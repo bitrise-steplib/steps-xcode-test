@@ -8,9 +8,16 @@ if [ -z "${project_path}" ] ; then
 	echo "[!] Missing required input: project_path"
 	exit 1
 fi
-
 if [ -z "${scheme}" ] ; then
 	echo "[!] Missing required input: scheme"
+	exit 1
+fi
+if [ -z "${simulator_device}" ] ; then
+	echo "[!] Missing required input: simulator_device"
+	exit 1
+fi
+if [ -z "${simulator_os_version}" ] ; then
+	echo "[!] Missing required input: simulator_os_version"
 	exit 1
 fi
 
@@ -27,24 +34,29 @@ fi
 
 #
 # Device Destination
-if [ -z "${simulator_device}" ]; then
-  simulator_device='iPad'
-fi
-if [ -z "${simulator_os_version}" ]; then
-  simulator_os_version='latest'
-fi
 CONFIG_unittest_device_destination="platform=iOS Simulator,name=${simulator_device},OS=${simulator_os_version}"
 
 #
 # Print configs
-echo " * CONFIG_xcode_project_action: ${CONFIG_xcode_project_action}"
-echo " * CONFIG_unittest_device_destination: ${CONFIG_unittest_device_destination}"
+echo
+echo "========== Configs =========="
 echo " * project_path: ${project_path}"
 echo " * scheme: ${scheme}"
+echo " * workdir: ${workdir}"
+echo " * simulator_device: ${simulator_device}"
+echo " * simulator_os_version: ${simulator_os_version}"
+echo " * CONFIG_xcode_project_action: ${CONFIG_xcode_project_action}"
+echo " * CONFIG_unittest_device_destination: ${CONFIG_unittest_device_destination}"
 
 
 #
 # Main
+if [ ! -z "${workdir}" ] ; then
+	echo
+	echo "$ cd ${workdir}"
+	cd "${workdir}"
+fi
+
 set -v
 
 xcodebuild ${CONFIG_xcode_project_action} "${project_path}" \

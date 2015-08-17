@@ -1,0 +1,16 @@
+format_version: 0.9.10
+default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
+
+app:
+  envs:
+  # define these in your .bitrise.secrets.yml
+  - project_path:
+  - scheme:
+  - workdir:
+
+workflows:
+  test:
+    steps:
+    - path::./:
+        inputs:
+        - simulator_device: iPhone 6 Plus
