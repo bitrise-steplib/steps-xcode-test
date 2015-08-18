@@ -1,5 +1,5 @@
-title: NEW Xcode Test
-summary: NEW Xcode Test
+title: Xcode Test
+summary: Xcode Test
 description: |-
   Runs Xcode's `test` action.
 website: https://github.com/bitrise-io/steps-new-xcode-test
@@ -75,5 +75,13 @@ inputs:
         * 8.4
         * latest
       is_required: false
+      is_expand: true
+  - is_clean_build: "yes"
+    opts:
+      title: "Do a clean Xcode build before testing?"
+      value_options:
+        - "yes"
+        - "no"
+      is_required: true
       is_expand: true
 outputs: []

@@ -14,3 +14,4 @@ workflows:
     - path::./:
         inputs:
         - simulator_device: iPhone 6 Plus
+        - is_clean_build: "no"

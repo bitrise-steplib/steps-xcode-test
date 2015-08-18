@@ -45,6 +45,7 @@ echo " * scheme: ${scheme}"
 echo " * workdir: ${workdir}"
 echo " * simulator_device: ${simulator_device}"
 echo " * simulator_os_version: ${simulator_os_version}"
+echo " * is_clean_build: ${is_clean_build}"
 echo " * CONFIG_xcode_project_action: ${CONFIG_xcode_project_action}"
 echo " * CONFIG_unittest_device_destination: ${CONFIG_unittest_device_destination}"
 
@@ -57,11 +58,16 @@ if [ ! -z "${workdir}" ] ; then
 	cd "${workdir}"
 fi
 
+clean_build_param=''
+if [[ "${is_clean_build}" == "yes" ]] ; then
+	clean_build_param='clean'
+fi
+
 set -v
 
 xcodebuild ${CONFIG_xcode_project_action} "${project_path}" \
 	-scheme "${scheme}" \
-	clean test \
+	${clean_build_param} test \
 	-destination "${CONFIG_unittest_device_destination}" \
 	-sdk iphonesimulator \
 	-verbose
