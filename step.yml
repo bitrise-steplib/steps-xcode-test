@@ -19,7 +19,7 @@ dependencies:
   - manager: _
     name: xcode
 inputs:
-  - workdir:
+  - workdir: $BITRISE_SOURCE_DIR
     opts:
       title: "Working directory"
       description: |
@@ -27,7 +27,7 @@ inputs:
         You can leave it empty to don't change it.
       is_required: false
       is_expand: true
-  - project_path:
+  - project_path: $BITRISE_PROJECT_PATH
     opts:
       title: "Project (or Workspace) path"
       description: |
@@ -35,7 +35,7 @@ inputs:
         the Workfing directory (if specified).
       is_required: true
       is_expand: true
-  - scheme:
+  - scheme: $BITRISE_SCHEME
     opts:
       title: "Scheme name"
       description: |
