@@ -41,7 +41,7 @@ func isTimeOutError(outputToSearchIn string) (bool, error) {
 	return r.MatchString(outputToSearchIn), nil
 }
 
-func runTest(action, projectPath, scheme, cleanBuild, deviceDestination string) error {
+func runTest(action, projectPath, scheme, cleanBuild, deviceDestination string, isRetryOnTimeout bool) error {
 	args := []string{action, projectPath, "-scheme", scheme}
 	if cleanBuild != "" {
 		args = append(args, cleanBuild)
@@ -53,17 +53,19 @@ func runTest(action, projectPath, scheme, cleanBuild, deviceDestination string) 
 	var outBuffer bytes.Buffer
 	outWriter := io.MultiWriter(&outBuffer, os.Stdout)
 	cmd.Stdout = outWriter
-
-	errorWriter := io.MultiWriter(&outBuffer, os.Stderr)
-	cmd.Stderr = errorWriter
+	cmd.Stderr = outWriter
 
 	log.Printf("---- cmd: %#v", cmd)
 	if err := cmd.Run(); err != nil {
 		if isTimeoutStrFound, err := isTimeOutError(outBuffer.String()); err != nil {
 			return err
 		} else if isTimeoutStrFound {
-			log.Printf("=> Simulator Timeout detected - retrying...")
-			return cmd.Run()
+			log.Println("=> Simulator Timeout detected")
+			if isRetryOnTimeout {
+				log.Println("==> isRetryOnTimeout=true - retrying...")
+				return runTest(action, projectPath, scheme, cleanBuild, deviceDestination, false)
+			}
+			log.Println(" [!] isRetryOnTimeout=false, no more retry, stopping the test!")
 		}
 		return err
 	}
@@ -122,7 +124,7 @@ func main() {
 
 	//
 	// Run
-	if err := runTest(action, projectPath, scheme, cleanBuild, deviceDestination); err != nil {
+	if err := runTest(action, projectPath, scheme, cleanBuild, deviceDestination, true); err != nil {
 		log.Fatalf("Failed to run xcode test, error: %s", err)
 	}
 }
