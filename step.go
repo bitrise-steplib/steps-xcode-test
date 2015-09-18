@@ -11,7 +11,15 @@ import (
 	"strings"
 )
 
-const timeOutMessage = "iPhoneSimulator: Timed out waiting"
+// On performance limited OS X hosts (ex: VMs) the iPhone/iOS Simulator might time out
+//  while booting. So far it seems that a simple retry solves these issues.
+
+// This boot timeout can happen when running Unit Tests
+//  with Xcode Command Line `xcodebuild`.
+const timeOutMessageIPhoneSimulator = "iPhoneSimulator: Timed out waiting"
+
+// This boot timeout can happen when running Xcode (7+) UI tests
+//  with Xcode Command Line `xcodebuild`.
 const timeOutMessageUITest = "Terminating app due to uncaught exception '_XCTestCaseInterruptionException'"
 
 func printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, action, deviceDestination, cleanBuild string) {
@@ -32,14 +40,6 @@ func validateRequiredInput(key string) (string, error) {
 		return "", fmt.Errorf("[!] Missing required input: %s", key)
 	}
 	return value, nil
-}
-
-func isTimeOutError(outputToSearchIn string) (bool, error) {
-	r, err := regexp.Compile("(?i)" + timeOutMessage)
-	if err != nil {
-		return false, err
-	}
-	return r.MatchString(outputToSearchIn), nil
 }
 
 func isStringFoundInOutput(searchStr, outputToSearchIn string) (bool, error) {
@@ -67,7 +67,7 @@ func runTest(action, projectPath, scheme, cleanBuild, deviceDestination string, 
 	log.Printf("---- cmd: %#v", cmd)
 	if err := cmd.Run(); err != nil {
 		outBuffStr := outBuffer.String()
-		if isTimeoutStrFound, err := isTimeOutError(outBuffStr); err != nil {
+		if isTimeoutStrFound, err := isStringFoundInOutput(timeOutMessageIPhoneSimulator, outBuffStr); err != nil {
 			return err
 		} else if isTimeoutStrFound {
 			log.Println("=> Simulator Timeout detected")

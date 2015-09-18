@@ -4,7 +4,7 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 app:
   envs:
   # define these in your .bitrise.secrets.yml
-  - BITRISE_SOURCE_DIR:
+  - SOURCE_ROOT_PATH:
   - BITRISE_PROJECT_PATH:
   - BITRISE_SCHEME:
 
@@ -15,6 +15,10 @@ workflows:
         title: "Go Test"
         inputs:
         - content: go test ./...
+    - script:
+        title: Switch working dir to SOURCE_ROOT_PATH
+        inputs:
+        - content: envman add --key BITRISE_SOURCE_DIR --value "${SOURCE_ROOT_PATH}"
     - path::./:
         inputs:
         - simulator_device: iPhone 6 Plus
