@@ -11,7 +11,16 @@ import (
 	"strings"
 )
 
-const timeOutMessage = "iPhoneSimulator: Timed out waiting"
+// On performance limited OS X hosts (ex: VMs) the iPhone/iOS Simulator might time out
+//  while booting. So far it seems that a simple retry solves these issues.
+
+// This boot timeout can happen when running Unit Tests
+//  with Xcode Command Line `xcodebuild`.
+const timeOutMessageIPhoneSimulator = "iPhoneSimulator: Timed out waiting"
+
+// This boot timeout can happen when running Xcode (7+) UI tests
+//  with Xcode Command Line `xcodebuild`.
+const timeOutMessageUITest = "Terminating app due to uncaught exception '_XCTestCaseInterruptionException'"
 
 func printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, action, deviceDestination, cleanBuild string) {
 	log.Println()
@@ -33,8 +42,8 @@ func validateRequiredInput(key string) (string, error) {
 	return value, nil
 }
 
-func isTimeOutError(outputToSearchIn string) (bool, error) {
-	r, err := regexp.Compile("(?i)" + timeOutMessage)
+func isStringFoundInOutput(searchStr, outputToSearchIn string) (bool, error) {
+	r, err := regexp.Compile("(?i)" + searchStr)
 	if err != nil {
 		return false, err
 	}
@@ -57,7 +66,8 @@ func runTest(action, projectPath, scheme, cleanBuild, deviceDestination string, 
 
 	log.Printf("---- cmd: %#v", cmd)
 	if err := cmd.Run(); err != nil {
-		if isTimeoutStrFound, err := isTimeOutError(outBuffer.String()); err != nil {
+		outBuffStr := outBuffer.String()
+		if isTimeoutStrFound, err := isStringFoundInOutput(timeOutMessageIPhoneSimulator, outBuffStr); err != nil {
 			return err
 		} else if isTimeoutStrFound {
 			log.Println("=> Simulator Timeout detected")
@@ -66,7 +76,21 @@ func runTest(action, projectPath, scheme, cleanBuild, deviceDestination string, 
 				return runTest(action, projectPath, scheme, cleanBuild, deviceDestination, false)
 			}
 			log.Println(" [!] isRetryOnTimeout=false, no more retry, stopping the test!")
+			return err
 		}
+
+		if isUITestTimeoutFound, err := isStringFoundInOutput(timeOutMessageUITest, outBuffStr); err != nil {
+			return err
+		} else if isUITestTimeoutFound {
+			log.Println("=> Simulator Timeout detected: isUITestTimeoutFound")
+			if isRetryOnTimeout {
+				log.Println("==> isRetryOnTimeout=true - retrying...")
+				return runTest(action, projectPath, scheme, cleanBuild, deviceDestination, false)
+			}
+			log.Println(" [!] isRetryOnTimeout=false, no more retry, stopping the test!")
+			return err
+		}
+
 		return err
 	}
 	return nil
