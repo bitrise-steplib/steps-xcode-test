@@ -32,6 +32,16 @@ func printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, actio
 	log.Printf(" * is_clean_build: %s", cleanBuild)
 	log.Printf(" * project_action: %s", action)
 	log.Printf(" * device_destination: %s", deviceDestination)
+
+	cmd := exec.Command("xcodebuild", "-version")
+	xcodebuildVersion, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Printf(" [!] Failed to get the version of xcodebuild! Error: %s", err)
+	}
+	fmt.Println()
+	log.Println(" * xcodebuildVersion:")
+	fmt.Printf("%s\n", xcodebuildVersion)
+	fmt.Println()
 }
 
 func validateRequiredInput(key string) (string, error) {
