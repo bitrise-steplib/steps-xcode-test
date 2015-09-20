@@ -27,3 +27,11 @@ workflows:
         inputs:
         - simulator_device: iPhone 6 Plus
         - is_clean_build: "no"
+        - is_full_output: "no"
+    - script:
+        title: Output test
+        is_always_run: true
+        inputs:
+        - content: |-
+            echo "BITRISE_XCODE_TEST_RESULT: ${BITRISE_XCODE_TEST_RESULT}"
+            echo "BITRISE_XCODE_TEST_FULL_RESULTS_TEXT: ${BITRISE_XCODE_TEST_FULL_RESULTS_TEXT}"
