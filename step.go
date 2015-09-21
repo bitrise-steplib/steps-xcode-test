@@ -76,8 +76,8 @@ func findTestSummaryInOutput(fullOutput string, isRunSucess bool) string {
 		possibleDelimiters := []string{"Testing failed:", "Failing tests:", "** TEST FAILED **"}
 		for _, aDelim := range possibleDelimiters {
 			splitIdx = strings.LastIndex(fullOutput, aDelim)
+			splitDelim = aDelim
 			if splitIdx >= 0 {
-				splitDelim = aDelim
 				break
 			}
 		}
