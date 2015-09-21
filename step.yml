@@ -86,4 +86,43 @@ inputs:
         - "no"
       is_required: true
       is_expand: true
-outputs: []
+  - is_full_output: "no"
+    opts:
+      title: "Present the full compile & test output?"
+      description: |-
+        If this option is set to "no" then only the test results / test summary
+        will be printed. If set to "yes" then every output generated
+        by `xcodebuild` (compile & test) will be presented.
+      value_options:
+        - "yes"
+        - "no"
+      is_required: true
+      is_expand: true
+outputs:
+- BITRISE_XCODE_TEST_RESULT:
+  opts:
+    title: Result of the tests. 'succeeded' or 'failed'.
+    value_options:
+    - succeeded
+    - failed
+- BITRISE_XCODE_TEST_FULL_RESULTS_TEXT:
+  opts:
+    title: Full results / summary of the text, as printed by Xcode.
+    description: |-
+      When available this output will contain the full test results
+      printed by Xcode.
+
+      Something like:
+
+          Failing tests:
+            -[BitriseSampleWithYMLTests testFailExample()]
+          ** TEST FAILED **
+
+          Test Suite 'All tests' started at 2015-09-20 10:18:46.342
+          Test Suite 'BitriseSampleWithYMLTests.xctest' started at 2015-09-20 10:18:46.343
+          Test Suite 'BitriseSampleWithYMLTests' started at 2015-09-20 10:18:46.343
+          Test Case '-[BitriseSampleWithYMLTests.BitriseSampleWithYMLTests testExample]' started.
+          Test Case '-[BitriseSampleWithYMLTests.BitriseSampleWithYMLTests testExample]' passed (0.000 seconds).
+          Test Case '-[BitriseSampleWithYMLTests.BitriseSampleWithYMLTests testFailExample]' started.
+          /Users/viktorbenei/develop/sample-apps-ios-with-bitrise-yml/BitriseSampleWithYMLTests/BitriseSampleWithYMLTests.swift:33: error: -[BitriseSampleWithYMLTests.BitriseSampleWithYMLTests testFailExample] : XCTAssertTrue failed -
+          Test Case '-[BitriseSampleWithYMLTests.BitriseSampleWithYMLTests testFailExample]' failed (0.001 seconds).

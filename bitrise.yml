@@ -17,9 +17,21 @@ workflows:
         - content: go test ./...
     - script:
         title: Switch working dir to SOURCE_ROOT_PATH
+        description: |-
+          To prevent step testing issues, like referencing relative
+          files with just './some-file', which would work for local tests
+          but not if the step is included in another bitrise.yml!
         inputs:
         - content: envman add --key BITRISE_SOURCE_DIR --value "${SOURCE_ROOT_PATH}"
     - path::./:
         inputs:
         - simulator_device: iPhone 6 Plus
         - is_clean_build: "no"
+        - is_full_output: "no"
+    - script:
+        title: Output test
+        is_always_run: true
+        inputs:
+        - content: |-
+            echo "BITRISE_XCODE_TEST_RESULT: ${BITRISE_XCODE_TEST_RESULT}"
+            echo "BITRISE_XCODE_TEST_FULL_RESULTS_TEXT: ${BITRISE_XCODE_TEST_FULL_RESULTS_TEXT}"
