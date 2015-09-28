@@ -99,7 +99,7 @@ func runTest(action, projectPath, scheme string, cleanBuild bool, deviceDestinat
 	if cleanBuild {
 		args = append(args, "clean")
 	}
-	args = append(args, "test", "-destination", deviceDestination, "-sdk", "iphonesimulator")
+	args = append(args, "build", "test", "-destination", deviceDestination, "-sdk", "iphonesimulator")
 	cmd := exec.Command("xcodebuild", args...)
 
 	var outBuffer bytes.Buffer
