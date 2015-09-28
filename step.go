@@ -31,14 +31,14 @@ func exportEnvironmentWithEnvman(keyStr, valueStr string) error {
 	return envman.Run()
 }
 
-func printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, action, deviceDestination, cleanBuild string) {
+func printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, action, deviceDestination string, cleanBuild bool) {
 	log.Println()
 	log.Println("========== Configs ==========")
 	log.Printf(" * project_path: %s", projectPath)
 	log.Printf(" * scheme: %s", scheme)
 	log.Printf(" * simulator_device: %s", simulatorDevice)
 	log.Printf(" * simulator_os_version: %s", simulatorOsVersion)
-	log.Printf(" * is_clean_build: %s", cleanBuild)
+	log.Printf(" * is_clean_build: %v", cleanBuild)
 	log.Printf(" * project_action: %s", action)
 	log.Printf(" * device_destination: %s", deviceDestination)
 
@@ -94,10 +94,10 @@ func findTestSummaryInOutput(fullOutput string, isRunSucess bool) string {
 	return fullOutput[splitIdx:]
 }
 
-func runTest(action, projectPath, scheme, cleanBuild, deviceDestination string, isRetryOnTimeout, isFullOutputMode bool) (string, error) {
+func runTest(action, projectPath, scheme string, cleanBuild bool, deviceDestination string, isRetryOnTimeout, isFullOutputMode bool) (string, error) {
 	args := []string{action, projectPath, "-scheme", scheme}
-	if cleanBuild != "" {
-		args = append(args, cleanBuild)
+	if cleanBuild {
+		args = append(args, "clean")
 	}
 	args = append(args, "test", "-destination", deviceDestination, "-sdk", "iphonesimulator")
 	cmd := exec.Command("xcodebuild", args...)
@@ -129,7 +129,7 @@ func runTest(action, projectPath, scheme, cleanBuild, deviceDestination string, 
 			log.Println("=> Simulator Timeout detected")
 			if isRetryOnTimeout {
 				log.Println("==> isRetryOnTimeout=true - retrying...")
-				return runTest(action, projectPath, scheme, cleanBuild, deviceDestination, false, isFullOutputMode)
+				return runTest(action, projectPath, scheme, false, deviceDestination, false, isFullOutputMode)
 			}
 			log.Println(" [!] isRetryOnTimeout=false, no more retry, stopping the test!")
 			return fullOutputStr, runErr
@@ -139,7 +139,7 @@ func runTest(action, projectPath, scheme, cleanBuild, deviceDestination string, 
 			log.Println("=> Simulator Timeout detected: isUITestTimeoutFound")
 			if isRetryOnTimeout {
 				log.Println("==> isRetryOnTimeout=true - retrying...")
-				return runTest(action, projectPath, scheme, cleanBuild, deviceDestination, false, isFullOutputMode)
+				return runTest(action, projectPath, scheme, false, deviceDestination, false, isFullOutputMode)
 			}
 			log.Println(" [!] isRetryOnTimeout=false, no more retry, stopping the test!")
 			return fullOutputStr, runErr
@@ -176,9 +176,9 @@ func main() {
 
 	//
 	// Not required parameters
-	cleanBuild := ""
+	cleanBuild := false
 	if os.Getenv("is_clean_build") == "yes" {
-		cleanBuild = "clean"
+		cleanBuild = true
 	}
 	isFullOutputMode := !(os.Getenv("is_full_output") == "no")
 
