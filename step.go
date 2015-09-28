@@ -61,12 +61,13 @@ func validateRequiredInput(key string) (string, error) {
 	return value, nil
 }
 
-func isStringFoundInOutput(searchStr, outputToSearchIn string) (bool, error) {
+func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
 	r, err := regexp.Compile("(?i)" + searchStr)
 	if err != nil {
-		return false, err
+		log.Printf(" [!] Failed to compile regexp: %s", err)
+		return false
 	}
-	return r.MatchString(outputToSearchIn), nil
+	return r.MatchString(outputToSearchIn)
 }
 
 func findTestSummaryInOutput(fullOutput string, isRunSucess bool) string {
@@ -121,34 +122,30 @@ func runTest(action, projectPath, scheme, cleanBuild, deviceDestination string, 
 		log.Println("   This can take some time, especially if the code have to be compiled first.")
 	}
 
-	err := cmd.Run()
+	runErr := cmd.Run()
 	fullOutputStr := outBuffer.String()
-	if err != nil {
-		if isTimeoutStrFound, err := isStringFoundInOutput(timeOutMessageIPhoneSimulator, fullOutputStr); err != nil {
-			return fullOutputStr, err
-		} else if isTimeoutStrFound {
+	if runErr != nil {
+		if isStringFoundInOutput(timeOutMessageIPhoneSimulator, fullOutputStr) {
 			log.Println("=> Simulator Timeout detected")
 			if isRetryOnTimeout {
 				log.Println("==> isRetryOnTimeout=true - retrying...")
 				return runTest(action, projectPath, scheme, cleanBuild, deviceDestination, false, isFullOutputMode)
 			}
 			log.Println(" [!] isRetryOnTimeout=false, no more retry, stopping the test!")
-			return fullOutputStr, err
+			return fullOutputStr, runErr
 		}
 
-		if isUITestTimeoutFound, err := isStringFoundInOutput(timeOutMessageUITest, fullOutputStr); err != nil {
-			return fullOutputStr, err
-		} else if isUITestTimeoutFound {
+		if isStringFoundInOutput(timeOutMessageUITest, fullOutputStr) {
 			log.Println("=> Simulator Timeout detected: isUITestTimeoutFound")
 			if isRetryOnTimeout {
 				log.Println("==> isRetryOnTimeout=true - retrying...")
 				return runTest(action, projectPath, scheme, cleanBuild, deviceDestination, false, isFullOutputMode)
 			}
 			log.Println(" [!] isRetryOnTimeout=false, no more retry, stopping the test!")
-			return fullOutputStr, err
+			return fullOutputStr, runErr
 		}
 
-		return fullOutputStr, err
+		return fullOutputStr, runErr
 	}
 
 	return fullOutputStr, nil

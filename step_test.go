@@ -9,6 +9,58 @@ import (
 //
 // --- TESTS
 
+func Test_isStringFoundInOutput(t *testing.T) {
+	// Should NOT find
+	searchPattern := "something"
+	isShouldFind := false
+	for _, anOutStr := range []string{
+		"",
+		"a",
+		"1",
+		"somethin",
+		"somethinx",
+		"TEST FAILED",
+	} {
+		if isFound := isStringFoundInOutput(searchPattern, anOutStr); isFound != isShouldFind {
+			t.Logf("Search pattern was: %s", searchPattern)
+			t.Logf("Input string to search in was: %s", anOutStr)
+			t.Fatalf("Expected (%v), actual (%v)", isShouldFind, isFound)
+		}
+	}
+
+	// Should find
+	searchPattern = "search for this"
+	isShouldFind = true
+	for _, anOutStr := range []string{
+		"search for this",
+		"-search for this",
+		"search for this-",
+		"-search for this-",
+	} {
+		if isFound := isStringFoundInOutput(searchPattern, anOutStr); isFound != isShouldFind {
+			t.Logf("Search pattern was: %s", searchPattern)
+			t.Logf("Input string to search in was: %s", anOutStr)
+			t.Fatalf("Expected (%v), actual (%v)", isShouldFind, isFound)
+		}
+	}
+
+	// Should find - empty pattern - always "yes"
+	searchPattern = ""
+	isShouldFind = true
+	for _, anOutStr := range []string{
+		"",
+		"a",
+		"1",
+		"TEST FAILED",
+	} {
+		if isFound := isStringFoundInOutput(searchPattern, anOutStr); isFound != isShouldFind {
+			t.Logf("Search pattern was: %s", searchPattern)
+			t.Logf("Input string to search in was: %s", anOutStr)
+			t.Fatalf("Expected (%v), actual (%v)", isShouldFind, isFound)
+		}
+	}
+}
+
 func Test_findTestSummaryInOutput(t *testing.T) {
 	// load sample logs
 	sampleIPhoneSimulatorLog, err := loadFileContent("./_samples/xcodebuild-iPhoneSimulator-timeout.txt")
@@ -115,11 +167,7 @@ func TestIsStringFoundInOutput_timeOutMessageUITest(t *testing.T) {
 // --- TESTING UTILITY FUNCS
 
 func testIsFoundWith(t *testing.T, searchPattern, outputToSearchIn string, isShouldFind bool) {
-	if isFound, err := isStringFoundInOutput(searchPattern, outputToSearchIn); err != nil {
-		t.Logf("Search pattern was: %s", searchPattern)
-		t.Logf("Input string to search in was: %s", outputToSearchIn)
-		t.Fatalf("Error: Expected (nil), actual (%s)", err)
-	} else if isFound != isShouldFind {
+	if isFound := isStringFoundInOutput(searchPattern, outputToSearchIn); isFound != isShouldFind {
 		t.Logf("Search pattern was: %s", searchPattern)
 		t.Logf("Input string to search in was: %s", outputToSearchIn)
 		t.Fatalf("Expected (%v), actual (%v)", isShouldFind, isFound)
