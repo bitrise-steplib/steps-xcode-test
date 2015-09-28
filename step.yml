@@ -46,7 +46,7 @@ inputs:
         **IMPORTANT**: The Scheme have to be marked as __shared__ in Xcode!
       is_required: true
       is_expand: true
-  - simulator_device: iPad
+  - simulator_device: iPhone 6
     opts:
       title: "Device"
       description: |

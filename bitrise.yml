@@ -25,7 +25,6 @@ workflows:
         - content: envman add --key BITRISE_SOURCE_DIR --value "${SOURCE_ROOT_PATH}"
     - path::./:
         inputs:
-        - simulator_device: iPhone 6 Plus
         - is_clean_build: "no"
         - is_full_output: "no"
     - script:
