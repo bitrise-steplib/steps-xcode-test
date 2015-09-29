@@ -181,6 +181,45 @@ func Test_printableCommandArgs(t *testing.T) {
 	}
 }
 
+func Test_findFirstDelimiter(t *testing.T) {
+	test := func(strToSearchIn string, searchDelims []string, expectedDelim string, expectedIdx int) {
+		foundIdx, foundDelim := findFirstDelimiter(strToSearchIn, searchDelims)
+
+		if foundDelim != expectedDelim {
+			t.Log("foundDelim != expectedDelim")
+			t.Logf(" -> foundDelim: %s", foundDelim)
+			t.Logf(" -> expectedDelim: %s", expectedDelim)
+			t.Fatalf("searchDelims: (%#v) | strToSearchIn: %s", searchDelims, strToSearchIn)
+		}
+		if foundIdx != expectedIdx {
+			t.Log("foundIdx != expectedIdx")
+			t.Logf(" -> foundIdx: %v", foundIdx)
+			t.Logf(" -> expectedIdx: %v", expectedIdx)
+			t.Fatalf("searchDelims: (%#v) | strToSearchIn: %s", searchDelims, strToSearchIn)
+		}
+	}
+
+	strToSearchIn := `Touch /Users/bitrise/Library/Developer/Xcode/DerivedData/BitriseSampleWithYML-duyungvabqzmagefbqehoqyodaqz/Build/Products/Debug-iphonesimulator/BitriseSampleWithYMLTests.xctest
+    cd /Users/bitrise/develop/sample-apps-ios-with-bitrise-yml
+    export PATH="/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/bin:/Applications/Xcode.app/Contents/Developer/usr/bin:/usr/local/heroku/bin:/usr/local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/bitrise/develop/go/bin:/usr/local/opt/go/libexec/bin:/Users/bitrise/bin:/Users/bitrise/develop/go/bin:/usr/local/opt/go/libexec/bin:/Users/bitrise/bin"
+    /usr/bin/touch -c /Users/bitrise/Library/Developer/Xcode/DerivedData/BitriseSampleWithYML-duyungvabqzmagefbqehoqyodaqz/Build/Products/Debug-iphonesimulator/BitriseSampleWithYMLTests.xctest
+
+** TEST SUCCEEDED **
+
+Test Suite 'All tests' started at 2015-09-20 16:01:13.995
+Test Suite 'BitriseSampleWithYMLTests.xctest' started at 2015-09-20 16:01:13.997`
+
+	// found
+	// note: order of delimiters doesn't matter, first occurance will be used
+	test(strToSearchIn, []string{"TEST SUCCEEDED", "Test Suite"}, "TEST SUCCEEDED", 842)
+	test(strToSearchIn, []string{"Test Suite", "TEST SUCCEEDED"}, "TEST SUCCEEDED", 842)
+	test("aaaa Test Suite aaa", []string{"Test Suite", "TEST SUCCEEDED"}, "Test Suite", 5)
+	test("aaaa Test Suite aaa", []string{"TEST SUCCEEDED", "Test Suite"}, "Test Suite", 5)
+
+	// not found
+	test("aaaa", []string{"TEST SUCCEEDED", "Test Suite"}, "", -1)
+}
+
 //
 // --- TESTING UTILITY FUNCS
 

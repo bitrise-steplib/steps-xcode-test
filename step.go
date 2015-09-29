@@ -71,25 +71,37 @@ func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
 	return r.MatchString(outputToSearchIn)
 }
 
-func findTestSummaryInOutput(fullOutput string, isRunSucess bool) string {
-	splitIdx := -1
-	splitDelim := ""
-	if !isRunSucess {
-		possibleDelimiters := []string{"Testing failed:", "Failing tests:", "** TEST FAILED **"}
-		for _, aDelim := range possibleDelimiters {
-			splitIdx = strings.LastIndex(fullOutput, aDelim)
-			splitDelim = aDelim
-			if splitIdx >= 0 {
-				break
+func findFirstDelimiter(searchIn string, searchForDelimiters []string) (foundIdx int, foundDelim string) {
+	foundIdx = -1
+	for _, aDelim := range searchForDelimiters {
+		aDelimFoundIdx := strings.Index(searchIn, aDelim)
+		if aDelimFoundIdx >= 0 {
+			if foundIdx == -1 || aDelimFoundIdx < foundIdx {
+				foundIdx = aDelimFoundIdx
+				foundDelim = aDelim
 			}
 		}
+	}
+	return foundIdx, foundDelim
+}
+
+func findTestSummaryInOutput(fullOutput string, isRunSucess bool) string {
+	// using a list of possible delimiters, because the actual order
+	//  of these delimiters varies in Xcode CLT's output,
+	//  so we'll try to find the first occurance of any of the listed
+	//  delimiters
+	possibleDelimiters := []string{}
+	if !isRunSucess {
+		// Failed
+		possibleDelimiters = []string{"Testing failed:", "Failing tests:", "** TEST FAILED **"}
 	} else {
-		splitDelim = "** TEST SUCCEEDED **"
-		splitIdx = strings.LastIndex(fullOutput, splitDelim)
+		// Success
+		possibleDelimiters = []string{"Test Suite ", "** TEST SUCCEEDED **"}
 	}
 
+	splitIdx, _ := findFirstDelimiter(fullOutput, possibleDelimiters)
 	if splitIdx < 0 {
-		log.Printf(" [!] Could not find the required test result delimiter: %s", splitDelim)
+		log.Println(" [!] Could not find any of the required test result delimiters")
 		return ""
 	}
 	return fullOutput[splitIdx:]
