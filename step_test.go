@@ -163,6 +163,24 @@ func TestIsStringFoundInOutput_timeOutMessageUITest(t *testing.T) {
 	}
 }
 
+func Test_printableCommandArgs(t *testing.T) {
+	orgCmdArgs := []string{
+		"xcodebuild", "-project", "MyProj.xcodeproj", "-scheme", "MyScheme",
+		"build", "test",
+		"-destination", "platform=iOS Simulator,name=iPhone 6,OS=latest",
+		"-sdk", "iphonesimulator",
+	}
+	resStr := printableCommandArgs(orgCmdArgs)
+	expectedStr := `xcodebuild "-project" "MyProj.xcodeproj" "-scheme" "MyScheme" "build" "test" "-destination" "platform=iOS Simulator,name=iPhone 6,OS=latest" "-sdk" "iphonesimulator"`
+
+	if resStr != expectedStr {
+		t.Log("printableCommandArgs failed to generate the expected string!")
+		t.Logf(" -> expectedStr: %s", expectedStr)
+		t.Logf(" -> resStr: %s", resStr)
+		t.Fatalf("Expected string does not match the generated string. Original args: (%#v)", orgCmdArgs)
+	}
+}
+
 //
 // --- TESTING UTILITY FUNCS
 

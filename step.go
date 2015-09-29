@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -94,6 +95,19 @@ func findTestSummaryInOutput(fullOutput string, isRunSucess bool) string {
 	return fullOutput[splitIdx:]
 }
 
+func printableCommandArgs(fullCommandArgs []string) string {
+	cmdArgsDecorated := []string{}
+	for idx, anArg := range fullCommandArgs {
+		quotedArg := strconv.Quote(anArg)
+		if idx == 0 {
+			quotedArg = anArg
+		}
+		cmdArgsDecorated = append(cmdArgsDecorated, quotedArg)
+	}
+
+	return strings.Join(cmdArgsDecorated, " ")
+}
+
 func runTest(action, projectPath, scheme string, cleanBuild bool, deviceDestination string, isRetryOnTimeout, isFullOutputMode bool) (string, error) {
 	args := []string{action, projectPath, "-scheme", scheme}
 	if cleanBuild {
@@ -110,12 +124,15 @@ func runTest(action, projectPath, scheme string, cleanBuild bool, deviceDestinat
 		outWriter = &outBuffer
 	}
 
+	cmd.Stdin = nil
 	cmd.Stdout = outWriter
 	cmd.Stderr = outWriter
 
 	fmt.Println()
 	log.Println("=> Compiling and running the tests...")
-	log.Printf("==> Full command: %#v", cmd)
+	cmdArgsForPrint := printableCommandArgs(cmd.Args)
+
+	log.Printf("==> Full command: %s", cmdArgsForPrint)
 	if !isFullOutputMode {
 		fmt.Println()
 		log.Println("=> You selected to only see test results.")
