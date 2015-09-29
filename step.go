@@ -113,6 +113,12 @@ func runTest(action, projectPath, scheme string, cleanBuild bool, deviceDestinat
 	if cleanBuild {
 		args = append(args, "clean")
 	}
+	// the 'build' argument is required *before* the 'test' arg, to prevent
+	//  the Xcode bug described in the README, which causes:
+	// 'iPhoneSimulator: Timed out waiting 120 seconds for simulator to boot, current state is 1.'
+	//  in case the compilation takes a long time.
+	// Related Radar link: https://openradar.appspot.com/22413115
+	// Demonstration project: https://github.com/bitrise-io/simulator-launch-timeout-includes-build-time
 	args = append(args, "build", "test", "-destination", deviceDestination, "-sdk", "iphonesimulator")
 	cmd := exec.Command("xcodebuild", args...)
 
