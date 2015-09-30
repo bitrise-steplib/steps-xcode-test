@@ -23,6 +23,8 @@ const timeOutMessageIPhoneSimulator = "iPhoneSimulator: Timed out waiting"
 //  with Xcode Command Line `xcodebuild`.
 const timeOutMessageUITest = "Terminating app due to uncaught exception '_XCTestCaseInterruptionException'"
 
+const xcodeVersionPrefix = "Xcode "
+
 func exportEnvironmentWithEnvman(keyStr, valueStr string) error {
 	log.Printf("Exporting: %s", keyStr)
 	envman := exec.Command("envman", "add", "--key", keyStr)
@@ -30,6 +32,21 @@ func exportEnvironmentWithEnvman(keyStr, valueStr string) error {
 	envman.Stdout = os.Stdout
 	envman.Stderr = os.Stderr
 	return envman.Run()
+}
+
+func getXcodeVersion() (string, error) {
+	outBuffer := bytes.Buffer{}
+	errBuffer := bytes.Buffer{}
+
+	cmd := exec.Command("xcodebuild", "-version")
+	cmd.Stdout = io.Writer(&outBuffer)
+	cmd.Stderr = io.Writer(&errBuffer)
+
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("xcodebuild -version failed, err: %s, details: %s", err, errBuffer.String())
+	}
+
+	return outBuffer.String(), nil
 }
 
 func printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, action, deviceDestination string, cleanBuild bool) {
@@ -43,8 +60,7 @@ func printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, actio
 	log.Printf(" * project_action: %s", action)
 	log.Printf(" * device_destination: %s", deviceDestination)
 
-	cmd := exec.Command("xcodebuild", "-version")
-	xcodebuildVersion, err := cmd.CombinedOutput()
+	xcodebuildVersion, err := getXcodeVersion()
 	if err != nil {
 		log.Printf(" [!] Failed to get the version of xcodebuild! Error: %s", err)
 	}
@@ -120,6 +136,27 @@ func printableCommandArgs(fullCommandArgs []string) string {
 	return strings.Join(cmdArgsDecorated, " ")
 }
 
+func findXcodeMajorVersion(str string) (int, error) {
+	idx := strings.Index(str, xcodeVersionPrefix)
+	if idx < 0 {
+		return -1, fmt.Errorf("No prefix (%s) found in xcodebuild -version output (%s)", xcodeVersionPrefix, str)
+	}
+	if idx+len(xcodeVersionPrefix)+1 >= len(str) {
+		return -1, fmt.Errorf("No version number found in xcodebuild -version output (%s)", str)
+	}
+	majorVersionStr := str[idx+len(xcodeVersionPrefix) : idx+len(xcodeVersionPrefix)+1]
+	return strconv.Atoi(majorVersionStr)
+}
+
+func majorXcodeVersion() (int, error) {
+	xcodeVersionStr, err := getXcodeVersion()
+	if err != nil {
+		return -1, fmt.Errorf("xcodebuild -version failed, err: %s", err)
+	}
+
+	return findXcodeMajorVersion(xcodeVersionStr)
+}
+
 func runTest(action, projectPath, scheme string, cleanBuild bool, deviceDestination string, isRetryOnTimeout, isFullOutputMode bool) (string, error) {
 	args := []string{action, projectPath, "-scheme", scheme}
 	if cleanBuild {
@@ -131,7 +168,16 @@ func runTest(action, projectPath, scheme string, cleanBuild bool, deviceDestinat
 	//  in case the compilation takes a long time.
 	// Related Radar link: https://openradar.appspot.com/22413115
 	// Demonstration project: https://github.com/bitrise-io/simulator-launch-timeout-includes-build-time
-	args = append(args, "build", "test", "-destination", deviceDestination, "-sdk", "iphonesimulator")
+	args = append(args, "build", "test", "-destination", deviceDestination)
+
+	majorXcodeVersion, err := majorXcodeVersion()
+	if err != nil {
+		return "", fmt.Errorf("Faild to get major xcode version, err: %s", err)
+	}
+	if majorXcodeVersion < 7 {
+		args = append(args, "-sdk", "iphonesimulator")
+	}
+
 	cmd := exec.Command("xcodebuild", args...)
 
 	var outBuffer bytes.Buffer
