@@ -23,8 +23,6 @@ const timeOutMessageIPhoneSimulator = "iPhoneSimulator: Timed out waiting"
 //  with Xcode Command Line `xcodebuild`.
 const timeOutMessageUITest = "Terminating app due to uncaught exception '_XCTestCaseInterruptionException'"
 
-const xcodeVersionPrefix = "Xcode "
-
 func exportEnvironmentWithEnvman(keyStr, valueStr string) error {
 	log.Printf("Exporting: %s", keyStr)
 	envman := exec.Command("envman", "add", "--key", keyStr)
