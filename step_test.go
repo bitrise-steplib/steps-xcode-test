@@ -9,13 +9,13 @@ import (
 //
 // --- TESTS
 
-func TestFindMajorVersion(t *testing.T) {
+func TestFindXcodeMajorVersion(t *testing.T) {
 	// Should find
 	versionStr := `
 Xcode 7.0
 Build version 7A220`
 
-	version, err := findMajorVersion(versionStr)
+	version, err := findXcodeMajorVersion(versionStr)
 	if err != nil {
 		t.Fatalf("Failed to findMajorVersion: %s", err)
 	}
@@ -23,11 +23,24 @@ Build version 7A220`
 		t.Fatalf("Expected version (7), actual (%d)", version)
 	}
 
+	// Should find
+	versionStr = `
+	Xcode 6.1
+	Build version 7A220`
+
+	version, err = findXcodeMajorVersion(versionStr)
+	if err != nil {
+		t.Fatalf("Failed to findMajorVersion: %s", err)
+	}
+	if version != 6 {
+		t.Fatalf("Expected version (6), actual (%d)", version)
+	}
+
 	// Should not find
 	versionStr = `
 	Build version 7A220`
 
-	version, err = findMajorVersion(versionStr)
+	version, err = findXcodeMajorVersion(versionStr)
 	if err == nil {
 		t.Fatalf("Should failed to findMajorVersion: %s", err)
 	}
