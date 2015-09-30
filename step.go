@@ -136,27 +136,6 @@ func printableCommandArgs(fullCommandArgs []string) string {
 	return strings.Join(cmdArgsDecorated, " ")
 }
 
-func findXcodeMajorVersion(str string) (int, error) {
-	idx := strings.Index(str, xcodeVersionPrefix)
-	if idx < 0 {
-		return -1, fmt.Errorf("No prefix (%s) found in xcodebuild -version output (%s)", xcodeVersionPrefix, str)
-	}
-	if idx+len(xcodeVersionPrefix)+1 >= len(str) {
-		return -1, fmt.Errorf("No version number found in xcodebuild -version output (%s)", str)
-	}
-	majorVersionStr := str[idx+len(xcodeVersionPrefix) : idx+len(xcodeVersionPrefix)+1]
-	return strconv.Atoi(majorVersionStr)
-}
-
-func majorXcodeVersion() (int, error) {
-	xcodeVersionStr, err := getXcodeVersion()
-	if err != nil {
-		return -1, fmt.Errorf("xcodebuild -version failed, err: %s", err)
-	}
-
-	return findXcodeMajorVersion(xcodeVersionStr)
-}
-
 func runTest(action, projectPath, scheme string, cleanBuild bool, deviceDestination string, isRetryOnTimeout, isFullOutputMode bool) (string, error) {
 	args := []string{action, projectPath, "-scheme", scheme}
 	if cleanBuild {
@@ -169,15 +148,6 @@ func runTest(action, projectPath, scheme string, cleanBuild bool, deviceDestinat
 	// Related Radar link: https://openradar.appspot.com/22413115
 	// Demonstration project: https://github.com/bitrise-io/simulator-launch-timeout-includes-build-time
 	args = append(args, "build", "test", "-destination", deviceDestination)
-
-	majorXcodeVersion, err := majorXcodeVersion()
-	if err != nil {
-		return "", fmt.Errorf("Faild to get major xcode version, err: %s", err)
-	}
-	if majorXcodeVersion < 7 {
-		args = append(args, "-sdk", "iphonesimulator")
-	}
-
 	cmd := exec.Command("xcodebuild", args...)
 
 	var outBuffer bytes.Buffer
