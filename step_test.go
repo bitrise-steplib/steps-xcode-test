@@ -9,6 +9,33 @@ import (
 //
 // --- TESTS
 
+func TestFindMajorVersion(t *testing.T) {
+	// Should find
+	versionStr := `
+Xcode 7.0
+Build version 7A220`
+
+	version, err := findMajorVersion(versionStr)
+	if err != nil {
+		t.Fatalf("Failed to findMajorVersion: %s", err)
+	}
+	if version != 7 {
+		t.Fatalf("Expected version (7), actual (%d)", version)
+	}
+
+	// Should not find
+	versionStr = `
+	Build version 7A220`
+
+	version, err = findMajorVersion(versionStr)
+	if err == nil {
+		t.Fatalf("Should failed to findMajorVersion: %s", err)
+	}
+	if version != -1 {
+		t.Fatalf("Expected version (-1), actual (%d)", version)
+	}
+}
+
 func Test_isStringFoundInOutput(t *testing.T) {
 	// Should NOT find
 	searchPattern := "something"
