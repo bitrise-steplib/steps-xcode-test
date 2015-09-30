@@ -33,18 +33,14 @@ func exportEnvironmentWithEnvman(keyStr, valueStr string) error {
 }
 
 func getXcodeVersion() (string, error) {
-	outBuffer := bytes.Buffer{}
-	errBuffer := bytes.Buffer{}
 
 	cmd := exec.Command("xcodebuild", "-version")
-	cmd.Stdout = io.Writer(&outBuffer)
-	cmd.Stderr = io.Writer(&errBuffer)
-
-	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("xcodebuild -version failed, err: %s, details: %s", err, errBuffer.String())
+	outBytes, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("xcodebuild -version failed, err: %s, details: %s", err, string(outBytes))
 	}
 
-	return outBuffer.String(), nil
+	return string(outBytes), nil
 }
 
 func printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, action, deviceDestination string, cleanBuild bool) {
