@@ -120,6 +120,30 @@ func printableCommandArgs(fullCommandArgs []string) string {
 	return strings.Join(cmdArgsDecorated, " ")
 }
 
+func majorXcodeVersion() (int, error) {
+	outBuffer := bytes.Buffer{}
+	errBuffer := bytes.Buffer{}
+
+	cmd := exec.Command("xcodebuild", "-version")
+	cmd.Stdout = io.Writer(&outBuffer)
+	cmd.Stderr = io.Writer(&errBuffer)
+
+	if err := cmd.Run(); err != nil {
+		return -1, fmt.Errorf("xcodebuild -version failed, err: %s", err)
+	}
+
+	outStr := outBuffer.String()
+	idx := strings.Index(outStr, "Xcode ")
+	if idx < 0 {
+		return -1, fmt.Errorf("No prefix (Xcode ) found in xcodebuild -version output (%s)", outBuffer.String())
+	}
+	if idx+len("Xcode ")+1 >= len(outStr) {
+		return -1, fmt.Errorf("No version number found in xcodebuild -version output (%s)", outBuffer.String())
+	}
+	majorVersionStr := outStr[idx+len("Xcode ") : idx+len("Xcode ")+1]
+	return strconv.Atoi(majorVersionStr)
+}
+
 func runTest(action, projectPath, scheme string, cleanBuild bool, deviceDestination string, isRetryOnTimeout, isFullOutputMode bool) (string, error) {
 	args := []string{action, projectPath, "-scheme", scheme}
 	if cleanBuild {
@@ -132,7 +156,15 @@ func runTest(action, projectPath, scheme string, cleanBuild bool, deviceDestinat
 	// Related Radar link: https://openradar.appspot.com/22413115
 	// Demonstration project: https://github.com/bitrise-io/simulator-launch-timeout-includes-build-time
 	args = append(args, "build", "test", "-destination", deviceDestination)
-	// args = append(args, "build", "test", "-destination", deviceDestination, "-sdk", "iphonesimulator")
+
+	majorXcodeVersion, err := majorXcodeVersion()
+	if err != nil {
+		return "", fmt.Errorf("Faild to get major xcode version, err: %s", err)
+	}
+	if majorXcodeVersion < 7 {
+		args = append(args, "-sdk", "iphonesimulator")
+	}
+
 	cmd := exec.Command("xcodebuild", args...)
 
 	var outBuffer bytes.Buffer
