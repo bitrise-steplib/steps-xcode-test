@@ -34,7 +34,7 @@ func exportEnvironmentWithEnvman(keyStr, valueStr string) error {
 	return envman.Run()
 }
 
-func doXcodeVersion() (string, error) {
+func getXcodeVersion() (string, error) {
 	outBuffer := bytes.Buffer{}
 	errBuffer := bytes.Buffer{}
 
@@ -60,7 +60,7 @@ func printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, actio
 	log.Printf(" * project_action: %s", action)
 	log.Printf(" * device_destination: %s", deviceDestination)
 
-	xcodebuildVersion, err := doXcodeVersion()
+	xcodebuildVersion, err := getXcodeVersion()
 	if err != nil {
 		log.Printf(" [!] Failed to get the version of xcodebuild! Error: %s", err)
 	}
@@ -136,7 +136,7 @@ func printableCommandArgs(fullCommandArgs []string) string {
 	return strings.Join(cmdArgsDecorated, " ")
 }
 
-func findMajorVersion(str string) (int, error) {
+func findXcodeMajorVersion(str string) (int, error) {
 	idx := strings.Index(str, xcodeVersionPrefix)
 	if idx < 0 {
 		return -1, fmt.Errorf("No prefix (%s) found in xcodebuild -version output (%s)", xcodeVersionPrefix, str)
@@ -149,12 +149,12 @@ func findMajorVersion(str string) (int, error) {
 }
 
 func majorXcodeVersion() (int, error) {
-	xcodeVersionStr, err := doXcodeVersion()
+	xcodeVersionStr, err := getXcodeVersion()
 	if err != nil {
 		return -1, fmt.Errorf("xcodebuild -version failed, err: %s", err)
 	}
 
-	return findMajorVersion(xcodeVersionStr)
+	return findXcodeMajorVersion(xcodeVersionStr)
 }
 
 func runTest(action, projectPath, scheme string, cleanBuild bool, deviceDestination string, isRetryOnTimeout, isFullOutputMode bool) (string, error) {
