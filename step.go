@@ -131,7 +131,8 @@ func runTest(action, projectPath, scheme string, cleanBuild bool, deviceDestinat
 	//  in case the compilation takes a long time.
 	// Related Radar link: https://openradar.appspot.com/22413115
 	// Demonstration project: https://github.com/bitrise-io/simulator-launch-timeout-includes-build-time
-	args = append(args, "build", "test", "-destination", deviceDestination, "-sdk", "iphonesimulator")
+	args = append(args, "build", "test", "-destination", deviceDestination)
+	// args = append(args, "build", "test", "-destination", deviceDestination, "-sdk", "iphonesimulator")
 	cmd := exec.Command("xcodebuild", args...)
 
 	var outBuffer bytes.Buffer
