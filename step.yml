@@ -18,6 +18,11 @@ type_tags:
 is_requires_admin_user: false
 is_always_run: false
 is_skippable: false
+deps:
+  check_only:
+  - name: xcode
+  brew:
+  - name: go
 dependencies:
   - manager: _
     name: xcode
