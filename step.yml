@@ -94,6 +94,14 @@ inputs:
         - "no"
       is_required: true
       is_expand: true
+  - generate_code_coverage_files: "no"
+    opts:
+      title: "Generate code coverage files?"
+      value_options:
+        - "yes"
+        - "no"
+      is_required: true
+      is_expand: true
   - is_full_output: "no"
     opts:
       title: "Present the full compile & test output?"

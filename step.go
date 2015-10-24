@@ -43,7 +43,7 @@ func getXcodeVersion() (string, error) {
 	return string(outBytes), nil
 }
 
-func printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, action, deviceDestination string, cleanBuild bool) {
+func printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, action, deviceDestination string, cleanBuild bool, generateCodeCoverage bool) {
 	log.Println()
 	log.Println("========== Configs ==========")
 	log.Printf(" * project_path: %s", projectPath)
@@ -52,6 +52,7 @@ func printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, actio
 	log.Printf(" * simulator_os_version: %s", simulatorOsVersion)
 	log.Printf(" * is_clean_build: %v", cleanBuild)
 	log.Printf(" * project_action: %s", action)
+	log.Printf(" * generate_code_coverage_files: %v", generateCodeCoverage)
 	log.Printf(" * device_destination: %s", deviceDestination)
 
 	xcodebuildVersion, err := getXcodeVersion()
@@ -130,7 +131,7 @@ func printableCommandArgs(fullCommandArgs []string) string {
 	return strings.Join(cmdArgsDecorated, " ")
 }
 
-func runTest(action, projectPath, scheme string, cleanBuild bool, deviceDestination string, isRetryOnTimeout, isFullOutputMode bool) (string, error) {
+func runTest(action, projectPath, scheme string, cleanBuild bool, deviceDestination string, generateCodeCoverage bool, isRetryOnTimeout, isFullOutputMode bool) (string, error) {
 	args := []string{action, projectPath, "-scheme", scheme}
 	if cleanBuild {
 		args = append(args, "clean")
@@ -142,6 +143,11 @@ func runTest(action, projectPath, scheme string, cleanBuild bool, deviceDestinat
 	// Related Radar link: https://openradar.appspot.com/22413115
 	// Demonstration project: https://github.com/bitrise-io/simulator-launch-timeout-includes-build-time
 	args = append(args, "build", "test", "-destination", deviceDestination)
+
+	if generateCodeCoverage {
+		args = append(args, "GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES")
+		args = append(args, "GCC_GENERATE_TEST_COVERAGE_FILES=YES")
+	}
 	cmd := exec.Command("xcodebuild", args...)
 
 	var outBuffer bytes.Buffer
@@ -174,7 +180,7 @@ func runTest(action, projectPath, scheme string, cleanBuild bool, deviceDestinat
 			log.Println("=> Simulator Timeout detected")
 			if isRetryOnTimeout {
 				log.Println("==> isRetryOnTimeout=true - retrying...")
-				return runTest(action, projectPath, scheme, false, deviceDestination, false, isFullOutputMode)
+				return runTest(action, projectPath, scheme, false, deviceDestination, generateCodeCoverage, false, isFullOutputMode)
 			}
 			log.Println(" [!] isRetryOnTimeout=false, no more retry, stopping the test!")
 			return fullOutputStr, runErr
@@ -184,7 +190,7 @@ func runTest(action, projectPath, scheme string, cleanBuild bool, deviceDestinat
 			log.Println("=> Simulator Timeout detected: isUITestTimeoutFound")
 			if isRetryOnTimeout {
 				log.Println("==> isRetryOnTimeout=true - retrying...")
-				return runTest(action, projectPath, scheme, false, deviceDestination, false, isFullOutputMode)
+				return runTest(action, projectPath, scheme, false, deviceDestination, generateCodeCoverage, false, isFullOutputMode)
 			}
 			log.Println(" [!] isRetryOnTimeout=false, no more retry, stopping the test!")
 			return fullOutputStr, runErr
@@ -221,10 +227,8 @@ func main() {
 
 	//
 	// Not required parameters
-	cleanBuild := false
-	if os.Getenv("is_clean_build") == "yes" {
-		cleanBuild = true
-	}
+	cleanBuild := (os.Getenv("is_clean_build") == "yes")
+	generateCodeCoverage := (os.Getenv("generate_code_coverage_files") == "yes")
 	isFullOutputMode := !(os.Getenv("is_full_output") == "no")
 
 	//
@@ -245,11 +249,11 @@ func main() {
 
 	//
 	// Print configs
-	printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, action, deviceDestination, cleanBuild)
+	printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, action, deviceDestination, cleanBuild, generateCodeCoverage)
 
 	//
 	// Run
-	fullOutputStr, runErr := runTest(action, projectPath, scheme, cleanBuild, deviceDestination, true, isFullOutputMode)
+	fullOutputStr, runErr := runTest(action, projectPath, scheme, cleanBuild, deviceDestination, generateCodeCoverage, true, isFullOutputMode)
 
 	//
 	isRunSuccess := (runErr == nil)
