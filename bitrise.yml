@@ -27,6 +27,7 @@ workflows:
         inputs:
         - is_clean_build: "no"
         - is_full_output: "no"
+        - generate_code_coverage_files: "no"
         - simulator_device: iPhone 6
     - script:
         title: Output test
