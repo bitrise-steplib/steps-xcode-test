@@ -35,4 +35,3 @@ workflows:
         inputs:
         - content: |-
             echo "BITRISE_XCODE_TEST_RESULT: ${BITRISE_XCODE_TEST_RESULT}"
-            echo "BITRISE_XCODE_TEST_FULL_RESULTS_TEXT: ${BITRISE_XCODE_TEST_FULL_RESULTS_TEXT}"

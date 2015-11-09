@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -33,7 +34,6 @@ func exportEnvironmentWithEnvman(keyStr, valueStr string) error {
 }
 
 func getXcodeVersion() (string, error) {
-
 	cmd := exec.Command("xcodebuild", "-version")
 	outBytes, err := cmd.CombinedOutput()
 	if err != nil {
@@ -202,6 +202,40 @@ func runTest(action, projectPath, scheme string, cleanBuild bool, deviceDestinat
 	return fullOutputStr, nil
 }
 
+// WriteBytesToFileWithPermission ...
+//  copied from the Bitrise go-utils
+//  repository: https://github.com/bitrise-io/go-utils/blob/master/fileutil/fileutil.go
+func WriteBytesToFileWithPermission(pth string, fileCont []byte, perm os.FileMode) error {
+	if pth == "" {
+		return errors.New("No path provided")
+	}
+
+	var file *os.File
+	var err error
+	if perm == 0 {
+		file, err = os.Create(pth)
+	} else {
+		// same as os.Create, but with a specified permission
+		//  the flags are copy-pasted from the official
+		//  os.Create func: https://golang.org/src/os/file.go?s=7327:7366#L244
+		file, err = os.OpenFile(pth, os.O_RDWR|os.O_CREATE|os.O_TRUNC, perm)
+	}
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Println(" [!] Failed to close file:", err)
+		}
+	}()
+
+	if _, err := file.Write(fileCont); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func main() {
 	//
 	// Required parameters
@@ -221,6 +255,10 @@ func main() {
 	}
 
 	simulatorOsVersion, err := validateRequiredInput("simulator_os_version")
+	if err != nil {
+		log.Fatalf("Input validation failed, err: %s", err)
+	}
+	testSummaryFilePath, err := validateRequiredInput("test_results_file_path")
 	if err != nil {
 		log.Fatalf("Input validation failed, err: %s", err)
 	}
@@ -266,7 +304,10 @@ func main() {
 	if testResultsSummary == "" {
 		testResultsSummary = fmt.Sprintf(" [!] No test summary found in the output - most likely it was a compilation error.\n\n Full output was: %s", fullOutputStr)
 	}
-	exportEnvironmentWithEnvman("BITRISE_XCODE_TEST_FULL_RESULTS_TEXT", testResultsSummary)
+	log.Printf("=> Saving test summary into file: %s", testSummaryFilePath)
+	if err := WriteBytesToFileWithPermission(testSummaryFilePath, []byte(testResultsSummary), 0); err != nil {
+		log.Printf(" [!] Failed to write summary into file, error: %s", err)
+	}
 
 	if !isFullOutputMode {
 		fmt.Println()
