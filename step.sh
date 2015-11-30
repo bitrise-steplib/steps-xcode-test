@@ -1,8 +1,6 @@
 #!/bin/bash
 
-THIS_SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-set -e
+THIS_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 if [ ! -z "${workdir}" ] ; then
 	echo
@@ -11,4 +9,5 @@ if [ ! -z "${workdir}" ] ; then
 	cd "${workdir}"
 fi
 
-go run ${THIS_SCRIPTDIR}/step.go
+go run ${THIS_SCRIPT_DIR}/step.go
+exit $?
