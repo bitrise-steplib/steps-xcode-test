@@ -389,8 +389,11 @@ func main() {
 	}
 	if outputTool == "xcpretty" {
 		version, err := getXcprettyVersion()
-		if err != nil {
-			log.Fatalf("Failed to check xcpretty version, err: %s", err)
+		if err != nil || version == "" {
+			log.Fatal(`
+ (!) xcpretty is not installed
+     For xcpretty installation see: 'https://github.com/supermarin/xcpretty',
+     or use 'xcodebuild' as 'output_tool'.`)
 		}
 		if version == "" {
 			log.Fatalf("xcpertty is not installed")
