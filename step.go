@@ -8,9 +8,11 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 )
 
 // On performance limited OS X hosts (ex: VMs) the iPhone/iOS Simulator might time out
@@ -24,7 +26,19 @@ const timeOutMessageIPhoneSimulator = "iPhoneSimulator: Timed out waiting"
 //  with Xcode Command Line `xcodebuild`.
 const timeOutMessageUITest = "Terminating app due to uncaught exception '_XCTestCaseInterruptionException'"
 
+func printFatal(exitCode int, format string, v ...interface{}) {
+	errorMsg := fmt.Sprintf(format, v...)
+	log.Printf("\x1b[31;1m%s\x1b[0m", errorMsg)
+	os.Exit(exitCode)
+}
+
+func printError(format string, v ...interface{}) {
+	errorMsg := fmt.Sprintf(format, v...)
+	log.Printf("\x1b[31;1m%s\x1b[0m", errorMsg)
+}
+
 func exportEnvironmentWithEnvman(keyStr, valueStr string) error {
+	fmt.Println()
 	log.Printf("Exporting: %s", keyStr)
 	envman := exec.Command("envman", "add", "--key", keyStr)
 	envman.Stdin = strings.NewReader(valueStr)
@@ -43,8 +57,18 @@ func getXcodeVersion() (string, error) {
 	return string(outBytes), nil
 }
 
-func printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, action, deviceDestination string, cleanBuild bool, generateCodeCoverage bool) {
-	log.Println()
+func getXcprettyVersion() (string, error) {
+	cmd := exec.Command("xcpretty", "-version")
+	outBytes, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("xcpretty -version failed, err: %s, details: %s", err, string(outBytes))
+	}
+
+	return string(outBytes), nil
+}
+
+func printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, action, deviceDestination, outputTool string, cleanBuild bool, generateCodeCoverage bool) {
+	fmt.Println()
 	log.Println("========== Configs ==========")
 	log.Printf(" * project_path: %s", projectPath)
 	log.Printf(" * scheme: %s", scheme)
@@ -54,6 +78,7 @@ func printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, actio
 	log.Printf(" * project_action: %s", action)
 	log.Printf(" * generate_code_coverage_files: %v", generateCodeCoverage)
 	log.Printf(" * device_destination: %s", deviceDestination)
+	log.Printf(" * output_tool: %s", outputTool)
 
 	xcodebuildVersion, err := getXcodeVersion()
 	if err != nil {
@@ -62,7 +87,6 @@ func printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, actio
 	fmt.Println()
 	log.Println(" * xcodebuildVersion:")
 	fmt.Printf("%s\n", xcodebuildVersion)
-	fmt.Println()
 }
 
 func validateRequiredInput(key string) (string, error) {
@@ -131,11 +155,138 @@ func printableCommandArgs(fullCommandArgs []string) string {
 	return strings.Join(cmdArgsDecorated, " ")
 }
 
-func runTest(action, projectPath, scheme string, cleanBuild bool, deviceDestination string, generateCodeCoverage bool, isRetryOnTimeout, isFullOutputMode bool) (string, error) {
+func runXcodeBuildCmd(useStdOut bool, args ...string) (string, int, error) {
+	buildCmd := exec.Command("xcodebuild", args...)
+
+	cmdArgsForPrint := printableCommandArgs(buildCmd.Args)
+	log.Printf("==> Full command: %s", cmdArgsForPrint)
+
+	var outBuffer bytes.Buffer
+	outWritter := io.Writer(&outBuffer)
+	if useStdOut {
+		outWritter = io.MultiWriter(&outBuffer, os.Stdout)
+	}
+
+	buildCmd.Stdin = nil
+	buildCmd.Stdout = outWritter
+	buildCmd.Stderr = outWritter
+
+	err := buildCmd.Run()
+	if err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok {
+			waitStatus, ok := exitError.Sys().(syscall.WaitStatus)
+			if !ok {
+				return outBuffer.String(), 1, errors.New("Failed to cast exit status")
+			}
+			return outBuffer.String(), waitStatus.ExitStatus(), err
+		}
+		return outBuffer.String(), 1, err
+	}
+	return outBuffer.String(), 0, nil
+}
+
+func runPrettyXcodeBuildCmd(useStdOut, reportHTML bool, args ...string) (string, int, error) {
+	buildCmd := exec.Command("xcodebuild", args...)
+
+	cmdArgsForPrint := printableCommandArgs(buildCmd.Args)
+	log.Printf("==> Full command: %s", cmdArgsForPrint)
+
+	prettyArgs := []string{}
+	if reportHTML {
+		deployDir := os.Getenv("BITRISE_DEPLOY_DIR")
+		reportPath := path.Join(deployDir, "BitriseXcodeTestReport.html")
+		log.Printf("report path: %s", reportPath)
+		prettyArgs = append(prettyArgs, "--report", "html", "--output", reportPath)
+	}
+	prettyCmd := exec.Command("xcpretty", prettyArgs...)
+
+	var prettyOutBuffer bytes.Buffer
+	prettyOutWritter := io.Writer(&prettyOutBuffer)
+	if useStdOut {
+		prettyOutWritter = io.MultiWriter(&prettyOutBuffer, os.Stdout)
+	}
+
+	reader, writer := io.Pipe()
+	var buildOutBuffer bytes.Buffer
+	buildOutWriter := io.MultiWriter(writer, &buildOutBuffer)
+
+	buildCmd.Stdin = nil
+	buildCmd.Stdout = buildOutWriter
+	buildCmd.Stderr = buildOutWriter
+
+	prettyCmd.Stdin = reader
+	prettyCmd.Stdout = prettyOutWritter
+	prettyCmd.Stderr = prettyOutWritter
+
+	if err := buildCmd.Start(); err != nil {
+		return buildOutBuffer.String(), 1, err
+	}
+	if err := prettyCmd.Start(); err != nil {
+		return prettyOutBuffer.String(), 1, err
+	}
+
+	if err := buildCmd.Wait(); err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok {
+			waitStatus, ok := exitError.Sys().(syscall.WaitStatus)
+			if !ok {
+				return prettyOutBuffer.String(), 1, errors.New("Failed to cast exit status")
+			}
+			return prettyOutBuffer.String(), waitStatus.ExitStatus(), err
+		}
+		return prettyOutBuffer.String(), 1, err
+	}
+	if err := writer.Close(); err != nil {
+		return prettyOutBuffer.String(), 1, err
+	}
+
+	if err := prettyCmd.Wait(); err != nil {
+		return prettyOutBuffer.String(), 1, err
+	}
+
+	return prettyOutBuffer.String(), 0, nil
+}
+
+func runBuild(outputTool, action, projectPath, scheme string, cleanBuild bool, deviceDestination string) (string, int, error) {
 	args := []string{action, projectPath, "-scheme", scheme}
 	if cleanBuild {
 		args = append(args, "clean")
 	}
+	args = append(args, "build", "-destination", deviceDestination)
+
+	log.Println("=> Building the project...")
+
+	if outputTool == "xcpretty" {
+		return runPrettyXcodeBuildCmd(false, false, args...)
+	}
+	return runXcodeBuildCmd(false, args...)
+}
+
+func runTest(outputTool, action, projectPath, scheme string, deviceDestination string, generateCodeCoverage bool, isRetryOnTimeout bool) (string, int, error) {
+	handleTestError := func(fullOutputStr string, exitCode int, testError error) (string, int, error) {
+		if isStringFoundInOutput(timeOutMessageIPhoneSimulator, fullOutputStr) {
+			log.Println("=> Simulator Timeout detected")
+			if isRetryOnTimeout {
+				log.Println("==> isRetryOnTimeout=true - retrying...")
+				return runTest(outputTool, action, projectPath, scheme, deviceDestination, generateCodeCoverage, false)
+			}
+			log.Println(" [!] isRetryOnTimeout=false, no more retry, stopping the test!")
+			return fullOutputStr, exitCode, testError
+		}
+
+		if isStringFoundInOutput(timeOutMessageUITest, fullOutputStr) {
+			log.Println("=> Simulator Timeout detected: isUITestTimeoutFound")
+			if isRetryOnTimeout {
+				log.Println("==> isRetryOnTimeout=true - retrying...")
+				return runTest(outputTool, action, projectPath, scheme, deviceDestination, generateCodeCoverage, false)
+			}
+			log.Println(" [!] isRetryOnTimeout=false, no more retry, stopping the test!")
+			return fullOutputStr, exitCode, testError
+		}
+
+		return fullOutputStr, exitCode, testError
+	}
+
+	args := []string{action, projectPath, "-scheme", scheme}
 	// the 'build' argument is required *before* the 'test' arg, to prevent
 	//  the Xcode bug described in the README, which causes:
 	// 'iPhoneSimulator: Timed out waiting 120 seconds for simulator to boot, current state is 1.'
@@ -148,58 +299,23 @@ func runTest(action, projectPath, scheme string, cleanBuild bool, deviceDestinat
 		args = append(args, "GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES")
 		args = append(args, "GCC_GENERATE_TEST_COVERAGE_FILES=YES")
 	}
-	cmd := exec.Command("xcodebuild", args...)
-
-	var outBuffer bytes.Buffer
-	var outWriter io.Writer
-	if isFullOutputMode {
-		outWriter = io.MultiWriter(&outBuffer, os.Stdout)
-	} else {
-		outWriter = &outBuffer
-	}
-
-	cmd.Stdin = nil
-	cmd.Stdout = outWriter
-	cmd.Stderr = outWriter
 
 	fmt.Println()
-	log.Println("=> Compiling and running the tests...")
-	cmdArgsForPrint := printableCommandArgs(cmd.Args)
+	log.Println("=> Running the tests...")
 
-	log.Printf("==> Full command: %s", cmdArgsForPrint)
-	if !isFullOutputMode {
-		fmt.Println()
-		log.Println("=> You selected to only see test results.")
-		log.Println("   This can take some time, especially if the code have to be compiled first.")
+	var out string
+	var exit int
+	var err error
+	if outputTool == "xcpretty" {
+		out, exit, err = runPrettyXcodeBuildCmd(true, true, args...)
+	} else {
+		out, exit, err = runXcodeBuildCmd(true, args...)
 	}
 
-	runErr := cmd.Run()
-	fullOutputStr := outBuffer.String()
-	if runErr != nil {
-		if isStringFoundInOutput(timeOutMessageIPhoneSimulator, fullOutputStr) {
-			log.Println("=> Simulator Timeout detected")
-			if isRetryOnTimeout {
-				log.Println("==> isRetryOnTimeout=true - retrying...")
-				return runTest(action, projectPath, scheme, false, deviceDestination, generateCodeCoverage, false, isFullOutputMode)
-			}
-			log.Println(" [!] isRetryOnTimeout=false, no more retry, stopping the test!")
-			return fullOutputStr, runErr
-		}
-
-		if isStringFoundInOutput(timeOutMessageUITest, fullOutputStr) {
-			log.Println("=> Simulator Timeout detected: isUITestTimeoutFound")
-			if isRetryOnTimeout {
-				log.Println("==> isRetryOnTimeout=true - retrying...")
-				return runTest(action, projectPath, scheme, false, deviceDestination, generateCodeCoverage, false, isFullOutputMode)
-			}
-			log.Println(" [!] isRetryOnTimeout=false, no more retry, stopping the test!")
-			return fullOutputStr, runErr
-		}
-
-		return fullOutputStr, runErr
+	if err != nil {
+		return handleTestError(out, exit, err)
 	}
-
-	return fullOutputStr, nil
+	return out, exit, nil
 }
 
 // WriteBytesToFileWithPermission ...
@@ -267,7 +383,22 @@ func main() {
 	// Not required parameters
 	cleanBuild := (os.Getenv("is_clean_build") == "yes")
 	generateCodeCoverage := (os.Getenv("generate_code_coverage_files") == "yes")
-	isFullOutputMode := !(os.Getenv("is_full_output") == "no")
+	outputTool := os.Getenv("output_tool")
+	if outputTool != "xcpretty" && outputTool != "xcodebuild" {
+		log.Fatalf("Invalid output_tool: (%s), valid options: xcpretty, xcodebuild", outputTool)
+	}
+	if outputTool == "xcpretty" {
+		version, err := getXcprettyVersion()
+		if err != nil || version == "" {
+			log.Fatal(`
+ (!) xcpretty is not installed
+     For xcpretty installation see: 'https://github.com/supermarin/xcpretty',
+     or use 'xcodebuild' as 'output_tool'.`)
+		}
+		if version == "" {
+			log.Fatalf("xcpertty is not installed")
+		}
+	}
 
 	//
 	// Project-or-Workspace flag
@@ -287,36 +418,43 @@ func main() {
 
 	//
 	// Print configs
-	printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, action, deviceDestination, cleanBuild, generateCodeCoverage)
+	printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, action, deviceDestination, outputTool, cleanBuild, generateCodeCoverage)
 
 	//
-	// Run
-	fullOutputStr, runErr := runTest(action, projectPath, scheme, cleanBuild, deviceDestination, generateCodeCoverage, true, isFullOutputMode)
+	// Run build
+	if buildOutputStr, exitCode, buildErr := runBuild(outputTool, action, projectPath, scheme, cleanBuild, deviceDestination); buildErr != nil {
+		exportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed")
+
+		fmt.Println()
+		log.Printf("=> Saving build summary into file: %s", testSummaryFilePath)
+		if err := WriteBytesToFileWithPermission(testSummaryFilePath, []byte(buildOutputStr), 0); err != nil {
+			printError(" [!] Failed to write summary into file, error: %s", err)
+		}
+
+		if buildErr != nil {
+			log.Printf("xcode build log:\n%s", buildOutputStr)
+			printFatal(exitCode, "xcode build failed with error: %s\n", buildErr)
+		}
+	}
 
 	//
-	isRunSuccess := (runErr == nil)
+	// Run test
+	testOutputStr, exitCode, testErr := runTest(outputTool, action, projectPath, scheme, deviceDestination, generateCodeCoverage, true)
+
+	isRunSuccess := (testErr == nil)
 	if isRunSuccess {
 		exportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "succeeded")
 	} else {
 		exportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed")
 	}
-	testResultsSummary := findTestSummaryInOutput(fullOutputStr, isRunSuccess)
-	if testResultsSummary == "" {
-		testResultsSummary = fmt.Sprintf(" [!] No test summary found in the output - most likely it was a compilation error.\n\n Full output was: %s", fullOutputStr)
-	}
+
+	fmt.Println()
 	log.Printf("=> Saving test summary into file: %s", testSummaryFilePath)
-	if err := WriteBytesToFileWithPermission(testSummaryFilePath, []byte(testResultsSummary), 0); err != nil {
-		log.Printf(" [!] Failed to write summary into file, error: %s", err)
+	if err := WriteBytesToFileWithPermission(testSummaryFilePath, []byte(testOutputStr), 0); err != nil {
+		printError(" [!] Failed to write summary into file, error: %s", err)
 	}
 
-	if !isFullOutputMode {
-		fmt.Println()
-		fmt.Println("========= TEST RESULTS: =========")
-		fmt.Println(testResultsSummary)
-		fmt.Println()
-	}
-
-	if runErr != nil {
-		log.Fatalf("xcode test failed with error: %s", runErr)
+	if testErr != nil {
+		printFatal(exitCode, "xcode test failed with error: %s", testErr)
 	}
 }

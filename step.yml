@@ -102,18 +102,6 @@ inputs:
         - "no"
       is_required: true
       is_expand: true
-  - is_full_output: "no"
-    opts:
-      title: "Present the full compile & test output?"
-      description: |-
-        If this option is set to "no" then only the test results / test summary
-        will be printed. If set to "yes" then every output generated
-        by `xcodebuild` (compile & test) will be presented.
-      value_options:
-        - "yes"
-        - "no"
-      is_required: true
-      is_expand: true
   - test_results_file_path: "${BITRISE_DEPLOY_DIR}/xcode-test-summary-${BITRISE_SCHEME}.log"
     opts:
       title: "Full results / summary of the test, as printed by Xcode, will be saved into this file"
@@ -137,6 +125,18 @@ inputs:
             Test Case '-[BitriseSampleWithYMLTests.BitriseSampleWithYMLTests testFailExample]' failed (0.001 seconds).
       is_required: true
       is_expand: true
+  - output_tool: xcpretty
+    opts:
+      title: Output tool
+      description: |-
+        If output_tool is set to xcpretty, the xcodebuild output will be prettified by xcpretty.
+        If output_tool is set to xcodebuild, the raw xcodebuild output will be printed.
+      value_options:
+      - xcpretty
+      - xcodebuild
+      is_required: true
+      is_expand: false
+      is_dont_change_value: false
 outputs:
 - BITRISE_XCODE_TEST_RESULT:
   opts:
