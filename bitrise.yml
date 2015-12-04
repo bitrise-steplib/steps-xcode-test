@@ -4,7 +4,7 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 app:
   envs:
   # define these in your .bitrise.secrets.yml
-  - SOURCE_ROOT_PATH:
+  - PROJECT_WORKDIR:
   - BITRISE_PROJECT_PATH:
   - BITRISE_SCHEME:
 
@@ -16,19 +16,21 @@ workflows:
         inputs:
         - content: go test ./...
     - script:
-        title: Switch working dir to SOURCE_ROOT_PATH
+        title: Switch working dir to PROJECT_WORKDIR
         description: |-
           To prevent step testing issues, like referencing relative
           files with just './some-file', which would work for local tests
           but not if the step is included in another bitrise.yml!
         inputs:
-        - content: envman add --key BITRISE_SOURCE_DIR --value "${SOURCE_ROOT_PATH}"
+        - content: envman add --key BITRISE_SOURCE_DIR --value "${PROJECT_WORKDIR}"
     - path::./:
         inputs:
-        - is_clean_build: "no"
+        - is_clean_build: "yes"
         - is_full_output: "no"
         - generate_code_coverage_files: "no"
         - simulator_device: iPhone 6
+        - output_tool: xcpretty
+        # - output_tool: xcodebuild
     - script:
         title: Output test
         is_always_run: true
