@@ -80,12 +80,22 @@ func printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, actio
 	log.Printf(" * device_destination: %s", deviceDestination)
 	log.Printf(" * output_tool: %s", outputTool)
 
+	if outputTool == "xcpretty" {
+		version, err := getXcprettyVersion()
+		if err != nil || version == "" {
+			log.Fatal(`
+ (!) xcpretty is not installed
+		 For xcpretty installation see: 'https://github.com/supermarin/xcpretty',
+		 or use 'xcodebuild' as 'output_tool'.`)
+		}
+		log.Printf(" * xcpretty version: %s", version)
+	}
+
 	xcodebuildVersion, err := getXcodeVersion()
 	if err != nil {
 		log.Printf(" [!] Failed to get the version of xcodebuild! Error: %s", err)
 	}
-	fmt.Println()
-	log.Println(" * xcodebuildVersion:")
+	log.Println(" * xcodebuild version:")
 	fmt.Printf("%s\n", xcodebuildVersion)
 }
 
@@ -386,18 +396,6 @@ func main() {
 	outputTool := os.Getenv("output_tool")
 	if outputTool != "xcpretty" && outputTool != "xcodebuild" {
 		log.Fatalf("Invalid output_tool: (%s), valid options: xcpretty, xcodebuild", outputTool)
-	}
-	if outputTool == "xcpretty" {
-		version, err := getXcprettyVersion()
-		if err != nil || version == "" {
-			log.Fatal(`
- (!) xcpretty is not installed
-     For xcpretty installation see: 'https://github.com/supermarin/xcpretty',
-     or use 'xcodebuild' as 'output_tool'.`)
-		}
-		if version == "" {
-			log.Fatalf("xcpertty is not installed")
-		}
 	}
 
 	//
