@@ -102,6 +102,7 @@ func printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, actio
 	}
 	Printlnf(" * xcodebuild version: %s", strings.TrimSpace(xcodebuildVersion))
 	fmt.Println("=============================")
+	fmt.Println()
 }
 
 func validateRequiredInput(key string) (string, error) {
