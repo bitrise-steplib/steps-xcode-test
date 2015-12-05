@@ -167,14 +167,14 @@ func runXcodeBuildCmd(useStdOut bool, args ...string) (string, int, error) {
 
 // runPrettyXcodeBuildCmd ...
 func runPrettyXcodeBuildCmd(useStdOut bool,
-	runPrettyXcodeBuildCmd string,
+	testResultsFilePath string,
 	args ...string) (string, int, error) {
 
 	buildCmd := exec.Command("xcodebuild", args...)
 
 	prettyArgs := []string{"--color"}
-	if runPrettyXcodeBuildCmd != "" {
-		prettyArgs = append(prettyArgs, "--report", "html", "--output", runPrettyXcodeBuildCmd)
+	if testResultsFilePath != "" {
+		prettyArgs = append(prettyArgs, "--report", "html", "--output", testResultsFilePath)
 	}
 	prettyCmd := exec.Command("xcpretty", prettyArgs...)
 
