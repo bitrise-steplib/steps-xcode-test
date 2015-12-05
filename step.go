@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -116,42 +115,6 @@ func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
 	return r.MatchString(outputToSearchIn)
 }
 
-func findFirstDelimiter(searchIn string, searchForDelimiters []string) (foundIdx int, foundDelim string) {
-	foundIdx = -1
-	for _, aDelim := range searchForDelimiters {
-		aDelimFoundIdx := strings.Index(searchIn, aDelim)
-		if aDelimFoundIdx >= 0 {
-			if foundIdx == -1 || aDelimFoundIdx < foundIdx {
-				foundIdx = aDelimFoundIdx
-				foundDelim = aDelim
-			}
-		}
-	}
-	return foundIdx, foundDelim
-}
-
-func findTestSummaryInOutput(fullOutput string, isRunSucess bool) string {
-	// using a list of possible delimiters, because the actual order
-	//  of these delimiters varies in Xcode CLT's output,
-	//  so we'll try to find the first occurance of any of the listed
-	//  delimiters
-	possibleDelimiters := []string{}
-	if !isRunSucess {
-		// Failed
-		possibleDelimiters = []string{"Testing failed:", "Failing tests:", "** TEST FAILED **"}
-	} else {
-		// Success
-		possibleDelimiters = []string{"Test Suite ", "** TEST SUCCEEDED **"}
-	}
-
-	splitIdx, _ := findFirstDelimiter(fullOutput, possibleDelimiters)
-	if splitIdx < 0 {
-		log.Println(" [!] Could not find any of the required test result delimiters")
-		return ""
-	}
-	return fullOutput[splitIdx:]
-}
-
 func printableCommandArgs(fullCommandArgs []string) string {
 	cmdArgsDecorated := []string{}
 	for idx, anArg := range fullCommandArgs {
@@ -169,7 +132,7 @@ func runXcodeBuildCmd(useStdOut bool, args ...string) (string, int, error) {
 	buildCmd := exec.Command("xcodebuild", args...)
 
 	cmdArgsForPrint := printableCommandArgs(buildCmd.Args)
-	log.Printf("==> Full command: %s", cmdArgsForPrint)
+	log.Printf("==> Full command: $ %s", cmdArgsForPrint)
 
 	var outBuffer bytes.Buffer
 	outWritter := io.Writer(&outBuffer)
@@ -195,20 +158,22 @@ func runXcodeBuildCmd(useStdOut bool, args ...string) (string, int, error) {
 	return outBuffer.String(), 0, nil
 }
 
-func runPrettyXcodeBuildCmd(useStdOut, reportHTML bool, args ...string) (string, int, error) {
+// runPrettyXcodeBuildCmd ...
+func runPrettyXcodeBuildCmd(useStdOut bool,
+	runPrettyXcodeBuildCmd string,
+	args ...string) (string, int, error) {
+
 	buildCmd := exec.Command("xcodebuild", args...)
 
-	cmdArgsForPrint := printableCommandArgs(buildCmd.Args)
-	log.Printf("==> Full command: %s", cmdArgsForPrint)
-
-	prettyArgs := []string{}
-	if reportHTML {
-		deployDir := os.Getenv("BITRISE_DEPLOY_DIR")
-		reportPath := path.Join(deployDir, "BitriseXcodeTestReport.html")
-		log.Printf("report path: %s", reportPath)
-		prettyArgs = append(prettyArgs, "--report", "html", "--output", reportPath)
+	prettyArgs := []string{"--color"}
+	if runPrettyXcodeBuildCmd != "" {
+		prettyArgs = append(prettyArgs, "--report", "html", "--output", runPrettyXcodeBuildCmd)
 	}
 	prettyCmd := exec.Command("xcpretty", prettyArgs...)
+
+	log.Printf("==> Full command: $ %s | %v",
+		printableCommandArgs(buildCmd.Args),
+		printableCommandArgs(prettyCmd.Args))
 
 	var prettyOutBuffer bytes.Buffer
 	prettyOutWritter := io.Writer(&prettyOutBuffer)
@@ -256,7 +221,11 @@ func runPrettyXcodeBuildCmd(useStdOut, reportHTML bool, args ...string) (string,
 	return prettyOutBuffer.String(), 0, nil
 }
 
-func runBuild(outputTool, action, projectPath, scheme string, cleanBuild bool, deviceDestination string) (string, int, error) {
+// runBuild ...
+func runBuild(outputTool, action,
+	projectPath, scheme string, cleanBuild bool,
+	deviceDestination string) (string, int, error) {
+
 	args := []string{action, projectPath, "-scheme", scheme}
 	if cleanBuild {
 		args = append(args, "clean")
@@ -266,18 +235,24 @@ func runBuild(outputTool, action, projectPath, scheme string, cleanBuild bool, d
 	log.Println("=> Building the project...")
 
 	if outputTool == "xcpretty" {
-		return runPrettyXcodeBuildCmd(false, false, args...)
+		return runPrettyXcodeBuildCmd(false, "", args...)
 	}
 	return runXcodeBuildCmd(false, args...)
 }
 
-func runTest(outputTool, action, projectPath, scheme string, deviceDestination string, generateCodeCoverage bool, isRetryOnTimeout bool) (string, int, error) {
+func runTest(outputTool, action, projectPath, scheme string,
+	deviceDestination string, generateCodeCoverage bool,
+	isRetryOnTimeout bool,
+	testResultsFilePath string) (string, int, error) {
+
 	handleTestError := func(fullOutputStr string, exitCode int, testError error) (string, int, error) {
 		if isStringFoundInOutput(timeOutMessageIPhoneSimulator, fullOutputStr) {
 			log.Println("=> Simulator Timeout detected")
 			if isRetryOnTimeout {
 				log.Println("==> isRetryOnTimeout=true - retrying...")
-				return runTest(outputTool, action, projectPath, scheme, deviceDestination, generateCodeCoverage, false)
+				return runTest(outputTool, action,
+					projectPath, scheme, deviceDestination, generateCodeCoverage,
+					false, testResultsFilePath)
 			}
 			log.Println(" [!] isRetryOnTimeout=false, no more retry, stopping the test!")
 			return fullOutputStr, exitCode, testError
@@ -287,7 +262,9 @@ func runTest(outputTool, action, projectPath, scheme string, deviceDestination s
 			log.Println("=> Simulator Timeout detected: isUITestTimeoutFound")
 			if isRetryOnTimeout {
 				log.Println("==> isRetryOnTimeout=true - retrying...")
-				return runTest(outputTool, action, projectPath, scheme, deviceDestination, generateCodeCoverage, false)
+				return runTest(outputTool, action,
+					projectPath, scheme, deviceDestination, generateCodeCoverage,
+					false, testResultsFilePath)
 			}
 			log.Println(" [!] isRetryOnTimeout=false, no more retry, stopping the test!")
 			return fullOutputStr, exitCode, testError
@@ -317,7 +294,7 @@ func runTest(outputTool, action, projectPath, scheme string, deviceDestination s
 	var exit int
 	var err error
 	if outputTool == "xcpretty" {
-		out, exit, err = runPrettyXcodeBuildCmd(true, true, args...)
+		out, exit, err = runPrettyXcodeBuildCmd(true, testResultsFilePath, args...)
 	} else {
 		out, exit, err = runXcodeBuildCmd(true, args...)
 	}
@@ -326,40 +303,6 @@ func runTest(outputTool, action, projectPath, scheme string, deviceDestination s
 		return handleTestError(out, exit, err)
 	}
 	return out, exit, nil
-}
-
-// WriteBytesToFileWithPermission ...
-//  copied from the Bitrise go-utils
-//  repository: https://github.com/bitrise-io/go-utils/blob/master/fileutil/fileutil.go
-func WriteBytesToFileWithPermission(pth string, fileCont []byte, perm os.FileMode) error {
-	if pth == "" {
-		return errors.New("No path provided")
-	}
-
-	var file *os.File
-	var err error
-	if perm == 0 {
-		file, err = os.Create(pth)
-	} else {
-		// same as os.Create, but with a specified permission
-		//  the flags are copy-pasted from the official
-		//  os.Create func: https://golang.org/src/os/file.go?s=7327:7366#L244
-		file, err = os.OpenFile(pth, os.O_RDWR|os.O_CREATE|os.O_TRUNC, perm)
-	}
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := file.Close(); err != nil {
-			log.Println(" [!] Failed to close file:", err)
-		}
-	}()
-
-	if _, err := file.Write(fileCont); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func main() {
@@ -384,7 +327,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Input validation failed, err: %s", err)
 	}
-	testSummaryFilePath, err := validateRequiredInput("test_results_file_path")
+	testResultsFilePath, err := validateRequiredInput("test_results_file_path")
 	if err != nil {
 		log.Fatalf("Input validation failed, err: %s", err)
 	}
@@ -423,12 +366,6 @@ func main() {
 	if buildOutputStr, exitCode, buildErr := runBuild(outputTool, action, projectPath, scheme, cleanBuild, deviceDestination); buildErr != nil {
 		exportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed")
 
-		fmt.Println()
-		log.Printf("=> Saving build summary into file: %s", testSummaryFilePath)
-		if err := WriteBytesToFileWithPermission(testSummaryFilePath, []byte(buildOutputStr), 0); err != nil {
-			printError(" [!] Failed to write summary into file, error: %s", err)
-		}
-
 		if buildErr != nil {
 			log.Printf("xcode build log:\n%s", buildOutputStr)
 			printFatal(exitCode, "xcode build failed with error: %s\n", buildErr)
@@ -437,19 +374,15 @@ func main() {
 
 	//
 	// Run test
-	testOutputStr, exitCode, testErr := runTest(outputTool, action, projectPath, scheme, deviceDestination, generateCodeCoverage, true)
+	_, exitCode, testErr := runTest(outputTool, action,
+		projectPath, scheme, deviceDestination, generateCodeCoverage,
+		true, testResultsFilePath)
 
 	isRunSuccess := (testErr == nil)
 	if isRunSuccess {
 		exportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "succeeded")
 	} else {
 		exportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed")
-	}
-
-	fmt.Println()
-	log.Printf("=> Saving test summary into file: %s", testSummaryFilePath)
-	if err := WriteBytesToFileWithPermission(testSummaryFilePath, []byte(testOutputStr), 0); err != nil {
-		printError(" [!] Failed to write summary into file, error: %s", err)
 	}
 
 	if testErr != nil {
