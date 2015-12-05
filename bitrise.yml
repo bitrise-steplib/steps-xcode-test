@@ -25,8 +25,7 @@ workflows:
         - content: envman add --key BITRISE_SOURCE_DIR --value "${PROJECT_WORKDIR}"
     - path::./:
         inputs:
-        - is_clean_build: "yes"
-        - is_full_output: "no"
+        - is_clean_build: "no"
         - generate_code_coverage_files: "no"
         - simulator_device: iPhone 6
         - output_tool: xcpretty
