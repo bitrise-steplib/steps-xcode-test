@@ -135,21 +135,49 @@ func printableCommandArgs(fullCommandArgs []string) string {
 	return strings.Join(cmdArgsDecorated, " ")
 }
 
-func runXcodeBuildCmd(useStdOut bool, args ...string) (string, int, error) {
-	buildCmd := exec.Command("xcodebuild", args...)
+// createXcodebuildCmd ...
+func createXcodebuildCmd(xcodebuildArgs ...string) *exec.Cmd {
+	return exec.Command("xcodebuild", xcodebuildArgs...)
+}
 
-	cmdArgsForPrint := printableCommandArgs(buildCmd.Args)
-	log.Printf("==> Full command: $ %s", cmdArgsForPrint)
-
-	var outBuffer bytes.Buffer
-	outWritter := io.Writer(&outBuffer)
-	if useStdOut {
-		outWritter = io.MultiWriter(&outBuffer, os.Stdout)
+// createXcprettyCmd ...
+func createXcprettyCmd(testResultsFilePath string) *exec.Cmd {
+	prettyArgs := []string{"--color"}
+	if testResultsFilePath != "" {
+		prettyArgs = append(prettyArgs, "--report", "html", "--output", testResultsFilePath)
 	}
+	return exec.Command("xcpretty", prettyArgs...)
+}
 
+// CreateBufferedWriter ...
+func CreateBufferedWriter(buff *bytes.Buffer, writers ...io.Writer) io.Writer {
+	if len(writers) > 0 {
+		allWriters := append([]io.Writer{buff}, writers...)
+		return io.MultiWriter(allWriters...)
+	}
+	return io.Writer(buff)
+}
+
+// runXcodeBuildCmd ...
+func runXcodeBuildCmd(useStdOut bool, args ...string) (string, int, error) {
+	// command
+	buildCmd := createXcodebuildCmd(args...)
+	// output buffer
+	var outBuffer bytes.Buffer
+	// additional output writers, like StdOut
+	outWritters := []io.Writer{}
+	if useStdOut {
+		outWritters = append(outWritters, os.Stdout)
+	}
+	// unify as a single writer
+	outWritter := CreateBufferedWriter(&outBuffer, outWritters...)
+	// and set the writer
 	buildCmd.Stdin = nil
 	buildCmd.Stdout = outWritter
 	buildCmd.Stderr = outWritter
+
+	cmdArgsForPrint := printableCommandArgs(buildCmd.Args)
+	log.Printf("==> Full command: $ %s", cmdArgsForPrint)
 
 	err := buildCmd.Run()
 	if err != nil {
@@ -170,62 +198,64 @@ func runPrettyXcodeBuildCmd(useStdOut bool,
 	testResultsFilePath string,
 	args ...string) (string, int, error) {
 
-	buildCmd := exec.Command("xcodebuild", args...)
-
-	prettyArgs := []string{"--color"}
-	if testResultsFilePath != "" {
-		prettyArgs = append(prettyArgs, "--report", "html", "--output", testResultsFilePath)
+	//
+	buildCmd := createXcodebuildCmd(args...)
+	prettyCmd := createXcprettyCmd(testResultsFilePath)
+	//
+	var buildOutBuffer bytes.Buffer
+	//
+	pipeReader, pipeWriter := io.Pipe()
+	//
+	// build outputs:
+	// - write it into a buffer
+	// - write it into the pipe, which will be fed into xcpretty
+	buildOutWriters := []io.Writer{pipeWriter}
+	buildOutWriter := CreateBufferedWriter(&buildOutBuffer, buildOutWriters...)
+	//
+	var prettyOutWriter io.Writer
+	if useStdOut {
+		prettyOutWriter = os.Stdout
 	}
-	prettyCmd := exec.Command("xcpretty", prettyArgs...)
+
+	// and set the writers
+	buildCmd.Stdin = nil
+	buildCmd.Stdout = buildOutWriter
+	buildCmd.Stderr = buildOutWriter
+	//
+	prettyCmd.Stdin = pipeReader
+	prettyCmd.Stdout = prettyOutWriter
+	prettyCmd.Stderr = prettyOutWriter
 
 	log.Printf("==> Full command: $ %s | %v",
 		printableCommandArgs(buildCmd.Args),
 		printableCommandArgs(prettyCmd.Args))
 
-	var prettyOutBuffer bytes.Buffer
-	prettyOutWritter := io.Writer(&prettyOutBuffer)
-	if useStdOut {
-		prettyOutWritter = io.MultiWriter(&prettyOutBuffer, os.Stdout)
-	}
-
-	reader, writer := io.Pipe()
-	var buildOutBuffer bytes.Buffer
-	buildOutWriter := io.MultiWriter(writer, &buildOutBuffer)
-
-	buildCmd.Stdin = nil
-	buildCmd.Stdout = buildOutWriter
-	buildCmd.Stderr = buildOutWriter
-
-	prettyCmd.Stdin = reader
-	prettyCmd.Stdout = prettyOutWritter
-	prettyCmd.Stderr = prettyOutWritter
-
 	if err := buildCmd.Start(); err != nil {
 		return buildOutBuffer.String(), 1, err
 	}
 	if err := prettyCmd.Start(); err != nil {
-		return prettyOutBuffer.String(), 1, err
+		return buildOutBuffer.String(), 1, err
 	}
 
 	if err := buildCmd.Wait(); err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
 			waitStatus, ok := exitError.Sys().(syscall.WaitStatus)
 			if !ok {
-				return prettyOutBuffer.String(), 1, errors.New("Failed to cast exit status")
+				return buildOutBuffer.String(), 1, errors.New("Failed to cast exit status")
 			}
-			return prettyOutBuffer.String(), waitStatus.ExitStatus(), err
+			return buildOutBuffer.String(), waitStatus.ExitStatus(), err
 		}
-		return prettyOutBuffer.String(), 1, err
+		return buildOutBuffer.String(), 1, err
 	}
-	if err := writer.Close(); err != nil {
-		return prettyOutBuffer.String(), 1, err
+	if err := pipeWriter.Close(); err != nil {
+		return buildOutBuffer.String(), 1, err
 	}
 
 	if err := prettyCmd.Wait(); err != nil {
-		return prettyOutBuffer.String(), 1, err
+		return buildOutBuffer.String(), 1, err
 	}
 
-	return prettyOutBuffer.String(), 0, nil
+	return buildOutBuffer.String(), 0, nil
 }
 
 // runBuild ...
@@ -253,6 +283,7 @@ func runTest(outputTool, action, projectPath, scheme string,
 	testResultsFilePath string) (string, int, error) {
 
 	handleTestError := func(fullOutputStr string, exitCode int, testError error) (string, int, error) {
+		// fmt.Printf("\n\nfullOutputStr:\n\n%s", fullOutputStr)
 		if isStringFoundInOutput(timeOutMessageIPhoneSimulator, fullOutputStr) {
 			log.Println("=> Simulator Timeout detected")
 			if isRetryOnTimeout {
