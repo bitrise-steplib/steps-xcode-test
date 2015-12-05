@@ -66,18 +66,24 @@ func getXcprettyVersion() (string, error) {
 	return string(outBytes), nil
 }
 
+// Printlnf ...
+func Printlnf(format string, a ...interface{}) {
+	fmt.Printf(format, a...)
+	fmt.Println()
+}
+
 func printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, action, deviceDestination, outputTool string, cleanBuild bool, generateCodeCoverage bool) {
 	fmt.Println()
-	log.Println("========== Configs ==========")
-	log.Printf(" * project_path: %s", projectPath)
-	log.Printf(" * scheme: %s", scheme)
-	log.Printf(" * simulator_device: %s", simulatorDevice)
-	log.Printf(" * simulator_os_version: %s", simulatorOsVersion)
-	log.Printf(" * is_clean_build: %v", cleanBuild)
-	log.Printf(" * project_action: %s", action)
-	log.Printf(" * generate_code_coverage_files: %v", generateCodeCoverage)
-	log.Printf(" * device_destination: %s", deviceDestination)
-	log.Printf(" * output_tool: %s", outputTool)
+	fmt.Println("========== Configs ==========")
+	Printlnf(" * project_path: %s", projectPath)
+	Printlnf(" * scheme: %s", scheme)
+	Printlnf(" * simulator_device: %s", simulatorDevice)
+	Printlnf(" * simulator_os_version: %s", simulatorOsVersion)
+	Printlnf(" * is_clean_build: %v", cleanBuild)
+	Printlnf(" * project_action: %s", action)
+	Printlnf(" * generate_code_coverage_files: %v", generateCodeCoverage)
+	Printlnf(" * device_destination: %s", deviceDestination)
+	Printlnf(" * output_tool: %s", outputTool)
 
 	if outputTool == "xcpretty" {
 		version, err := getXcprettyVersion()
@@ -87,15 +93,15 @@ func printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, actio
 		 For xcpretty installation see: 'https://github.com/supermarin/xcpretty',
 		 or use 'xcodebuild' as 'output_tool'.`)
 		}
-		log.Printf(" * xcpretty version: %s", version)
+		Printlnf(" * xcpretty version: %s", strings.TrimSpace(version))
 	}
 
 	xcodebuildVersion, err := getXcodeVersion()
 	if err != nil {
 		log.Printf(" [!] Failed to get the version of xcodebuild! Error: %s", err)
 	}
-	log.Println(" * xcodebuild version:")
-	fmt.Printf("%s\n", xcodebuildVersion)
+	Printlnf(" * xcodebuild version: %s", strings.TrimSpace(xcodebuildVersion))
+	fmt.Println("=============================")
 }
 
 func validateRequiredInput(key string) (string, error) {
