@@ -226,7 +226,7 @@ func runPrettyXcodeBuildCmd(useStdOut bool,
 	prettyCmd.Stdout = prettyOutWriter
 	prettyCmd.Stderr = prettyOutWriter
 
-	log.Printf("==> Full command: $ %s | %v",
+	log.Printf("==> Full command: $ set -o pipefail && %s | %v",
 		printableCommandArgs(buildCmd.Args),
 		printableCommandArgs(prettyCmd.Args))
 
