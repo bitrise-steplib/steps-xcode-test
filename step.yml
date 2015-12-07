@@ -42,7 +42,7 @@ inputs:
       title: "Project (or Workspace) path"
       description: |
         A `.xcodeproj` or `.xcworkspace` path, relative to
-        the Workfing directory (if specified).
+        the Working directory (if specified).
       is_required: true
       is_expand: true
   - scheme: $BITRISE_SCHEME
