@@ -72,11 +72,12 @@ func Printlnf(format string, a ...interface{}) {
 	fmt.Println()
 }
 
-func printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, action, deviceDestination, outputTool string, cleanBuild bool, generateCodeCoverage bool) {
+func printConfig(projectPath, scheme, simulatorPlatform, simulatorDevice, simulatorOsVersion, action, deviceDestination, outputTool string, cleanBuild bool, generateCodeCoverage bool) {
 	fmt.Println()
 	fmt.Println("========== Configs ==========")
 	Printlnf(" * project_path: %s", projectPath)
 	Printlnf(" * scheme: %s", scheme)
+	Printlnf(" * simulator_platform: %s", simulatorPlatform)
 	Printlnf(" * simulator_device: %s", simulatorDevice)
 	Printlnf(" * simulator_os_version: %s", simulatorOsVersion)
 	Printlnf(" * is_clean_build: %v", cleanBuild)
@@ -356,11 +357,14 @@ func main() {
 		log.Fatalf("Input validation failed, err: %s", err)
 	}
 
+	simulatorPlatform, err := validateRequiredInput("simulator_platform")
+	if err != nil {
+		log.Fatalf("Input validation failed, err: %s", err)
+	}
 	simulatorDevice, err := validateRequiredInput("simulator_device")
 	if err != nil {
 		log.Fatalf("Input validation failed, err: %s", err)
 	}
-
 	simulatorOsVersion, err := validateRequiredInput("simulator_os_version")
 	if err != nil {
 		log.Fatalf("Input validation failed, err: %s", err)
@@ -393,11 +397,11 @@ func main() {
 	//
 	// Device Destination
 	// xcodebuild -project ./BitriseSampleWithYML.xcodeproj -scheme BitriseSampleWithYML  test -destination "platform=iOS Simulator,name=iPhone 6 Plus,OS=latest" -sdk iphonesimulator -verbose
-	deviceDestination := fmt.Sprintf("platform=iOS Simulator,name=%s,OS=%s", simulatorDevice, simulatorOsVersion)
+	deviceDestination := fmt.Sprintf("platform=%s,name=%s,OS=%s", simulatorPlatform, simulatorDevice, simulatorOsVersion)
 
 	//
 	// Print configs
-	printConfig(projectPath, scheme, simulatorDevice, simulatorOsVersion, action, deviceDestination, outputTool, cleanBuild, generateCodeCoverage)
+	printConfig(projectPath, scheme, simulatorPlatform, simulatorDevice, simulatorOsVersion, action, deviceDestination, outputTool, cleanBuild, generateCodeCoverage)
 
 	//
 	// Run build

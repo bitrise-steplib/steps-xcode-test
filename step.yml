@@ -54,12 +54,26 @@ inputs:
         **IMPORTANT**: The Scheme have to be marked as __shared__ in Xcode!
       is_required: true
       is_expand: true
+  - simulator_platform: iOS Simulator
+    opts:
+      title: Platform
+      description: |-
+        Set it as it is shown in Xcode's device selection dropdown UI.
+
+        A couple of examples (the
+        actual available options depend on which versions
+        are installed):
+
+        * iOS Simulator
+        * tvOS Simulator
+      value_options:
+      - iOS Simulator
+      - tvOS Simulator
   - simulator_device: iPhone 6
     opts:
       title: "Device"
-      description: |
-        Set it as it is shown in
-        Xcode's device selection dropdown UI.
+      description: |-
+        Set it as it is shown in Xcode's device selection dropdown UI.
 
         A couple of examples (the
         actual available options depend on which versions
@@ -69,6 +83,7 @@ inputs:
         * iPhone 6 Plus
         * iPad
         * iPad Air
+        * Apple TV 1080p (don't forget to set the platform to `tvOS Simulator` to use this option!)
       is_required: false
       is_expand: true
   - simulator_os_version: latest
