@@ -40,6 +40,11 @@ workflows:
         inputs:
         - content: |-
             echo "BITRISE_XCODE_TEST_RESULT: ${BITRISE_XCODE_TEST_RESULT}"
+            if [ ! -f "$BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH" ] ; then
+              echo "No BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH file generated!"
+              exit 1
+            fi
+            echo "BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH: ${BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH}"
 
 
   # ----------------------------------------------------------------

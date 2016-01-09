@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -329,19 +330,42 @@ func runTest(outputTool, action, projectPath, scheme string,
 	fmt.Println()
 	log.Println("=> Running the tests...")
 
-	var out string
+	var rawOutput string
 	var exit int
 	var err error
 	if outputTool == "xcpretty" {
-		out, exit, err = runPrettyXcodeBuildCmd(true, testResultsFilePath, args...)
+		rawOutput, exit, err = runPrettyXcodeBuildCmd(true, testResultsFilePath, args...)
 	} else {
-		out, exit, err = runXcodeBuildCmd(true, args...)
+		rawOutput, exit, err = runXcodeBuildCmd(true, args...)
 	}
 
 	if err != nil {
-		return handleTestError(out, exit, err)
+		return handleTestError(rawOutput, exit, err)
 	}
-	return out, exit, nil
+	return rawOutput, exit, nil
+}
+
+func saveRawOutputToLogFile(rawXcodebuildOutput string) error {
+	outputFile, err := ioutil.TempFile(os.TempDir(), "temp")
+	if err != nil {
+		return fmt.Errorf("saveRawOutputToLogFile: failed to create Raw Output file: %s", err)
+	}
+	outputFilePath := outputFile.Name()
+
+	defer func() {
+		if err := outputFile.Close(); err != nil {
+			log.Println(" [!] Failed to close file:", err)
+		}
+	}()
+
+	if _, err := outputFile.Write([]byte(rawXcodebuildOutput)); err != nil {
+		return fmt.Errorf("saveRawOutputToLogFile: failed to write into the Raw Output file: %s", err)
+	}
+
+	if err := exportEnvironmentWithEnvman("BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH", outputFilePath); err != nil {
+		return fmt.Errorf("saveRawOutputToLogFile: failed to expose BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH: %s", err)
+	}
+	return nil
 }
 
 func main() {
@@ -405,27 +429,33 @@ func main() {
 
 	//
 	// Run build
-	if buildOutputStr, exitCode, buildErr := runBuild(outputTool, action, projectPath, scheme, cleanBuild, deviceDestination); buildErr != nil {
+	if rawXcodebuildOutput, exitCode, buildErr := runBuild(outputTool, action, projectPath, scheme, cleanBuild, deviceDestination); buildErr != nil {
+		// --- Outputs
 		exportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed")
-
-		if buildErr != nil {
-			log.Printf("xcode build log:\n%s", buildOutputStr)
-			printFatal(exitCode, "xcode build failed with error: %s\n", buildErr)
+		if err := saveRawOutputToLogFile(rawXcodebuildOutput); err != nil {
+			log.Println("[!] Failed to save the Raw Output")
 		}
+		//
+		log.Printf("xcode build log:\n%s", rawXcodebuildOutput)
+		printFatal(exitCode, "xcode build failed with error: %s\n", buildErr)
 	}
 
 	//
 	// Run test
-	_, exitCode, testErr := runTest(outputTool, action,
+	rawXcodebuildOutput, exitCode, testErr := runTest(outputTool, action,
 		projectPath, scheme, deviceDestination, generateCodeCoverage,
 		true, testResultsFilePath)
-
+	// --- Outputs
 	isRunSuccess := (testErr == nil)
 	if isRunSuccess {
 		exportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "succeeded")
 	} else {
 		exportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed")
 	}
+	if err := saveRawOutputToLogFile(rawXcodebuildOutput); err != nil {
+		log.Println("[!] Failed to save the Raw Output")
+	}
+	//
 
 	if testErr != nil {
 		printFatal(exitCode, "xcode test failed with error: %s", testErr)
