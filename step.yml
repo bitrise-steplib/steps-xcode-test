@@ -97,7 +97,7 @@ inputs:
         * 8.4
         * latest
       is_required: false
-  - is_clean_build: "yes"
+  - is_clean_build: "no"
     opts:
       title: "Do a clean Xcode build before testing?"
       value_options:
@@ -142,6 +142,6 @@ outputs:
     title: The full, raw test output file path
     description: |-
       This is the path of the raw test results log file.
-      
+
       If the compilation fails this log will contain the compilation output,
       if the tests can be started it'll only include the test output.
