@@ -9,6 +9,8 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -282,7 +284,7 @@ func runBuild(outputTool, action,
 func runTest(outputTool, action, projectPath, scheme string,
 	deviceDestination string, generateCodeCoverage bool,
 	isRetryOnTimeout bool,
-	testResultsFilePath string) (string, int, error) {
+	testResultsFilePath, derivedDataPath string) (string, int, error) {
 
 	handleTestError := func(fullOutputStr string, exitCode int, testError error) (string, int, error) {
 		// fmt.Printf("\n\nfullOutputStr:\n\n%s", fullOutputStr)
@@ -292,7 +294,7 @@ func runTest(outputTool, action, projectPath, scheme string,
 				log.Println("==> isRetryOnTimeout=true - retrying...")
 				return runTest(outputTool, action,
 					projectPath, scheme, deviceDestination, generateCodeCoverage,
-					false, testResultsFilePath)
+					false, testResultsFilePath, derivedDataPath)
 			}
 			log.Println(" [!] isRetryOnTimeout=false, no more retry, stopping the test!")
 			return fullOutputStr, exitCode, testError
@@ -304,7 +306,7 @@ func runTest(outputTool, action, projectPath, scheme string,
 				log.Println("==> isRetryOnTimeout=true - retrying...")
 				return runTest(outputTool, action,
 					projectPath, scheme, deviceDestination, generateCodeCoverage,
-					false, testResultsFilePath)
+					false, testResultsFilePath, derivedDataPath)
 			}
 			log.Println(" [!] isRetryOnTimeout=false, no more retry, stopping the test!")
 			return fullOutputStr, exitCode, testError
@@ -320,7 +322,7 @@ func runTest(outputTool, action, projectPath, scheme string,
 	//  in case the compilation takes a long time.
 	// Related Radar link: https://openradar.appspot.com/22413115
 	// Demonstration project: https://github.com/bitrise-io/simulator-launch-timeout-includes-build-time
-	args = append(args, "build", "test", "-destination", deviceDestination)
+	args = append(args, "build", "test", "-destination", deviceDestination, "-derivedDataPath", derivedDataPath)
 
 	if generateCodeCoverage {
 		args = append(args, "GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES")
@@ -331,8 +333,8 @@ func runTest(outputTool, action, projectPath, scheme string,
 	log.Println("=> Running the tests...")
 
 	var rawOutput string
-	var exit int
 	var err error
+	var exit int
 	if outputTool == "xcpretty" {
 		rawOutput, exit, err = runPrettyXcodeBuildCmd(true, testResultsFilePath, args...)
 	} else {
@@ -345,7 +347,16 @@ func runTest(outputTool, action, projectPath, scheme string,
 	return rawOutput, exit, nil
 }
 
-func saveRawOutputToLogFile(rawXcodebuildOutput string) error {
+func zip(targetDir, targetRelPathToZip, zipPath string) error {
+	zipCmd := exec.Command("/usr/bin/zip", "-rTy", zipPath, targetRelPathToZip)
+	zipCmd.Dir = targetDir
+	if out, err := zipCmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("Zip failed, out: %s, err: %#v", out, err)
+	}
+	return nil
+}
+
+func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) error {
 	outputFile, err := ioutil.TempFile(os.TempDir(), "temp")
 	if err != nil {
 		return fmt.Errorf("saveRawOutputToLogFile: failed to create Raw Output file: %s", err)
@@ -362,8 +373,40 @@ func saveRawOutputToLogFile(rawXcodebuildOutput string) error {
 		return fmt.Errorf("saveRawOutputToLogFile: failed to write into the Raw Output file: %s", err)
 	}
 
+	if !isRunSuccess {
+		deployDir := os.Getenv("BITRISE_DEPLOY_DIR")
+		if deployDir == "" {
+			return errors.New("No BITRISE_DEPLOY_DIR found")
+		}
+
+		rawXcodebuildOutputDir := filepath.Dir(outputFilePath)
+		rawXcodebuildOutputName := filepath.Base(outputFilePath)
+		outputFilePath = path.Join(deployDir, "raw-xcodebuild-output.zip")
+		if err := zip(rawXcodebuildOutputDir, rawXcodebuildOutputName, outputFilePath); err != nil {
+			return err
+		}
+	}
+
 	if err := exportEnvironmentWithEnvman("BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH", outputFilePath); err != nil {
 		return fmt.Errorf("saveRawOutputToLogFile: failed to expose BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH: %s", err)
+	}
+	return nil
+}
+
+func saveAttachements(deviedDataPath string) error {
+	deployDir := os.Getenv("BITRISE_DEPLOY_DIR")
+	if deployDir == "" {
+		return errors.New("No BITRISE_DEPLOY_DIR found")
+	}
+
+	zipedTestsDerivedDataPath := path.Join(deployDir, "attachments.zip")
+	testsDerivedDataDir := path.Join(deviedDataPath, "Logs", "Test")
+	if err := zip(testsDerivedDataDir, "Attachments", zipedTestsDerivedDataPath); err != nil {
+		return err
+	}
+
+	if err := exportEnvironmentWithEnvman("BITRISE_XCODE_TEST_ATTACHMENTS_PATH", zipedTestsDerivedDataPath); err != nil {
+		return fmt.Errorf("saveRawOutputToLogFile: failed to expose BITRISE_XCODE_TEST_ATTACHMENTS_PATH: %s", err)
 	}
 	return nil
 }
@@ -406,6 +449,10 @@ func main() {
 	if outputTool != "xcpretty" && outputTool != "xcodebuild" {
 		log.Fatalf("Invalid output_tool: (%s), valid options: xcpretty, xcodebuild", outputTool)
 	}
+	exportUitestArtifacts := false
+	if os.Getenv("export_uitest_artifacts") == "true" {
+		exportUitestArtifacts = true
+	}
 
 	//
 	// Project-or-Workspace flag
@@ -432,7 +479,7 @@ func main() {
 	if rawXcodebuildOutput, exitCode, buildErr := runBuild(outputTool, action, projectPath, scheme, cleanBuild, deviceDestination); buildErr != nil {
 		// --- Outputs
 		exportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed")
-		if err := saveRawOutputToLogFile(rawXcodebuildOutput); err != nil {
+		if err := saveRawOutputToLogFile(rawXcodebuildOutput, false); err != nil {
 			log.Println("[!] Failed to save the Raw Output")
 		}
 		//
@@ -442,9 +489,14 @@ func main() {
 
 	//
 	// Run test
+	derivedDataPath, err := ioutil.TempDir("", "BITRISE-DERIVED-DATA")
+	if err != nil {
+		printFatal(1, "Failed to create derived data path, error: %s\n", err)
+	}
+
 	rawXcodebuildOutput, exitCode, testErr := runTest(outputTool, action,
 		projectPath, scheme, deviceDestination, generateCodeCoverage,
-		true, testResultsFilePath)
+		true, testResultsFilePath, derivedDataPath)
 	// --- Outputs
 	isRunSuccess := (testErr == nil)
 	if isRunSuccess {
@@ -452,8 +504,13 @@ func main() {
 	} else {
 		exportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed")
 	}
-	if err := saveRawOutputToLogFile(rawXcodebuildOutput); err != nil {
-		log.Println("[!] Failed to save the Raw Output")
+	if err := saveRawOutputToLogFile(rawXcodebuildOutput, isRunSuccess); err != nil {
+		log.Printf("[!] Failed to save the Raw Output, error %s\n", err)
+	}
+	if exportUitestArtifacts {
+		if err := saveAttachements(derivedDataPath); err != nil {
+			log.Printf("[!] Failed to save the screenshots, error %s\n", err)
+		}
 	}
 	//
 

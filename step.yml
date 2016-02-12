@@ -130,6 +130,15 @@ inputs:
       - xcpretty
       - xcodebuild
       is_required: true
+  - export_uitest_artifacts: "false"
+    opts:
+      title: Export UITest Artifacts
+      description: |
+        If enabled, the attachments of the UITest will be exported into the BITRISE_DEPLOY_DIR, as a compressed ZIP file.
+        Attachments include screenshots taken during the UI test, and other artifacts.
+      value_options:
+      - "true"
+      - "false"
 outputs:
 - BITRISE_XCODE_TEST_RESULT:
   opts:
@@ -145,3 +154,8 @@ outputs:
 
       If the compilation fails this log will contain the compilation output,
       if the tests can be started it'll only include the test output.
+- BITRISE_XCODE_TEST_ATTACHMENTS_PATH:
+  opts:
+    title: The full, test attachments zip path
+    description: |-
+      This is the path of the test attachments zip.
