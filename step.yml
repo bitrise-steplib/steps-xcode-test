@@ -134,8 +134,8 @@ inputs:
     opts:
       title: Export UITest Artifacts
       description: |
-        If true, step will export the attachments of the UITest result into BITRISE_DEPLOY_DIR.
-        Attachments contains during the test taken screenshots and other artifacts as zipped file.
+        If enabled, the attachments of the UITest will be exported into the BITRISE_DEPLOY_DIR, as a compressed ZIP file.
+        Attachments include screenshots taken during the UI test, and other artifacts.
       value_options:
       - "true"
       - "false"
