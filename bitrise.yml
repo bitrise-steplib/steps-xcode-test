@@ -9,6 +9,8 @@ app:
   - BITRISE_SCHEME: $BITRISE_SCHEME
 
 workflows:
+  # ----------------------------------------------------------------
+  # --- workflow to Step Test
   test:
     steps:
     - script:
@@ -51,15 +53,44 @@ workflows:
             echo "BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH: ${BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH}"
             echo "BITRISE_XCODE_TEST_ATTACHMENTS_PATH: ${BITRISE_XCODE_TEST_ATTACHMENTS_PATH}"
 
+  # ----------------------------------------------------------------
+  # --- workflow to Create Release
+  create-release:
+    steps:
+    - script:
+        title:
+        inputs:
+        - content: |
+            #!/bin/bash
+            set -e
+
+            export CI=true
+            releaseman create --bump-version patch
 
   # ----------------------------------------------------------------
-  # --- workflows to Share this step into a Step Library
+  # --- workflow to Create Release version
+  create-release-version:
+    envs:
+    - RELEASE_VERSION: 1.12.1
+    steps:
+    - script:
+        title:
+        inputs:
+        - content: |
+            #!/bin/bash
+            set -e
+
+            export CI=true
+            releaseman create --version $RELEASE_VERSION
+
+  # ----------------------------------------------------------------
+  # --- workflow to Share this step into a Step Library
   share-this-step:
     envs:
       # if you want to share this step into a StepLib
       - MY_STEPLIB_REPO_FORK_GIT_URL: $MY_STEPLIB_REPO_FORK_GIT_URL
       - STEP_ID_IN_STEPLIB: xcode-test
-      - STEP_GIT_VERION_TAG_TO_SHARE: 1.11.0
+      - STEP_GIT_VERION_TAG_TO_SHARE: 1.12.1
       - STEP_GIT_CLONE_URL: https://github.com/bitrise-io/steps-xcode-test.git
     description: |-
       If this is the first time you try to share a Step you should
