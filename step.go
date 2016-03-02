@@ -75,7 +75,7 @@ func Printlnf(format string, a ...interface{}) {
 	fmt.Println()
 }
 
-func printConfig(projectPath, scheme, simulatorPlatform, simulatorDevice, simulatorOsVersion, action, deviceDestination, outputTool string, cleanBuild bool, generateCodeCoverage bool) {
+func printConfig(projectPath, scheme, simulatorPlatform, simulatorDevice, simulatorOsVersion, action, deviceDestination, outputTool, derivedDataDir string, cleanBuild, generateCodeCoverage bool) {
 	fmt.Println()
 	fmt.Println("========== Configs ==========")
 	Printlnf(" * project_path: %s", projectPath)
@@ -87,6 +87,7 @@ func printConfig(projectPath, scheme, simulatorPlatform, simulatorDevice, simula
 	Printlnf(" * project_action: %s", action)
 	Printlnf(" * generate_code_coverage_files: %v", generateCodeCoverage)
 	Printlnf(" * device_destination: %s", deviceDestination)
+	Printlnf(" * derived_data_dir: %s", derivedDataDir)
 	Printlnf(" * output_tool: %s", outputTool)
 
 	if outputTool == "xcpretty" {
@@ -104,7 +105,12 @@ func printConfig(projectPath, scheme, simulatorPlatform, simulatorDevice, simula
 	if err != nil {
 		log.Printf(" [!] Failed to get the version of xcodebuild! Error: %s", err)
 	}
-	Printlnf(" * xcodebuild version: %s", strings.TrimSpace(xcodebuildVersion))
+
+	xcodebuildVersionSplit := strings.Split(xcodebuildVersion, "\n")
+	if len(xcodebuildVersionSplit) > 1 {
+		Printlnf(" * xcodebuild version: %s (%s)", strings.TrimSpace(xcodebuildVersionSplit[0]), strings.TrimSpace(xcodebuildVersionSplit[1]))
+	}
+
 	fmt.Println("=============================")
 	fmt.Println()
 }
@@ -265,13 +271,13 @@ func runPrettyXcodeBuildCmd(useStdOut bool,
 // runBuild ...
 func runBuild(outputTool, action,
 	projectPath, scheme string, cleanBuild bool,
-	deviceDestination string) (string, int, error) {
+	deviceDestination, derivedDataDir string) (string, int, error) {
 
 	args := []string{action, projectPath, "-scheme", scheme}
 	if cleanBuild {
 		args = append(args, "clean")
 	}
-	args = append(args, "build", "-destination", deviceDestination)
+	args = append(args, "build", "-destination", deviceDestination, "-derivedDataPath", derivedDataDir)
 
 	log.Println("=> Building the project...")
 
@@ -284,7 +290,7 @@ func runBuild(outputTool, action,
 func runTest(outputTool, action, projectPath, scheme string,
 	deviceDestination string, generateCodeCoverage bool,
 	isRetryOnTimeout bool,
-	testResultsFilePath, derivedDataPath string) (string, int, error) {
+	testResultsFilePath, derivedDataDir string) (string, int, error) {
 
 	handleTestError := func(fullOutputStr string, exitCode int, testError error) (string, int, error) {
 		// fmt.Printf("\n\nfullOutputStr:\n\n%s", fullOutputStr)
@@ -294,7 +300,7 @@ func runTest(outputTool, action, projectPath, scheme string,
 				log.Println("==> isRetryOnTimeout=true - retrying...")
 				return runTest(outputTool, action,
 					projectPath, scheme, deviceDestination, generateCodeCoverage,
-					false, testResultsFilePath, derivedDataPath)
+					false, testResultsFilePath, derivedDataDir)
 			}
 			log.Println(" [!] isRetryOnTimeout=false, no more retry, stopping the test!")
 			return fullOutputStr, exitCode, testError
@@ -306,7 +312,7 @@ func runTest(outputTool, action, projectPath, scheme string,
 				log.Println("==> isRetryOnTimeout=true - retrying...")
 				return runTest(outputTool, action,
 					projectPath, scheme, deviceDestination, generateCodeCoverage,
-					false, testResultsFilePath, derivedDataPath)
+					false, testResultsFilePath, derivedDataDir)
 			}
 			log.Println(" [!] isRetryOnTimeout=false, no more retry, stopping the test!")
 			return fullOutputStr, exitCode, testError
@@ -322,7 +328,7 @@ func runTest(outputTool, action, projectPath, scheme string,
 	//  in case the compilation takes a long time.
 	// Related Radar link: https://openradar.appspot.com/22413115
 	// Demonstration project: https://github.com/bitrise-io/simulator-launch-timeout-includes-build-time
-	args = append(args, "build", "test", "-destination", deviceDestination, "-derivedDataPath", derivedDataPath)
+	args = append(args, "build", "test", "-destination", deviceDestination, "-derivedDataPath", derivedDataDir)
 
 	if generateCodeCoverage {
 		args = append(args, "GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES")
@@ -470,13 +476,18 @@ func main() {
 	// xcodebuild -project ./BitriseSampleWithYML.xcodeproj -scheme BitriseSampleWithYML  test -destination "platform=iOS Simulator,name=iPhone 6 Plus,OS=latest" -sdk iphonesimulator -verbose
 	deviceDestination := fmt.Sprintf("platform=%s,name=%s,OS=%s", simulatorPlatform, simulatorDevice, simulatorOsVersion)
 
+	derivedDataDir, err := ioutil.TempDir("", "BITRISE-DERIVED-DATA")
+	if err != nil {
+		printFatal(1, "Failed to create derived data path, error: %s\n", err)
+	}
+
 	//
 	// Print configs
-	printConfig(projectPath, scheme, simulatorPlatform, simulatorDevice, simulatorOsVersion, action, deviceDestination, outputTool, cleanBuild, generateCodeCoverage)
+	printConfig(projectPath, scheme, simulatorPlatform, simulatorDevice, simulatorOsVersion, action, deviceDestination, outputTool, derivedDataDir, cleanBuild, generateCodeCoverage)
 
 	//
 	// Run build
-	if rawXcodebuildOutput, exitCode, buildErr := runBuild(outputTool, action, projectPath, scheme, cleanBuild, deviceDestination); buildErr != nil {
+	if rawXcodebuildOutput, exitCode, buildErr := runBuild(outputTool, action, projectPath, scheme, cleanBuild, deviceDestination, derivedDataDir); buildErr != nil {
 		// --- Outputs
 		exportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed")
 		if err := saveRawOutputToLogFile(rawXcodebuildOutput, false); err != nil {
@@ -489,14 +500,9 @@ func main() {
 
 	//
 	// Run test
-	derivedDataPath, err := ioutil.TempDir("", "BITRISE-DERIVED-DATA")
-	if err != nil {
-		printFatal(1, "Failed to create derived data path, error: %s\n", err)
-	}
-
 	rawXcodebuildOutput, exitCode, testErr := runTest(outputTool, action,
 		projectPath, scheme, deviceDestination, generateCodeCoverage,
-		true, testResultsFilePath, derivedDataPath)
+		true, testResultsFilePath, derivedDataDir)
 	// --- Outputs
 	isRunSuccess := (testErr == nil)
 	if isRunSuccess {
@@ -508,7 +514,7 @@ func main() {
 		log.Printf("[!] Failed to save the Raw Output, error %s\n", err)
 	}
 	if exportUitestArtifacts {
-		if err := saveAttachements(derivedDataPath); err != nil {
+		if err := saveAttachements(derivedDataDir); err != nil {
 			log.Printf("[!] Failed to save the screenshots, error %s\n", err)
 		}
 	}
