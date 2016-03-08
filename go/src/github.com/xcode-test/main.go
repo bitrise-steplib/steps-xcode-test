@@ -6,15 +6,17 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 	"syscall"
+
+	cmd "github.com/xcode-test/command"
+	log "github.com/xcode-test/logutil"
+	"github.com/xcode-test/xcodeutil"
 )
 
 // On performance limited OS X hosts (ex: VMs) the iPhone/iOS Simulator might time out
@@ -28,150 +30,57 @@ const timeOutMessageIPhoneSimulator = "iPhoneSimulator: Timed out waiting"
 //  with Xcode Command Line `xcodebuild`.
 const timeOutMessageUITest = "Terminating app due to uncaught exception '_XCTestCaseInterruptionException'"
 
-func printFatal(exitCode int, format string, v ...interface{}) {
-	errorMsg := fmt.Sprintf(format, v...)
-	log.Printf("\x1b[31;1m%s\x1b[0m", errorMsg)
-	os.Exit(exitCode)
+func validateRequiredInput(value, key string) {
+	if value == "" {
+		log.LogFail("Missing required input: %s", key)
+	}
 }
 
-func printError(format string, v ...interface{}) {
-	errorMsg := fmt.Sprintf(format, v...)
-	log.Printf("\x1b[31;1m%s\x1b[0m", errorMsg)
-}
-
-func exportEnvironmentWithEnvman(keyStr, valueStr string) error {
-	fmt.Println()
-	log.Printf("Exporting: %s", keyStr)
-	envman := exec.Command("envman", "add", "--key", keyStr)
-	envman.Stdin = strings.NewReader(valueStr)
-	envman.Stdout = os.Stdout
-	envman.Stderr = os.Stderr
-	return envman.Run()
-}
-
-func getXcodeVersion() (string, error) {
-	cmd := exec.Command("xcodebuild", "-version")
-	outBytes, err := cmd.CombinedOutput()
-	if err != nil {
-		return "", fmt.Errorf("xcodebuild -version failed, err: %s, details: %s", err, string(outBytes))
+func validateRequiredInputWithOptions(value, key string, options []string) {
+	if value == "" {
+		log.LogFail("Missing required input: %s", key)
+	}
+	found := false
+	for _, option := range options {
+		if option == value {
+			found = true
+			break
+		}
 	}
 
-	return string(outBytes), nil
+	if !found {
+		log.LogFail("Invalid input: (%s) value: (%s), valid options: %s", key, value, strings.Join(options, ", "))
+	}
 }
 
 func getXcprettyVersion() (string, error) {
 	cmd := exec.Command("xcpretty", "-version")
 	outBytes, err := cmd.CombinedOutput()
+	outStr := string(outBytes)
+	if strings.HasSuffix(outStr, "\n") {
+		outStr = strings.TrimSuffix(outStr, "\n")
+	}
+
 	if err != nil {
-		return "", fmt.Errorf("xcpretty -version failed, err: %s, details: %s", err, string(outBytes))
+		return "", fmt.Errorf("xcpretty -version failed, err: %s, details: %s", err, outStr)
 	}
 
-	return string(outBytes), nil
-}
-
-// Printlnf ...
-func Printlnf(format string, a ...interface{}) {
-	fmt.Printf(format, a...)
-	fmt.Println()
-}
-
-func printConfig(projectPath, scheme, simulatorPlatform, simulatorDevice, simulatorOsVersion, action, deviceDestination, outputTool, derivedDataDir string, cleanBuild, generateCodeCoverage bool) {
-	fmt.Println()
-	fmt.Println("========== Configs ==========")
-	Printlnf(" * project_path: %s", projectPath)
-	Printlnf(" * scheme: %s", scheme)
-	Printlnf(" * simulator_platform: %s", simulatorPlatform)
-	Printlnf(" * simulator_device: %s", simulatorDevice)
-	Printlnf(" * simulator_os_version: %s", simulatorOsVersion)
-	Printlnf(" * is_clean_build: %v", cleanBuild)
-	Printlnf(" * project_action: %s", action)
-	Printlnf(" * generate_code_coverage_files: %v", generateCodeCoverage)
-	Printlnf(" * device_destination: %s", deviceDestination)
-	Printlnf(" * derived_data_dir: %s", derivedDataDir)
-	Printlnf(" * output_tool: %s", outputTool)
-
-	if outputTool == "xcpretty" {
-		version, err := getXcprettyVersion()
-		if err != nil || version == "" {
-			log.Fatal(`
- (!) xcpretty is not installed
-		 For xcpretty installation see: 'https://github.com/supermarin/xcpretty',
-		 or use 'xcodebuild' as 'output_tool'.`)
-		}
-		Printlnf(" * xcpretty version: %s", strings.TrimSpace(version))
-	}
-
-	xcodebuildVersion, err := getXcodeVersion()
-	if err != nil {
-		log.Printf(" [!] Failed to get the version of xcodebuild! Error: %s", err)
-	}
-
-	xcodebuildVersionSplit := strings.Split(xcodebuildVersion, "\n")
-	if len(xcodebuildVersionSplit) > 1 {
-		Printlnf(" * xcodebuild version: %s (%s)", strings.TrimSpace(xcodebuildVersionSplit[0]), strings.TrimSpace(xcodebuildVersionSplit[1]))
-	}
-
-	fmt.Println("=============================")
-	fmt.Println()
-}
-
-func validateRequiredInput(key string) (string, error) {
-	value := os.Getenv(key)
-	if value == "" {
-		return "", fmt.Errorf("[!] Missing required input: %s", key)
-	}
-	return value, nil
+	return outStr, nil
 }
 
 func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
 	r, err := regexp.Compile("(?i)" + searchStr)
 	if err != nil {
-		log.Printf(" [!] Failed to compile regexp: %s", err)
+		log.LogWarn("Failed to compile regexp: %s", err)
 		return false
 	}
 	return r.MatchString(outputToSearchIn)
 }
 
-func printableCommandArgs(fullCommandArgs []string) string {
-	cmdArgsDecorated := []string{}
-	for idx, anArg := range fullCommandArgs {
-		quotedArg := strconv.Quote(anArg)
-		if idx == 0 {
-			quotedArg = anArg
-		}
-		cmdArgsDecorated = append(cmdArgsDecorated, quotedArg)
-	}
-
-	return strings.Join(cmdArgsDecorated, " ")
-}
-
-// createXcodebuildCmd ...
-func createXcodebuildCmd(xcodebuildArgs ...string) *exec.Cmd {
-	return exec.Command("xcodebuild", xcodebuildArgs...)
-}
-
-// createXcprettyCmd ...
-func createXcprettyCmd(testResultsFilePath string) *exec.Cmd {
-	prettyArgs := []string{"--color"}
-	if testResultsFilePath != "" {
-		prettyArgs = append(prettyArgs, "--report", "html", "--output", testResultsFilePath)
-	}
-	return exec.Command("xcpretty", prettyArgs...)
-}
-
-// CreateBufferedWriter ...
-func CreateBufferedWriter(buff *bytes.Buffer, writers ...io.Writer) io.Writer {
-	if len(writers) > 0 {
-		allWriters := append([]io.Writer{buff}, writers...)
-		return io.MultiWriter(allWriters...)
-	}
-	return io.Writer(buff)
-}
-
 // runXcodeBuildCmd ...
 func runXcodeBuildCmd(useStdOut bool, args ...string) (string, int, error) {
 	// command
-	buildCmd := createXcodebuildCmd(args...)
+	buildCmd := cmd.CreateXcodebuildCmd(args...)
 	// output buffer
 	var outBuffer bytes.Buffer
 	// additional output writers, like StdOut
@@ -180,14 +89,15 @@ func runXcodeBuildCmd(useStdOut bool, args ...string) (string, int, error) {
 		outWritters = append(outWritters, os.Stdout)
 	}
 	// unify as a single writer
-	outWritter := CreateBufferedWriter(&outBuffer, outWritters...)
+	outWritter := cmd.CreateBufferedWriter(&outBuffer, outWritters...)
 	// and set the writer
 	buildCmd.Stdin = nil
 	buildCmd.Stdout = outWritter
 	buildCmd.Stderr = outWritter
 
-	cmdArgsForPrint := printableCommandArgs(buildCmd.Args)
-	log.Printf("==> Full command: $ %s", cmdArgsForPrint)
+	cmdArgsForPrint := cmd.PrintableCommandArgs(buildCmd.Args)
+
+	log.LogDetails("$ %s", cmdArgsForPrint)
 
 	err := buildCmd.Run()
 	if err != nil {
@@ -209,8 +119,8 @@ func runPrettyXcodeBuildCmd(useStdOut bool,
 	args ...string) (string, int, error) {
 
 	//
-	buildCmd := createXcodebuildCmd(args...)
-	prettyCmd := createXcprettyCmd(testResultsFilePath)
+	buildCmd := cmd.CreateXcodebuildCmd(args...)
+	prettyCmd := cmd.CreateXcprettyCmd(testResultsFilePath)
 	//
 	var buildOutBuffer bytes.Buffer
 	//
@@ -220,7 +130,7 @@ func runPrettyXcodeBuildCmd(useStdOut bool,
 	// - write it into a buffer
 	// - write it into the pipe, which will be fed into xcpretty
 	buildOutWriters := []io.Writer{pipeWriter}
-	buildOutWriter := CreateBufferedWriter(&buildOutBuffer, buildOutWriters...)
+	buildOutWriter := cmd.CreateBufferedWriter(&buildOutBuffer, buildOutWriters...)
 	//
 	var prettyOutWriter io.Writer
 	if useStdOut {
@@ -236,9 +146,11 @@ func runPrettyXcodeBuildCmd(useStdOut bool,
 	prettyCmd.Stdout = prettyOutWriter
 	prettyCmd.Stderr = prettyOutWriter
 
-	log.Printf("==> Full command: $ set -o pipefail && %s | %v",
-		printableCommandArgs(buildCmd.Args),
-		printableCommandArgs(prettyCmd.Args))
+	log.LogDetails("$ set -o pipefail && %s | %v",
+		cmd.PrintableCommandArgs(buildCmd.Args),
+		cmd.PrintableCommandArgs(prettyCmd.Args))
+
+	fmt.Println()
 
 	if err := buildCmd.Start(); err != nil {
 		return buildOutBuffer.String(), 1, err
@@ -279,7 +191,7 @@ func runBuild(outputTool, action,
 	}
 	args = append(args, "build", "-destination", deviceDestination, "-derivedDataPath", derivedDataDir)
 
-	log.Println("=> Building the project...")
+	log.LogInfo("Building the project...")
 
 	if outputTool == "xcpretty" {
 		return runPrettyXcodeBuildCmd(false, "", args...)
@@ -295,26 +207,26 @@ func runTest(outputTool, action, projectPath, scheme string,
 	handleTestError := func(fullOutputStr string, exitCode int, testError error) (string, int, error) {
 		// fmt.Printf("\n\nfullOutputStr:\n\n%s", fullOutputStr)
 		if isStringFoundInOutput(timeOutMessageIPhoneSimulator, fullOutputStr) {
-			log.Println("=> Simulator Timeout detected")
+			log.LogInfo("Simulator Timeout detected")
 			if isRetryOnTimeout {
-				log.Println("==> isRetryOnTimeout=true - retrying...")
+				log.LogDetails("isRetryOnTimeout=true - retrying...")
 				return runTest(outputTool, action,
 					projectPath, scheme, deviceDestination, generateCodeCoverage,
 					false, testResultsFilePath, derivedDataDir)
 			}
-			log.Println(" [!] isRetryOnTimeout=false, no more retry, stopping the test!")
+			log.LogWarn("isRetryOnTimeout=false, no more retry, stopping the test!")
 			return fullOutputStr, exitCode, testError
 		}
 
 		if isStringFoundInOutput(timeOutMessageUITest, fullOutputStr) {
-			log.Println("=> Simulator Timeout detected: isUITestTimeoutFound")
+			log.LogInfo("Simulator Timeout detected: isUITestTimeoutFound")
 			if isRetryOnTimeout {
-				log.Println("==> isRetryOnTimeout=true - retrying...")
+				log.LogDetails("isRetryOnTimeout=true - retrying...")
 				return runTest(outputTool, action,
 					projectPath, scheme, deviceDestination, generateCodeCoverage,
 					false, testResultsFilePath, derivedDataDir)
 			}
-			log.Println(" [!] isRetryOnTimeout=false, no more retry, stopping the test!")
+			log.LogWarn("isRetryOnTimeout=false, no more retry, stopping the test!")
 			return fullOutputStr, exitCode, testError
 		}
 
@@ -335,8 +247,7 @@ func runTest(outputTool, action, projectPath, scheme string,
 		args = append(args, "GCC_GENERATE_TEST_COVERAGE_FILES=YES")
 	}
 
-	fmt.Println()
-	log.Println("=> Running the tests...")
+	log.LogInfo("Running the tests...")
 
 	var rawOutput string
 	var err error
@@ -371,7 +282,7 @@ func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) error
 
 	defer func() {
 		if err := outputFile.Close(); err != nil {
-			log.Println(" [!] Failed to close file:", err)
+			log.LogWarn("Failed to close file:", err)
 		}
 	}()
 
@@ -393,8 +304,8 @@ func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) error
 		}
 	}
 
-	if err := exportEnvironmentWithEnvman("BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH", outputFilePath); err != nil {
-		return fmt.Errorf("saveRawOutputToLogFile: failed to expose BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH: %s", err)
+	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH", outputFilePath); err != nil {
+		log.LogWarn("Failed to export: BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH, error: %s", err)
 	}
 	return nil
 }
@@ -411,8 +322,8 @@ func saveAttachements(deviedDataPath string) error {
 		return err
 	}
 
-	if err := exportEnvironmentWithEnvman("BITRISE_XCODE_TEST_ATTACHMENTS_PATH", zipedTestsDerivedDataPath); err != nil {
-		return fmt.Errorf("saveRawOutputToLogFile: failed to expose BITRISE_XCODE_TEST_ATTACHMENTS_PATH: %s", err)
+	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_ATTACHMENTS_PATH", zipedTestsDerivedDataPath); err != nil {
+		log.LogWarn("Failed to export: BITRISE_XCODE_TEST_ATTACHMENTS_PATH, error: %s", err)
 	}
 	return nil
 }
@@ -420,45 +331,45 @@ func saveAttachements(deviedDataPath string) error {
 func main() {
 	//
 	// Required parameters
-	projectPath, err := validateRequiredInput("project_path")
-	if err != nil {
-		log.Fatalf("Input validation failed, err: %s", err)
-	}
-
-	scheme, err := validateRequiredInput("scheme")
-	if err != nil {
-		log.Fatalf("Input validation failed, err: %s", err)
-	}
-
-	simulatorPlatform, err := validateRequiredInput("simulator_platform")
-	if err != nil {
-		log.Fatalf("Input validation failed, err: %s", err)
-	}
-	simulatorDevice, err := validateRequiredInput("simulator_device")
-	if err != nil {
-		log.Fatalf("Input validation failed, err: %s", err)
-	}
-	simulatorOsVersion, err := validateRequiredInput("simulator_os_version")
-	if err != nil {
-		log.Fatalf("Input validation failed, err: %s", err)
-	}
-	testResultsFilePath, err := validateRequiredInput("test_results_file_path")
-	if err != nil {
-		log.Fatalf("Input validation failed, err: %s", err)
-	}
+	projectPath := os.Getenv("project_path")
+	scheme := os.Getenv("scheme")
+	simulatorPlatform := os.Getenv("simulator_platform")
+	simulatorDevice := os.Getenv("simulator_device")
+	simulatorOsVersion := os.Getenv("simulator_os_version")
+	testResultsFilePath := os.Getenv("test_results_file_path")
 
 	//
 	// Not required parameters
-	cleanBuild := (os.Getenv("is_clean_build") == "yes")
-	generateCodeCoverage := (os.Getenv("generate_code_coverage_files") == "yes")
+	isCleanBuild := os.Getenv("is_clean_build")
+	generateCodeCoverageFiles := os.Getenv("generate_code_coverage_files")
 	outputTool := os.Getenv("output_tool")
-	if outputTool != "xcpretty" && outputTool != "xcodebuild" {
-		log.Fatalf("Invalid output_tool: (%s), valid options: xcpretty, xcodebuild", outputTool)
-	}
-	exportUitestArtifacts := false
-	if os.Getenv("export_uitest_artifacts") == "true" {
-		exportUitestArtifacts = true
-	}
+	exportUITestArtifactsStr := os.Getenv("export_uitest_artifacts")
+
+	log.LogConfigs(
+		projectPath,
+		scheme,
+		simulatorPlatform,
+		simulatorDevice,
+		simulatorOsVersion,
+		testResultsFilePath,
+		isCleanBuild,
+		generateCodeCoverageFiles,
+		outputTool,
+		exportUITestArtifactsStr)
+
+	validateRequiredInput(projectPath, "project_path")
+	validateRequiredInput(scheme, "scheme")
+	validateRequiredInput(simulatorPlatform, "simulator_platform")
+	validateRequiredInput(simulatorDevice, "simulator_device")
+	validateRequiredInput(simulatorOsVersion, "simulator_os_version")
+	validateRequiredInput(testResultsFilePath, "test_results_file_path")
+	validateRequiredInputWithOptions(outputTool, "output_tool", []string{"xcpretty", "xcodebuild"})
+
+	cleanBuild := (isCleanBuild == "yes")
+	generateCodeCoverage := (generateCodeCoverageFiles == "yes")
+	exportUITestArtifacts := (exportUITestArtifactsStr == "true")
+
+	fmt.Println()
 
 	//
 	// Project-or-Workspace flag
@@ -468,34 +379,67 @@ func main() {
 	} else if strings.HasSuffix(projectPath, ".xcworkspace") {
 		action = "-workspace"
 	} else {
-		log.Fatalf("Failed to get valid project file (invalid project file): %s", projectPath)
+		log.LogFail("Failed to get valid project file (invalid project file): %s", projectPath)
 	}
+
+	log.LogDetails("* action: %s", action)
 
 	//
 	// Device Destination
 	// xcodebuild -project ./BitriseSampleWithYML.xcodeproj -scheme BitriseSampleWithYML  test -destination "platform=iOS Simulator,name=iPhone 6 Plus,OS=latest" -sdk iphonesimulator -verbose
 	deviceDestination := fmt.Sprintf("platform=%s,name=%s,OS=%s", simulatorPlatform, simulatorDevice, simulatorOsVersion)
 
+	log.LogDetails("* device_destination: %s", deviceDestination)
+
 	derivedDataDir, err := ioutil.TempDir("", "BITRISE-DERIVED-DATA")
 	if err != nil {
-		printFatal(1, "Failed to create derived data path, error: %s\n", err)
+		log.LogFail("Failed to create derived data path, error: %s\n", err)
 	}
 
+	log.LogDetails("* derived_data_dir: %s", derivedDataDir)
+
+	xcodebuildVersion, err := xcodeutil.GetXcodeVersion()
+	if err != nil {
+		log.LogFail("Failed to get the version of xcodebuild! Error: %s", err)
+	}
+
+	log.LogDetails("* xcodebuild_version: %s (%s)", xcodebuildVersion.Version, xcodebuildVersion.BuildVersion)
+
+	xcprettyVersion, err := getXcprettyVersion()
+	if err != nil {
+		log.LogWarn("Failed to get the xcpretty version! Error: %s", err)
+	} else {
+		log.LogDetails("* xcpretty_version: %s", xcprettyVersion)
+	}
+
+	simulator, err := xcodeutil.GetSimulator(simulatorPlatform, simulatorDevice, simulatorOsVersion)
+	if err != nil {
+		log.LogFail(fmt.Sprintf("failed to get simulator udid, error: %s", err))
+	}
+
+	log.LogDetails("* simulator_name: %s, UDID: %s, status: %s", simulator.Name, simulator.SimID, simulator.Status)
+
 	//
-	// Print configs
-	printConfig(projectPath, scheme, simulatorPlatform, simulatorDevice, simulatorOsVersion, action, deviceDestination, outputTool, derivedDataDir, cleanBuild, generateCodeCoverage)
+	// Start simulator
+	if simulator.Status == "Shutdown" {
+		log.LogInfo("Booting simulator (%s)...", simulator.SimID)
+
+		if err := xcodeutil.BootSimulator(simulator, xcodebuildVersion); err != nil {
+			log.LogFail(fmt.Sprintf("failed to boot simulator, error: %s", err))
+		}
+	}
 
 	//
 	// Run build
 	if rawXcodebuildOutput, exitCode, buildErr := runBuild(outputTool, action, projectPath, scheme, cleanBuild, deviceDestination, derivedDataDir); buildErr != nil {
 		// --- Outputs
-		exportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed")
 		if err := saveRawOutputToLogFile(rawXcodebuildOutput, false); err != nil {
-			log.Println("[!] Failed to save the Raw Output")
+			log.LogWarn("Failed to save the Raw Output, err: %s", err)
 		}
 		//
-		log.Printf("xcode build log:\n%s", rawXcodebuildOutput)
-		printFatal(exitCode, "xcode build failed with error: %s\n", buildErr)
+		log.LogWarn("xcode build exit code: %d", exitCode)
+		log.LogWarn("xcode build log:\n%s", rawXcodebuildOutput)
+		log.LogFail("xcode build failed with error: %s", buildErr)
 	}
 
 	//
@@ -503,24 +447,27 @@ func main() {
 	rawXcodebuildOutput, exitCode, testErr := runTest(outputTool, action,
 		projectPath, scheme, deviceDestination, generateCodeCoverage,
 		true, testResultsFilePath, derivedDataDir)
+
 	// --- Outputs
 	isRunSuccess := (testErr == nil)
-	if isRunSuccess {
-		exportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "succeeded")
-	} else {
-		exportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed")
-	}
+
 	if err := saveRawOutputToLogFile(rawXcodebuildOutput, isRunSuccess); err != nil {
-		log.Printf("[!] Failed to save the Raw Output, error %s\n", err)
+		log.LogWarn("Failed to save the Raw Output, error %s", err)
 	}
-	if exportUitestArtifacts {
+
+	if exportUITestArtifacts {
 		if err := saveAttachements(derivedDataDir); err != nil {
-			log.Printf("[!] Failed to save the screenshots, error %s\n", err)
+			log.LogWarn("Failed to save the screenshots, error %s", err)
 		}
 	}
-	//
 
 	if testErr != nil {
-		printFatal(exitCode, "xcode test failed with error: %s", testErr)
+		log.LogWarn("xcode test exit code: %d", exitCode)
+		log.LogFail("xcode test failed, error: %s", testErr)
 	}
+
+	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "succeeded"); err != nil {
+		log.LogWarn("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
+	}
+	//
 }

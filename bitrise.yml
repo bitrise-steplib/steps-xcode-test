@@ -12,11 +12,17 @@ workflows:
   # ----------------------------------------------------------------
   # --- workflow to Step Test
   test:
+    envs:
+    - XCODE_TEST_GO_PATH: ./go/src/github.com/xcode-test
     steps:
+    - script:
+        title: "Export GOPATH"
+        inputs:
+        - content: export GOPATH="$GOPATH:$THIS_SCRIPT_DIR/go"
     - script:
         title: "Go Test"
         inputs:
-        - content: go test ./...
+        - content: go test $XCODE_TEST_GO_PATH/...
     - script:
         title: Step audit
         inputs:

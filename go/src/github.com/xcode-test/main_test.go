@@ -3,6 +3,8 @@ package main
 import (
 	"io/ioutil"
 	"testing"
+
+	cmd "github.com/xcode-test/command"
 )
 
 //
@@ -133,7 +135,7 @@ func Test_printableCommandArgs(t *testing.T) {
 		"-destination", "platform=iOS Simulator,name=iPhone 6,OS=latest",
 		"-sdk", "iphonesimulator",
 	}
-	resStr := printableCommandArgs(orgCmdArgs)
+	resStr := cmd.PrintableCommandArgs(orgCmdArgs)
 	expectedStr := `xcodebuild "-project" "MyProj.xcodeproj" "-scheme" "MyScheme" "build" "test" "-destination" "platform=iOS Simulator,name=iPhone 6,OS=latest" "-sdk" "iphonesimulator"`
 
 	if resStr != expectedStr {
