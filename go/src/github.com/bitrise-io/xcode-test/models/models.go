@@ -2,6 +2,35 @@ package models
 
 import "fmt"
 
+/*
+func runBuild(
+	outputTool,
+	action,
+	projectPath,
+	scheme string,
+	cleanBuild bool,
+	deviceDestination,
+	derivedDataDir string) (string, int, error) {
+*/
+
+// XcodeBuildParamsModel ...
+type XcodeBuildParamsModel struct {
+	Action            string
+	ProjectPath       string
+	Scheme            string
+	DeviceDestination string
+	DerivedDataDir    string
+	CleanBuild        bool
+}
+
+// XcodeBuildTestParamsModel ...
+type XcodeBuildTestParamsModel struct {
+	BuildParams XcodeBuildParamsModel
+
+	GenerateCodeCoverage bool
+	AdditionalOptions    string
+}
+
 // XcodebuildVersionModel ...
 type XcodebuildVersionModel struct {
 	Version      string

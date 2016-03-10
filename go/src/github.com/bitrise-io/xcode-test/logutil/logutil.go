@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	cmd "github.com/xcode-test/command"
+	cmd "github.com/bitrise-io/xcode-test/command"
 )
 
 // LogFail ...
@@ -54,17 +54,19 @@ func LogConfigs(
 	isCleanBuild,
 	generateCodeCoverageFiles,
 	outputTool,
-	exportUITestArtifactsStr string) {
+	exportUITestArtifactsStr,
+	testOptions string) {
 	LogInfo("Configs:")
 	LogDetails("* project_path: %s", projectPath)
 	LogDetails("* scheme: %s", scheme)
 	LogDetails("* is_clean_build: %v", isCleanBuild)
+	LogDetails("* xcodebuild_test_options: %s", testOptions)
 	fmt.Println()
 	LogDetails("* simulator_platform: %s", simulatorPlatform)
 	LogDetails("* simulator_device: %s", simulatorDevice)
 	LogDetails("* simulator_os_version: %s", simulatorOsVersion)
 	fmt.Println()
-	LogDetails("* output_tool: %v", outputTool)
+	LogDetails("* output_tool: %s", outputTool)
 	LogDetails("* test_result_file_path: %s", testResultsFilePath)
 	LogDetails("* generate_code_coverage_files: %v", generateCodeCoverageFiles)
 	LogDetails("* export_uitest_artifacts: %v", exportUITestArtifactsStr)

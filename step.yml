@@ -139,6 +139,29 @@ inputs:
       value_options:
       - "true"
       - "false"
+  - xcodebuild_test_options: ""
+    opts:
+      title: Additional options for `xcodebuild build test` call
+      description: |-
+        Options added to the end of the `xcodebuild build test` call.
+
+        If you leave empty this input, xcodebuild will be called as:
+
+        `xcodebuild
+          -project\-workspace PROJECT.xcodeproj\WORKSPACE.xcworkspace
+          -scheme SCHEME
+          build test
+          -destination platform=PLATFORM Simulator,name=NAME,OS=VERSION
+          -derivedDataPath DERIVED_DATA_PATH`
+
+        In case of `generate_code_coverage_files: "yes"`
+        `xcodebuild` becomes two additional flags:
+
+          * GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES
+          * GCC_GENERATE_TEST_COVERAGE_FILES=YES
+
+        If you want to add more options, list that separated by space character.
+        Example: `-xcconfig PATH -verbose`
 outputs:
 - BITRISE_XCODE_TEST_RESULT:
   opts:

@@ -14,9 +14,11 @@ import (
 	"strings"
 	"syscall"
 
-	cmd "github.com/xcode-test/command"
-	log "github.com/xcode-test/logutil"
-	"github.com/xcode-test/xcodeutil"
+	cmd "github.com/bitrise-io/xcode-test/command"
+	log "github.com/bitrise-io/xcode-test/logutil"
+	"github.com/bitrise-io/xcode-test/models"
+	"github.com/bitrise-io/xcode-test/xcodeutil"
+	shellquote "github.com/kballard/go-shellquote"
 )
 
 // On performance limited OS X hosts (ex: VMs) the iPhone/iOS Simulator might time out
@@ -181,15 +183,13 @@ func runPrettyXcodeBuildCmd(useStdOut bool,
 }
 
 // runBuild ...
-func runBuild(outputTool, action,
-	projectPath, scheme string, cleanBuild bool,
-	deviceDestination, derivedDataDir string) (string, int, error) {
+func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (string, int, error) {
 
-	args := []string{action, projectPath, "-scheme", scheme}
-	if cleanBuild {
+	args := []string{buildParams.Action, buildParams.ProjectPath, "-scheme", buildParams.Scheme}
+	if buildParams.CleanBuild {
 		args = append(args, "clean")
 	}
-	args = append(args, "build", "-destination", deviceDestination, "-derivedDataPath", derivedDataDir)
+	args = append(args, "build", "-destination", buildParams.DeviceDestination, "-derivedDataPath", buildParams.DerivedDataDir)
 
 	log.LogInfo("Building the project...")
 
@@ -199,10 +199,7 @@ func runBuild(outputTool, action,
 	return runXcodeBuildCmd(false, args...)
 }
 
-func runTest(outputTool, action, projectPath, scheme string,
-	deviceDestination string, generateCodeCoverage bool,
-	isRetryOnTimeout bool,
-	testResultsFilePath, derivedDataDir string) (string, int, error) {
+func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, testResultsFilePath string, isRetryOnTimeout bool) (string, int, error) {
 
 	handleTestError := func(fullOutputStr string, exitCode int, testError error) (string, int, error) {
 		// fmt.Printf("\n\nfullOutputStr:\n\n%s", fullOutputStr)
@@ -210,9 +207,7 @@ func runTest(outputTool, action, projectPath, scheme string,
 			log.LogInfo("Simulator Timeout detected")
 			if isRetryOnTimeout {
 				log.LogDetails("isRetryOnTimeout=true - retrying...")
-				return runTest(outputTool, action,
-					projectPath, scheme, deviceDestination, generateCodeCoverage,
-					false, testResultsFilePath, derivedDataDir)
+				return runTest(buildTestParams, outputTool, testResultsFilePath, false)
 			}
 			log.LogWarn("isRetryOnTimeout=false, no more retry, stopping the test!")
 			return fullOutputStr, exitCode, testError
@@ -222,9 +217,7 @@ func runTest(outputTool, action, projectPath, scheme string,
 			log.LogInfo("Simulator Timeout detected: isUITestTimeoutFound")
 			if isRetryOnTimeout {
 				log.LogDetails("isRetryOnTimeout=true - retrying...")
-				return runTest(outputTool, action,
-					projectPath, scheme, deviceDestination, generateCodeCoverage,
-					false, testResultsFilePath, derivedDataDir)
+				return runTest(buildTestParams, outputTool, testResultsFilePath, false)
 			}
 			log.LogWarn("isRetryOnTimeout=false, no more retry, stopping the test!")
 			return fullOutputStr, exitCode, testError
@@ -233,18 +226,28 @@ func runTest(outputTool, action, projectPath, scheme string,
 		return fullOutputStr, exitCode, testError
 	}
 
-	args := []string{action, projectPath, "-scheme", scheme}
+	buildParams := buildTestParams.BuildParams
+
+	args := []string{buildParams.Action, buildParams.ProjectPath, "-scheme", buildParams.Scheme}
 	// the 'build' argument is required *before* the 'test' arg, to prevent
 	//  the Xcode bug described in the README, which causes:
 	// 'iPhoneSimulator: Timed out waiting 120 seconds for simulator to boot, current state is 1.'
 	//  in case the compilation takes a long time.
 	// Related Radar link: https://openradar.appspot.com/22413115
 	// Demonstration project: https://github.com/bitrise-io/simulator-launch-timeout-includes-build-time
-	args = append(args, "build", "test", "-destination", deviceDestination, "-derivedDataPath", derivedDataDir)
+	args = append(args, "build", "test", "-destination", buildParams.DeviceDestination, "-derivedDataPath", buildParams.DerivedDataDir)
 
-	if generateCodeCoverage {
+	if buildTestParams.GenerateCodeCoverage {
 		args = append(args, "GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES")
 		args = append(args, "GCC_GENERATE_TEST_COVERAGE_FILES=YES")
+	}
+
+	if buildTestParams.AdditionalOptions != "" {
+		options, err := shellquote.Split(buildTestParams.AdditionalOptions)
+		if err != nil {
+			return "", 1, fmt.Errorf("failed to parse additional options (%s), error: %s", buildTestParams.AdditionalOptions, err)
+		}
+		args = append(args, options...)
 	}
 
 	log.LogInfo("Running the tests...")
@@ -344,6 +347,7 @@ func main() {
 	generateCodeCoverageFiles := os.Getenv("generate_code_coverage_files")
 	outputTool := os.Getenv("output_tool")
 	exportUITestArtifactsStr := os.Getenv("export_uitest_artifacts")
+	testOptions := os.Getenv("xcodebuild_test_options")
 
 	log.LogConfigs(
 		projectPath,
@@ -355,7 +359,8 @@ func main() {
 		isCleanBuild,
 		generateCodeCoverageFiles,
 		outputTool,
-		exportUITestArtifactsStr)
+		exportUITestArtifactsStr,
+		testOptions)
 
 	validateRequiredInput(projectPath, "project_path")
 	validateRequiredInput(scheme, "scheme")
@@ -419,6 +424,22 @@ func main() {
 
 	log.LogDetails("* simulator_name: %s, UDID: %s, status: %s", simulator.Name, simulator.SimID, simulator.Status)
 
+	buildParams := models.XcodeBuildParamsModel{
+		Action:            action,
+		ProjectPath:       projectPath,
+		Scheme:            scheme,
+		DeviceDestination: deviceDestination,
+		DerivedDataDir:    derivedDataDir,
+		CleanBuild:        cleanBuild,
+	}
+
+	buildTestParams := models.XcodeBuildTestParamsModel{
+		BuildParams: buildParams,
+
+		AdditionalOptions:    testOptions,
+		GenerateCodeCoverage: generateCodeCoverage,
+	}
+
 	//
 	// Start simulator
 	if simulator.Status == "Shutdown" {
@@ -431,7 +452,7 @@ func main() {
 
 	//
 	// Run build
-	if rawXcodebuildOutput, exitCode, buildErr := runBuild(outputTool, action, projectPath, scheme, cleanBuild, deviceDestination, derivedDataDir); buildErr != nil {
+	if rawXcodebuildOutput, exitCode, buildErr := runBuild(buildParams, outputTool); buildErr != nil {
 		// --- Outputs
 		if err := saveRawOutputToLogFile(rawXcodebuildOutput, false); err != nil {
 			log.LogWarn("Failed to save the Raw Output, err: %s", err)
@@ -444,14 +465,10 @@ func main() {
 
 	//
 	// Run test
-	rawXcodebuildOutput, exitCode, testErr := runTest(outputTool, action,
-		projectPath, scheme, deviceDestination, generateCodeCoverage,
-		true, testResultsFilePath, derivedDataDir)
+	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, outputTool, testResultsFilePath, true)
 
 	// --- Outputs
-	isRunSuccess := (testErr == nil)
-
-	if err := saveRawOutputToLogFile(rawXcodebuildOutput, isRunSuccess); err != nil {
+	if err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil)); err != nil {
 		log.LogWarn("Failed to save the Raw Output, error %s", err)
 	}
 
@@ -469,5 +486,4 @@ func main() {
 	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "succeeded"); err != nil {
 		log.LogWarn("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 	}
-	//
 }

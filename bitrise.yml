@@ -13,7 +13,7 @@ workflows:
   # --- workflow to Step Test
   test:
     envs:
-    - XCODE_TEST_GO_PATH: ./go/src/github.com/xcode-test
+    - XCODE_TEST_GO_PATH: ./go/src/github.com/bitrise-io/xcode-test
     steps:
     - script:
         title: "Export GOPATH"
@@ -46,6 +46,7 @@ workflows:
         - simulator_device: iPhone 6
         # - simulator_device: Apple TV 1080p
         # - simulator_platform: tvOS Simulator
+        - xcodebuild_test_options: -verbose
     - script:
         title: Output test
         is_always_run: true

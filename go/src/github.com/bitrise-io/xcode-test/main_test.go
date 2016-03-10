@@ -4,11 +4,36 @@ import (
 	"io/ioutil"
 	"testing"
 
-	cmd "github.com/xcode-test/command"
+	cmd "github.com/bitrise-io/xcode-test/command"
+	shellquote "github.com/kballard/go-shellquote"
 )
 
 //
 // --- TESTS
+
+func TestParseCommandLineOptions(t *testing.T) {
+	expectedWords := []string{"/bin/sh", "-c", `echo "my complicated command" | tee log | cat > log2`}
+	words, err := shellquote.Split("/bin/sh -c 'echo \"my complicated command\" | tee log | cat > log2'")
+	if err != nil {
+		t.Fatalf("Expected (no error), actual(%v)", err)
+	}
+	if len(words) != len(expectedWords) {
+		t.Fatalf("Expected (%d), actual(%d)", len(expectedWords), len(words))
+	}
+	for i := 0; i < len(expectedWords); i++ {
+		exceptedWord := expectedWords[i]
+		word := words[i]
+
+		if word != exceptedWord {
+			t.Fatalf("Expected (%s), actual(%s)", exceptedWord, word)
+		}
+	}
+
+	words, err = shellquote.Split("/bin/sh -c 'echo")
+	if err == nil {
+		t.Fatalf("Expected (error), actual(%v)", err)
+	}
+}
 
 func Test_isStringFoundInOutput(t *testing.T) {
 	// Should NOT find

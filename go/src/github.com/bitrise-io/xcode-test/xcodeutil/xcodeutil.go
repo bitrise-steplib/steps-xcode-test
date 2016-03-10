@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	cmd "github.com/xcode-test/command"
-	log "github.com/xcode-test/logutil"
-	"github.com/xcode-test/models"
+	cmd "github.com/bitrise-io/xcode-test/command"
+	log "github.com/bitrise-io/xcode-test/logutil"
+	"github.com/bitrise-io/xcode-test/models"
 )
 
 var (
