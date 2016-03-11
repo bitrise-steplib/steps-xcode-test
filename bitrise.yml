@@ -16,10 +16,6 @@ workflows:
     - XCODE_TEST_GO_PATH: ./go/src/github.com/bitrise-io/xcode-test
     steps:
     - script:
-        title: "Export GOPATH"
-        inputs:
-        - content: export GOPATH="$GOPATH:$THIS_SCRIPT_DIR/go"
-    - script:
         title: "Go Test"
         inputs:
         - content: go test $XCODE_TEST_GO_PATH/...

@@ -2,16 +2,9 @@ package models
 
 import "fmt"
 
-/*
-func runBuild(
-	outputTool,
-	action,
-	projectPath,
-	scheme string,
-	cleanBuild bool,
-	deviceDestination,
-	derivedDataDir string) (string, int, error) {
-*/
+//=======================================
+// Models
+//=======================================
 
 // XcodeBuildParamsModel ...
 type XcodeBuildParamsModel struct {
@@ -38,29 +31,33 @@ type XcodebuildVersionModel struct {
 	MajorVersion int64
 }
 
-// SimInfo ...
-type SimInfo struct {
+// SimInfoModel ...
+type SimInfoModel struct {
 	Name        string
 	SimID       string
 	Status      string
 	StatusOther string
 }
 
-// OSVersionSimInfoPair ...
-type OSVersionSimInfoPair struct {
+// OSVersionSimInfoPairModel ...
+type OSVersionSimInfoPairModel struct {
 	OSVersion     string
-	SimulatorInfo SimInfo
+	SimulatorInfo SimInfoModel
 }
 
-// SimulatorsGroupedByIOSVersions ...
-type SimulatorsGroupedByIOSVersions map[string][]SimInfo
+// SimulatorsGroupedByIOSVersionsModel ...
+type SimulatorsGroupedByIOSVersionsModel map[string][]SimInfoModel
 
-func (simsGrouped *SimulatorsGroupedByIOSVersions) flatList() []OSVersionSimInfoPair {
-	osVersionSimInfoPairs := []OSVersionSimInfoPair{}
+//=======================================
+// Model methods
+//=======================================
+
+func (simsGrouped *SimulatorsGroupedByIOSVersionsModel) flatList() []OSVersionSimInfoPairModel {
+	osVersionSimInfoPairs := []OSVersionSimInfoPairModel{}
 
 	for osVer, simulatorInfos := range *simsGrouped {
 		for _, aSimInfo := range simulatorInfos {
-			osVersionSimInfoPairs = append(osVersionSimInfoPairs, OSVersionSimInfoPair{
+			osVersionSimInfoPairs = append(osVersionSimInfoPairs, OSVersionSimInfoPairModel{
 				OSVersion:     osVer,
 				SimulatorInfo: aSimInfo,
 			})
@@ -70,13 +67,13 @@ func (simsGrouped *SimulatorsGroupedByIOSVersions) flatList() []OSVersionSimInfo
 	return osVersionSimInfoPairs
 }
 
-func (simsGrouped *SimulatorsGroupedByIOSVersions) duplicates() []OSVersionSimInfoPair {
-	duplicates := []OSVersionSimInfoPair{}
+func (simsGrouped *SimulatorsGroupedByIOSVersionsModel) duplicates() []OSVersionSimInfoPairModel {
+	duplicates := []OSVersionSimInfoPairModel{}
 	for osVer, simulatorInfos := range *simsGrouped {
 		simNameCache := map[string]bool{}
 		for _, aSimInfo := range simulatorInfos {
 			if _, isFound := simNameCache[aSimInfo.Name]; isFound {
-				duplicates = append(duplicates, OSVersionSimInfoPair{
+				duplicates = append(duplicates, OSVersionSimInfoPairModel{
 					OSVersion:     osVer,
 					SimulatorInfo: aSimInfo,
 				})
@@ -87,6 +84,6 @@ func (simsGrouped *SimulatorsGroupedByIOSVersions) duplicates() []OSVersionSimIn
 	return duplicates
 }
 
-func (osVerSimInfoPair *OSVersionSimInfoPair) String() string {
+func (osVerSimInfoPair *OSVersionSimInfoPairModel) String() string {
 	return fmt.Sprintf("[OS: %s] %#v", osVerSimInfoPair.OSVersion, osVerSimInfoPair.SimulatorInfo)
 }

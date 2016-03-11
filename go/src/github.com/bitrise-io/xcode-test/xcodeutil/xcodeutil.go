@@ -18,18 +18,22 @@ var (
 	deviceStateRegexp = regexp.MustCompile(` *(.+) \(([A-Z0-9-]+)\) \((.+)\)`)
 )
 
+//=======================================
+// Utility
+//=======================================
+
 // a simulator info line should look like this:
 //  iPhone 5s (EA1C7E48-8137-428C-A0A5-B2C63FF276EB) (Shutdown)
 // or
 //  iPhone 4s (51B10EBD-C949-49F5-A38B-E658F41640FF) (Shutdown) (unavailable, runtime profile not found)
-func getSimInfoFromLine(lineStr string) (models.SimInfo, error) {
+func getSimInfoFromLine(lineStr string) (models.SimInfoModel, error) {
 	baseInfosExp := regexp.MustCompile(`(?P<deviceName>[a-zA-Z].*[a-zA-Z0-9 -]*) \((?P<simulatorID>[a-zA-Z0-9-]{36})\) \((?P<status>[a-zA-Z]*)\)`)
 	baseInfosRes := baseInfosExp.FindStringSubmatch(lineStr)
 	if baseInfosRes == nil {
-		return models.SimInfo{}, fmt.Errorf("No match found")
+		return models.SimInfoModel{}, fmt.Errorf("No match found")
 	}
 
-	simInfo := models.SimInfo{
+	simInfo := models.SimInfoModel{
 		Name:   baseInfosRes[1],
 		SimID:  baseInfosRes[2],
 		Status: baseInfosRes[3],
@@ -47,8 +51,8 @@ func getSimInfoFromLine(lineStr string) (models.SimInfo, error) {
 	return simInfo, nil
 }
 
-func collectAllSimIDs(simctlListOutputToScan string) models.SimulatorsGroupedByIOSVersions {
-	simulatorsByIOSVersions := models.SimulatorsGroupedByIOSVersions{}
+func collectAllSimIDs(simctlListOutputToScan string) models.SimulatorsGroupedByIOSVersionsModel {
+	simulatorsByIOSVersions := models.SimulatorsGroupedByIOSVersionsModel{}
 	currIOSVersion := ""
 
 	fscanner := bufio.NewScanner(strings.NewReader(simctlListOutputToScan))
@@ -91,45 +95,6 @@ func collectAllSimIDs(simctlListOutputToScan string) models.SimulatorsGroupedByI
 	return simulatorsByIOSVersions
 }
 
-// GetXcodeVersion ...
-func GetXcodeVersion() (models.XcodebuildVersionModel, error) {
-	cmd := exec.Command("xcodebuild", "-version")
-	outBytes, err := cmd.CombinedOutput()
-	outStr := string(outBytes)
-	if err != nil {
-		return models.XcodebuildVersionModel{}, fmt.Errorf("xcodebuild -version failed, err: %s, details: %s", err, outStr)
-	}
-
-	split := strings.Split(outStr, "\n")
-	if len(split) == 0 {
-		return models.XcodebuildVersionModel{}, fmt.Errorf("failed to parse xcodebuild version output (%s)", outStr)
-	}
-
-	xcodebuildVersion := split[0]
-	buildVersion := split[1]
-
-	split = strings.Split(xcodebuildVersion, " ")
-	if len(split) != 2 {
-		return models.XcodebuildVersionModel{}, fmt.Errorf("failed to parse xcodebuild version output (%s)", outStr)
-	}
-
-	version := split[1]
-
-	split = strings.Split(version, ".")
-	majorVersionStr := split[0]
-
-	majorVersion, err := strconv.ParseInt(majorVersionStr, 10, 32)
-	if err != nil {
-		return models.XcodebuildVersionModel{}, fmt.Errorf("failed to parse xcodebuild version output (%s), error: %s", outStr, err)
-	}
-
-	return models.XcodebuildVersionModel{
-		Version:      xcodebuildVersion,
-		BuildVersion: buildVersion,
-		MajorVersion: majorVersion,
-	}, nil
-}
-
 // Compares sematic versions with 2 components (9.1, 9.2, ...)
 // Return true if first version is greater then second
 func isOsVersionGreater(osVersion, otherOsVersion string) (bool, error) {
@@ -169,12 +134,19 @@ func isOsVersionGreater(osVersion, otherOsVersion string) (bool, error) {
 	return false, nil
 }
 
+//=======================================
+// Main
+//=======================================
+
 // GetSimulator ...
-func GetSimulator(simulatorPlatform, simulatorDevice, simulatorOsVersion string) (models.SimInfo, error) {
-	simctlListOut, err := cmd.RunCommandReturnCombinedStdoutAndStderr("xcrun", "simctl", "list")
+func GetSimulator(simulatorPlatform, simulatorDevice, simulatorOsVersion string) (models.SimInfoModel, error) {
+	cmd := exec.Command("xcrun", "simctl", "list")
+	outBytes, err := cmd.CombinedOutput()
 	if err != nil {
-		return models.SimInfo{}, err
+		return models.SimInfoModel{}, err
 	}
+
+	simctlListOut := string(outBytes)
 
 	allSimIDsGroupedBySimVersion := collectAllSimIDs(simctlListOut)
 
@@ -182,7 +154,7 @@ func GetSimulator(simulatorPlatform, simulatorDevice, simulatorOsVersion string)
 	// map desired inputs
 	simulatorPlatformSplit := strings.Split(simulatorPlatform, " Simulator")
 	if len(simulatorPlatformSplit) == 0 {
-		return models.SimInfo{}, fmt.Errorf("failed to parse simulator platform (%s)", simulatorPlatform)
+		return models.SimInfoModel{}, fmt.Errorf("failed to parse simulator platform (%s)", simulatorPlatform)
 	}
 
 	desiredDevice := simulatorDevice
@@ -201,7 +173,7 @@ func GetSimulator(simulatorPlatform, simulatorDevice, simulatorOsVersion string)
 			} else {
 				greater, err := isOsVersionGreater(latestOsVersion, osVersion)
 				if err != nil {
-					return models.SimInfo{}, err
+					return models.SimInfoModel{}, err
 				}
 
 				if greater {
@@ -219,7 +191,7 @@ func GetSimulator(simulatorPlatform, simulatorDevice, simulatorOsVersion string)
 	// find desired simulator
 	simInfoList, found := allSimIDsGroupedBySimVersion[desiredOsVersion]
 	if !found {
-		return models.SimInfo{}, fmt.Errorf("no simulator found for desired os: %s", desiredOsVersion)
+		return models.SimInfoModel{}, fmt.Errorf("no simulator found for desired os: %s", desiredOsVersion)
 	}
 
 	for _, simInfo := range simInfoList {
@@ -228,11 +200,11 @@ func GetSimulator(simulatorPlatform, simulatorDevice, simulatorOsVersion string)
 		}
 	}
 
-	return models.SimInfo{}, fmt.Errorf("%s - %s - %s not found", simulatorPlatform, simulatorDevice, simulatorOsVersion)
+	return models.SimInfoModel{}, fmt.Errorf("%s - %s - %s not found", simulatorPlatform, simulatorDevice, simulatorOsVersion)
 }
 
 // BootSimulator ...
-func BootSimulator(simulator models.SimInfo, xcodebuildVersion models.XcodebuildVersionModel) error {
+func BootSimulator(simulator models.SimInfoModel, xcodebuildVersion models.XcodebuildVersionModel) error {
 	simulatorApp := "/Applications/Xcode.app/Contents/Developer/Applications/Simulator.app"
 	if xcodebuildVersion.MajorVersion == 6 {
 		simulatorApp = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Applications/iPhone Simulator.app"
@@ -249,4 +221,43 @@ func BootSimulator(simulator models.SimInfo, xcodebuildVersion models.Xcodebuild
 	}
 
 	return nil
+}
+
+// GetXcodeVersion ...
+func GetXcodeVersion() (models.XcodebuildVersionModel, error) {
+	cmd := exec.Command("xcodebuild", "-version")
+	outBytes, err := cmd.CombinedOutput()
+	outStr := string(outBytes)
+	if err != nil {
+		return models.XcodebuildVersionModel{}, fmt.Errorf("xcodebuild -version failed, err: %s, details: %s", err, outStr)
+	}
+
+	split := strings.Split(outStr, "\n")
+	if len(split) == 0 {
+		return models.XcodebuildVersionModel{}, fmt.Errorf("failed to parse xcodebuild version output (%s)", outStr)
+	}
+
+	xcodebuildVersion := split[0]
+	buildVersion := split[1]
+
+	split = strings.Split(xcodebuildVersion, " ")
+	if len(split) != 2 {
+		return models.XcodebuildVersionModel{}, fmt.Errorf("failed to parse xcodebuild version output (%s)", outStr)
+	}
+
+	version := split[1]
+
+	split = strings.Split(version, ".")
+	majorVersionStr := split[0]
+
+	majorVersion, err := strconv.ParseInt(majorVersionStr, 10, 32)
+	if err != nil {
+		return models.XcodebuildVersionModel{}, fmt.Errorf("failed to parse xcodebuild version output (%s), error: %s", outStr, err)
+	}
+
+	return models.XcodebuildVersionModel{
+		Version:      xcodebuildVersion,
+		BuildVersion: buildVersion,
+		MajorVersion: majorVersion,
+	}, nil
 }
