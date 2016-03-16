@@ -12,13 +12,12 @@ workflows:
   # ----------------------------------------------------------------
   # --- workflow to Step Test
   test:
-    envs:
-    - XCODE_TEST_GO_PATH: ./go/src/github.com/bitrise-io/xcode-test
     steps:
     - script:
         title: "Go Test"
         inputs:
-        - content: go test $XCODE_TEST_GO_PATH/...
+        - working_dir: ./go/src/github.com/bitrise-io/xcode-test
+        - content: go test ./...
     - script:
         title: Step audit
         inputs:
