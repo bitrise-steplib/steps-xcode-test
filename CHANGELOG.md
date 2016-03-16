@@ -1,6 +1,16 @@
-## Changelog (Current version: 1.12.1)
+## Changelog (Current version: 1.13.0)
 
 -----------------
+
+### 1.13.0 (2016 Mar 16)
+
+* [de50ce2] version bump
+* [555a6b5] Merge pull request #35 from bitrise-io/start_simulator
+* [80acbd6] ensure clean git
+* [936bde2] go test fix
+* [9789fd3] review
+* [8d0f5f4] boot simulator before run test
+* [b654793] xcodebuild additional options
 
 ### 1.12.1 (2016 Mar 02)
 
@@ -145,4 +155,4 @@
 
 -----------------
 
-Updated: 2016 Mar 02
+Updated: 2016 Mar 16
