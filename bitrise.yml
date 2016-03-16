@@ -16,6 +16,7 @@ workflows:
     - script:
         title: "Go Test"
         inputs:
+        - working_dir: ./go/src/github.com/bitrise-io/xcode-test
         - content: go test ./...
     - script:
         title: Step audit
@@ -40,6 +41,7 @@ workflows:
         - simulator_device: iPhone 6
         # - simulator_device: Apple TV 1080p
         # - simulator_platform: tvOS Simulator
+        - xcodebuild_test_options: -verbose
     - script:
         title: Output test
         is_always_run: true
@@ -54,7 +56,7 @@ workflows:
             echo "BITRISE_XCODE_TEST_ATTACHMENTS_PATH: ${BITRISE_XCODE_TEST_ATTACHMENTS_PATH}"
 
   # ----------------------------------------------------------------
-  # --- workflow to Create Release
+  # --- workflows to create Release
   create-release:
     steps:
     - script:
@@ -67,8 +69,6 @@ workflows:
             export CI=true
             releaseman create --bump-version patch
 
-  # ----------------------------------------------------------------
-  # --- workflow to Create Release version
   create-release-version:
     envs:
     - RELEASE_VERSION: 1.12.1
@@ -114,6 +114,7 @@ workflows:
       Once it finishes the only thing left is to actually create a Pull Request,
       the way described in the guide printed at the end of the process.
     steps:
+    - ensure-clean-git:
     - script:
         inputs:
         - content: |-
