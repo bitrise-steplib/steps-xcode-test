@@ -157,7 +157,11 @@ func GetSimulator(simulatorPlatform, simulatorDevice, simulatorOsVersion string)
 		return models.SimInfoModel{}, fmt.Errorf("failed to parse simulator platform (%s)", simulatorPlatform)
 	}
 
-	desiredDevice := simulatorDevice
+	if simulatorDevice == "iPad" {
+		log.LogWarn("Given device (%s) is deprecated, using (iPad 2)...", simulatorDevice)
+		simulatorDevice = "iPad 2"
+	}
+
 	desiredPlatform := simulatorPlatformSplit[0]
 	desiredOsVersion := ""
 
@@ -195,7 +199,7 @@ func GetSimulator(simulatorPlatform, simulatorDevice, simulatorOsVersion string)
 	}
 
 	for _, simInfo := range simInfoList {
-		if simInfo.Name == desiredDevice {
+		if simInfo.Name == simulatorDevice {
 			return simInfo, nil
 		}
 	}
