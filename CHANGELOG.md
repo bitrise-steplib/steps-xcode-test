@@ -1,6 +1,13 @@
-## Changelog (Current version: 1.13.0)
+## Changelog (Current version: 1.13.1)
 
 -----------------
+
+### 1.13.1 (2016 Mar 17)
+
+* [2bcef31] version bump
+* [d9bff12] Merge pull request #36 from bitrise-io/deprecated_ipad
+* [385d31d] GOPATH fix
+* [5d5dc26] deprecated iPad device handling
 
 ### 1.13.0 (2016 Mar 16)
 
@@ -155,4 +162,4 @@
 
 -----------------
 
-Updated: 2016 Mar 16
+Updated: 2016 Mar 17
