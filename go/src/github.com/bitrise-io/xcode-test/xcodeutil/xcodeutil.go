@@ -209,12 +209,12 @@ func GetSimulator(simulatorPlatform, simulatorDevice, simulatorOsVersion string)
 
 // BootSimulator ...
 func BootSimulator(simulator models.SimInfoModel, xcodebuildVersion models.XcodebuildVersionModel) error {
-	simulatorApp := "/Applications/Xcode.app/Contents/Developer/Applications/Simulator.app"
+	simulatorApp := "Simulator"
 	if xcodebuildVersion.MajorVersion == 6 {
-		simulatorApp = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Applications/iPhone Simulator.app"
+		simulatorApp = "iOS Simulator"
 	}
 
-	openCmd := exec.Command("open", simulatorApp, "--args", "-CurrentDeviceUDID", simulator.SimID)
+	openCmd := exec.Command("open", "-a", simulatorApp, "--args", "-CurrentDeviceUDID", simulator.SimID)
 
 	log.LogDetails("$ %s", cmd.PrintableCommandArgs(openCmd.Args))
 
