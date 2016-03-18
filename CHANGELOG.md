@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.13.1)
+## Changelog (Current version: 1.13.2)
 
 -----------------
+
+### 1.13.2 (2016 Mar 18)
+
+* [f5a96cd] prepare fro new version
+* [2c80839] Merge pull request #37 from bitrise-io/sim_boot_fix
+* [336efce] simulator boot fix
 
 ### 1.13.1 (2016 Mar 17)
 
@@ -162,4 +168,4 @@
 
 -----------------
 
-Updated: 2016 Mar 17
+Updated: 2016 Mar 18
