@@ -11,6 +11,7 @@ import (
 	cmd "github.com/bitrise-io/xcode-test/command"
 	log "github.com/bitrise-io/xcode-test/logutil"
 	"github.com/bitrise-io/xcode-test/models"
+	ver "github.com/hashicorp/go-version"
 )
 
 var (
@@ -98,40 +99,62 @@ func collectAllSimIDs(simctlListOutputToScan string) models.SimulatorsGroupedByI
 // Compares sematic versions with 2 components (9.1, 9.2, ...)
 // Return true if first version is greater then second
 func isOsVersionGreater(osVersion, otherOsVersion string) (bool, error) {
-	versionsComponents := [][]int64{}
+	versionPtrs := []*ver.Version{}
 	for _, osVer := range []string{osVersion, otherOsVersion} {
 		osVersionSplit := strings.Split(osVer, " ")
 		if len(osVersionSplit) != 2 {
 			return false, fmt.Errorf("failed to parse version: %s", osVer)
 		}
 
-		versionSplit := strings.Split(osVersionSplit[1], ".")
-		if len(versionSplit) != 2 {
-			return false, fmt.Errorf("failed to parse version: %s", osVer)
+		version, err := ver.NewVersion(osVersionSplit[1])
+		if err != nil {
+			return false, err
 		}
 
-		versionComponents := []int64{}
-		for _, versionComponentStr := range versionSplit {
-			versionComponent, err := strconv.ParseInt(versionComponentStr, 10, 32)
-			if err != nil {
-				return false, fmt.Errorf("failed to parse version: %s", osVer)
+		versionPtrs = append(versionPtrs, version)
+	}
+
+	return versionPtrs[0].GreaterThan(versionPtrs[1]), nil
+}
+
+func getLatestOsVersion(desiredPlatform, desiredDevice string, allSimIDsGroupedBySimVersion models.SimulatorsGroupedByIOSVersionsModel) (string, error) {
+	latestOsVersion := ""
+	for osVersion, simInfos := range allSimIDsGroupedBySimVersion {
+		if !strings.HasPrefix(osVersion, desiredPlatform) {
+			continue
+		}
+
+		deviceExist := false
+		for _, simInfo := range simInfos {
+			if simInfo.Name == desiredDevice {
+				deviceExist = true
+				break
 			}
-			versionComponents = append(versionComponents, versionComponent)
 		}
 
-		versionsComponents = append(versionsComponents, versionComponents)
-	}
+		if !deviceExist {
+			continue
+		}
 
-	for i := 0; i < len(versionsComponents[0]); i++ {
-		versionPart := versionsComponents[0][i]
-		otherVersionPart := versionsComponents[1][i]
+		if latestOsVersion == "" {
+			latestOsVersion = osVersion
+		} else {
+			greater, err := isOsVersionGreater(osVersion, latestOsVersion)
+			if err != nil {
+				return "", err
+			}
 
-		if otherVersionPart > versionPart {
-			return true, nil
+			if greater {
+				latestOsVersion = osVersion
+			}
 		}
 	}
 
-	return false, nil
+	if latestOsVersion == "" {
+		return "", fmt.Errorf("failed to find latest os version for (%s) - (%s)", desiredPlatform, desiredDevice)
+	}
+
+	return latestOsVersion, nil
 }
 
 //=======================================
@@ -166,26 +189,10 @@ func GetSimulator(simulatorPlatform, simulatorDevice, simulatorOsVersion string)
 	desiredOsVersion := ""
 
 	if simulatorOsVersion == "latest" {
-		latestOsVersion := ""
-		for osVersion := range allSimIDsGroupedBySimVersion {
-			if !strings.HasPrefix(osVersion, desiredPlatform) {
-				continue
-			}
-
-			if latestOsVersion == "" {
-				latestOsVersion = osVersion
-			} else {
-				greater, err := isOsVersionGreater(latestOsVersion, osVersion)
-				if err != nil {
-					return models.SimInfoModel{}, err
-				}
-
-				if greater {
-					latestOsVersion = osVersion
-				}
-			}
+		latestOsVersion, err := getLatestOsVersion(desiredPlatform, simulatorDevice, allSimIDsGroupedBySimVersion)
+		if err != nil {
+			return models.SimInfoModel{}, fmt.Errorf("failed to fer latest os version, error: %s", err)
 		}
-
 		desiredOsVersion = latestOsVersion
 	} else {
 		desiredOsVersion = fmt.Sprintf("%s %s", desiredPlatform, simulatorOsVersion)

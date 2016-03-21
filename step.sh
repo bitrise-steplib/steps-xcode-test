@@ -9,5 +9,6 @@ if [ ! -z "${workdir}" ] ; then
 	cd "${workdir}"
 fi
 
+export GO15VENDOREXPERIMENT="1"
 GOPATH="$THIS_SCRIPT_DIR/go" go run "${THIS_SCRIPT_DIR}/go/src/github.com/bitrise-io/xcode-test/main.go"
 exit $?
