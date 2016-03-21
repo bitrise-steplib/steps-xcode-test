@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.13.2)
+## Changelog (Current version: 1.13.3)
 
 -----------------
+
+### 1.13.3 (2016 Mar 21)
+
+* [3e3b5a7] prepare for release
+* [be2a15a] Merge pull request #38 from bitrise-io/latest_version_fix
+* [f9f845c] latest os version fix
 
 ### 1.13.2 (2016 Mar 18)
 
@@ -168,4 +174,4 @@
 
 -----------------
 
-Updated: 2016 Mar 18
+Updated: 2016 Mar 21
