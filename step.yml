@@ -67,7 +67,7 @@ inputs:
       - iOS Simulator
       - tvOS Simulator
       is_required: true
-  - simulator_device: iPhone 6
+  - simulator_device: iPhone 6s Plus
     opts:
       title: "Device"
       description: |-
