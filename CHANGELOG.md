@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.13.3)
+## Changelog (Current version: 1.13.4)
 
 -----------------
+
+### 1.13.4 (2016 Mar 31)
+
+* [0b1b778] prepare for release
+* [0093472] Merge pull request #42 from bitrise-io/default_device
+* [b9b6e5d] change default device
 
 ### 1.13.3 (2016 Mar 21)
 
@@ -174,4 +180,4 @@
 
 -----------------
 
-Updated: 2016 Mar 21
+Updated: 2016 Mar 31
