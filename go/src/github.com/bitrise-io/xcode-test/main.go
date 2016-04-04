@@ -454,6 +454,12 @@ func main() {
 	}
 
 	//
+	// Export derived data directory
+	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_DERIVED_DATA_PATH", buildParams.DerivedDataDir); err != nil {
+		log.LogWarn("Failed to export: BITRISE_XCODE_TEST_DERIVED_DATA_PATH, error: %s", err)
+	}
+
+	//
 	// Run test
 	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, outputTool, testResultsFilePath, true)
 

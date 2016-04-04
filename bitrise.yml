@@ -54,6 +54,7 @@ workflows:
             fi
             echo "BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH: ${BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH}"
             echo "BITRISE_XCODE_TEST_ATTACHMENTS_PATH: ${BITRISE_XCODE_TEST_ATTACHMENTS_PATH}"
+            echo "BITRISE_XCODE_TEST_DERIVED_DATA_PATH: ${BITRISE_XCODE_TEST_DERIVED_DATA_PATH}"
 
   # ----------------------------------------------------------------
   # --- workflows to create Release
