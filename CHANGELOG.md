@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.13.4)
+## Changelog (Current version: 1.13.5)
 
 -----------------
+
+### 1.13.5 (2016 Apr 04)
+
+* [714434f] Merge pull request #43 from bitrise-io/derived_data_fix
+* [557d48f] filepath instead of path package, renamed attachments
+* [c03c9db] removed changing derived data dir
 
 ### 1.13.4 (2016 Mar 31)
 
@@ -180,4 +186,4 @@
 
 -----------------
 
-Updated: 2016 Mar 31
+Updated: 2016 Apr 04
