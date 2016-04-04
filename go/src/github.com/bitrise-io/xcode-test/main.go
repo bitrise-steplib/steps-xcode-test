@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -269,7 +268,7 @@ func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) error
 
 		rawXcodebuildOutputDir := filepath.Dir(outputFilePath)
 		rawXcodebuildOutputName := filepath.Base(outputFilePath)
-		outputFilePath = path.Join(deployDir, "raw-xcodebuild-output.zip")
+		outputFilePath = filepath.Join(deployDir, "raw-xcodebuild-output.zip")
 		if err := cmd.Zip(rawXcodebuildOutputDir, rawXcodebuildOutputName, outputFilePath); err != nil {
 			return err
 		}
@@ -281,14 +280,14 @@ func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) error
 	return nil
 }
 
-func saveAttachements(projectPath string) error {
-	projectName := path.Base(projectPath)
-	projectExt := path.Ext(projectName)
+func saveAttachements(projectPath, scheme string) error {
+	projectName := filepath.Base(projectPath)
+	projectExt := filepath.Ext(projectName)
 	projectName = strings.TrimSuffix(projectName, projectExt)
 
 	userHome := pathutil.UserHomeDir()
-	deviedDataDir := path.Join(userHome, "Library/Developer/Xcode/DerivedData")
-	projectDerivedDataDirPattern := path.Join(deviedDataDir, fmt.Sprintf("%s-*", projectName))
+	deviedDataDir := filepath.Join(userHome, "Library/Developer/Xcode/DerivedData")
+	projectDerivedDataDirPattern := filepath.Join(deviedDataDir, fmt.Sprintf("%s-*", projectName))
 	projectDerivedDataDirs, err := filepath.Glob(projectDerivedDataDirPattern)
 	if err != nil {
 		return err
@@ -301,14 +300,14 @@ func saveAttachements(projectPath string) error {
 	}
 	projectDerivedDataDir := projectDerivedDataDirs[0]
 
-	testLogDir := path.Join(projectDerivedDataDir, "Logs", "Test")
+	testLogDir := filepath.Join(projectDerivedDataDir, "Logs", "Test")
 	if exist, err := pathutil.IsDirExists(testLogDir); err != nil {
 		return err
 	} else if !exist {
 		return fmt.Errorf("no test logs found at: %s", projectDerivedDataDir)
 	}
 
-	testLogAttachmentsDir := path.Join(testLogDir, "Attachments")
+	testLogAttachmentsDir := filepath.Join(testLogDir, "Attachments")
 	if exist, err := pathutil.IsDirExists(testLogAttachmentsDir); err != nil {
 		return err
 	} else if !exist {
@@ -320,7 +319,7 @@ func saveAttachements(projectPath string) error {
 		return errors.New("No BITRISE_DEPLOY_DIR found")
 	}
 
-	zipedTestsDerivedDataPath := path.Join(deployDir, "attachments.zip")
+	zipedTestsDerivedDataPath := filepath.Join(deployDir, fmt.Sprintf("%s-xc-test-Attachments.zip", scheme))
 	if err := cmd.Zip(testLogDir, "Attachments", zipedTestsDerivedDataPath); err != nil {
 		return err
 	}
@@ -463,7 +462,7 @@ func main() {
 	}
 
 	if exportUITestArtifacts {
-		if err := saveAttachements(projectPath); err != nil {
+		if err := saveAttachements(projectPath, scheme); err != nil {
 			log.LogWarn("Failed to export UI test artifacts, error %s", err)
 		}
 	}
