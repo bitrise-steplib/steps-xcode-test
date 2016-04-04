@@ -8,12 +8,12 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"syscall"
 
+	"github.com/bitrise-io/go-utils/pathutil"
 	cmd "github.com/bitrise-io/xcode-test/command"
 	log "github.com/bitrise-io/xcode-test/logutil"
 	"github.com/bitrise-io/xcode-test/models"
@@ -166,7 +166,7 @@ func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (stri
 	if buildParams.CleanBuild {
 		args = append(args, "clean")
 	}
-	args = append(args, "build", "-destination", buildParams.DeviceDestination, "-derivedDataPath", buildParams.DerivedDataDir)
+	args = append(args, "build", "-destination", buildParams.DeviceDestination)
 
 	log.LogInfo("Building the project...")
 
@@ -211,7 +211,7 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, testR
 	//  in case the compilation takes a long time.
 	// Related Radar link: https://openradar.appspot.com/22413115
 	// Demonstration project: https://github.com/bitrise-io/simulator-launch-timeout-includes-build-time
-	args = append(args, "build", "test", "-destination", buildParams.DeviceDestination, "-derivedDataPath", buildParams.DerivedDataDir)
+	args = append(args, "build", "test", "-destination", buildParams.DeviceDestination)
 
 	if buildTestParams.GenerateCodeCoverage {
 		args = append(args, "GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES")
@@ -268,7 +268,7 @@ func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) error
 
 		rawXcodebuildOutputDir := filepath.Dir(outputFilePath)
 		rawXcodebuildOutputName := filepath.Base(outputFilePath)
-		outputFilePath = path.Join(deployDir, "raw-xcodebuild-output.zip")
+		outputFilePath = filepath.Join(deployDir, "raw-xcodebuild-output.zip")
 		if err := cmd.Zip(rawXcodebuildOutputDir, rawXcodebuildOutputName, outputFilePath); err != nil {
 			return err
 		}
@@ -280,15 +280,47 @@ func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) error
 	return nil
 }
 
-func saveAttachements(deviedDataPath string) error {
+func saveAttachements(projectPath, scheme string) error {
+	projectName := filepath.Base(projectPath)
+	projectExt := filepath.Ext(projectName)
+	projectName = strings.TrimSuffix(projectName, projectExt)
+
+	userHome := pathutil.UserHomeDir()
+	deviedDataDir := filepath.Join(userHome, "Library/Developer/Xcode/DerivedData")
+	projectDerivedDataDirPattern := filepath.Join(deviedDataDir, fmt.Sprintf("%s-*", projectName))
+	projectDerivedDataDirs, err := filepath.Glob(projectDerivedDataDirPattern)
+	if err != nil {
+		return err
+	}
+
+	if len(projectDerivedDataDirs) > 1 {
+		return fmt.Errorf("more than 1 project derived data dir found: %v, with pattern: %s", projectDerivedDataDirs, projectDerivedDataDirPattern)
+	} else if len(projectDerivedDataDirs) == 0 {
+		return fmt.Errorf("no project derived data dir found with pattern: %s", projectDerivedDataDirPattern)
+	}
+	projectDerivedDataDir := projectDerivedDataDirs[0]
+
+	testLogDir := filepath.Join(projectDerivedDataDir, "Logs", "Test")
+	if exist, err := pathutil.IsDirExists(testLogDir); err != nil {
+		return err
+	} else if !exist {
+		return fmt.Errorf("no test logs found at: %s", projectDerivedDataDir)
+	}
+
+	testLogAttachmentsDir := filepath.Join(testLogDir, "Attachments")
+	if exist, err := pathutil.IsDirExists(testLogAttachmentsDir); err != nil {
+		return err
+	} else if !exist {
+		return fmt.Errorf("no test attachments found at: %s", testLogAttachmentsDir)
+	}
+
 	deployDir := os.Getenv("BITRISE_DEPLOY_DIR")
 	if deployDir == "" {
 		return errors.New("No BITRISE_DEPLOY_DIR found")
 	}
 
-	zipedTestsDerivedDataPath := path.Join(deployDir, "attachments.zip")
-	testsDerivedDataDir := path.Join(deviedDataPath, "Logs", "Test")
-	if err := cmd.Zip(testsDerivedDataDir, "Attachments", zipedTestsDerivedDataPath); err != nil {
+	zipedTestsDerivedDataPath := filepath.Join(deployDir, fmt.Sprintf("%s-xc-test-Attachments.zip", scheme))
+	if err := cmd.Zip(testLogDir, "Attachments", zipedTestsDerivedDataPath); err != nil {
 		return err
 	}
 
@@ -361,14 +393,6 @@ func main() {
 
 	log.LogDetails("* device_destination: %s", deviceDestination)
 
-	// Derived Data Directory
-	derivedDataDir, err := ioutil.TempDir("", "BITRISE-DERIVED-DATA")
-	if err != nil {
-		log.LogFail("Failed to create derived data path, error: %s\n", err)
-	}
-
-	log.LogDetails("* derived_data_dir: %s", derivedDataDir)
-
 	// Output tools versions
 	xcodebuildVersion, err := xcodeutil.GetXcodeVersion()
 	if err != nil {
@@ -397,7 +421,6 @@ func main() {
 		ProjectPath:       projectPath,
 		Scheme:            scheme,
 		DeviceDestination: deviceDestination,
-		DerivedDataDir:    derivedDataDir,
 		CleanBuild:        cleanBuild,
 	}
 
@@ -439,8 +462,8 @@ func main() {
 	}
 
 	if exportUITestArtifacts {
-		if err := saveAttachements(derivedDataDir); err != nil {
-			log.LogWarn("Failed to save the screenshots, error %s", err)
+		if err := saveAttachements(projectPath, scheme); err != nil {
+			log.LogWarn("Failed to export UI test artifacts, error %s", err)
 		}
 	}
 

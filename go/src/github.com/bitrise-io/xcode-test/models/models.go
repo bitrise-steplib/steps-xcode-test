@@ -12,7 +12,6 @@ type XcodeBuildParamsModel struct {
 	ProjectPath       string
 	Scheme            string
 	DeviceDestination string
-	DerivedDataDir    string
 	CleanBuild        bool
 }
 

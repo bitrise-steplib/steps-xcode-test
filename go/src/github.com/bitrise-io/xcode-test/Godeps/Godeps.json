@@ -6,6 +6,10 @@
 	],
 	"Deps": [
 		{
+			"ImportPath": "github.com/bitrise-io/go-utils/pathutil",
+			"Rev": "873d35c6b6e0db94f60666a966b732b1ff6c6aa2"
+		},
+		{
 			"ImportPath": "github.com/hashicorp/go-version",
 			"Rev": "2e7f5ea8e27bb3fdf9baa0881d16757ac4637332"
 		},
