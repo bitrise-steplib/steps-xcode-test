@@ -107,6 +107,12 @@ inputs:
   - generate_code_coverage_files: "no"
     opts:
       title: "Generate code coverage files?"
+      description: |-
+        In case of `generate_code_coverage_files: "yes"`
+        `xcodebuild` gets two additional flags:
+
+        * GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES
+        * GCC_GENERATE_TEST_COVERAGE_FILES=YES
       value_options:
         - "yes"
         - "no"
@@ -155,10 +161,10 @@ inputs:
           -derivedDataPath DERIVED_DATA_PATH`
 
         In case of `generate_code_coverage_files: "yes"`
-        `xcodebuild` becomes two additional flags:
+        `xcodebuild` gets two additional flags:
 
-          * GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES
-          * GCC_GENERATE_TEST_COVERAGE_FILES=YES
+        * GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES
+        * GCC_GENERATE_TEST_COVERAGE_FILES=YES
 
         If you want to add more options, list that separated by space character.
         Example: `-xcconfig PATH -verbose`
