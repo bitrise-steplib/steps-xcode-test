@@ -205,6 +205,9 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, testR
 	buildParams := buildTestParams.BuildParams
 
 	args := []string{buildParams.Action, buildParams.ProjectPath, "-scheme", buildParams.Scheme}
+	if buildTestParams.CleanBuild {
+		args = append(args, "clean")
+	}
 	// the 'build' argument is required *before* the 'test' arg, to prevent
 	//  the Xcode bug described in the README, which causes:
 	// 'iPhoneSimulator: Timed out waiting 120 seconds for simulator to boot, current state is 1.'
@@ -348,6 +351,7 @@ func main() {
 	outputTool := os.Getenv("output_tool")
 	exportUITestArtifactsStr := os.Getenv("export_uitest_artifacts")
 	testOptions := os.Getenv("xcodebuild_test_options")
+	isSingleBuild := os.Getenv("single_build")
 
 	log.LogConfigs(
 		projectPath,
@@ -360,7 +364,8 @@ func main() {
 		generateCodeCoverageFiles,
 		outputTool,
 		exportUITestArtifactsStr,
-		testOptions)
+		testOptions,
+		isSingleBuild)
 
 	validateRequiredInput("project_path", projectPath)
 	validateRequiredInput("scheme", scheme)
@@ -373,6 +378,7 @@ func main() {
 	cleanBuild := (isCleanBuild == "yes")
 	generateCodeCoverage := (generateCodeCoverageFiles == "yes")
 	exportUITestArtifacts := (exportUITestArtifactsStr == "true")
+	singleBuild := (isSingleBuild == "true")
 
 	fmt.Println()
 
@@ -431,6 +437,10 @@ func main() {
 		GenerateCodeCoverage: generateCodeCoverage,
 	}
 
+	if singleBuild {
+		buildTestParams.CleanBuild = cleanBuild
+	}
+
 	//
 	// Start simulator
 	if simulator.Status == "Shutdown" {
@@ -443,14 +453,16 @@ func main() {
 
 	//
 	// Run build
-	if rawXcodebuildOutput, exitCode, buildErr := runBuild(buildParams, outputTool); buildErr != nil {
-		if err := saveRawOutputToLogFile(rawXcodebuildOutput, false); err != nil {
-			log.LogWarn("Failed to save the Raw Output, err: %s", err)
-		}
+	if !singleBuild {
+		if rawXcodebuildOutput, exitCode, buildErr := runBuild(buildParams, outputTool); buildErr != nil {
+			if err := saveRawOutputToLogFile(rawXcodebuildOutput, false); err != nil {
+				log.LogWarn("Failed to save the Raw Output, err: %s", err)
+			}
 
-		log.LogWarn("xcode build exit code: %d", exitCode)
-		log.LogWarn("xcode build log:\n%s", rawXcodebuildOutput)
-		log.LogFail("xcode build failed with error: %s", buildErr)
+			log.LogWarn("xcode build exit code: %d", exitCode)
+			log.LogWarn("xcode build log:\n%s", rawXcodebuildOutput)
+			log.LogFail("xcode build failed with error: %s", buildErr)
+		}
 	}
 
 	//

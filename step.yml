@@ -168,6 +168,18 @@ inputs:
 
         If you want to add more options, list that separated by space character.
         Example: `-xcconfig PATH -verbose`
+  - single_build: "true"
+    opts:
+      title: "Run xcodebuild test only"
+      description: |-
+        If `single_build: false` step runs `xcodebuild OPTIONS build OPTIONS` befor the test,
+        to generate the project derived datas. After that comes `xcodebuild OPTIONS build test OPTIONS`,
+        which command's log is presented in the setp's log.
+
+        If `single_build: true`, then step calls only `xcodebuild OPTIONS build test OPTIONS`.
+      value_options:
+      - "true"
+      - "false"
 outputs:
 - BITRISE_XCODE_TEST_RESULT:
   opts:

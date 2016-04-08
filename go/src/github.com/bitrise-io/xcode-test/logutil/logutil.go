@@ -55,12 +55,14 @@ func LogConfigs(
 	generateCodeCoverageFiles,
 	outputTool,
 	exportUITestArtifactsStr,
-	testOptions string) {
+	testOptions,
+	singleBuild string) {
 	LogInfo("Configs:")
 	LogDetails("* project_path: %s", projectPath)
 	LogDetails("* scheme: %s", scheme)
 	LogDetails("* is_clean_build: %v", isCleanBuild)
 	LogDetails("* xcodebuild_test_options: %s", testOptions)
+	LogDetails("* single_build: %s", singleBuild)
 	fmt.Println()
 	LogDetails("* simulator_platform: %s", simulatorPlatform)
 	LogDetails("* simulator_device: %s", simulatorDevice)
