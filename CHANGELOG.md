@@ -1,6 +1,14 @@
-## Changelog (Current version: 1.13.5)
+## Changelog (Current version: 1.13.6)
 
 -----------------
+
+### 1.13.6 (2016 Apr 08)
+
+* [b18f937] prepare for relase
+* [329002c] Merge pull request #44 from bitrise-io/step_yml_updates
+* [5f065f2] single build
+* [d18ad7d] step.yml updates
+* [440e737] bump version
 
 ### 1.13.5 (2016 Apr 04)
 
@@ -186,4 +194,4 @@
 
 -----------------
 
-Updated: 2016 Apr 04
+Updated: 2016 Apr 08
