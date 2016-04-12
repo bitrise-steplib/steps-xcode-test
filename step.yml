@@ -23,11 +23,6 @@ deps:
   - name: xcode
   brew:
   - name: go
-dependencies:
-  - manager: _
-    name: xcode
-  - manager: brew
-    name: go
 inputs:
   - workdir: $BITRISE_SOURCE_DIR
     opts:
