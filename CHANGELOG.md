@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.13.6)
+## Changelog (Current version: 1.13.7)
 
 -----------------
+
+### 1.13.7 (2016 Apr 12)
+
+* [5ee62fb] prepare for release
+* [4ee45ae] Merge pull request #46 from tiagomartinho/master
+* [2712e31] remove duplicated and deprecated dependencies step
 
 ### 1.13.6 (2016 Apr 08)
 
@@ -194,4 +200,4 @@
 
 -----------------
 
-Updated: 2016 Apr 08
+Updated: 2016 Apr 12
