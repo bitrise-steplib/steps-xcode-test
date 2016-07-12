@@ -167,7 +167,7 @@ inputs:
     opts:
       title: "Run xcodebuild test only"
       description: |-
-        If `single_build: false` step runs `xcodebuild OPTIONS build OPTIONS` befor the test,
+        If `single_build: false` step runs `xcodebuild OPTIONS build OPTIONS` before the test,
         to generate the project derived datas. After that comes `xcodebuild OPTIONS build test OPTIONS`,
         which command's log is presented in the setp's log.
 
