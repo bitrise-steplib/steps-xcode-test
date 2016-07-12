@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.13.7)
+## Changelog (Current version: 1.13.8)
 
 -----------------
+
+### 1.13.8 (2016 Jul 12)
+
+* [929a4de] prepare for 1.13.8
+* [2372437] Merge pull request #48 from bitrise-io/viktorbenei-patch-1
+* [165f06f] typo
 
 ### 1.13.7 (2016 Apr 12)
 
@@ -200,4 +206,4 @@
 
 -----------------
 
-Updated: 2016 Apr 12
+Updated: 2016 Jul 12
