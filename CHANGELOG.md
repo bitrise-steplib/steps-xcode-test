@@ -1,6 +1,16 @@
-## Changelog (Current version: 1.13.8)
+## Changelog (Current version: 1.14.0)
 
 -----------------
+
+### 1.14.0 (2016 Jul 26)
+
+* [ec8fde5] prep for v1.14.0
+* [182aff8] Merge pull request #49 from bitrise-io/feature/multi-xcode-bug-fix
+* [2a4723e] BootSimulator - multi xcode bug fix
+* [c1c8e2f] run xcodebuild with "NSUnbufferedIO=YES" env
+* [8cba6c9] GOPATH for test workflow
+* [a39ef2f] bitrise.yml - releaseman revision
+* [bdbcdeb] step.yml revision
 
 ### 1.13.8 (2016 Jul 12)
 
@@ -206,4 +216,4 @@
 
 -----------------
 
-Updated: 2016 Jul 12
+Updated: 2016 Jul 26
