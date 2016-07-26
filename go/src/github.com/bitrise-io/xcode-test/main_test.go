@@ -4,7 +4,6 @@ import (
 	"io/ioutil"
 	"testing"
 
-	cmd "github.com/bitrise-io/xcode-test/command"
 	shellquote "github.com/kballard/go-shellquote"
 )
 
@@ -170,27 +169,6 @@ func TestIsStringFoundInOutput_timeOutMessageUITest(t *testing.T) {
 			sampleOKBuildLog,
 		} {
 			testTimeOutMessageUITestWith(t, anOutStr, false)
-		}
-	}
-}
-
-func Test_printableCommandArgs(t *testing.T) {
-	t.Log("Prinatble command test")
-	{
-		orgCmdArgs := []string{
-			"xcodebuild", "-project", "MyProj.xcodeproj", "-scheme", "MyScheme",
-			"build", "test",
-			"-destination", "platform=iOS Simulator,name=iPhone 6,OS=latest",
-			"-sdk", "iphonesimulator",
-		}
-		resStr := cmd.PrintableCommandArgs(orgCmdArgs)
-		expectedStr := `xcodebuild "-project" "MyProj.xcodeproj" "-scheme" "MyScheme" "build" "test" "-destination" "platform=iOS Simulator,name=iPhone 6,OS=latest" "-sdk" "iphonesimulator"`
-
-		if resStr != expectedStr {
-			t.Log("printableCommandArgs failed to generate the expected string!")
-			t.Logf(" -> expectedStr: %s", expectedStr)
-			t.Logf(" -> resStr: %s", resStr)
-			t.Fatalf("Expected string does not match the generated string. Original args: (%#v)", orgCmdArgs)
 		}
 	}
 }

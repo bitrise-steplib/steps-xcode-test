@@ -12,6 +12,11 @@ import (
 
 // PrintableCommandArgs ...
 func PrintableCommandArgs(fullCommandArgs []string) string {
+	return PrintableCommandArgsWithEnvs(fullCommandArgs, []string{})
+}
+
+// PrintableCommandArgsWithEnvs ...
+func PrintableCommandArgsWithEnvs(fullCommandArgs []string, envs []string) string {
 	cmdArgsDecorated := []string{}
 	for idx, anArg := range fullCommandArgs {
 		quotedArg := strconv.Quote(anArg)
@@ -21,7 +26,17 @@ func PrintableCommandArgs(fullCommandArgs []string) string {
 		cmdArgsDecorated = append(cmdArgsDecorated, quotedArg)
 	}
 
-	return strings.Join(cmdArgsDecorated, " ")
+	fullCmdArgs := cmdArgsDecorated
+	if len(envs) > 0 {
+		fullCmdArgs = []string{"env"}
+		for _, anArg := range envs {
+			quotedArg := strconv.Quote(anArg)
+			fullCmdArgs = append(fullCmdArgs, quotedArg)
+		}
+		fullCmdArgs = append(fullCmdArgs, cmdArgsDecorated...)
+	}
+
+	return strings.Join(fullCmdArgs, " ")
 }
 
 // CreateBufferedWriter ...
