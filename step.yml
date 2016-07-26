@@ -1,10 +1,12 @@
-title: Xcode Test
+title: Xcode Test for iOS
 summary: |-
+  Runs Xcode's `test` action, on an iOS project.
+description: |-
+  Runs Xcode's `test` action, on an iOS project.
+
   Write the tests and run them on every build just to make sure those tiny
   code goblins didn't put something in the code that shouldn't be there while
   you were at the daily Scrum meeting.
-description: |-
-  Runs Xcode's `test` action.
 website: https://github.com/bitrise-io/steps-xcode-test
 source_code_url: https://github.com/bitrise-io/steps-xcode-test
 support_url: https://github.com/bitrise-io/steps-xcode-test/issues
