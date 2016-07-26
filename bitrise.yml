@@ -14,6 +14,13 @@ workflows:
   test:
     steps:
     - script:
+        title: "GOPATH"
+        inputs:
+        - content: |
+            #!/bin/bash
+            set -ex
+            envman add --key GOPATH --value "$(pwd)/go"
+    - script:
         title: "Go Test"
         inputs:
         - working_dir: ./go/src/github.com/bitrise-io/xcode-test
