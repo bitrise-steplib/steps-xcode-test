@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -214,14 +215,26 @@ func GetSimulator(simulatorPlatform, simulatorDevice, simulatorOsVersion string)
 	return models.SimInfoModel{}, fmt.Errorf("%s - %s - %s not found", simulatorPlatform, simulatorDevice, simulatorOsVersion)
 }
 
+func getXcodeDeveloperDirPath() (string, error) {
+	cmd := exec.Command("xcode-select", "--print-path")
+	outBytes, err := cmd.CombinedOutput()
+	outStr := string(outBytes)
+	return strings.TrimSpace(outStr), err
+}
+
 // BootSimulator ...
 func BootSimulator(simulator models.SimInfoModel, xcodebuildVersion models.XcodebuildVersionModel) error {
 	simulatorApp := "Simulator"
 	if xcodebuildVersion.MajorVersion == 6 {
 		simulatorApp = "iOS Simulator"
 	}
+	xcodeDevDirPth, err := getXcodeDeveloperDirPath()
+	if err != nil {
+		return fmt.Errorf("Failed to get Xcode Developer Directory - most likely Xcode.app is not installed")
+	}
+	simulatorAppFullPath := filepath.Join(xcodeDevDirPth, "Applications", simulatorApp+".app")
 
-	openCmd := exec.Command("open", "-a", simulatorApp, "--args", "-CurrentDeviceUDID", simulator.SimID)
+	openCmd := exec.Command("open", simulatorAppFullPath, "--args", "-CurrentDeviceUDID", simulator.SimID)
 
 	log.LogDetails("$ %s", cmd.PrintableCommandArgs(openCmd.Args))
 

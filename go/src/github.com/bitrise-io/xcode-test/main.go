@@ -32,6 +32,8 @@ const timeOutMessageIPhoneSimulator = "iPhoneSimulator: Timed out waiting"
 //  with Xcode Command Line `xcodebuild`.
 const timeOutMessageUITest = "Terminating app due to uncaught exception '_XCTestCaseInterruptionException'"
 
+var xcodeCommandEnvs = []string{"NSUnbufferedIO=YES"}
+
 func validateRequiredInput(key, value string) {
 	if value == "" {
 		log.LogFail("Missing required input: %s", key)
@@ -79,8 +81,9 @@ func runXcodeBuildCmd(useStdOut bool, args ...string) (string, int, error) {
 	buildCmd.Stdin = nil
 	buildCmd.Stdout = outWritter
 	buildCmd.Stderr = outWritter
+	buildCmd.Env = append(os.Environ(), xcodeCommandEnvs...)
 
-	cmdArgsForPrint := cmd.PrintableCommandArgs(buildCmd.Args)
+	cmdArgsForPrint := cmd.PrintableCommandArgsWithEnvs(buildCmd.Args, xcodeCommandEnvs)
 
 	log.LogDetails("$ %s", cmdArgsForPrint)
 
@@ -126,9 +129,11 @@ func runPrettyXcodeBuildCmd(useStdOut bool, testResultsFilePath string, args ...
 	prettyCmd.Stdin = pipeReader
 	prettyCmd.Stdout = prettyOutWriter
 	prettyCmd.Stderr = prettyOutWriter
+	//
+	buildCmd.Env = append(os.Environ(), xcodeCommandEnvs...)
 
 	log.LogDetails("$ set -o pipefail && %s | %v",
-		cmd.PrintableCommandArgs(buildCmd.Args),
+		cmd.PrintableCommandArgsWithEnvs(buildCmd.Args, xcodeCommandEnvs),
 		cmd.PrintableCommandArgs(prettyCmd.Args))
 
 	fmt.Println()
