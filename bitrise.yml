@@ -48,6 +48,7 @@ workflows:
         - simulator_device: iPhone 6
         # - simulator_device: Apple TV 1080p
         # - simulator_platform: tvOS Simulator
+        - should_build_before_test: "yes"
         - xcodebuild_test_options: -verbose
     - script:
         title: Output test

@@ -177,6 +177,13 @@ inputs:
       value_options:
       - "true"
       - "false"
+  - should_build_before_test: "yes"
+    opts:
+      title: "Explicitly perform a build before testing? (Should be yes when experiencing unexplainable timeouts during testing)"
+      value_options:
+        - "yes"
+        - "no"
+      is_required: true
 outputs:
 - BITRISE_XCODE_TEST_RESULT:
   opts:
