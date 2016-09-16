@@ -198,6 +198,7 @@ inputs:
     opts:
       title: "(Experimental) Rerun test, when it fails?"
       description: 
+        If `should_retry_test_on_fail: yes` step will retry the test if first attempt failed.
       value_options:
         - "yes"
         - "no"
