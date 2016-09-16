@@ -1,17 +1,18 @@
 {
-	"ImportPath": "github.com/bitrise-io/xcode-test",
-	"GoVersion": "go1.6",
+	"ImportPath": "github.com/bitrise-io/steps-xcode-test",
+	"GoVersion": "go1.7",
+	"GodepVersion": "v74",
 	"Packages": [
 		"./..."
 	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/pathutil",
-			"Rev": "873d35c6b6e0db94f60666a966b732b1ff6c6aa2"
+			"Rev": "5422c5893198ce5ca5d872179ebacaafa2013bc6"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/go-version",
-			"Rev": "2e7f5ea8e27bb3fdf9baa0881d16757ac4637332"
+			"Rev": "0181db47023708a38c2d20d2fe25a5fa034d5743"
 		},
 		{
 			"ImportPath": "github.com/kballard/go-shellquote",

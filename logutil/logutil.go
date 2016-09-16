@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	cmd "github.com/bitrise-io/xcode-test/command"
+	cmd "github.com/bitrise-io/steps-xcode-test/command"
 )
 
 // LogFail ...
