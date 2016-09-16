@@ -324,28 +324,41 @@ func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (stri
 	return runXcodeBuildCmd(false, args...)
 }
 
-func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, testResultsFilePath string, isRetryOnTimeout bool) (string, int, error) {
+func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, testResultsFilePath string, isRetryOnTimeout, isRetryOnFail bool) (string, int, error) {
 	handleTestError := func(fullOutputStr string, exitCode int, testError error) (string, int, error) {
-		// fmt.Printf("\n\nfullOutputStr:\n\n%s", fullOutputStr)
+		//
+		// Retry on timeout
 		if isStringFoundInOutput(timeOutMessageIPhoneSimulator, fullOutputStr) {
 			log.Info("Simulator Timeout detected")
 			if isRetryOnTimeout {
 				log.Detail("isRetryOnTimeout=true - retrying...")
-				return runTest(buildTestParams, outputTool, testResultsFilePath, false)
+				return runTest(buildTestParams, outputTool, testResultsFilePath, false, false)
 			}
 			log.Warn("isRetryOnTimeout=false, no more retry, stopping the test!")
 			return fullOutputStr, exitCode, testError
 		}
 
+		//
+		// Retry on timeout
 		if isStringFoundInOutput(timeOutMessageUITest, fullOutputStr) {
 			log.Info("Simulator Timeout detected: isUITestTimeoutFound")
 			if isRetryOnTimeout {
 				log.Detail("isRetryOnTimeout=true - retrying...")
-				return runTest(buildTestParams, outputTool, testResultsFilePath, false)
+				return runTest(buildTestParams, outputTool, testResultsFilePath, false, false)
 			}
 			log.Warn("isRetryOnTimeout=false, no more retry, stopping the test!")
 			return fullOutputStr, exitCode, testError
 		}
+
+		//
+		// Retry on fail
+		if isRetryOnFail {
+			log.Info("Test run failed")
+			log.Detail("isRetryOnFail=true - retrying...")
+			return runTest(buildTestParams, outputTool, testResultsFilePath, false, false)
+		}
+
+		log.Warn("isRetryOnFail=false, no more retry, stopping the test!")
 
 		return fullOutputStr, exitCode, testError
 	}
@@ -509,6 +522,7 @@ func main() {
 	exportUITestArtifacts := (configs.ExportUITestArtifacts == "true")
 	singleBuild := (configs.IsSingleBuild == "true")
 	buildBeforeTest := (configs.ShouldBuildBeforeTest == "yes")
+	retryOnFail := (configs.ShouldRetryTestOnFail == "yes")
 
 	// Project-or-Workspace flag
 	action := ""
@@ -617,7 +631,7 @@ func main() {
 
 	//
 	// Run test
-	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, configs.OutputTool, configs.TestResultsFilePath, true)
+	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, configs.OutputTool, configs.TestResultsFilePath, true, retryOnFail)
 
 	if err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil)); err != nil {
 		log.Warn("Failed to save the Raw Output, error %s", err)
