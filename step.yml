@@ -35,7 +35,6 @@ inputs:
       description: |
         Working directory of the step.
         You can leave it empty to don't change it.
-      is_required: false
   - project_path: $BITRISE_PROJECT_PATH
     opts:
       title: "Project (or Workspace) path"
@@ -96,7 +95,7 @@ inputs:
 
         * 8.4
         * latest
-      is_required: false
+      is_required: true
   - is_clean_build: "no"
     opts:
       title: "Do a clean Xcode build before testing?"
@@ -191,6 +190,14 @@ inputs:
         Calling an explicit build before the test results in the code being compiled twice, thus creating an overhead.
 
         Unless you are sure that your configuration is not prone to this error, it is recommended to leave this option turned on.
+      value_options:
+        - "yes"
+        - "no"
+      is_required: true
+  - should_retry_test_on_fail: "no"
+    opts:
+      title: "(Experimental) Rerun test, when it fails?"
+      description: 
       value_options:
         - "yes"
         - "no"
