@@ -329,36 +329,36 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, testR
 		//
 		// Retry on timeout
 		if isStringFoundInOutput(timeOutMessageIPhoneSimulator, fullOutputStr) {
-			log.Info("Simulator Timeout detected")
+			log.Warn("Simulator Timeout detected")
 			if isRetryOnTimeout {
 				log.Detail("isRetryOnTimeout=true - retrying...")
 				return runTest(buildTestParams, outputTool, testResultsFilePath, false, false)
 			}
-			log.Warn("isRetryOnTimeout=false, no more retry, stopping the test!")
+			log.Error("isRetryOnTimeout=false, no more retry, stopping the test!")
 			return fullOutputStr, exitCode, testError
 		}
 
 		//
 		// Retry on timeout
 		if isStringFoundInOutput(timeOutMessageUITest, fullOutputStr) {
-			log.Info("Simulator Timeout detected: isUITestTimeoutFound")
+			log.Warn("Simulator Timeout detected: isUITestTimeoutFound")
 			if isRetryOnTimeout {
 				log.Detail("isRetryOnTimeout=true - retrying...")
 				return runTest(buildTestParams, outputTool, testResultsFilePath, false, false)
 			}
-			log.Warn("isRetryOnTimeout=false, no more retry, stopping the test!")
+			log.Error("isRetryOnTimeout=false, no more retry, stopping the test!")
 			return fullOutputStr, exitCode, testError
 		}
 
 		//
 		// Retry on fail
 		if isRetryOnFail {
-			log.Info("Test run failed")
+			log.Warn("Test run failed")
 			log.Detail("isRetryOnFail=true - retrying...")
 			return runTest(buildTestParams, outputTool, testResultsFilePath, false, false)
 		}
 
-		log.Warn("isRetryOnFail=false, no more retry, stopping the test!")
+		log.Error("isRetryOnFail=false, no more retry, stopping the test!")
 
 		return fullOutputStr, exitCode, testError
 	}
