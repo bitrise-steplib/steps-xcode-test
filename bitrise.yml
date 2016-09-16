@@ -3,6 +3,8 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
   envs:
+  - RELEASE_VERSION: 1.14.1
+
   # define these in your .bitrise.secrets.yml
   - PROJECT_WORKDIR: $PROJECT_WORKDIR
   - BITRISE_PROJECT_PATH: $BITRISE_PROJECT_PATH
@@ -66,20 +68,7 @@ workflows:
   # ----------------------------------------------------------------
   # --- workflows to create Release
   create-release:
-    steps:
-    - script:
-        title:
-        inputs:
-        - content: |
-            #!/bin/bash
-            set -ex
-            go get -u github.com/bitrise-tools/releaseman
-            export CI=true
-            releaseman create --bump-version patch
-
-  create-release-version:
     envs:
-    - RELEASE_VERSION: 1.14.0
     steps:
     - script:
         title:
@@ -98,7 +87,7 @@ workflows:
       # if you want to share this step into a StepLib
       - MY_STEPLIB_REPO_FORK_GIT_URL: $MY_STEPLIB_REPO_FORK_GIT_URL
       - STEP_ID_IN_STEPLIB: xcode-test
-      - STEP_GIT_VERION_TAG_TO_SHARE: 1.14.0
+      - STEP_GIT_VERION_TAG_TO_SHARE: $RELEASE_VERSION
       - STEP_GIT_CLONE_URL: https://github.com/bitrise-io/steps-xcode-test.git
     description: |-
       If this is the first time you try to share a Step you should
