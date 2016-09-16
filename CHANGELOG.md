@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.14.0)
+## Changelog (Current version: 1.14.1)
 
 -----------------
+
+### 1.14.1 (2016 Sep 16)
+
+* [3ad45ff] prepare for 1.14.1
+* [11d8908] Offer opt-out for redundant build before performing test (#56)
 
 ### 1.14.0 (2016 Jul 26)
 
@@ -216,4 +221,4 @@
 
 -----------------
 
-Updated: 2016 Jul 26
+Updated: 2016 Sep 16
