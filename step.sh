@@ -2,7 +2,7 @@
 set -ex
 THIS_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Swicth to work dir
+# Switching to working directory
 if [ ! -z "${workdir}" ] ; then
 	echo
 	echo "=> Switching to working directory: ${workdir}"
