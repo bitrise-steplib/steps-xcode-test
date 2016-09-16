@@ -25,6 +25,9 @@ deps:
   - name: xcode
   brew:
   - name: go
+toolkit:
+  go:
+    package_name: github.com/bitrise-io/steps-xcode-test
 inputs:
   - workdir: $BITRISE_SOURCE_DIR
     opts:

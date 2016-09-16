@@ -14,10 +14,10 @@ import (
 	"syscall"
 
 	"github.com/bitrise-io/go-utils/pathutil"
-	cmd "github.com/bitrise-io/xcode-test/command"
-	log "github.com/bitrise-io/xcode-test/logutil"
-	"github.com/bitrise-io/xcode-test/models"
-	"github.com/bitrise-io/xcode-test/xcodeutil"
+	cmd "github.com/bitrise-io/steps-xcode-test/command"
+	log "github.com/bitrise-io/steps-xcode-test/logutil"
+	"github.com/bitrise-io/steps-xcode-test/models"
+	"github.com/bitrise-io/steps-xcode-test/xcodeutil"
 	shellquote "github.com/kballard/go-shellquote"
 )
 

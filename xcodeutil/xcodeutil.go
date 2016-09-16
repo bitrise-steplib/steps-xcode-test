@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"strings"
 
-	cmd "github.com/bitrise-io/xcode-test/command"
-	log "github.com/bitrise-io/xcode-test/logutil"
-	"github.com/bitrise-io/xcode-test/models"
+	cmd "github.com/bitrise-io/steps-xcode-test/command"
+	log "github.com/bitrise-io/steps-xcode-test/logutil"
+	"github.com/bitrise-io/steps-xcode-test/models"
 	ver "github.com/hashicorp/go-version"
 )
 
