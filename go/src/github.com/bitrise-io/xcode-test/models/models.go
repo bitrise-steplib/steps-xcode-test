@@ -20,6 +20,7 @@ type XcodeBuildTestParamsModel struct {
 	BuildParams XcodeBuildParamsModel
 
 	CleanBuild           bool
+	BuildBeforeTest      bool
 	GenerateCodeCoverage bool
 	AdditionalOptions    string
 }

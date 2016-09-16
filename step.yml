@@ -177,6 +177,21 @@ inputs:
       value_options:
       - "true"
       - "false"
+  - should_build_before_test: "yes"
+    opts:
+      title: "(Experimental) Explicitly perform a build before testing?"
+      description: |-
+        Previous Xcode versions and configurations may throw the error `iPhoneSimulator: Timed out waiting 120 seconds for simulator to boot, current state is 1.`
+        when the compilation before performing the tests takes too long.
+
+        This is fixed by running `xcodebuild OPTIONS build test OPTIONS` instead of `xcodebuild OPTIONS test OPTIONS`.
+        Calling an explicit build before the test results in the code being compiled twice, thus creating an overhead.
+
+        Unless you are sure that your configuration is not prone to this error, it is recommended to leave this option turned on.
+      value_options:
+        - "yes"
+        - "no"
+      is_required: true
 outputs:
 - BITRISE_XCODE_TEST_RESULT:
   opts:

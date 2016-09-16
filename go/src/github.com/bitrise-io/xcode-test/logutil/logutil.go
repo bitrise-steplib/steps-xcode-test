@@ -56,13 +56,15 @@ func LogConfigs(
 	outputTool,
 	exportUITestArtifactsStr,
 	testOptions,
-	singleBuild string) {
+	singleBuild,
+	shouldBuildBeforeTest string) {
 	LogInfo("Configs:")
 	LogDetails("* project_path: %s", projectPath)
 	LogDetails("* scheme: %s", scheme)
 	LogDetails("* is_clean_build: %v", isCleanBuild)
 	LogDetails("* xcodebuild_test_options: %s", testOptions)
 	LogDetails("* single_build: %s", singleBuild)
+	LogDetails("* should_build_before_test: %s", shouldBuildBeforeTest)
 	fmt.Println()
 	LogDetails("* simulator_platform: %s", simulatorPlatform)
 	LogDetails("* simulator_device: %s", simulatorDevice)

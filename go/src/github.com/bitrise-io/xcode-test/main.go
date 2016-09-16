@@ -219,7 +219,15 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, testR
 	//  in case the compilation takes a long time.
 	// Related Radar link: https://openradar.appspot.com/22413115
 	// Demonstration project: https://github.com/bitrise-io/simulator-launch-timeout-includes-build-time
-	args = append(args, "build", "test", "-destination", buildParams.DeviceDestination)
+
+	// for builds < 120 seconds or fixed Xcode versions, one should
+	// have the possibility of opting out, because the explicit build arg
+	// leads the project to be compiled twice and increase the duration
+	// Related issue link: https://github.com/bitrise-io/steps-xcode-test/issues/55
+	if buildTestParams.BuildBeforeTest {
+		args = append(args, "build")
+	}
+	args = append(args, "test", "-destination", buildParams.DeviceDestination)
 
 	if buildTestParams.GenerateCodeCoverage {
 		args = append(args, "GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES")
@@ -357,6 +365,7 @@ func main() {
 	exportUITestArtifactsStr := os.Getenv("export_uitest_artifacts")
 	testOptions := os.Getenv("xcodebuild_test_options")
 	isSingleBuild := os.Getenv("single_build")
+	shouldBuildBeforeTest := os.Getenv("should_build_before_test")
 
 	log.LogConfigs(
 		projectPath,
@@ -370,7 +379,8 @@ func main() {
 		outputTool,
 		exportUITestArtifactsStr,
 		testOptions,
-		isSingleBuild)
+		isSingleBuild,
+		shouldBuildBeforeTest)
 
 	validateRequiredInput("project_path", projectPath)
 	validateRequiredInput("scheme", scheme)
@@ -384,6 +394,7 @@ func main() {
 	generateCodeCoverage := (generateCodeCoverageFiles == "yes")
 	exportUITestArtifacts := (exportUITestArtifactsStr == "true")
 	singleBuild := (isSingleBuild == "true")
+	buildBeforeTest := (shouldBuildBeforeTest == "yes")
 
 	fmt.Println()
 
@@ -438,6 +449,7 @@ func main() {
 	buildTestParams := models.XcodeBuildTestParamsModel{
 		BuildParams: buildParams,
 
+		BuildBeforeTest:      buildBeforeTest,
 		AdditionalOptions:    testOptions,
 		GenerateCodeCoverage: generateCodeCoverage,
 	}
