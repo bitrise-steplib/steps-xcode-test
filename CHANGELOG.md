@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.14.1)
+## Changelog (Current version: 1.15.0)
 
 -----------------
+
+### 1.15.0 (2016 Sep 19)
+
+* [8bf5469] prepare for 1.15.0
+* [0927fbf] Retry (#59)
+* [f13e07a] toolkit support (#58)
 
 ### 1.14.1 (2016 Sep 16)
 
@@ -221,4 +227,4 @@
 
 -----------------
 
-Updated: 2016 Sep 16
+Updated: 2016 Sep 19
