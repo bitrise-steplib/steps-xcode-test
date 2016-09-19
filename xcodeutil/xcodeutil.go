@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/bitrise-io/go-utils/log"
 	cmd "github.com/bitrise-io/steps-xcode-test/command"
-	log "github.com/bitrise-io/steps-xcode-test/logutil"
 	"github.com/bitrise-io/steps-xcode-test/models"
 	ver "github.com/hashicorp/go-version"
 )
@@ -182,7 +182,7 @@ func GetSimulator(simulatorPlatform, simulatorDevice, simulatorOsVersion string)
 	}
 
 	if simulatorDevice == "iPad" {
-		log.LogWarn("Given device (%s) is deprecated, using (iPad 2)...", simulatorDevice)
+		log.Warn("Given device (%s) is deprecated, using (iPad 2)...", simulatorDevice)
 		simulatorDevice = "iPad 2"
 	}
 
@@ -236,7 +236,7 @@ func BootSimulator(simulator models.SimInfoModel, xcodebuildVersion models.Xcode
 
 	openCmd := exec.Command("open", simulatorAppFullPath, "--args", "-CurrentDeviceUDID", simulator.SimID)
 
-	log.LogDetails("$ %s", cmd.PrintableCommandArgs(openCmd.Args))
+	log.Detail("$ %s", cmd.PrintableCommandArgs(openCmd.Args))
 
 	out, err := openCmd.CombinedOutput()
 	outStr := string(out)
