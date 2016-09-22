@@ -417,7 +417,7 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, testR
 }
 
 func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) error {
-	tmpDir, err := pathutil.NormalizedOSTempDirPath("xcodebuild")
+	tmpDir, err := pathutil.NormalizedOSTempDirPath("xcodebuild-output")
 	if err != nil {
 		return fmt.Errorf("Failed to create temp dir, error: %s", err)
 	}
