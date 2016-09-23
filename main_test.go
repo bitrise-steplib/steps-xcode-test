@@ -173,6 +173,48 @@ func TestIsStringFoundInOutput_timeOutMessageUITest(t *testing.T) {
 	}
 }
 
+func TestIsStringFoundInOutput_earlyUnexpectedExit(t *testing.T) {
+	// load sample logs 1
+	sampleUITestEarlyUnexpectedExit1, err := loadFileContent("./_samples/xcodebuild-early-unexpected-exit_1.txt")
+	if err != nil {
+		t.Fatalf("Failed to load error sample log : %s", err)
+	}
+	sampleUITestEarlyUnexpectedExit2, err := loadFileContent("./_samples/xcodebuild-early-unexpected-exit_2.txt")
+	if err != nil {
+		t.Fatalf("Failed to load error sample log : %s", err)
+	}
+	sampleOKBuildLog, err := loadFileContent("./_samples/xcodebuild-ok.txt")
+	if err != nil {
+		t.Fatalf("Failed to load xcodebuild-ok.txt : %s", err)
+	}
+
+	t.Log("Should find")
+	{
+		for _, anOutStr := range []string{
+			"Early unexpected exit, operation never finished bootstrapping - no restart will be attempted",
+			"Test target ios-xcode-8.0UITests encountered an error (Early unexpected exit, operation never finished bootstrapping - no restart will be attempted)",
+			"aaEarly unexpected exit, operation never finished bootstrapping - no restart will be attemptedaa",
+			"aa Early unexpected exit, operation never finished bootstrapping - no restart will be attempted aa",
+			sampleUITestEarlyUnexpectedExit1,
+			sampleUITestEarlyUnexpectedExit2,
+		} {
+			testEarlyUnexpectedExitMessageUITestWith(t, anOutStr, true)
+		}
+	}
+
+	t.Log("Should NOT find")
+	{
+		for _, anOutStr := range []string{
+			"",
+			"Early unexpected exit, operation never finished bootstrapping",
+			"no restart will be attempted",
+			sampleOKBuildLog,
+		} {
+			testEarlyUnexpectedExitMessageUITestWith(t, anOutStr, false)
+		}
+	}
+}
+
 //
 // TESTING UTILITY FUNCS
 
@@ -189,6 +231,10 @@ func testIPhoneSimulatorTimeoutWith(t *testing.T, outputToSearchIn string, isSho
 
 func testTimeOutMessageUITestWith(t *testing.T, outputToSearchIn string, isShouldFind bool) {
 	testIsFoundWith(t, timeOutMessageUITest, outputToSearchIn, isShouldFind)
+}
+
+func testEarlyUnexpectedExitMessageUITestWith(t *testing.T, outputToSearchIn string, isShouldFind bool) {
+	testIsFoundWith(t, earlyUnexpectedExit, outputToSearchIn, isShouldFind)
 }
 
 func loadFileContent(filePth string) (string, error) {
