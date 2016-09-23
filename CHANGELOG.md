@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.15.0)
+## Changelog (Current version: 1.16.0)
 
 -----------------
+
+### 1.16.0 (2016 Sep 23)
+
+* [7483ba9] prepare for 1.16.0
+* [f2ac5fd] automatic retry, typo fix (#61)
+* [ef9f1c1] Xcodebuild output (#60)
 
 ### 1.15.0 (2016 Sep 19)
 
@@ -227,4 +233,4 @@
 
 -----------------
 
-Updated: 2016 Sep 19
+Updated: 2016 Sep 23
