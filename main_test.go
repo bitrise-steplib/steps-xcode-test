@@ -174,7 +174,7 @@ func TestIsStringFoundInOutput_timeOutMessageUITest(t *testing.T) {
 }
 
 func TestIsStringFoundInOutput_earlyUnexpectedExit(t *testing.T) {
-	// load sample logs 1
+	// load sample logs
 	sampleUITestEarlyUnexpectedExit1, err := loadFileContent("./_samples/xcodebuild-early-unexpected-exit_1.txt")
 	if err != nil {
 		t.Fatalf("Failed to load error sample log : %s", err)
