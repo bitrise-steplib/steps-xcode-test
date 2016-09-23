@@ -1,0 +1,25 @@
+2016-09-22 23:42:28.691176 ios-xcode-8.0[1712:8816] subsystem: com.apple.UIKit, category: HIDEventFiltered, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+2016-09-22 23:42:28.695633 ios-xcode-8.0[1712:8816] subsystem: com.apple.UIKit, category: HIDEventIncoming, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+2016-09-22 23:42:28.745993 ios-xcode-8.0[1712:8812] subsystem: com.apple.BaseBoard, category: MachPort, enable_level: 1, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 0, privacy_setting: 0, enable_private_data: 0
+2016-09-22 23:42:28.774634 ios-xcode-8.0[1712:8802] subsystem: com.apple.UIKit, category: StatusBar, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+2016-09-22 23:42:28.887988 ios-xcode-8.0[1712:8802] subsystem: com.apple.BackBoardServices.fence, category: App, enable_level: 1, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 0, privacy_setting: 0, enable_private_data: 0
+Test Suite 'All tests' started at 2016-09-22 23:42:29.146
+Test Suite 'ios-xcode-8.0Tests.xctest' started at 2016-09-22 23:42:29.147
+Test Suite 'ios_xcode_8_0Tests' started at 2016-09-22 23:42:29.147
+Test Case '-[ios_xcode_8_0Tests.ios_xcode_8_0Tests testExample]' started.
+Test Case '-[ios_xcode_8_0Tests.ios_xcode_8_0Tests testExample]' passed (0.001 seconds).
+Test Case '-[ios_xcode_8_0Tests.ios_xcode_8_0Tests testPerformanceExample]' started.
+/Users/vagrant/git/ios-xcode-8.0/ios-xcode-8.0Tests/ios_xcode_8_0Tests.swift:33: Test Case '-[ios_xcode_8_0Tests.ios_xcode_8_0Tests testPerformanceExample]' measured [Time, seconds] average: 0.000, relative standard deviation: 172.743%, values: [0.000004, 0.000001, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000], performanceMetricID:com.apple.XCTPerformanceMetric_WallClockTime, baselineName: "", baselineAverage: , maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.100, maxStandardDeviation: 0.100
+Test Case '-[ios_xcode_8_0Tests.ios_xcode_8_0Tests testPerformanceExample]' passed (0.311 seconds).
+Test Suite 'ios_xcode_8_0Tests' passed at 2016-09-22 23:42:29.460.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.312 (0.313) seconds
+Test Suite 'ios-xcode-8.0Tests.xctest' passed at 2016-09-22 23:42:29.460.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.312 (0.314) seconds
+Test Suite 'All tests' passed at 2016-09-22 23:42:29.461.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.312 (0.315) seconds
+2016-09-22 23:42:29.729 xcodebuild[1321:5913] Error Domain=FBSOpenApplicationServiceErrorDomain Code=1 "The request to open "com.apple.test.ios-xcode-8.0UITests -Runner" failed." UserInfo={NSUnderlyingError=0x7fa9daa90170 {Error Domain=FBSOpenApplicationErrorDomain Code=4 "Application "com.apple.test.ios-xcode-8.0UITests -Runner" is unknown to FrontBoard." UserInfo={BSErrorCodeDescription=NotFound, NSLocalizedFailureReason=Application "com.apple.test.ios-xcode-8.0UITests -Runner" is unknown to FrontBoard.}}, NSLocalizedDescription=The request to open "com.apple.test.ios-xcode-8.0UITests -Runner" failed., NSLocalizedFailureReason=The request was denied by service delegate (SBMainWorkspace) for reason: NotFound ("Application "com.apple.test.ios-xcode-8.0UITests -Runner" is unknown to FrontBoard")., BSErrorCodeDescription=RequestDenied}
+2016-09-22 23:42:29.729 xcodebuild[1321:5913] Error Domain=IDETestOperationsObserverErrorDomain Code=5 "Early unexpected exit, operation never finished bootstrapping - no restart will be attempted" UserInfo={NSLocalizedDescription=Early unexpected exit, operation never finished bootstrapping - no restart will be attempted}
+
+Testing failed:
+	Test target ios-xcode-8.0UITests encountered an error (Early unexpected exit, operation never finished bootstrapping - no restart will be attempted)
+** TEST FAILED **

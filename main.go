@@ -33,6 +33,14 @@ const timeOutMessageIPhoneSimulator = "iPhoneSimulator: Timed out waiting"
 //  with Xcode Command Line `xcodebuild`.
 const timeOutMessageUITest = "Terminating app due to uncaught exception '_XCTestCaseInterruptionException'"
 
+const earlyUnexpectedExit = "Early unexpected exit, operation never finished bootstrapping - no restart will be attempted"
+
+var automaticRetryReasonPatterns = []string{
+	timeOutMessageIPhoneSimulator,
+	timeOutMessageUITest,
+	earlyUnexpectedExit,
+}
+
 var xcodeCommandEnvs = []string{"NSUnbufferedIO=YES"}
 
 // -----------------------
@@ -325,30 +333,20 @@ func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (stri
 	return runXcodeBuildCmd(false, args...)
 }
 
-func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, testResultsFilePath string, isRetryOnTimeout, isRetryOnFail bool) (string, int, error) {
+func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, testResultsFilePath string, isAutomaticRetryOnReason, isRetryOnFail bool) (string, int, error) {
 	handleTestError := func(fullOutputStr string, exitCode int, testError error) (string, int, error) {
 		//
-		// Retry on timeout
-		if isStringFoundInOutput(timeOutMessageIPhoneSimulator, fullOutputStr) {
-			log.Warn("Simulator Timeout detected")
-			if isRetryOnTimeout {
-				log.Detail("isRetryOnTimeout=true - retrying...")
-				return runTest(buildTestParams, outputTool, testResultsFilePath, false, false)
+		// Automatic retry
+		for _, retryReasonPattern := range automaticRetryReasonPatterns {
+			if isStringFoundInOutput(retryReasonPattern, fullOutputStr) {
+				log.Warn("Automatic retry reason found in log: %s", retryReasonPattern)
+				if isAutomaticRetryOnReason {
+					log.Detail("isAutomaticRetryOnReason=true - retrying...")
+					return runTest(buildTestParams, outputTool, testResultsFilePath, false, false)
+				}
+				log.Error("isAutomaticRetryOnReason=false, no more retry, stopping the test!")
+				return fullOutputStr, exitCode, testError
 			}
-			log.Error("isRetryOnTimeout=false, no more retry, stopping the test!")
-			return fullOutputStr, exitCode, testError
-		}
-
-		//
-		// Retry on timeout
-		if isStringFoundInOutput(timeOutMessageUITest, fullOutputStr) {
-			log.Warn("Simulator Timeout detected: isUITestTimeoutFound")
-			if isRetryOnTimeout {
-				log.Detail("isRetryOnTimeout=true - retrying...")
-				return runTest(buildTestParams, outputTool, testResultsFilePath, false, false)
-			}
-			log.Error("isRetryOnTimeout=false, no more retry, stopping the test!")
-			return fullOutputStr, exitCode, testError
 		}
 
 		//
@@ -358,8 +356,6 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, testR
 			log.Detail("isRetryOnFail=true - retrying...")
 			return runTest(buildTestParams, outputTool, testResultsFilePath, false, false)
 		}
-
-		log.Error("isRetryOnFail=false, no more retry, stopping the test!")
 
 		return fullOutputStr, exitCode, testError
 	}
@@ -603,6 +599,8 @@ func main() {
 			}
 			os.Exit(1)
 		}
+
+		fmt.Println()
 	}
 
 	//
