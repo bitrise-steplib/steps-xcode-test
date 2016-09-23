@@ -192,7 +192,7 @@ func GetSimulator(simulatorPlatform, simulatorDevice, simulatorOsVersion string)
 	if simulatorOsVersion == "latest" {
 		latestOsVersion, err := getLatestOsVersion(desiredPlatform, simulatorDevice, allSimIDsGroupedBySimVersion)
 		if err != nil {
-			return models.SimInfoModel{}, fmt.Errorf("failed to fer latest os version, error: %s", err)
+			return models.SimInfoModel{}, fmt.Errorf("failed to get latest os version, error: %s", err)
 		}
 		desiredOsVersion = latestOsVersion
 	} else {
