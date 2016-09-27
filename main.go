@@ -34,11 +34,15 @@ const timeOutMessageIPhoneSimulator = "iPhoneSimulator: Timed out waiting"
 const timeOutMessageUITest = "Terminating app due to uncaught exception '_XCTestCaseInterruptionException'"
 
 const earlyUnexpectedExit = "Early unexpected exit, operation never finished bootstrapping - no restart will be attempted"
+const failureAttemptingToLaunch = "Assertion Failure: <unknown>:0: UI Testing Failure - Failure attempting to launch <XCUIApplicationImpl:"
+const failedToBackgroundTestRunner = `Error Domain=IDETestOperationsObserverErrorDomain Code=12 "Failed to background test runner.`
 
 var automaticRetryReasonPatterns = []string{
 	timeOutMessageIPhoneSimulator,
 	timeOutMessageUITest,
 	earlyUnexpectedExit,
+	failureAttemptingToLaunch,
+	failedToBackgroundTestRunner,
 }
 
 var xcodeCommandEnvs = []string{"NSUnbufferedIO=YES"}

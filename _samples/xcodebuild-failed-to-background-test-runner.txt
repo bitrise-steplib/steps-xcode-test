@@ -1,0 +1,36 @@
+2016-09-26 01:13:25.522373 XCTRunner[1695:8805] subsystem: com.apple.UIKit, category: HIDEventFiltered, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+2016-09-26 01:13:25.524082 XCTRunner[1695:8805] subsystem: com.apple.UIKit, category: HIDEventIncoming, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+2016-09-26 01:13:25.711587 XCTRunner[1695:8789] subsystem: com.apple.BaseBoard, category: MachPort, enable_level: 1, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 0, privacy_setting: 0, enable_private_data: 0
+2016-09-26 01:13:25.736408 XCTRunner[1695:8766] subsystem: com.apple.UIKit, category: StatusBar, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+2016-09-26 01:13:25.775264 XCTRunner[1695:8766] subsystem: com.apple.BackBoardServices.fence, category: App, enable_level: 1, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 0, privacy_setting: 0, enable_private_data: 0
+2016-09-26 01:13:25.775 XCTRunner[1695:8766] Running tests...
+2016-09-26 01:13:25.925 XCTRunner[1695:8766] Continuing to run tests in the background with task ID 1
+2016-09-26 01:13:26.791712 XCTRunner[1695:8766] subsystem: com.apple.siri, category: Intents, enable_level: 1, persist_level: 1, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 0, privacy_setting: 0, enable_private_data: 0
+2016-09-26 01:13:26.893995 XCTRunner[1695:8766] subsystem: com.apple.Accessibility, category: AccessibilityBundleLoading, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+2016-09-26 01:14:07.614437 ios-xcode-8.0[1703:9304] subsystem: com.apple.UIKit, category: HIDEventFiltered, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+2016-09-26 01:14:07.615424 ios-xcode-8.0[1703:9304] subsystem: com.apple.UIKit, category: HIDEventIncoming, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+2016-09-26 01:14:07.667896 ios-xcode-8.0[1703:9299] subsystem: com.apple.BaseBoard, category: MachPort, enable_level: 1, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 0, privacy_setting: 0, enable_private_data: 0
+2016-09-26 01:14:07.738566 ios-xcode-8.0[1703:9291] subsystem: com.apple.siri, category: Intents, enable_level: 1, persist_level: 1, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 0, privacy_setting: 0, enable_private_data: 0
+2016-09-26 01:14:07.781934 ios-xcode-8.0[1703:9291] subsystem: com.apple.Accessibility, category: AccessibilityBundleLoading, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+2016-09-26 01:14:07.819334 ios-xcode-8.0[1703:9291] subsystem: com.apple.UIKit, category: StatusBar, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+2016-09-26 01:14:07.860885 ios-xcode-8.0[1703:9291] subsystem: com.apple.BackBoardServices.fence, category: App, enable_level: 1, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 0, privacy_setting: 0, enable_private_data: 0
+Test Suite 'All tests' started at 2016-09-26 01:14:08.176
+Test Suite 'ios-xcode-8.0Tests.xctest' started at 2016-09-26 01:14:08.177
+Test Suite 'ios_xcode_8_0Tests' started at 2016-09-26 01:14:08.177
+Test Case '-[ios_xcode_8_0Tests.ios_xcode_8_0Tests testExample]' started.
+Test Case '-[ios_xcode_8_0Tests.ios_xcode_8_0Tests testExample]' passed (0.001 seconds).
+Test Case '-[ios_xcode_8_0Tests.ios_xcode_8_0Tests testPerformanceExample]' started.
+2016-09-26 01:14:08.180757 ios-xcode-8.0[1703:9291] subsystem: com.apple.Accessibility, category: VOTHandwriting, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+/Users/vagrant/git/ios-xcode-8.0/ios-xcode-8.0Tests/ios_xcode_8_0Tests.swift:33: Test Case '-[ios_xcode_8_0Tests.ios_xcode_8_0Tests testPerformanceExample]' measured [Time, seconds] average: 0.000, relative standard deviation: 161.442%, values: [0.000005, 0.000001, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000], performanceMetricID:com.apple.XCTPerformanceMetric_WallClockTime, baselineName: "", baselineAverage: , maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.100, maxStandardDeviation: 0.100
+Test Case '-[ios_xcode_8_0Tests.ios_xcode_8_0Tests testPerformanceExample]' passed (0.433 seconds).
+Test Suite 'ios_xcode_8_0Tests' passed at 2016-09-26 01:14:08.613.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.434 (0.436) seconds
+Test Suite 'ios-xcode-8.0Tests.xctest' passed at 2016-09-26 01:14:08.613.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.434 (0.437) seconds
+Test Suite 'All tests' passed at 2016-09-26 01:14:08.614.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.434 (0.438) seconds
+2016-09-26 01:14:08.896 xcodebuild[1299:5953] Error Domain=IDETestOperationsObserverErrorDomain Code=12 "Failed to background test runner. If you believe this error represents a bug, please attach the log file at /Users/vagrant/Library/Developer/Xcode/DerivedData/ios-xcode-8.0-dfdizwjyzcuzweamzufxzanscrkk/Logs/Test/9D36C7BF-BFA7-4036-836D-04657E1A7B3A/Session-ios-xcode-8.0UITests-2016-09-26_011252-PQRQz6.log" UserInfo={NSLocalizedDescription=Failed to background test runner. If you believe this error represents a bug, please attach the log file at /Users/vagrant/Library/Developer/Xcode/DerivedData/ios-xcode-8.0-dfdizwjyzcuzweamzufxzanscrkk/Logs/Test/9D36C7BF-BFA7-4036-836D-04657E1A7B3A/Session-ios-xcode-8.0UITests-2016-09-26_011252-PQRQz6.log}
+
+Testing failed:
+	Test target ios-xcode-8.0UITests encountered an error (Failed to background test runner. If you believe this error represents a bug, please attach the log file at /Users/vagrant/Library/Developer/Xcode/DerivedData/ios-xcode-8.0-dfdizwjyzcuzweamzufxzanscrkk/Logs/Test/9D36C7BF-BFA7-4036-836D-04657E1A7B3A/Session-ios-xcode-8.0UITests-2016-09-26_011252-PQRQz6.log)
+** TEST FAILED **
