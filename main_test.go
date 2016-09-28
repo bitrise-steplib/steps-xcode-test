@@ -215,6 +215,80 @@ func TestIsStringFoundInOutput_earlyUnexpectedExit(t *testing.T) {
 	}
 }
 
+func TestIsStringFoundInOutput_failureAttemptingToLaunch(t *testing.T) {
+	// load sample logs
+	sampleUITestFailureAttemptingToLaunch, err := loadFileContent("./_samples/xcodebuild-failure-attempting-tolaunch.txt")
+	if err != nil {
+		t.Fatalf("Failed to load error sample log : %s", err)
+	}
+	sampleOKBuildLog, err := loadFileContent("./_samples/xcodebuild-ok.txt")
+	if err != nil {
+		t.Fatalf("Failed to load xcodebuild-ok.txt : %s", err)
+	}
+
+	t.Log("Should find")
+	{
+		for _, anOutStr := range []string{
+			"Assertion Failure: <unknown>:0: UI Testing Failure - Failure attempting to launch <XCUIApplicationImpl:",
+			"t =    46.77s             Assertion Failure: <unknown>:0: UI Testing Failure - Failure attempting to launch <XCUIApplicationImpl: 0x608000423da0 io.bitrise.ios-xcode-8-0 at ",
+			"aaAssertion Failure: <unknown>:0: UI Testing Failure - Failure attempting to launch <XCUIApplicationImpl:aa",
+			"aa Assertion Failure: <unknown>:0: UI Testing Failure - Failure attempting to launch <XCUIApplicationImpl: aa",
+			sampleUITestFailureAttemptingToLaunch,
+		} {
+			testFailureAttemptingToLaunch(t, anOutStr, true)
+		}
+	}
+
+	t.Log("Should NOT find")
+	{
+		for _, anOutStr := range []string{
+			"",
+			"Assertion Failure:",
+			"Failure attempting to launch <XCUIApplicationImpl:",
+			sampleOKBuildLog,
+		} {
+			testFailureAttemptingToLaunch(t, anOutStr, false)
+		}
+	}
+}
+
+func TestIsStringFoundInOutput_failedToBackgroundTestRunner(t *testing.T) {
+	// load sample logs
+	sampleUITestFailedToBackgroundTestRunner, err := loadFileContent("./_samples/xcodebuild-failed-to-background-test-runner.txt")
+	if err != nil {
+		t.Fatalf("Failed to load error sample log : %s", err)
+	}
+	sampleOKBuildLog, err := loadFileContent("./_samples/xcodebuild-ok.txt")
+	if err != nil {
+		t.Fatalf("Failed to load xcodebuild-ok.txt : %s", err)
+	}
+
+	t.Log("Should find")
+	{
+		for _, anOutStr := range []string{
+			`Error Domain=IDETestOperationsObserverErrorDomain Code=12 "Failed to background test runner.`,
+			`2016-09-26 01:14:08.896 xcodebuild[1299:5953] Error Domain=IDETestOperationsObserverErrorDomain Code=12 "Failed to background test runner. If you believe this error represents a bug, please attach the log file at`,
+			`aaError Domain=IDETestOperationsObserverErrorDomain Code=12 "Failed to background test runner.aa`,
+			`aa Error Domain=IDETestOperationsObserverErrorDomain Code=12 "Failed to background test runner. aa`,
+			sampleUITestFailedToBackgroundTestRunner,
+		} {
+			testfailedToBackgroundTestRunner(t, anOutStr, true)
+		}
+	}
+
+	t.Log("Should NOT find")
+	{
+		for _, anOutStr := range []string{
+			"",
+			"Assertion Failure:",
+			"Failure attempting to launch <XCUIApplicationImpl:",
+			sampleOKBuildLog,
+		} {
+			testFailureAttemptingToLaunch(t, anOutStr, false)
+		}
+	}
+}
+
 //
 // TESTING UTILITY FUNCS
 
@@ -235,6 +309,14 @@ func testTimeOutMessageUITestWith(t *testing.T, outputToSearchIn string, isShoul
 
 func testEarlyUnexpectedExitMessageUITestWith(t *testing.T, outputToSearchIn string, isShouldFind bool) {
 	testIsFoundWith(t, earlyUnexpectedExit, outputToSearchIn, isShouldFind)
+}
+
+func testFailureAttemptingToLaunch(t *testing.T, outputToSearchIn string, isShouldFind bool) {
+	testIsFoundWith(t, failureAttemptingToLaunch, outputToSearchIn, isShouldFind)
+}
+
+func testfailedToBackgroundTestRunner(t *testing.T, outputToSearchIn string, isShouldFind bool) {
+	testIsFoundWith(t, failedToBackgroundTestRunner, outputToSearchIn, isShouldFind)
 }
 
 func loadFileContent(filePth string) (string, error) {

@@ -1,0 +1,52 @@
+2016-09-24 01:11:26.244686 XCTRunner[1706:8058] subsystem: com.apple.UIKit, category: HIDEventFiltered, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+2016-09-24 01:11:26.246398 XCTRunner[1706:8058] subsystem: com.apple.UIKit, category: HIDEventIncoming, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+2016-09-24 01:11:26.295273 XCTRunner[1706:8052] subsystem: com.apple.BaseBoard, category: MachPort, enable_level: 1, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 0, privacy_setting: 0, enable_private_data: 0
+2016-09-24 01:11:26.416841 XCTRunner[1706:8047] subsystem: com.apple.UIKit, category: StatusBar, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+2016-09-24 01:11:26.472839 XCTRunner[1706:8047] subsystem: com.apple.BackBoardServices.fence, category: App, enable_level: 1, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 0, privacy_setting: 0, enable_private_data: 0
+2016-09-24 01:11:26.473 XCTRunner[1706:8047] Running tests...
+2016-09-24 01:11:26.858030 XCTRunner[1706:8047] subsystem: com.apple.siri, category: Intents, enable_level: 1, persist_level: 1, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 0, privacy_setting: 0, enable_private_data: 0
+2016-09-24 01:11:26.942399 XCTRunner[1706:8047] subsystem: com.apple.Accessibility, category: AccessibilityBundleLoading, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+2016-09-24 01:11:27.178128 XCTRunner[1706:8047] subsystem: com.apple.Accessibility, category: VOTHandwriting, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+2016-09-24 01:11:33.343 XCTRunner[1706:8047] Continuing to run tests in the background with task ID 1
+Test Suite 'All tests' started at 2016-09-24 01:11:34.425
+Test Suite 'ios-xcode-8.0UITests.xctest' started at 2016-09-24 01:11:34.427
+Test Suite 'ios_xcode_8_0UITests' started at 2016-09-24 01:11:34.427
+Test Case '-[ios_xcode_8_0UITests.ios_xcode_8_0UITests testExample]' started.
+    t =     0.00s     Start Test at 2016-09-24 01:11:34.429
+    t =     0.00s     Set Up
+    t =    10.01s         Launch io.bitrise.ios-xcode-8-0
+    t =    46.77s             Assertion Failure: <unknown>:0: UI Testing Failure - Failure attempting to launch <XCUIApplicationImpl: 0x608000423da0 io.bitrise.ios-xcode-8-0 at /Users/vagrant/Library/Developer/Xcode/DerivedData/ios-xcode-8.0-dfdizwjyzcuzweamzufxzanscrkk/Build/Products/Debug-iphonesimulator/ios-xcode-8.0.app>: Error Domain=FBSOpenApplicationServiceErrorDomain Code=1 "The request to open "io.bitrise.ios-xcode-8-0" failed." UserInfo={NSLocalizedDescription=The request to open "io.bitrise.ios-xcode-8-0" failed., NSLocalizedFailureReason=The request was denied by service delegate (SBMainWorkspace) for reason: NotFound ("Application "io.bitrise.ios-xcode-8-0" is unknown to FrontBoard")., BSErrorCodeDescription=RequestDenied, NSUnderlyingError=0x600000057a30 {Error Domain=FBSOpenApplicationErrorDomain Code=4 "Application "io.bitrise.ios-xcode-8-0" is unknown to FrontBoard." UserInfo={BSErrorCodeDescription=NotFound, NSLocalizedFailureReason=Application "io.bitrise.ios-xcode-8-0" is unknown to FrontBoard.}}}
+The request was denied by service delegate (SBMainWorkspace) for reason: NotFound ("Application "io.bitrise.ios-xcode-8-0" is unknown to FrontBoard").
+    t =    46.77s     Tear Down
+Test Case '-[ios_xcode_8_0UITests.ios_xcode_8_0UITests testExample]' failed (46.773 seconds).
+Test Suite 'ios_xcode_8_0UITests' failed at 2016-09-24 01:12:21.204.
+	 Executed 1 test, with 1 failure (0 unexpected) in 46.773 (46.776) seconds
+Test Suite 'ios-xcode-8.0UITests.xctest' failed at 2016-09-24 01:12:21.206.
+	 Executed 1 test, with 1 failure (0 unexpected) in 46.773 (46.779) seconds
+Test Suite 'All tests' failed at 2016-09-24 01:12:21.207.
+	 Executed 1 test, with 1 failure (0 unexpected) in 46.773 (46.782) seconds
+2016-09-24 01:12:25.607896 ios-xcode-8.0[1718:8996] subsystem: com.apple.UIKit, category: HIDEventFiltered, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+2016-09-24 01:12:25.608623 ios-xcode-8.0[1718:8996] subsystem: com.apple.UIKit, category: HIDEventIncoming, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+2016-09-24 01:12:25.648837 ios-xcode-8.0[1718:8989] subsystem: com.apple.BaseBoard, category: MachPort, enable_level: 1, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 0, privacy_setting: 0, enable_private_data: 0
+2016-09-24 01:12:25.898235 ios-xcode-8.0[1718:8981] subsystem: com.apple.siri, category: Intents, enable_level: 1, persist_level: 1, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 0, privacy_setting: 0, enable_private_data: 0
+2016-09-24 01:12:25.961011 ios-xcode-8.0[1718:8981] subsystem: com.apple.Accessibility, category: AccessibilityBundleLoading, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+2016-09-24 01:12:25.998790 ios-xcode-8.0[1718:8981] subsystem: com.apple.UIKit, category: StatusBar, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+2016-09-24 01:12:26.039396 ios-xcode-8.0[1718:8981] subsystem: com.apple.BackBoardServices.fence, category: App, enable_level: 1, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 0, privacy_setting: 0, enable_private_data: 0
+2016-09-24 01:12:26.290771 ios-xcode-8.0[1718:8981] subsystem: com.apple.Accessibility, category: VOTHandwriting, enable_level: 0, persist_level: 0, default_ttl: 0, info_ttl: 0, debug_ttl: 0, generate_symptoms: 0, enable_oversize: 1, privacy_setting: 2, enable_private_data: 0
+Test Suite 'All tests' started at 2016-09-24 01:12:26.357
+Test Suite 'ios-xcode-8.0Tests.xctest' started at 2016-09-24 01:12:26.358
+Test Suite 'ios_xcode_8_0Tests' started at 2016-09-24 01:12:26.358
+Test Case '-[ios_xcode_8_0Tests.ios_xcode_8_0Tests testExample]' started.
+Test Case '-[ios_xcode_8_0Tests.ios_xcode_8_0Tests testExample]' passed (0.002 seconds).
+Test Case '-[ios_xcode_8_0Tests.ios_xcode_8_0Tests testPerformanceExample]' started.
+/Users/vagrant/git/ios-xcode-8.0/ios-xcode-8.0Tests/ios_xcode_8_0Tests.swift:33: Test Case '-[ios_xcode_8_0Tests.ios_xcode_8_0Tests testPerformanceExample]' measured [Time, seconds] average: 0.000, relative standard deviation: 154.446%, values: [0.000004, 0.000001, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000], performanceMetricID:com.apple.XCTPerformanceMetric_WallClockTime, baselineName: "", baselineAverage: , maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.100, maxStandardDeviation: 0.100
+Test Case '-[ios_xcode_8_0Tests.ios_xcode_8_0Tests testPerformanceExample]' passed (0.272 seconds).
+Test Suite 'ios_xcode_8_0Tests' passed at 2016-09-24 01:12:26.633.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.274 (0.275) seconds
+Test Suite 'ios-xcode-8.0Tests.xctest' passed at 2016-09-24 01:12:26.634.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.274 (0.276) seconds
+Test Suite 'All tests' passed at 2016-09-24 01:12:26.635.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.274 (0.278) seconds
+Failing tests:
+	-[ios_xcode_8_0UITests testExample()]
+** TEST FAILED **
