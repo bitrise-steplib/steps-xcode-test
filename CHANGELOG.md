@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.16.0)
+## Changelog (Current version: 1.16.1)
 
 -----------------
+
+### 1.16.1 (2016 Sep 28)
+
+* [b848fde] prepare for 1.16.1
+* [2e6d684] new retry patterns (#62)
 
 ### 1.16.0 (2016 Sep 23)
 
@@ -233,4 +238,4 @@
 
 -----------------
 
-Updated: 2016 Sep 23
+Updated: 2016 Sep 28
