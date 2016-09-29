@@ -79,12 +79,8 @@ func CreateXcodebuildCmd(xcodebuildArgs ...string) *exec.Cmd {
 }
 
 // CreateXcprettyCmd ...
-func CreateXcprettyCmd(testResultsFilePath string) *exec.Cmd {
-	prettyArgs := []string{"--color"}
-	if testResultsFilePath != "" {
-		prettyArgs = append(prettyArgs, "--report", "html", "--output", testResultsFilePath)
-	}
-	return exec.Command("xcpretty", prettyArgs...)
+func CreateXcprettyCmd(xcprettydArgs ...string) *exec.Cmd {
+	return exec.Command("xcpretty", xcprettydArgs...)
 }
 
 // Zip ...
