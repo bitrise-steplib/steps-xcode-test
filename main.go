@@ -72,10 +72,10 @@ type ConfigsModel struct {
 
 	GenerateCodeCoverageFiles string
 	ExportUITestArtifacts     string
-	TestResultsFilePath       string
 
 	// Not required parameters
-	TestOptions string
+	TestOptions         string
+	XcprettyTestOptions string
 }
 
 func (configs ConfigsModel) print() {
@@ -100,10 +100,10 @@ func (configs ConfigsModel) print() {
 	log.Detail("- ShouldRetryTestOnFail: %s", configs.ShouldRetryTestOnFail)
 
 	log.Detail("- GenerateCodeCoverageFiles: %s", configs.GenerateCodeCoverageFiles)
-	log.Detail("- TestResultsFilePath: %s", configs.TestResultsFilePath)
 	log.Detail("- ExportUITestArtifacts: %s", configs.ExportUITestArtifacts)
 
 	log.Detail("- TestOptions: %s", configs.TestOptions)
+	log.Detail("- XcprettyTestOptions: %s", configs.XcprettyTestOptions)
 }
 
 func createConfigsModelFromEnvs() ConfigsModel {
@@ -127,10 +127,10 @@ func createConfigsModelFromEnvs() ConfigsModel {
 
 		GenerateCodeCoverageFiles: os.Getenv("generate_code_coverage_files"),
 		ExportUITestArtifacts:     os.Getenv("export_uitest_artifacts"),
-		TestResultsFilePath:       os.Getenv("test_results_file_path"),
 
 		// Not required parameters
-		TestOptions: os.Getenv("xcodebuild_test_options"),
+		TestOptions:         os.Getenv("xcodebuild_test_options"),
+		XcprettyTestOptions: os.Getenv("xcpretty_test_options"),
 	}
 }
 
@@ -174,9 +174,6 @@ func (configs ConfigsModel) validate() error {
 		return err
 	}
 	if err := validateRequiredInputWithOptions(configs.ExportUITestArtifacts, "export_uitest_artifacts", []string{"true", "false"}); err != nil {
-		return err
-	}
-	if err := validateRequiredInput(configs.TestResultsFilePath, ""); err != nil {
 		return err
 	}
 
@@ -257,10 +254,10 @@ func runXcodeBuildCmd(useStdOut bool, args ...string) (string, int, error) {
 	return outBuffer.String(), 0, nil
 }
 
-func runPrettyXcodeBuildCmd(useStdOut bool, testResultsFilePath string, args ...string) (string, int, error) {
+func runPrettyXcodeBuildCmd(useStdOut bool, xcprettyArgs []string, xcodebuildArgs []string) (string, int, error) {
 	//
-	buildCmd := cmd.CreateXcodebuildCmd(args...)
-	prettyCmd := cmd.CreateXcprettyCmd(testResultsFilePath)
+	buildCmd := cmd.CreateXcodebuildCmd(xcodebuildArgs...)
+	prettyCmd := cmd.CreateXcprettyCmd(xcprettyArgs...)
 	//
 	var buildOutBuffer bytes.Buffer
 	//
@@ -323,21 +320,21 @@ func runPrettyXcodeBuildCmd(useStdOut bool, testResultsFilePath string, args ...
 }
 
 func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (string, int, error) {
-	args := []string{buildParams.Action, buildParams.ProjectPath, "-scheme", buildParams.Scheme}
+	xcodebuildArgs := []string{buildParams.Action, buildParams.ProjectPath, "-scheme", buildParams.Scheme}
 	if buildParams.CleanBuild {
-		args = append(args, "clean")
+		xcodebuildArgs = append(xcodebuildArgs, "clean")
 	}
-	args = append(args, "build", "-destination", buildParams.DeviceDestination)
+	xcodebuildArgs = append(xcodebuildArgs, "build", "-destination", buildParams.DeviceDestination)
 
 	log.Info("Building the project...")
 
 	if outputTool == "xcpretty" {
-		return runPrettyXcodeBuildCmd(false, "", args...)
+		return runPrettyXcodeBuildCmd(false, []string{}, xcodebuildArgs)
 	}
-	return runXcodeBuildCmd(false, args...)
+	return runXcodeBuildCmd(false, xcodebuildArgs...)
 }
 
-func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, testResultsFilePath string, isAutomaticRetryOnReason, isRetryOnFail bool) (string, int, error) {
+func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcprettyOptions string, isAutomaticRetryOnReason, isRetryOnFail bool) (string, int, error) {
 	handleTestError := func(fullOutputStr string, exitCode int, testError error) (string, int, error) {
 		//
 		// Automatic retry
@@ -346,7 +343,7 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, testR
 				log.Warn("Automatic retry reason found in log: %s", retryReasonPattern)
 				if isAutomaticRetryOnReason {
 					log.Detail("isAutomaticRetryOnReason=true - retrying...")
-					return runTest(buildTestParams, outputTool, testResultsFilePath, false, false)
+					return runTest(buildTestParams, outputTool, xcprettyOptions, false, false)
 				}
 				log.Error("isAutomaticRetryOnReason=false, no more retry, stopping the test!")
 				return fullOutputStr, exitCode, testError
@@ -358,7 +355,7 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, testR
 		if isRetryOnFail {
 			log.Warn("Test run failed")
 			log.Detail("isRetryOnFail=true - retrying...")
-			return runTest(buildTestParams, outputTool, testResultsFilePath, false, false)
+			return runTest(buildTestParams, outputTool, xcprettyOptions, false, false)
 		}
 
 		return fullOutputStr, exitCode, testError
@@ -366,9 +363,9 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, testR
 
 	buildParams := buildTestParams.BuildParams
 
-	args := []string{buildParams.Action, buildParams.ProjectPath, "-scheme", buildParams.Scheme}
+	xcodebuildArgs := []string{buildParams.Action, buildParams.ProjectPath, "-scheme", buildParams.Scheme}
 	if buildTestParams.CleanBuild {
-		args = append(args, "clean")
+		xcodebuildArgs = append(xcodebuildArgs, "clean")
 	}
 	// the 'build' argument is required *before* the 'test' arg, to prevent
 	//  the Xcode bug described in the README, which causes:
@@ -382,13 +379,13 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, testR
 	// leads the project to be compiled twice and increase the duration
 	// Related issue link: https://github.com/bitrise-io/steps-xcode-test/issues/55
 	if buildTestParams.BuildBeforeTest {
-		args = append(args, "build")
+		xcodebuildArgs = append(xcodebuildArgs, "build")
 	}
-	args = append(args, "test", "-destination", buildParams.DeviceDestination)
+	xcodebuildArgs = append(xcodebuildArgs, "test", "-destination", buildParams.DeviceDestination)
 
 	if buildTestParams.GenerateCodeCoverage {
-		args = append(args, "GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES")
-		args = append(args, "GCC_GENERATE_TEST_COVERAGE_FILES=YES")
+		xcodebuildArgs = append(xcodebuildArgs, "GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES")
+		xcodebuildArgs = append(xcodebuildArgs, "GCC_GENERATE_TEST_COVERAGE_FILES=YES")
 	}
 
 	if buildTestParams.AdditionalOptions != "" {
@@ -396,7 +393,16 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, testR
 		if err != nil {
 			return "", 1, fmt.Errorf("failed to parse additional options (%s), error: %s", buildTestParams.AdditionalOptions, err)
 		}
-		args = append(args, options...)
+		xcodebuildArgs = append(xcodebuildArgs, options...)
+	}
+
+	xcprettyArgs := []string{}
+	if xcprettyOptions != "" {
+		options, err := shellquote.Split(xcprettyOptions)
+		if err != nil {
+			return "", 1, fmt.Errorf("failed to parse additional options (%s), error: %s", xcprettyOptions, err)
+		}
+		xcprettyArgs = append(xcprettyArgs, options...)
 	}
 
 	log.Info("Running the tests...")
@@ -405,9 +411,9 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, testR
 	var err error
 	var exit int
 	if outputTool == "xcpretty" {
-		rawOutput, exit, err = runPrettyXcodeBuildCmd(true, testResultsFilePath, args...)
+		rawOutput, exit, err = runPrettyXcodeBuildCmd(true, xcprettyArgs, xcodebuildArgs)
 	} else {
-		rawOutput, exit, err = runXcodeBuildCmd(true, args...)
+		rawOutput, exit, err = runXcodeBuildCmd(true, xcodebuildArgs...)
 	}
 
 	if err != nil {
@@ -627,7 +633,7 @@ func main() {
 
 	//
 	// Run test
-	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, configs.OutputTool, configs.TestResultsFilePath, true, retryOnFail)
+	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, configs.OutputTool, configs.XcprettyTestOptions, true, retryOnFail)
 
 	if err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil)); err != nil {
 		log.Warn("Failed to save the Raw Output, error %s", err)
