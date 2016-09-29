@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.16.1)
+## Changelog (Current version: 1.17.0)
 
 -----------------
+
+### 1.17.0 (2016 Sep 29)
+
+* [fba03e9] prepare for 1.17.0
+* [e781ab7] xcpretty test additional options (#64)
 
 ### 1.16.1 (2016 Sep 28)
 
@@ -238,4 +243,4 @@
 
 -----------------
 
-Updated: 2016 Sep 28
+Updated: 2016 Sep 29
