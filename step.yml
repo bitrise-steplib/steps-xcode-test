@@ -32,20 +32,20 @@ inputs:
   - workdir: $BITRISE_SOURCE_DIR
     opts:
       title: "Working directory"
-      description: |
+      description: |-
         Working directory of the step.
         You can leave it empty to don't change it.
   - project_path: $BITRISE_PROJECT_PATH
     opts:
       title: "Project (or Workspace) path"
-      description: |
+      description: |-
         A `.xcodeproj` or `.xcworkspace` path, relative to
         the Working directory (if specified).
       is_required: true
   - scheme: $BITRISE_SCHEME
     opts:
       title: "Scheme name"
-      description: |
+      description: |-
         The Scheme to use.
 
         **IMPORTANT**: The Scheme have to be marked as __shared__ in Xcode!
@@ -85,7 +85,7 @@ inputs:
   - simulator_os_version: latest
     opts:
       title: "OS version"
-      description: |
+      description: |-
         Set it as it is shown in
         Xcode's device selection dropdown UI.
 
@@ -129,7 +129,7 @@ inputs:
   - export_uitest_artifacts: "false"
     opts:
       title: Export UITest Artifacts
-      description: |
+      description: |-
         If enabled, the attachments of the UITest will be exported into the BITRISE_DEPLOY_DIR, as a compressed ZIP file.
         Attachments include screenshots taken during the UI test, and other artifacts.
       value_options:
@@ -188,7 +188,7 @@ inputs:
   - should_retry_test_on_fail: "no"
     opts:
       title: "(Experimental) Rerun test, when it fails?"
-      description: 
+      description: |-
         If `should_retry_test_on_fail: yes` step will retry the test if first attempt failed.
       value_options:
         - "yes"
