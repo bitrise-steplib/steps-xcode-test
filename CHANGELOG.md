@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.17.0)
+## Changelog (Current version: 1.17.1)
 
 -----------------
+
+### 1.17.1 (2016 Oct 11)
+
+* [5b076ca] prepare for 1.17.1
+* [f562a05] step.yml update (#65)
 
 ### 1.17.0 (2016 Sep 29)
 
@@ -243,4 +248,4 @@
 
 -----------------
 
-Updated: 2016 Sep 29
+Updated: 2016 Oct 11
