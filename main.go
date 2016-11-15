@@ -404,6 +404,30 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 		if err != nil {
 			return "", 1, fmt.Errorf("failed to parse additional options (%s), error: %s", xcprettyOptions, err)
 		}
+		// get and delete the xcpretty output file, if exists
+		xcprettyOutputFilePath := ""
+		isNextOptOutputPth := false
+		for _, aOpt := range options {
+			if isNextOptOutputPth {
+				xcprettyOutputFilePath = aOpt
+				break
+			}
+			if aOpt == "--output" {
+				isNextOptOutputPth = true
+				continue
+			}
+		}
+		if xcprettyOutputFilePath != "" {
+			if isExist, err := pathutil.IsPathExists(xcprettyOutputFilePath); err != nil {
+				log.Error("Failed to check xcpretty output file status (path: %s), error: %s", xcprettyOutputFilePath, err)
+			} else if isExist {
+				log.Warn("=> Deleting existing xcpretty output: %s", xcprettyOutputFilePath)
+				if err := os.Remove(xcprettyOutputFilePath); err != nil {
+					log.Error("Failed to delete xcpretty output file (path: %s), error: %s", xcprettyOutputFilePath, err)
+				}
+			}
+		}
+		//
 		xcprettyArgs = append(xcprettyArgs, options...)
 	}
 
