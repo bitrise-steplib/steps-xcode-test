@@ -1,6 +1,9 @@
-## Changelog (Current version: 1.17.1)
+## Changelog (Current version: 1.17.2)
 
 -----------------
+
+### 1.17.2 (2016 Nov 15)
+
 
 ### 1.17.1 (2016 Oct 11)
 
@@ -248,4 +251,4 @@
 
 -----------------
 
-Updated: 2016 Oct 11
+Updated: 2016 Nov 15
