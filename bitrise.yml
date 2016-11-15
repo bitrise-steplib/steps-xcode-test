@@ -32,6 +32,9 @@ workflows:
         inputs:
         - content: envman add --key BITRISE_SOURCE_DIR --value "${PROJECT_WORKDIR}"
     - path::./:
+        title: Test the default inputs
+    - path::./:
+        title: Test input config
         inputs:
         - output_tool: xcpretty
         # - output_tool: xcodebuild
