@@ -418,6 +418,7 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 			}
 		}
 		if xcprettyOutputFilePath != "" {
+			log.Warn("DEBUG: xcprettyOutputFilePath specifid")
 			if isExist, err := pathutil.IsPathExists(xcprettyOutputFilePath); err != nil {
 				log.Error("Failed to check xcpretty output file status (path: %s), error: %s", xcprettyOutputFilePath, err)
 			} else if isExist {
@@ -425,6 +426,8 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 				if err := os.Remove(xcprettyOutputFilePath); err != nil {
 					log.Error("Failed to delete xcpretty output file (path: %s), error: %s", xcprettyOutputFilePath, err)
 				}
+			} else {
+				log.Warn("DEBUG: No xcprettyOutputFilePath exists")
 			}
 		}
 		//
