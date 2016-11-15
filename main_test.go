@@ -289,6 +289,38 @@ func TestIsStringFoundInOutput_failedToBackgroundTestRunner(t *testing.T) {
 	}
 }
 
+func TestIsStringFoundInOutput_appStateIsStillNotRunning(t *testing.T) {
+	// load sample logs
+	sampleOKBuildLog, err := loadFileContent("./_samples/xcodebuild-ok.txt")
+	if err != nil {
+		t.Fatalf("Failed to load xcodebuild-ok.txt : %s", err)
+	}
+
+	t.Log("Should find")
+	{
+		for _, anOutStr := range []string{
+			`App state is still not running active, state = XCApplicationStateNotRunning`,
+			`---App state is still not running active, state = XCApplicationStateNotRunning---`,
+			`Asdf.SchemeUITests
+  testThis, UI Testing Failure - '<XCUIApplicationImpl: 0x600000433440 com.this.Scheme.Target at /Users/vagrant/Library/Developer/Xcode/DerivedData/App-bfkuwgxmaiprwncotahtjjhoigbm/Build/Products/Debug-iphonesimulator/TheApp.app>' App state is still not running active, state = XCApplicationStateNotRunning
+  MyAppUITests.swift:32`,
+		} {
+			testIsFoundWith(t, appStateIsStillNotRunning, anOutStr, true)
+		}
+	}
+
+	t.Log("Should NOT find")
+	{
+		for _, anOutStr := range []string{
+			"",
+			`App state is still not running active, state = XCApplicationStateXXX`,
+			sampleOKBuildLog,
+		} {
+			testIsFoundWith(t, appStateIsStillNotRunning, anOutStr, false)
+		}
+	}
+}
+
 //
 // TESTING UTILITY FUNCS
 
