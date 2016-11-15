@@ -10,9 +10,6 @@
 * [7622df6] Merge pull request #66 from bitrise-io/feature/retry-pattern-for-app-state-not-running
 * [bb28f78] new retry pattern for "app state is still not running"
 
-### 1.17.2 (2016 Nov 15)
-
-
 ### 1.17.1 (2016 Oct 11)
 
 * [5b076ca] prepare for 1.17.1
