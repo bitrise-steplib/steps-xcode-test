@@ -79,9 +79,9 @@ type ConfigsModel struct {
 	ExportUITestArtifacts     string
 
 	// Not required parameters
-	TestOptions            string
-	XcprettyTestOptions    string
-	WaitForSimulatorReviev string
+	TestOptions          string
+	XcprettyTestOptions  string
+	WaitForSimulatorBoot string
 }
 
 func (configs ConfigsModel) print() {
@@ -110,7 +110,7 @@ func (configs ConfigsModel) print() {
 
 	log.Detail("- TestOptions: %s", configs.TestOptions)
 	log.Detail("- XcprettyTestOptions: %s", configs.XcprettyTestOptions)
-	log.Detail("- WaitForSimulatorReviev: %s", configs.WaitForSimulatorReviev)
+	log.Detail("- WaitForSimulatorBoot: %s", configs.WaitForSimulatorBoot)
 }
 
 func createConfigsModelFromEnvs() ConfigsModel {
@@ -136,9 +136,9 @@ func createConfigsModelFromEnvs() ConfigsModel {
 		ExportUITestArtifacts:     os.Getenv("export_uitest_artifacts"),
 
 		// Not required parameters
-		TestOptions:            os.Getenv("xcodebuild_test_options"),
-		XcprettyTestOptions:    os.Getenv("xcpretty_test_options"),
-		WaitForSimulatorReviev: os.Getenv("wait_for_simulator_reviev"),
+		TestOptions:          os.Getenv("xcodebuild_test_options"),
+		XcprettyTestOptions:  os.Getenv("xcpretty_test_options"),
+		WaitForSimulatorBoot: os.Getenv("wait_for_simulator_boot"),
 	}
 }
 
@@ -184,7 +184,7 @@ func (configs ConfigsModel) validate() error {
 	if err := validateRequiredInputWithOptions(configs.ExportUITestArtifacts, "export_uitest_artifacts", []string{"true", "false"}); err != nil {
 		return err
 	}
-	if err := validateRequiredInputWithOptions(configs.WaitForSimulatorReviev, "wait_for_simulator_reviev", []string{"yes", "no"}); err != nil {
+	if err := validateRequiredInputWithOptions(configs.WaitForSimulatorBoot, "wait_for_simulator_boot", []string{"yes", "no"}); err != nil {
 		return err
 	}
 
@@ -432,8 +432,6 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 			}
 		}
 		if xcprettyOutputFilePath != "" {
-			fmt.Printf("xcprettyOutputFilePath: %s\n", xcprettyOutputFilePath)
-
 			if isExist, err := pathutil.IsPathExists(xcprettyOutputFilePath); err != nil {
 				log.Error("Failed to check xcpretty output file status (path: %s), error: %s", xcprettyOutputFilePath, err)
 			} else if isExist {
@@ -441,8 +439,6 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 				if err := os.Remove(xcprettyOutputFilePath); err != nil {
 					log.Error("Failed to delete xcpretty output file (path: %s), error: %s", xcprettyOutputFilePath, err)
 				}
-			} else {
-				log.Warn("output file does not exists")
 			}
 		}
 		//
@@ -654,8 +650,8 @@ func main() {
 			os.Exit(1)
 		}
 
-		if configs.WaitForSimulatorReviev == "yes" {
-			log.Detail("Waiting 60 sec to let simulator to reviev")
+		if configs.WaitForSimulatorBoot == "yes" {
+			log.Detail("Waiting for simulator boot")
 			progress.SimpleProgress(".", 1*time.Second, func() {
 				time.Sleep(60 * time.Second)
 			})
