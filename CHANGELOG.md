@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.17.2)
+## Changelog (Current version: 1.18.0)
 
 -----------------
+
+### 1.18.0 (2016 Nov 18)
+
+* [fc01cfd] prepare for 1.18.0
+* [da74fd4] Xcpretty fix (#68)
+* [77f3e9f] CHANGELOG fix
 
 ### 1.17.2 (2016 Nov 15)
 
@@ -256,4 +262,4 @@
 
 -----------------
 
-Updated: 2016 Nov 15
+Updated: 2016 Nov 18
