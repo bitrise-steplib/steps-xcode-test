@@ -1,34 +1,38 @@
 {
 	"ImportPath": "github.com/bitrise-io/steps-xcode-test",
 	"GoVersion": "go1.7",
-	"GodepVersion": "v74",
+	"GodepVersion": "v75",
 	"Packages": [
 		"./..."
 	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/cmdex",
-			"Rev": "446385002f039292fb137fa8cc82e121792051bb"
+			"Rev": "f9155f8d01013ec098cba431327cbeb063dacea7"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/colorstring",
-			"Rev": "446385002f039292fb137fa8cc82e121792051bb"
+			"Rev": "f9155f8d01013ec098cba431327cbeb063dacea7"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/errorutil",
-			"Rev": "446385002f039292fb137fa8cc82e121792051bb"
+			"Rev": "f9155f8d01013ec098cba431327cbeb063dacea7"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/fileutil",
-			"Rev": "446385002f039292fb137fa8cc82e121792051bb"
+			"Rev": "f9155f8d01013ec098cba431327cbeb063dacea7"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/log",
-			"Rev": "446385002f039292fb137fa8cc82e121792051bb"
+			"Rev": "f9155f8d01013ec098cba431327cbeb063dacea7"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/pathutil",
-			"Rev": "446385002f039292fb137fa8cc82e121792051bb"
+			"Rev": "f9155f8d01013ec098cba431327cbeb063dacea7"
+		},
+		{
+			"ImportPath": "github.com/bitrise-io/go-utils/progress",
+			"Rev": "f9155f8d01013ec098cba431327cbeb063dacea7"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/go-version",

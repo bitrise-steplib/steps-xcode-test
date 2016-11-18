@@ -12,10 +12,13 @@ import (
 	"strings"
 	"syscall"
 
+	"time"
+
 	"github.com/bitrise-io/go-utils/cmdex"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
+	"github.com/bitrise-io/go-utils/progress"
 	cmd "github.com/bitrise-io/steps-xcode-test/command"
 	"github.com/bitrise-io/steps-xcode-test/models"
 	"github.com/bitrise-io/steps-xcode-test/xcodeutil"
@@ -76,8 +79,9 @@ type ConfigsModel struct {
 	ExportUITestArtifacts     string
 
 	// Not required parameters
-	TestOptions         string
-	XcprettyTestOptions string
+	TestOptions            string
+	XcprettyTestOptions    string
+	WaitForSimulatorReviev string
 }
 
 func (configs ConfigsModel) print() {
@@ -106,6 +110,7 @@ func (configs ConfigsModel) print() {
 
 	log.Detail("- TestOptions: %s", configs.TestOptions)
 	log.Detail("- XcprettyTestOptions: %s", configs.XcprettyTestOptions)
+	log.Detail("- WaitForSimulatorReviev: %s", configs.WaitForSimulatorReviev)
 }
 
 func createConfigsModelFromEnvs() ConfigsModel {
@@ -131,8 +136,9 @@ func createConfigsModelFromEnvs() ConfigsModel {
 		ExportUITestArtifacts:     os.Getenv("export_uitest_artifacts"),
 
 		// Not required parameters
-		TestOptions:         os.Getenv("xcodebuild_test_options"),
-		XcprettyTestOptions: os.Getenv("xcpretty_test_options"),
+		TestOptions:            os.Getenv("xcodebuild_test_options"),
+		XcprettyTestOptions:    os.Getenv("xcpretty_test_options"),
+		WaitForSimulatorReviev: os.Getenv("wait_for_simulator_reviev"),
 	}
 }
 
@@ -178,6 +184,9 @@ func (configs ConfigsModel) validate() error {
 	if err := validateRequiredInputWithOptions(configs.ExportUITestArtifacts, "export_uitest_artifacts", []string{"true", "false"}); err != nil {
 		return err
 	}
+	if err := validateRequiredInputWithOptions(configs.WaitForSimulatorReviev, "wait_for_simulator_reviev", []string{"yes", "no"}); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -194,7 +203,9 @@ func validateRequiredInput(value, key string) error {
 }
 
 func validateRequiredInputWithOptions(value, key string, options []string) error {
-	validateRequiredInput(key, value)
+	if err := validateRequiredInput(key, value); err != nil {
+		return err
+	}
 
 	found := false
 	for _, option := range options {
@@ -300,6 +311,16 @@ func runPrettyXcodeBuildCmd(useStdOut bool, xcprettyArgs []string, xcodebuildArg
 		return buildOutBuffer.String(), 1, err
 	}
 
+	defer func() {
+		if err := pipeWriter.Close(); err != nil {
+			log.Warn("Failed to close xcodebuild-xcpretty pipe, error: %s", err)
+		}
+
+		if err := prettyCmd.Wait(); err != nil {
+			log.Warn("xcpretty command failed, error: %s", err)
+		}
+	}()
+
 	if err := buildCmd.Wait(); err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
 			waitStatus, ok := exitError.Sys().(syscall.WaitStatus)
@@ -308,13 +329,6 @@ func runPrettyXcodeBuildCmd(useStdOut bool, xcprettyArgs []string, xcodebuildArg
 			}
 			return buildOutBuffer.String(), waitStatus.ExitStatus(), err
 		}
-		return buildOutBuffer.String(), 1, err
-	}
-	if err := pipeWriter.Close(); err != nil {
-		return buildOutBuffer.String(), 1, err
-	}
-
-	if err := prettyCmd.Wait(); err != nil {
 		return buildOutBuffer.String(), 1, err
 	}
 
@@ -418,6 +432,8 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 			}
 		}
 		if xcprettyOutputFilePath != "" {
+			fmt.Printf("xcprettyOutputFilePath: %s\n", xcprettyOutputFilePath)
+
 			if isExist, err := pathutil.IsPathExists(xcprettyOutputFilePath); err != nil {
 				log.Error("Failed to check xcpretty output file status (path: %s), error: %s", xcprettyOutputFilePath, err)
 			} else if isExist {
@@ -425,6 +441,8 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 				if err := os.Remove(xcprettyOutputFilePath); err != nil {
 					log.Error("Failed to delete xcpretty output file (path: %s), error: %s", xcprettyOutputFilePath, err)
 				}
+			} else {
+				log.Warn("output file does not exists")
 			}
 		}
 		//
@@ -634,6 +652,13 @@ func main() {
 				log.Warn("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 			}
 			os.Exit(1)
+		}
+
+		if configs.WaitForSimulatorReviev == "yes" {
+			log.Detail("Waiting 60 sec to let simulator to reviev")
+			progress.SimpleProgress(".", 1*time.Second, func() {
+				time.Sleep(60 * time.Second)
+			})
 		}
 
 		fmt.Println()
