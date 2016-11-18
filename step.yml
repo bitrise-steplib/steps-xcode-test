@@ -209,6 +209,14 @@ inputs:
         `set -o pipefail && XCODEBUILD_TEST_COMMAND | xcpretty --color --report html --color --report html --output "${BITRISE_DEPLOY_DIR}/xcode-test-results-${BITRISE_SCHEME}.html"
 
         If you want to add more options, list that separated by space character.
+  - wait_for_simulator_boot: "yes"
+    opts:
+      title: "(Experimental) Wait to simulator boot?"
+      description: |-
+        Wait to simulator boot or start test immediately?
+      value_options:
+        - "yes"
+        - "no"
 outputs:
 - BITRISE_XCODE_TEST_RESULT:
   opts:
