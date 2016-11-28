@@ -40,6 +40,7 @@ const earlyUnexpectedExit = "Early unexpected exit, operation never finished boo
 const failureAttemptingToLaunch = "Assertion Failure: <unknown>:0: UI Testing Failure - Failure attempting to launch <XCUIApplicationImpl:"
 const failedToBackgroundTestRunner = `Error Domain=IDETestOperationsObserverErrorDomain Code=12 "Failed to background test runner.`
 const appStateIsStillNotRunning = `App state is still not running active, state = XCApplicationStateNotRunning`
+const appAccessibilityIsNotLoaded = `UI Testing Failure - App accessibility isn't loaded`
 
 var automaticRetryReasonPatterns = []string{
 	timeOutMessageIPhoneSimulator,
@@ -48,6 +49,7 @@ var automaticRetryReasonPatterns = []string{
 	failureAttemptingToLaunch,
 	failedToBackgroundTestRunner,
 	appStateIsStillNotRunning,
+	appAccessibilityIsNotLoaded,
 }
 
 var xcodeCommandEnvs = []string{"NSUnbufferedIO=YES"}
