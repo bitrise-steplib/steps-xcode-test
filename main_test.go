@@ -321,6 +321,41 @@ func TestIsStringFoundInOutput_appStateIsStillNotRunning(t *testing.T) {
 	}
 }
 
+func TestIsStringFoundInOutput_appAccessibilityIsNotLoaded(t *testing.T) {
+	// load sample logs
+	sampleOKBuildLog, err := loadFileContent("./_samples/xcodebuild-ok.txt")
+	if err != nil {
+		t.Fatalf("Failed to load xcodebuild-ok.txt : %s", err)
+	}
+
+	t.Log("Should find")
+	{
+		for _, anOutStr := range []string{
+			`UI Testing Failure - App accessibility isn't loaded`,
+			`---UI Testing Failure - App accessibility isn't loaded---`,
+			`    t =    65.80s                 Assertion Failure: LivescoreAppUITests.swift:23: UI Testing Failure - App accessibility isn't loaded`,
+			`    t =     0.02s         Launch com.tapdm.LiveScore.WhatsTheScore
+    t =     5.06s             Waiting for accessibility to load
+    t =    65.80s                 Assertion Failure: LivescoreAppUITests.swift:23: UI Testing Failure - App accessibility isn't loaded
+    t =    65.81s     Tear Down`,
+		} {
+			testIsFoundWith(t, appAccessibilityIsNotLoaded, anOutStr, true)
+		}
+	}
+
+	t.Log("Should NOT find")
+	{
+		for _, anOutStr := range []string{
+			"",
+			`UI Testing Failure`,
+			`App accessibility isn't loaded`,
+			sampleOKBuildLog,
+		} {
+			testIsFoundWith(t, appAccessibilityIsNotLoaded, anOutStr, false)
+		}
+	}
+}
+
 //
 // TESTING UTILITY FUNCS
 
