@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.18.0)
+## Changelog (Current version: 1.18.1)
 
 -----------------
+
+### 1.18.1 (2016 Nov 29)
+
+* [8160d64] prepare for 1.18.1
+* [583b25d] app accessibility is not loaded retry pattern (#69)
 
 ### 1.18.0 (2016 Nov 18)
 
@@ -262,4 +267,4 @@
 
 -----------------
 
-Updated: 2016 Nov 18
+Updated: 2016 Nov 29
