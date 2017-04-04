@@ -96,6 +96,47 @@ func Test_isStringFoundInOutput(t *testing.T) {
 	}
 }
 
+func TestIsStringFoundInOutput_testRunnerFailedToInitializeForUITesting(t *testing.T) {
+	t.Log("load sample logs")
+	{
+
+	}
+	sampleTestRunnerLog, err := loadFileContent("./_samples/xcodebuild-test-runner-failed-to-initialize-for-ui-testing.txt")
+	if err != nil {
+		t.Fatalf("Failed to load error sample log : %s", err)
+	}
+	sampleOKBuildLog, err := loadFileContent("./_samples/xcodebuild-ok.txt")
+	if err != nil {
+		t.Fatalf("Failed to load xcodebuild-ok.txt : %s", err)
+	}
+
+	t.Log("Should find")
+	{
+		for _, anOutStr := range []string{
+			"test runner failed to initialize for ui testing",
+			"Test runner failed to initialize for ui testing.",
+			"Test runner failed to initialize for UI testing, test test test",
+			"aaaTest runner failed to initialize for UI testing... test test test",
+			"aaa Test runner failed to initialize for UI testingtest",
+			sampleTestRunnerLog,
+		} {
+			testRunnerFailedToInitializeForUITestingWith(t, anOutStr, true)
+		}
+	}
+
+	t.Log("Should NOT find")
+	{
+		for _, anOutStr := range []string{
+			"",
+			"UI testing:",
+			"test runner failed",
+			sampleOKBuildLog,
+		} {
+			testRunnerFailedToInitializeForUITestingWith(t, anOutStr, false)
+		}
+	}
+}
+
 func TestIsStringFoundInOutput_timeOutMessageIPhoneSimulator(t *testing.T) {
 	t.Log("load sample logs")
 	{
@@ -366,6 +407,10 @@ func testIsFoundWith(t *testing.T, searchPattern, outputToSearchIn string, isSho
 		t.Fatalf("Expected (%v), actual (%v)", isShouldFind, isFound)
 	}
 }
+func testRunnerFailedToInitializeForUITestingWith(t *testing.T, outputToSearchIn string, isShouldFind bool) {
+	testIsFoundWith(t, testRunnerFailedToInitializeForUITesting, outputToSearchIn, isShouldFind)
+}
+
 func testIPhoneSimulatorTimeoutWith(t *testing.T, outputToSearchIn string, isShouldFind bool) {
 	testIsFoundWith(t, timeOutMessageIPhoneSimulator, outputToSearchIn, isShouldFind)
 }
