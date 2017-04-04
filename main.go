@@ -41,6 +41,7 @@ const failureAttemptingToLaunch = "Assertion Failure: <unknown>:0: UI Testing Fa
 const failedToBackgroundTestRunner = `Error Domain=IDETestOperationsObserverErrorDomain Code=12 "Failed to background test runner.`
 const appStateIsStillNotRunning = `App state is still not running active, state = XCApplicationStateNotRunning`
 const appAccessibilityIsNotLoaded = `UI Testing Failure - App accessibility isn't loaded`
+const testRunnerFailedToInitializeForUITesting = `Test runner failed to initialize for UI testing`
 
 var automaticRetryReasonPatterns = []string{
 	timeOutMessageIPhoneSimulator,
@@ -50,6 +51,7 @@ var automaticRetryReasonPatterns = []string{
 	failedToBackgroundTestRunner,
 	appStateIsStillNotRunning,
 	appAccessibilityIsNotLoaded,
+	testRunnerFailedToInitializeForUITesting,
 }
 
 var xcodeCommandEnvs = []string{"NSUnbufferedIO=YES"}
