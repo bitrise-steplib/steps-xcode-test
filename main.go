@@ -42,6 +42,7 @@ const failedToBackgroundTestRunner = `Error Domain=IDETestOperationsObserverErro
 const appStateIsStillNotRunning = `App state is still not running active, state = XCApplicationStateNotRunning`
 const appAccessibilityIsNotLoaded = `UI Testing Failure - App accessibility isn't loaded`
 const testRunnerFailedToInitializeForUITesting = `Test runner failed to initialize for UI testing`
+const timedOutRegisteringForTestingEvent = `Timed out registering for testing event accessibility notifications`
 
 var automaticRetryReasonPatterns = []string{
 	timeOutMessageIPhoneSimulator,
@@ -52,6 +53,7 @@ var automaticRetryReasonPatterns = []string{
 	appStateIsStillNotRunning,
 	appAccessibilityIsNotLoaded,
 	testRunnerFailedToInitializeForUITesting,
+	timedOutRegisteringForTestingEvent,
 }
 
 var xcodeCommandEnvs = []string{"NSUnbufferedIO=YES"}
