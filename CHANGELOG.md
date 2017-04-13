@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.18.2)
+## Changelog (Current version: 1.18.3)
 
 -----------------
+
+### 1.18.3 (2017 Apr 13)
+
+* [0c1c65e] Prepare for 1.18.3
+* [b7ef8d0] Added retry pattern (#72)
 
 ### 1.18.2 (2017 Apr 04)
 
@@ -272,4 +277,4 @@
 
 -----------------
 
-Updated: 2017 Apr 04
+Updated: 2017 Apr 13
