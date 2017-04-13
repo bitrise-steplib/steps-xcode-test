@@ -96,6 +96,47 @@ func Test_isStringFoundInOutput(t *testing.T) {
 	}
 }
 
+func TestIsStringFoundInOutput_timedOutRegisteringForTestingEvent(t *testing.T) {
+	t.Log("load sample logs")
+	{
+
+	}
+	sampleTestRunnerLog, err := loadFileContent("./_samples/xcodebuild-timed-out-registering-for-testing-event.txt")
+	if err != nil {
+		t.Fatalf("Failed to load error sample log : %s", err)
+	}
+	sampleOKBuildLog, err := loadFileContent("./_samples/xcodebuild-ok.txt")
+	if err != nil {
+		t.Fatalf("Failed to load xcodebuild-ok.txt : %s", err)
+	}
+
+	t.Log("Should find")
+	{
+		for _, anOutStr := range []string{
+			"Timed out registering for testing event accessibility notifications",
+			".timed out registering for testing event accessibility notifications.",
+			"(Timed out registering for testing event accessibility notifications)",
+			"aaaTimed out registering for testing event accessibility notifications... test test test",
+			"aaa timed out registering for testing event accessibility notificationstest",
+			sampleTestRunnerLog,
+		} {
+			timedOutRegisteringForTestingEventWith(t, anOutStr, true)
+		}
+	}
+
+	t.Log("Should NOT find")
+	{
+		for _, anOutStr := range []string{
+			"",
+			"accessibility",
+			"timed out",
+			sampleOKBuildLog,
+		} {
+			timedOutRegisteringForTestingEventWith(t, anOutStr, false)
+		}
+	}
+}
+
 func TestIsStringFoundInOutput_testRunnerFailedToInitializeForUITesting(t *testing.T) {
 	t.Log("load sample logs")
 	{
@@ -409,6 +450,10 @@ func testIsFoundWith(t *testing.T, searchPattern, outputToSearchIn string, isSho
 }
 func testRunnerFailedToInitializeForUITestingWith(t *testing.T, outputToSearchIn string, isShouldFind bool) {
 	testIsFoundWith(t, testRunnerFailedToInitializeForUITesting, outputToSearchIn, isShouldFind)
+}
+
+func timedOutRegisteringForTestingEventWith(t *testing.T, outputToSearchIn string, isShouldFind bool) {
+	testIsFoundWith(t, timedOutRegisteringForTestingEvent, outputToSearchIn, isShouldFind)
 }
 
 func testIPhoneSimulatorTimeoutWith(t *testing.T, outputToSearchIn string, isShouldFind bool) {
