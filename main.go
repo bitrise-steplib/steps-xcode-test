@@ -468,26 +468,27 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 	return rawOutput, exit, nil
 }
 
-func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) error {
+func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) (string, error) {
+	var logPth string
 	tmpDir, err := pathutil.NormalizedOSTempDirPath("xcodebuild-output")
 	if err != nil {
-		return fmt.Errorf("Failed to create temp dir, error: %s", err)
+		return logPth, fmt.Errorf("Failed to create temp dir, error: %s", err)
 	}
 	logFileName := "raw-xcodebuild-output.log"
-	logPth := filepath.Join(tmpDir, logFileName)
+	logPth = filepath.Join(tmpDir, logFileName)
 	if err := fileutil.WriteStringToFile(logPth, rawXcodebuildOutput); err != nil {
-		return fmt.Errorf("Failed to write xcodebuild output to file, error: %s", err)
+		return logPth, fmt.Errorf("Failed to write xcodebuild output to file, error: %s", err)
 	}
 
 	if !isRunSuccess {
 		deployDir := os.Getenv("BITRISE_DEPLOY_DIR")
 		if deployDir == "" {
-			return errors.New("No BITRISE_DEPLOY_DIR found")
+			return logPth, errors.New("No BITRISE_DEPLOY_DIR found")
 		}
 		deployPth := filepath.Join(deployDir, logFileName)
 
 		if err := cmdex.CopyFile(logPth, deployPth); err != nil {
-			return fmt.Errorf("Failed to copy xcodebuild output log file from (%s) to (%s), error: %s", logPth, deployPth, err)
+			return logPth, fmt.Errorf("Failed to copy xcodebuild output log file from (%s) to (%s), error: %s", logPth, deployPth, err)
 		}
 		logPth = deployPth
 	}
@@ -495,7 +496,7 @@ func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) error
 	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH", logPth); err != nil {
 		log.Warn("Failed to export: BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH, error: %s", err)
 	}
-	return nil
+	return logPth, nil
 }
 
 func saveAttachements(projectPath, scheme string) error {
@@ -670,7 +671,7 @@ func main() {
 	// Run build
 	if !singleBuild {
 		if rawXcodebuildOutput, exitCode, buildErr := runBuild(buildParams, configs.OutputTool); buildErr != nil {
-			if err := saveRawOutputToLogFile(rawXcodebuildOutput, false); err != nil {
+			if _, err := saveRawOutputToLogFile(rawXcodebuildOutput, false); err != nil {
 				log.Warn("Failed to save the Raw Output, err: %s", err)
 			}
 
@@ -688,7 +689,9 @@ func main() {
 	// Run test
 	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, configs.OutputTool, configs.XcprettyTestOptions, true, retryOnFail)
 
-	if err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil)); err != nil {
+	logPth, err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil))
+
+	if err != nil {
 		log.Warn("Failed to save the Raw Output, error %s", err)
 	}
 
@@ -701,10 +704,13 @@ func main() {
 	if testErr != nil {
 		log.Warn("xcode test exit code: %d", exitCode)
 		log.Error("xcode test failed, error: %s", testErr)
-		hint := `If you can't find the reason of the error in the log, please check the raw-xcodebuild-output.log
+		log.Warn(`If you can't find the reason of the error in the log, please check the raw-xcodebuild-output.log
 The log file is stored in $BITRISE_DEPLOY_DIR, and its full path
-is available in the $BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH environment variable`
-		log.Warn(hint)
+is available in the $BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH environment variable.
+
+You can check the full, unfiltered and unformatted Xcode output in the file: 
+%s. If you have the Deploy to Bitrise.io step (after this step), 
+that will attach the file to your build as an artifact!`, logPth)
 		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
 			log.Warn("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 		}
