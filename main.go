@@ -709,7 +709,8 @@ The log file is stored in $BITRISE_DEPLOY_DIR, and its full path
 is available in the $BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH environment variable.
 
 You can check the full, unfiltered and unformatted Xcode output in the file: 
-%s. If you have the Deploy to Bitrise.io step (after this step), 
+%s 
+If you have the Deploy to Bitrise.io step (after this step), 
 that will attach the file to your build as an artifact!`, logPth)
 		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
 			log.Warn("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
