@@ -469,26 +469,25 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 }
 
 func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) (string, error) {
-	var logPth string
 	tmpDir, err := pathutil.NormalizedOSTempDirPath("xcodebuild-output")
 	if err != nil {
-		return logPth, fmt.Errorf("Failed to create temp dir, error: %s", err)
+		return "", fmt.Errorf("Failed to create temp dir, error: %s", err)
 	}
 	logFileName := "raw-xcodebuild-output.log"
-	logPth = filepath.Join(tmpDir, logFileName)
+	logPth := filepath.Join(tmpDir, logFileName)
 	if err := fileutil.WriteStringToFile(logPth, rawXcodebuildOutput); err != nil {
-		return logPth, fmt.Errorf("Failed to write xcodebuild output to file, error: %s", err)
+		return "", fmt.Errorf("Failed to write xcodebuild output to file, error: %s", err)
 	}
 
 	if !isRunSuccess {
 		deployDir := os.Getenv("BITRISE_DEPLOY_DIR")
 		if deployDir == "" {
-			return logPth, errors.New("No BITRISE_DEPLOY_DIR found")
+			return "", errors.New("No BITRISE_DEPLOY_DIR found")
 		}
 		deployPth := filepath.Join(deployDir, logFileName)
 
 		if err := cmdex.CopyFile(logPth, deployPth); err != nil {
-			return logPth, fmt.Errorf("Failed to copy xcodebuild output log file from (%s) to (%s), error: %s", logPth, deployPth, err)
+			return "", fmt.Errorf("Failed to copy xcodebuild output log file from (%s) to (%s), error: %s", logPth, deployPth, err)
 		}
 		logPth = deployPth
 	}
