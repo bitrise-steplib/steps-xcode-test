@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.18.3)
+## Changelog (Current version: 1.18.4)
 
 -----------------
+
+### 1.18.4 (2017 Jun 08)
+
+* [609bef0] Prepare for 1.18.4
+* [a7f89e9] Xcode Test log update (#73)
 
 ### 1.18.3 (2017 Apr 13)
 
@@ -277,4 +282,4 @@
 
 -----------------
 
-Updated: 2017 Apr 13
+Updated: 2017 Jun 08
