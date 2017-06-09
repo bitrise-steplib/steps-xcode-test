@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.18.4)
+## Changelog (Current version: 1.18.5)
 
 -----------------
+
+### 1.18.5 (2017 Jun 09)
+
+* [2c84852] prepare for 1.18.5
+* [8d3d9f6] input grouping and reordering (#75)
 
 ### 1.18.4 (2017 Jun 08)
 
@@ -282,4 +287,4 @@
 
 -----------------
 
-Updated: 2017 Jun 08
+Updated: 2017 Jun 09
