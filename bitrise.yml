@@ -13,8 +13,8 @@ workflows:
   # ----------------------------------------------------------------
   # --- workflow to Step Test
   ci:
-    before_run:
-    - go-tests
+    # before_run:
+    # - go-tests
     after_run:
     - ci-objc
     - ci-xcode-8
