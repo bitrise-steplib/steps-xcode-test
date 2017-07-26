@@ -5,9 +5,9 @@ app:
   envs:
   - STEP_VERSION: 1.18.5
 
-  - SAMPLE_APP_URL: https://github.com/bitrise-samples/BitriseFastlaneSample.git
-  - BITRISE_PROJECT_PATH: BitriseFastlaneSample.xcodeproj
-  - BITRISE_SCHEME: BitriseFastlaneSample
+  - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-ios-simple-objc.git
+  - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
+  - BITRISE_SCHEME: ios-simple-objc
 
 workflows:
   # ----------------------------------------------------------------
@@ -59,7 +59,7 @@ workflows:
         - clone_into_dir: ./
         - commit: ""
         - tag: ""
-        - branch: "master"
+        - branch: "uitest"
         - pull_request_id: ""
         - clone_depth: ""
     - certificate-and-profile-installer: {}
@@ -70,7 +70,7 @@ workflows:
         - is_clean_build: "yes"
         - generate_code_coverage_files: "no"
         # - generate_code_coverage_files: "yes"
-        - simulator_device: iPhone 6s Plus
+        # - simulator_device: iPhone 6
         # - simulator_device: Apple TV 1080p
         # - simulator_platform: tvOS Simulator
         - should_build_before_test: "yes"
