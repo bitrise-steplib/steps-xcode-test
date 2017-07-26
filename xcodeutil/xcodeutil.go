@@ -182,7 +182,7 @@ func GetSimulator(simulatorPlatform, simulatorDevice, simulatorOsVersion string)
 	}
 
 	if simulatorDevice == "iPad" {
-		log.Warn("Given device (%s) is deprecated, using (iPad 2)...", simulatorDevice)
+		log.Warnf("Given device (%s) is deprecated, using (iPad 2)...", simulatorDevice)
 		simulatorDevice = "iPad 2"
 	}
 
@@ -236,7 +236,7 @@ func BootSimulator(simulator models.SimInfoModel, xcodebuildVersion models.Xcode
 
 	openCmd := exec.Command("open", simulatorAppFullPath, "--args", "-CurrentDeviceUDID", simulator.SimID)
 
-	log.Detail("$ %s", cmd.PrintableCommandArgs(openCmd.Args))
+	log.Printf("$ %s", cmd.PrintableCommandArgs(openCmd.Args))
 
 	out, err := openCmd.CombinedOutput()
 	outStr := string(out)

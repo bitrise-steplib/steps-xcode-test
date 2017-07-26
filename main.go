@@ -11,10 +11,9 @@ import (
 	"regexp"
 	"strings"
 	"syscall"
-
 	"time"
 
-	"github.com/bitrise-io/go-utils/cmdex"
+	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
@@ -92,31 +91,31 @@ type ConfigsModel struct {
 
 func (configs ConfigsModel) print() {
 	fmt.Println()
-	log.Info("Project Parameters:")
-	log.Detail("- ProjectPath: %s", configs.ProjectPath)
-	log.Detail("- Scheme: %s", configs.Scheme)
+	log.Infof("Project Parameters:")
+	log.Printf("- ProjectPath: %s", configs.ProjectPath)
+	log.Printf("- Scheme: %s", configs.Scheme)
 
 	fmt.Println()
-	log.Info("Simulator Configs:")
-	log.Detail("- SimulatorPlatform: %s", configs.SimulatorPlatform)
-	log.Detail("- SimulatorDevice: %s", configs.SimulatorDevice)
-	log.Detail("- SimulatorOsVersion: %s", configs.SimulatorOsVersion)
+	log.Infof("Simulator Configs:")
+	log.Printf("- SimulatorPlatform: %s", configs.SimulatorPlatform)
+	log.Printf("- SimulatorDevice: %s", configs.SimulatorDevice)
+	log.Printf("- SimulatorOsVersion: %s", configs.SimulatorOsVersion)
 
 	fmt.Println()
-	log.Info("Test Run Configs:")
-	log.Detail("- OutputTool: %s", configs.OutputTool)
-	log.Detail("- IsCleanBuild: %s", configs.IsCleanBuild)
-	log.Detail("- IsSingleBuild: %s", configs.IsSingleBuild)
+	log.Infof("Test Run Configs:")
+	log.Printf("- OutputTool: %s", configs.OutputTool)
+	log.Printf("- IsCleanBuild: %s", configs.IsCleanBuild)
+	log.Printf("- IsSingleBuild: %s", configs.IsSingleBuild)
 
-	log.Detail("- ShouldBuildBeforeTest: %s", configs.ShouldBuildBeforeTest)
-	log.Detail("- ShouldRetryTestOnFail: %s", configs.ShouldRetryTestOnFail)
+	log.Printf("- ShouldBuildBeforeTest: %s", configs.ShouldBuildBeforeTest)
+	log.Printf("- ShouldRetryTestOnFail: %s", configs.ShouldRetryTestOnFail)
 
-	log.Detail("- GenerateCodeCoverageFiles: %s", configs.GenerateCodeCoverageFiles)
-	log.Detail("- ExportUITestArtifacts: %s", configs.ExportUITestArtifacts)
+	log.Printf("- GenerateCodeCoverageFiles: %s", configs.GenerateCodeCoverageFiles)
+	log.Printf("- ExportUITestArtifacts: %s", configs.ExportUITestArtifacts)
 
-	log.Detail("- TestOptions: %s", configs.TestOptions)
-	log.Detail("- XcprettyTestOptions: %s", configs.XcprettyTestOptions)
-	log.Detail("- WaitForSimulatorBoot: %s", configs.WaitForSimulatorBoot)
+	log.Printf("- TestOptions: %s", configs.TestOptions)
+	log.Printf("- XcprettyTestOptions: %s", configs.XcprettyTestOptions)
+	log.Printf("- WaitForSimulatorBoot: %s", configs.WaitForSimulatorBoot)
 }
 
 func createConfigsModelFromEnvs() ConfigsModel {
@@ -231,7 +230,7 @@ func validateRequiredInputWithOptions(value, key string, options []string) error
 func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
 	r, err := regexp.Compile("(?i)" + searchStr)
 	if err != nil {
-		log.Warn("Failed to compile regexp: %s", err)
+		log.Warnf("Failed to compile regexp: %s", err)
 		return false
 	}
 	return r.MatchString(outputToSearchIn)
@@ -257,7 +256,7 @@ func runXcodeBuildCmd(useStdOut bool, args ...string) (string, int, error) {
 
 	cmdArgsForPrint := cmd.PrintableCommandArgsWithEnvs(buildCmd.Args, xcodeCommandEnvs)
 
-	log.Detail("$ %s", cmdArgsForPrint)
+	log.Printf("$ %s", cmdArgsForPrint)
 
 	err := buildCmd.Run()
 	if err != nil {
@@ -304,7 +303,7 @@ func runPrettyXcodeBuildCmd(useStdOut bool, xcprettyArgs []string, xcodebuildArg
 	//
 	buildCmd.Env = append(os.Environ(), xcodeCommandEnvs...)
 
-	log.Detail("$ set -o pipefail && %s | %v",
+	log.Printf("$ set -o pipefail && %s | %v",
 		cmd.PrintableCommandArgsWithEnvs(buildCmd.Args, xcodeCommandEnvs),
 		cmd.PrintableCommandArgs(prettyCmd.Args))
 
@@ -319,11 +318,11 @@ func runPrettyXcodeBuildCmd(useStdOut bool, xcprettyArgs []string, xcodebuildArg
 
 	defer func() {
 		if err := pipeWriter.Close(); err != nil {
-			log.Warn("Failed to close xcodebuild-xcpretty pipe, error: %s", err)
+			log.Warnf("Failed to close xcodebuild-xcpretty pipe, error: %s", err)
 		}
 
 		if err := prettyCmd.Wait(); err != nil {
-			log.Warn("xcpretty command failed, error: %s", err)
+			log.Warnf("xcpretty command failed, error: %s", err)
 		}
 	}()
 
@@ -348,7 +347,7 @@ func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (stri
 	}
 	xcodebuildArgs = append(xcodebuildArgs, "build", "-destination", buildParams.DeviceDestination)
 
-	log.Info("Building the project...")
+	log.Infof("Building the project...")
 
 	if outputTool == "xcpretty" {
 		return runPrettyXcodeBuildCmd(false, []string{}, xcodebuildArgs)
@@ -362,12 +361,12 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 		// Automatic retry
 		for _, retryReasonPattern := range automaticRetryReasonPatterns {
 			if isStringFoundInOutput(retryReasonPattern, fullOutputStr) {
-				log.Warn("Automatic retry reason found in log: %s", retryReasonPattern)
+				log.Warnf("Automatic retry reason found in log: %s", retryReasonPattern)
 				if isAutomaticRetryOnReason {
-					log.Detail("isAutomaticRetryOnReason=true - retrying...")
+					log.Printf("isAutomaticRetryOnReason=true - retrying...")
 					return runTest(buildTestParams, outputTool, xcprettyOptions, false, false)
 				}
-				log.Error("isAutomaticRetryOnReason=false, no more retry, stopping the test!")
+				log.Errorf("isAutomaticRetryOnReason=false, no more retry, stopping the test!")
 				return fullOutputStr, exitCode, testError
 			}
 		}
@@ -375,8 +374,8 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 		//
 		// Retry on fail
 		if isRetryOnFail {
-			log.Warn("Test run failed")
-			log.Detail("isRetryOnFail=true - retrying...")
+			log.Warnf("Test run failed")
+			log.Printf("isRetryOnFail=true - retrying...")
 			return runTest(buildTestParams, outputTool, xcprettyOptions, false, false)
 		}
 
@@ -439,11 +438,11 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 		}
 		if xcprettyOutputFilePath != "" {
 			if isExist, err := pathutil.IsPathExists(xcprettyOutputFilePath); err != nil {
-				log.Error("Failed to check xcpretty output file status (path: %s), error: %s", xcprettyOutputFilePath, err)
+				log.Errorf("Failed to check xcpretty output file status (path: %s), error: %s", xcprettyOutputFilePath, err)
 			} else if isExist {
-				log.Warn("=> Deleting existing xcpretty output: %s", xcprettyOutputFilePath)
+				log.Warnf("=> Deleting existing xcpretty output: %s", xcprettyOutputFilePath)
 				if err := os.Remove(xcprettyOutputFilePath); err != nil {
-					log.Error("Failed to delete xcpretty output file (path: %s), error: %s", xcprettyOutputFilePath, err)
+					log.Errorf("Failed to delete xcpretty output file (path: %s), error: %s", xcprettyOutputFilePath, err)
 				}
 			}
 		}
@@ -451,7 +450,7 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 		xcprettyArgs = append(xcprettyArgs, options...)
 	}
 
-	log.Info("Running the tests...")
+	log.Infof("Running the tests...")
 
 	var rawOutput string
 	var err error
@@ -486,25 +485,99 @@ func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) (stri
 		}
 		deployPth := filepath.Join(deployDir, logFileName)
 
-		if err := cmdex.CopyFile(logPth, deployPth); err != nil {
+		if err := command.CopyFile(logPth, deployPth); err != nil {
 			return "", fmt.Errorf("Failed to copy xcodebuild output log file from (%s) to (%s), error: %s", logPth, deployPth, err)
 		}
 		logPth = deployPth
 	}
 
 	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH", logPth); err != nil {
-		log.Warn("Failed to export: BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH, error: %s", err)
+		log.Warnf("Failed to export: BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH, error: %s", err)
 	}
 	return logPth, nil
 }
 
-func saveAttachements(projectPath, scheme string) error {
-	projectName := filepath.Base(projectPath)
-	projectExt := filepath.Ext(projectName)
-	projectName = strings.TrimSuffix(projectName, projectExt)
+func screenshotName(startTime time.Time, title, uuid string) string {
+	formattedDate := startTime.Format("2006-01-02_03-04-05")
+	fixedTitle := strings.Replace(title, " ", "_", -1)
+	return fmt.Sprintf("%s_%s_%s", formattedDate, fixedTitle, uuid)
+}
+
+func updateScreenshotNames(testLogsDir string) error {
+	testSummariesPattern := filepath.Join(testLogsDir, "*_TestSummaries.plist")
+	testSummariesPths, err := filepath.Glob(testSummariesPattern)
+	if err != nil {
+		return err
+	} else if len(testSummariesPths) == 0 {
+		return fmt.Errorf("no TestSummaries file found with pattern: %s", testSummariesPattern)
+	}
+	testSummariesPth := testSummariesPths[0]
+
+	testSummariesContent, err := fileutil.ReadStringFromFile(testSummariesPth)
+	if err != nil {
+		return err
+	}
+
+	testItems, err := xcodeutil.CollectTestItemsWithScreenshot(testSummariesContent)
+	if err != nil {
+		return err
+	}
+
+	for _, testItem := range testItems {
+		startTimeIntervalObj, found := testItem["StartTimeInterval"]
+		if !found {
+			return fmt.Errorf("missing StartTimeInterval")
+		}
+		startTimeInterval, casted := startTimeIntervalObj.(float64)
+		if !casted {
+			return fmt.Errorf("StartTimeInterval is not a float64")
+		}
+		startTime, err := xcodeutil.TimestampToTime(startTimeInterval)
+		if err != nil {
+			return err
+		}
+
+		titleObj, found := testItem["Title"]
+		if !found {
+			return fmt.Errorf("missing Title")
+		}
+		title, casted := titleObj.(string)
+		if !casted {
+			return fmt.Errorf("StartTimeInterval is not a string")
+		}
+
+		uuidObj, found := testItem["UUID"]
+		if !found {
+			return fmt.Errorf("missing UUID")
+		}
+		uuid, casted := uuidObj.(string)
+		if !casted {
+			return fmt.Errorf("StartTimeInterval is not a string")
+		}
+
+		origScreenshotPth := filepath.Join(testLogsDir, "Attachments", fmt.Sprintf("Screenshot_%s.png", uuid))
+		if exist, err := pathutil.IsPathExists(origScreenshotPth); err != nil {
+			return err
+		} else if exist {
+			newScreenshotPth := filepath.Join(testLogsDir, "Attachments", screenshotName(startTime, title, uuid)+".png")
+			if err := os.Rename(origScreenshotPth, newScreenshotPth); err != nil {
+				return err
+			}
+		} else {
+			return fmt.Errorf("screenshot not exists at: %s", origScreenshotPth)
+		}
+	}
+
+	return nil
+}
+
+func saveAttachments(projectPath, scheme string) error {
+	// find project derived data
+	projectName := strings.TrimSuffix(filepath.Base(projectPath), filepath.Ext(projectPath))
 
 	userHome := pathutil.UserHomeDir()
 	deviedDataDir := filepath.Join(userHome, "Library/Developer/Xcode/DerivedData")
+
 	projectDerivedDataDirPattern := filepath.Join(deviedDataDir, fmt.Sprintf("%s-*", projectName))
 	projectDerivedDataDirs, err := filepath.Glob(projectDerivedDataDirPattern)
 	if err != nil {
@@ -532,6 +605,12 @@ func saveAttachements(projectPath, scheme string) error {
 		return fmt.Errorf("no test attachments found at: %s", testLogAttachmentsDir)
 	}
 
+	// update screenshot name: Screenshot_uuid.png -> start_date_time_title_uuid.png
+	if err := updateScreenshotNames(testLogDir); err != nil {
+		log.Warnf("Failed to update screenshot names, error: %s", err)
+	}
+
+	// deploy zipped attachments
 	deployDir := os.Getenv("BITRISE_DEPLOY_DIR")
 	if deployDir == "" {
 		return errors.New("No BITRISE_DEPLOY_DIR found")
@@ -543,8 +622,9 @@ func saveAttachements(projectPath, scheme string) error {
 	}
 
 	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_ATTACHMENTS_PATH", zipedTestsDerivedDataPath); err != nil {
-		log.Warn("Failed to export: BITRISE_XCODE_TEST_ATTACHMENTS_PATH, error: %s", err)
+		log.Warnf("Failed to export: BITRISE_XCODE_TEST_ATTACHMENTS_PATH, error: %s", err)
 	}
+
 	return nil
 }
 
@@ -556,12 +636,12 @@ func main() {
 	configs := createConfigsModelFromEnvs()
 	configs.print()
 	if err := configs.validate(); err != nil {
-		log.Error("Issue with input: %s", err)
+		log.Errorf("Issue with input: %s", err)
 		os.Exit(1)
 	}
 
 	fmt.Println()
-	log.Info("Other Configs:")
+	log.Infof("Other Configs:")
 
 	cleanBuild := (configs.IsCleanBuild == "yes")
 	generateCodeCoverage := (configs.GenerateCodeCoverageFiles == "yes")
@@ -577,50 +657,50 @@ func main() {
 	} else if strings.HasSuffix(configs.ProjectPath, ".xcworkspace") {
 		action = "-workspace"
 	} else {
-		log.Error("Iinvalid project file (%s), extension should be (.xcodeproj/.xcworkspace)", configs.ProjectPath)
+		log.Errorf("Iinvalid project file (%s), extension should be (.xcodeproj/.xcworkspace)", configs.ProjectPath)
 		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
-			log.Warn("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
+			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 		}
 		os.Exit(1)
 	}
 
-	log.Detail("* action: %s", action)
+	log.Printf("* action: %s", action)
 
 	// Device Destination
 	deviceDestination := fmt.Sprintf("platform=%s,name=%s,OS=%s", configs.SimulatorPlatform, configs.SimulatorDevice, configs.SimulatorOsVersion)
 
-	log.Detail("* device_destination: %s", deviceDestination)
+	log.Printf("* device_destination: %s", deviceDestination)
 
 	// Output tools versions
 	xcodebuildVersion, err := xcodeutil.GetXcodeVersion()
 	if err != nil {
-		log.Error("Failed to get the version of xcodebuild! Error: %s", err)
+		log.Errorf("Failed to get the version of xcodebuild! Error: %s", err)
 		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
-			log.Warn("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
+			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 		}
 		os.Exit(1)
 	}
 
-	log.Detail("* xcodebuild_version: %s (%s)", xcodebuildVersion.Version, xcodebuildVersion.BuildVersion)
+	log.Printf("* xcodebuild_version: %s (%s)", xcodebuildVersion.Version, xcodebuildVersion.BuildVersion)
 
 	xcprettyVersion, err := cmd.GetXcprettyVersion()
 	if err != nil {
-		log.Warn("Failed to get the xcpretty version! Error: %s", err)
+		log.Warnf("Failed to get the xcpretty version! Error: %s", err)
 	} else {
-		log.Detail("* xcpretty_version: %s", xcprettyVersion)
+		log.Printf("* xcpretty_version: %s", xcprettyVersion)
 	}
 
 	// Simulator infos
 	simulator, err := xcodeutil.GetSimulator(configs.SimulatorPlatform, configs.SimulatorDevice, configs.SimulatorOsVersion)
 	if err != nil {
-		log.Error(fmt.Sprintf("failed to get simulator udid, error: %s", err))
+		log.Errorf(fmt.Sprintf("failed to get simulator udid, error: %s", err))
 		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
-			log.Warn("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
+			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 		}
 		os.Exit(1)
 	}
 
-	log.Detail("* simulator_name: %s, UDID: %s, status: %s", simulator.Name, simulator.SimID, simulator.Status)
+	log.Printf("* simulator_name: %s, UDID: %s, status: %s", simulator.Name, simulator.SimID, simulator.Status)
 	fmt.Println()
 
 	buildParams := models.XcodeBuildParamsModel{
@@ -646,19 +726,18 @@ func main() {
 	//
 	// Start simulator
 	if simulator.Status == "Shutdown" {
-		log.Info("Booting simulator (%s)...", simulator.SimID)
+		log.Infof("Booting simulator (%s)...", simulator.SimID)
 
 		if err := xcodeutil.BootSimulator(simulator, xcodebuildVersion); err != nil {
-			log.Error(fmt.Sprintf("failed to boot simulator, error: %s", err))
+			log.Errorf(fmt.Sprintf("failed to boot simulator, error: %s", err))
 			if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
-				log.Warn("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
+				log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 			}
 			os.Exit(1)
 		}
 
 		if configs.WaitForSimulatorBoot == "yes" {
-			log.Detail("Waiting for simulator boot")
-			progress.SimpleProgress(".", 1*time.Second, func() {
+			progress.NewDefaultWrapper("Waiting for simulator boot").WrapAction(func() {
 				time.Sleep(60 * time.Second)
 			})
 		}
@@ -671,14 +750,14 @@ func main() {
 	if !singleBuild {
 		if rawXcodebuildOutput, exitCode, buildErr := runBuild(buildParams, configs.OutputTool); buildErr != nil {
 			if _, err := saveRawOutputToLogFile(rawXcodebuildOutput, false); err != nil {
-				log.Warn("Failed to save the Raw Output, err: %s", err)
+				log.Warnf("Failed to save the Raw Output, err: %s", err)
 			}
 
-			log.Warn("xcode build exit code: %d", exitCode)
-			log.Warn("xcode build log:\n%s", rawXcodebuildOutput)
-			log.Error("xcode build failed with error: %s", buildErr)
+			log.Warnf("xcode build exit code: %d", exitCode)
+			log.Warnf("xcode build log:\n%s", rawXcodebuildOutput)
+			log.Errorf("xcode build failed with error: %s", buildErr)
 			if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
-				log.Warn("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
+				log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 			}
 			os.Exit(1)
 		}
@@ -691,19 +770,19 @@ func main() {
 	logPth, err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil))
 
 	if err != nil {
-		log.Warn("Failed to save the Raw Output, error %s", err)
+		log.Warnf("Failed to save the Raw Output, error %s", err)
 	}
 
 	if exportUITestArtifacts {
-		if err := saveAttachements(configs.ProjectPath, configs.Scheme); err != nil {
-			log.Warn("Failed to export UI test artifacts, error %s", err)
+		if err := saveAttachments(configs.ProjectPath, configs.Scheme); err != nil {
+			log.Warnf("Failed to export UI test artifacts, error %s", err)
 		}
 	}
 
 	if testErr != nil {
-		log.Warn("xcode test exit code: %d", exitCode)
-		log.Error("xcode test failed, error: %s", testErr)
-		log.Warn(`If you can't find the reason of the error in the log, please check the raw-xcodebuild-output.log
+		log.Warnf("xcode test exit code: %d", exitCode)
+		log.Errorf("xcode test failed, error: %s", testErr)
+		log.Warnf(`If you can't find the reason of the error in the log, please check the raw-xcodebuild-output.log
 The log file is stored in $BITRISE_DEPLOY_DIR, and its full path
 is available in the $BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH environment variable.
 
@@ -712,12 +791,12 @@ You can check the full, unfiltered and unformatted Xcode output in the file:
 If you have the Deploy to Bitrise.io step (after this step), 
 that will attach the file to your build as an artifact!`, logPth)
 		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
-			log.Warn("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
+			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 		}
 		os.Exit(1)
 	}
 
 	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "succeeded"); err != nil {
-		log.Warn("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
+		log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 	}
 }

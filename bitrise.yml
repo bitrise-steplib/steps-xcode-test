@@ -5,9 +5,9 @@ app:
   envs:
   - STEP_VERSION: 1.18.5
 
-  - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc.git
-  - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
-  - BITRISE_SCHEME: ios-simple-objc
+  - SAMPLE_APP_URL: https://github.com/bitrise-samples/BitriseFastlaneSample.git
+  - BITRISE_PROJECT_PATH: BitriseFastlaneSample.xcodeproj
+  - BITRISE_SCHEME: BitriseFastlaneSample
 
 workflows:
   # ----------------------------------------------------------------
@@ -76,6 +76,7 @@ workflows:
         # - simulator_platform: tvOS Simulator
         - should_build_before_test: "yes"
         - xcodebuild_test_options: -verbose
+        - export_uitest_artifacts: "true"
     - script:
         title: Output test
         is_always_run: true
@@ -164,6 +165,9 @@ workflows:
             #!/bin/bash
             set -ex
             go get -u -v github.com/tools/godep
+            go get -u -v golang.org/x/sys/unix
+            go get -u -v github.com/davecgh/go-spew/spew
+            go get -u -v github.com/pmezard/go-difflib/difflib
 
             rm -rf ./Godeps
             rm -rf ./vendor

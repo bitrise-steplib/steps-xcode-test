@@ -9,6 +9,32 @@ import (
 	"strings"
 )
 
+// RevokableChangeDir ...
+func RevokableChangeDir(dir string) (func() error, error) {
+	origDir, err := CurrentWorkingDirectoryAbsolutePath()
+	if err != nil {
+		return nil, err
+	}
+
+	revokeFn := func() error {
+		return os.Chdir(origDir)
+	}
+
+	return revokeFn, os.Chdir(dir)
+}
+
+// ChangeDirForFunction ...
+func ChangeDirForFunction(dir string, fn func()) error {
+	revokeFn, err := RevokableChangeDir(dir)
+	if err != nil {
+		return err
+	}
+
+	fn()
+
+	return revokeFn()
+}
+
 // IsRelativePath ...
 func IsRelativePath(pth string) bool {
 	if strings.HasPrefix(pth, "./") {
@@ -74,7 +100,7 @@ func IsDirExists(pth string) (bool, error) {
 		return false, nil
 	}
 	if fileInf == nil {
-		return false, errors.New("No file info available.")
+		return false, errors.New("No file info available")
 	}
 	return fileInf.IsDir(), nil
 }
