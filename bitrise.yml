@@ -70,7 +70,7 @@ workflows:
         - is_clean_build: "yes"
         - generate_code_coverage_files: "no"
         # - generate_code_coverage_files: "yes"
-        - simulator_device: iPhone 6
+        - simulator_device: iPhone 7
         # - simulator_device: Apple TV 1080p
         # - simulator_platform: tvOS Simulator
         - should_build_before_test: "yes"
