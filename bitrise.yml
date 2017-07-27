@@ -5,7 +5,7 @@ app:
   envs:
   - STEP_VERSION: 1.18.5
 
-  - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc.git
+  - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-ios-simple-objc-with-uitest.git
   - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
   - BITRISE_SCHEME: ios-simple-objc
 
@@ -28,8 +28,6 @@ workflows:
     - test
 
   ci-xcode-8:
-    before_run:
-    - go-tests
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-samples/ios-xcode-8.0.git
     - BITRISE_PROJECT_PATH: ios-xcode-8.0/ios-xcode-8.0.xcodeproj
@@ -65,8 +63,7 @@ workflows:
     - certificate-and-profile-installer: {}
     - path::./: 
         inputs:
-        - output_tool: xcpretty
-        # - output_tool: xcodebuild
+        - output_tool: xcodebuild
         # - is_clean_build: "no"
         - is_clean_build: "yes"
         - generate_code_coverage_files: "no"
@@ -76,6 +73,7 @@ workflows:
         # - simulator_platform: tvOS Simulator
         - should_build_before_test: "yes"
         - xcodebuild_test_options: -verbose
+        - export_uitest_artifacts: "true"
     - script:
         title: Output test
         is_always_run: true
@@ -164,6 +162,9 @@ workflows:
             #!/bin/bash
             set -ex
             go get -u -v github.com/tools/godep
+            go get -u -v golang.org/x/sys/unix
+            go get -u -v github.com/davecgh/go-spew/spew
+            go get -u -v github.com/pmezard/go-difflib/difflib
 
             rm -rf ./Godeps
             rm -rf ./vendor

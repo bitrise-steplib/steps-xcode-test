@@ -15,7 +15,7 @@ func TestIsOsVersionGreater(t *testing.T) {
 		}
 
 		if greater {
-			t.Fatalf("Expected (false), actual(%s)", greater)
+			t.Fatalf("Expected (false), actual(%v)", greater)
 		}
 	}
 
@@ -27,7 +27,7 @@ func TestIsOsVersionGreater(t *testing.T) {
 		}
 
 		if !greater {
-			t.Fatalf("Expected (true), actual(%s)", greater)
+			t.Fatalf("Expected (true), actual(%v)", greater)
 		}
 	}
 
@@ -39,7 +39,7 @@ func TestIsOsVersionGreater(t *testing.T) {
 		}
 
 		if !greater {
-			t.Fatalf("Expected (true), actual(%s)", greater)
+			t.Fatalf("Expected (true), actual(%v)", greater)
 		}
 	}
 }

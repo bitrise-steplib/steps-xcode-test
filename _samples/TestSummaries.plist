@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>FormatVersion</key>
+	<string>1.2</string>
+	<key>RunDestination</key>
+	<dict>
+		<key>LocalComputer</key>
+		<dict>
+			<key>BusSpeedInMHz</key>
+			<integer>100</integer>
+			<key>CPUCount</key>
+			<integer>1</integer>
+			<key>CPUKind</key>
+			<string>Intel Core i5</string>
+			<key>CPUSpeedInMHz</key>
+			<integer>2400</integer>
+			<key>Identifier</key>
+			<string>AEA62323-2E03-5CF7-8579-222F26613C4B</string>
+			<key>IsConcreteDevice</key>
+			<true/>
+			<key>LogicalCPUCoresPerPackage</key>
+			<integer>4</integer>
+			<key>ModelCode</key>
+			<string>MacBookPro11,1</string>
+			<key>ModelName</key>
+			<string>MacBook Pro</string>
+			<key>ModelUTI</key>
+			<string>com.apple.macbookpro-13-retina-display</string>
+			<key>Name</key>
+			<string>My Mac</string>
+			<key>NativeArchitecture</key>
+			<string>x86_64h</string>
+			<key>OperatingSystemVersion</key>
+			<string>10.12.5</string>
+			<key>OperatingSystemVersionWithBuildNumber</key>
+			<string>10.12.5 (16F73)</string>
+			<key>PhysicalCPUCoresPerPackage</key>
+			<integer>2</integer>
+			<key>Platform</key>
+			<dict>
+				<key>Identifier</key>
+				<string>com.apple.platform.macosx</string>
+				<key>Name</key>
+				<string>macOS</string>
+			</dict>
+			<key>RAMSizeInMegabytes</key>
+			<integer>8192</integer>
+		</dict>
+		<key>Name</key>
+		<string>iPhone 6</string>
+		<key>TargetArchitecture</key>
+		<string>x86_64</string>
+		<key>TargetDevice</key>
+		<dict>
+			<key>Identifier</key>
+			<string>5817D140-BFAA-4DB3-A07B-8E78A3962413</string>
+			<key>IsConcreteDevice</key>
+			<true/>
+			<key>ModelCode</key>
+			<string>iPhone7,2</string>
+			<key>ModelName</key>
+			<string>iPhone 6</string>
+			<key>ModelUTI</key>
+			<string>com.apple.iphone-6-b4b5b9</string>
+			<key>Name</key>
+			<string>iPhone 6</string>
+			<key>NativeArchitecture</key>
+			<string>x86_64</string>
+			<key>OperatingSystemVersion</key>
+			<string>10.3.1</string>
+			<key>OperatingSystemVersionWithBuildNumber</key>
+			<string>10.3.1 (14E8301)</string>
+			<key>Platform</key>
+			<dict>
+				<key>Identifier</key>
+				<string>com.apple.platform.iphonesimulator</string>
+				<key>Name</key>
+				<string>iOS Simulator</string>
+			</dict>
+		</dict>
+		<key>TargetSDK</key>
+		<dict>
+			<key>Identifier</key>
+			<string>iphonesimulator10.3</string>
+			<key>IsInternal</key>
+			<false/>
+			<key>Name</key>
+			<string>Simulator - iOS 10.3</string>
+			<key>OperatingSystemVersion</key>
+			<string>10.3</string>
+		</dict>
+	</dict>
+	<key>TestableSummaries</key>
+	<array>
+		<dict>
+			<key>ProjectPath</key>
+			<string>sign_test.xcodeproj</string>
+			<key>TargetName</key>
+			<string>sign_testUITests</string>
+			<key>TestName</key>
+			<string>sign_testUITests</string>
+			<key>TestObjectClass</key>
+			<string>IDESchemeActionTestableSummary</string>
+			<key>Tests</key>
+			<array>
+				<dict>
+					<key>Duration</key>
+					<real>10.104538977146149</real>
+					<key>Subtests</key>
+					<array>
+						<dict>
+							<key>Duration</key>
+							<real>10.101001977920532</real>
+							<key>Subtests</key>
+							<array>
+								<dict>
+									<key>Duration</key>
+									<real>10.099813997745514</real>
+									<key>Subtests</key>
+									<array>
+										<dict>
+											<key>ActivitySummaries</key>
+											<array>
+												<dict>
+													<key>FinishTimeInterval</key>
+													<real>519836664.99800497</real>
+													<key>StartTimeInterval</key>
+													<real>519836664.99739498</real>
+													<key>Title</key>
+													<string>Start Test at 2017-06-22 17:04:24.997</string>
+													<key>UUID</key>
+													<string>0AFA37F3-C4E7-4F86-BA15-935365954107</string>
+												</dict>
+												<dict>
+													<key>FinishTimeInterval</key>
+													<real>519836674.88899702</real>
+													<key>StartTimeInterval</key>
+													<real>519836665.00013798</real>
+													<key>SubActivities</key>
+													<array>
+														<dict>
+															<key>FinishTimeInterval</key>
+															<real>519836674.88696802</real>
+															<key>HasScreenshotData</key>
+															<true/>
+															<key>StartTimeInterval</key>
+															<real>519836665.007613</real>
+															<key>SubActivities</key>
+															<array>
+																<dict>
+																	<key>FinishTimeInterval</key>
+																	<real>519836673.88538599</real>
+																	<key>HasScreenshotData</key>
+																	<true/>
+																	<key>StartTimeInterval</key>
+																	<real>519836670.93567997</real>
+																	<key>Title</key>
+																	<string>Wait for app to idle</string>
+																	<key>UUID</key>
+																	<string>46F32B31-BBF5-464F-A43E-075403D04728</string>
+																</dict>
+															</array>
+															<key>Title</key>
+															<string>Launch com.bitrise.sign-test</string>
+															<key>UUID</key>
+															<string>76698039-31C1-4953-8005-028909B8C752</string>
+														</dict>
+													</array>
+													<key>Title</key>
+													<string>Set Up</string>
+													<key>UUID</key>
+													<string>0102AA08-EDF9-4EB7-84C5-268BF84E05F5</string>
+												</dict>
+												<dict>
+													<key>FinishTimeInterval</key>
+													<real>519836674.89021999</real>
+													<key>StartTimeInterval</key>
+													<real>519836674.88960999</real>
+													<key>Title</key>
+													<string>Tear Down</string>
+													<key>UUID</key>
+													<string>1C1EA6EF-5A69-4323-919D-E5C5F750F3B7</string>
+												</dict>
+											</array>
+											<key>Duration</key>
+											<real>10.098815977573395</real>
+											<key>TestIdentifier</key>
+											<string>sign_testUITests/testExample()</string>
+											<key>TestName</key>
+											<string>testExample()</string>
+											<key>TestObjectClass</key>
+											<string>IDESchemeActionTestSummary</string>
+											<key>TestStatus</key>
+											<string>Success</string>
+											<key>TestSummaryGUID</key>
+											<string>139DA087-C4EB-45CB-9944-38424CF9D7A4</string>
+										</dict>
+									</array>
+									<key>TestIdentifier</key>
+									<string>sign_testUITests</string>
+									<key>TestName</key>
+									<string>sign_testUITests</string>
+									<key>TestObjectClass</key>
+									<string>IDESchemeActionTestSummaryGroup</string>
+								</dict>
+							</array>
+							<key>TestIdentifier</key>
+							<string>sign_testUITests.xctest</string>
+							<key>TestName</key>
+							<string>sign_testUITests.xctest</string>
+							<key>TestObjectClass</key>
+							<string>IDESchemeActionTestSummaryGroup</string>
+						</dict>
+					</array>
+					<key>TestIdentifier</key>
+					<string>Selected tests</string>
+					<key>TestName</key>
+					<string>Selected tests</string>
+					<key>TestObjectClass</key>
+					<string>IDESchemeActionTestSummaryGroup</string>
+				</dict>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>
