@@ -543,7 +543,7 @@ func updateScreenshotNames(testLogsDir string) error {
 		}
 		title, casted := titleObj.(string)
 		if !casted {
-			return fmt.Errorf("StartTimeInterval is not a string")
+			return fmt.Errorf("Title is not a string")
 		}
 
 		uuidObj, found := testItem["UUID"]
@@ -552,7 +552,7 @@ func updateScreenshotNames(testLogsDir string) error {
 		}
 		uuid, casted := uuidObj.(string)
 		if !casted {
-			return fmt.Errorf("StartTimeInterval is not a string")
+			return fmt.Errorf("UUID is not a string")
 		}
 
 		origScreenshotPth := filepath.Join(testLogsDir, "Attachments", fmt.Sprintf("Screenshot_%s.png", uuid))
