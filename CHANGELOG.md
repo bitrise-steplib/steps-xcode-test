@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.18.5)
+## Changelog (Current version: 1.18.6)
 
 -----------------
+
+### 1.18.6 (2017 Jul 27)
+
+* [7c0a29a] prepare for 1.18.6
+* [e00967a] update generated screenshot names (#77)
 
 ### 1.18.5 (2017 Jun 09)
 
@@ -287,4 +292,4 @@
 
 -----------------
 
-Updated: 2017 Jun 09
+Updated: 2017 Jul 27
