@@ -15,11 +15,6 @@ import (
 	ver "github.com/hashicorp/go-version"
 )
 
-var (
-	osRegexp          = regexp.MustCompile(`-- (.+) (\d\.\d) --`)
-	deviceStateRegexp = regexp.MustCompile(` *(.+) \(([A-Z0-9-]+)\) \((.+)\)`)
-)
-
 //=======================================
 // Utility
 //=======================================
@@ -196,7 +191,12 @@ func GetSimulator(simulatorPlatform, simulatorDevice, simulatorOsVersion string)
 		}
 		desiredOsVersion = latestOsVersion
 	} else {
-		desiredOsVersion = fmt.Sprintf("%s %s", desiredPlatform, simulatorOsVersion)
+		normalizedOsVersion := simulatorOsVersion
+		osVersionSplit := strings.Split(normalizedOsVersion, ".")
+		if len(osVersionSplit) > 2 {
+			normalizedOsVersion = strings.Join(osVersionSplit[0:2], ".")
+		}
+		desiredOsVersion = fmt.Sprintf("%s %s", desiredPlatform, normalizedOsVersion)
 	}
 
 	//

@@ -666,11 +666,6 @@ func main() {
 
 	log.Printf("* action: %s", action)
 
-	// Device Destination
-	deviceDestination := fmt.Sprintf("platform=%s,name=%s,OS=%s", configs.SimulatorPlatform, configs.SimulatorDevice, configs.SimulatorOsVersion)
-
-	log.Printf("* device_destination: %s", deviceDestination)
-
 	// Output tools versions
 	xcodebuildVersion, err := xcodeutil.GetXcodeVersion()
 	if err != nil {
@@ -701,6 +696,11 @@ func main() {
 	}
 
 	log.Printf("* simulator_name: %s, UDID: %s, status: %s", simulator.Name, simulator.SimID, simulator.Status)
+
+	// Device Destination
+	deviceDestination := fmt.Sprintf("id=%s", simulator.SimID)
+
+	log.Printf("* device_destination: %s", deviceDestination)
 	fmt.Println()
 
 	buildParams := models.XcodeBuildParamsModel{
