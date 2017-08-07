@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.18.6)
+## Changelog (Current version: 1.18.7)
 
 -----------------
+
+### 1.18.7 (2017 Aug 07)
+
+* [d9e87dd] prepare for 1.18.7
+* [cabcec4] fix for 10.3.1 os version (#78)
 
 ### 1.18.6 (2017 Jul 27)
 
@@ -292,4 +297,4 @@
 
 -----------------
 
-Updated: 2017 Jul 27
+Updated: 2017 Aug 07
