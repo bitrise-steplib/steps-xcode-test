@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.18.7)
+## Changelog (Current version: 1.18.8)
 
 -----------------
+
+### 1.18.8 (2017 Oct 09)
+
+* [d082966] Preparing for v1.18.8
+* [baf8c31] Update xcode-test docs (#81)
 
 ### 1.18.7 (2017 Aug 07)
 
@@ -297,4 +302,4 @@
 
 -----------------
 
-Updated: 2017 Aug 07
+Updated: 2017 Oct 09
