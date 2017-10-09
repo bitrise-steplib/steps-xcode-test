@@ -189,11 +189,7 @@ func (configs ConfigsModel) validate() error {
 	if err := validateRequiredInputWithOptions(configs.ExportUITestArtifacts, "export_uitest_artifacts", []string{"true", "false"}); err != nil {
 		return err
 	}
-	if err := validateRequiredInputWithOptions(configs.WaitForSimulatorBoot, "wait_for_simulator_boot", []string{"yes", "no"}); err != nil {
-		return err
-	}
-
-	return nil
+	return validateRequiredInputWithOptions(configs.WaitForSimulatorBoot, "wait_for_simulator_boot", []string{"yes", "no"})
 }
 
 //--------------------
