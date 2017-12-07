@@ -174,7 +174,7 @@ inputs:
       description: |-
         If `single_build: false` step runs `xcodebuild OPTIONS build OPTIONS` before the test,
         to generate the project derived datas. After that comes `xcodebuild OPTIONS build test OPTIONS`,
-        which command's log is presented in the setp's log.
+        which command's log is presented in the step's log.
 
         If `single_build: true`, then step calls only `xcodebuild OPTIONS build test OPTIONS`.
       value_options:

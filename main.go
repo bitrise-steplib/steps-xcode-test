@@ -18,6 +18,7 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/progress"
+	"github.com/bitrise-io/go-utils/stringutil"
 	cmd "github.com/bitrise-io/steps-xcode-test/command"
 	"github.com/bitrise-io/steps-xcode-test/models"
 	"github.com/bitrise-io/steps-xcode-test/xcodeutil"
@@ -27,21 +28,19 @@ import (
 // On performance limited OS X hosts (ex: VMs) the iPhone/iOS Simulator might time out
 //  while booting. So far it seems that a simple retry solves these issues.
 
-// This boot timeout can happen when running Unit Tests
-//  with Xcode Command Line `xcodebuild`.
-const timeOutMessageIPhoneSimulator = "iPhoneSimulator: Timed out waiting"
-
-// This boot timeout can happen when running Xcode (7+) UI tests
-//  with Xcode Command Line `xcodebuild`.
-const timeOutMessageUITest = "Terminating app due to uncaught exception '_XCTestCaseInterruptionException'"
-
-const earlyUnexpectedExit = "Early unexpected exit, operation never finished bootstrapping - no restart will be attempted"
-const failureAttemptingToLaunch = "Assertion Failure: <unknown>:0: UI Testing Failure - Failure attempting to launch <XCUIApplicationImpl:"
-const failedToBackgroundTestRunner = `Error Domain=IDETestOperationsObserverErrorDomain Code=12 "Failed to background test runner.`
-const appStateIsStillNotRunning = `App state is still not running active, state = XCApplicationStateNotRunning`
-const appAccessibilityIsNotLoaded = `UI Testing Failure - App accessibility isn't loaded`
-const testRunnerFailedToInitializeForUITesting = `Test runner failed to initialize for UI testing`
-const timedOutRegisteringForTestingEvent = `Timed out registering for testing event accessibility notifications`
+const (
+	// This boot timeout can happen when running Unit Tests with Xcode Command Line `xcodebuild`.
+	timeOutMessageIPhoneSimulator = "iPhoneSimulator: Timed out waiting"
+	// This boot timeout can happen when running Xcode (7+) UI tests with Xcode Command Line `xcodebuild`.
+	timeOutMessageUITest                     = "Terminating app due to uncaught exception '_XCTestCaseInterruptionException'"
+	earlyUnexpectedExit                      = "Early unexpected exit, operation never finished bootstrapping - no restart will be attempted"
+	failureAttemptingToLaunch                = "Assertion Failure: <unknown>:0: UI Testing Failure - Failure attempting to launch <XCUIApplicationImpl:"
+	failedToBackgroundTestRunner             = `Error Domain=IDETestOperationsObserverErrorDomain Code=12 "Failed to background test runner.`
+	appStateIsStillNotRunning                = `App state is still not running active, state = XCApplicationStateNotRunning`
+	appAccessibilityIsNotLoaded              = `UI Testing Failure - App accessibility isn't loaded`
+	testRunnerFailedToInitializeForUITesting = `Test runner failed to initialize for UI testing`
+	timedOutRegisteringForTestingEvent       = `Timed out registering for testing event accessibility notifications`
+)
 
 var automaticRetryReasonPatterns = []string{
 	timeOutMessageIPhoneSimulator,
@@ -778,6 +777,8 @@ func main() {
 	if testErr != nil {
 		log.Warnf("xcode test exit code: %d", exitCode)
 		log.Errorf("xcode test failed, error: %s", testErr)
+		log.Errorf("\nLast lines of the Xcode build log:")
+		fmt.Println(stringutil.LastNLines(rawXcodebuildOutput, 10))
 		log.Warnf(`If you can't find the reason of the error in the log, please check the raw-xcodebuild-output.log
 The log file is stored in $BITRISE_DEPLOY_DIR, and its full path
 is available in the $BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH environment variable.
