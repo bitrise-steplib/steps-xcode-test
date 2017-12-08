@@ -777,7 +777,7 @@ func main() {
 	if testErr != nil {
 		log.Warnf("xcode test exit code: %d", exitCode)
 		log.Errorf("xcode test failed, error: %s", testErr)
-		log.Errorf("\nLast lines of the Xcode build log:")
+		log.Errorf("\nLast lines of the Xcode's build log:")
 		fmt.Println(stringutil.LastNLines(rawXcodebuildOutput, 10))
 		log.Warnf(`If you can't find the reason of the error in the log, please check the raw-xcodebuild-output.log
 The log file is stored in $BITRISE_DEPLOY_DIR, and its full path
