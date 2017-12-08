@@ -1,0 +1,19 @@
+[[constraint]]
+  name = "github.com/bitrise-io/go-utils"
+  branch = "master"
+
+[[constraint]]
+  name = "github.com/bitrise-tools/go-xcode"
+  branch = "master"
+
+[[constraint]]
+  name = "github.com/hashicorp/go-version"
+  branch = "master"
+
+[[constraint]]
+  name = "github.com/kballard/go-shellquote"
+  branch = "master"
+
+[[constraint]]
+  name = "github.com/stretchr/testify"
+  branch = "master"
