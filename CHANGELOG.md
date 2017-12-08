@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.18.8)
+## Changelog (Current version: 1.18.9)
 
 -----------------
+
+### 1.18.9 (2017 Dec 08)
+
+* [2b78c22] Bump version to 1.18.9
+* [6f71606] Print last 10 lines of the Xcode log (#82)
 
 ### 1.18.8 (2017 Oct 09)
 
@@ -302,4 +307,4 @@
 
 -----------------
 
-Updated: 2017 Oct 09
+Updated: 2017 Dec 08
