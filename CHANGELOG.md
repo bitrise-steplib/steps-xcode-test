@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.18.9)
+## Changelog (Current version: 1.18.10)
 
 -----------------
+
+### 1.18.10 (2018 Jan 25)
+
+* [a8526bf] Prepare for 1.18.10
+* [95c8b90] typo fix (#83)
+* [a1f28d8] replaced git-clone step (#84)
 
 ### 1.18.9 (2017 Dec 08)
 
@@ -307,4 +313,4 @@
 
 -----------------
 
-Updated: 2017 Dec 08
+Updated: 2018 Jan 25
