@@ -570,10 +570,13 @@ func saveAttachments(projectPath, scheme string) error {
 	// find project derived data
 	projectName := strings.TrimSuffix(filepath.Base(projectPath), filepath.Ext(projectPath))
 
-	userHome := pathutil.UserHomeDir()
-	deviedDataDir := filepath.Join(userHome, "Library/Developer/Xcode/DerivedData")
+	// change spaces to _
+	projectName = strings.Replace(projectName, " ", "_", -1)
 
-	projectDerivedDataDirPattern := filepath.Join(deviedDataDir, fmt.Sprintf("%s-*", projectName))
+	userHome := pathutil.UserHomeDir()
+	derivedDataDir := filepath.Join(userHome, "Library/Developer/Xcode/DerivedData")
+
+	projectDerivedDataDirPattern := filepath.Join(derivedDataDir, fmt.Sprintf("%s-*", projectName))
 	projectDerivedDataDirs, err := filepath.Glob(projectDerivedDataDirPattern)
 	if err != nil {
 		return err
