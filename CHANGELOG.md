@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.18.10)
+## Changelog (Current version: 1.18.11)
 
 -----------------
+
+### 1.18.11 (2018 Feb 05)
+
+* [783760c] Prepare for 1.18.11
+* [ec172f5] project name escaping (#85)
 
 ### 1.18.10 (2018 Jan 25)
 
@@ -313,4 +318,4 @@
 
 -----------------
 
-Updated: 2018 Jan 25
+Updated: 2018 Feb 05
