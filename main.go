@@ -559,7 +559,7 @@ func updateScreenshotNames(testLogsDir string) error {
 				return err
 			}
 		} else {
-			return fmt.Errorf("screenshot not exists at: %s", origScreenshotPth)
+			return fmt.Errorf("screenshot does not exist at: %s", origScreenshotPth)
 		}
 	}
 
