@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.18.11)
+## Changelog (Current version: 1.18.12)
 
 -----------------
+
+### 1.18.12 (2018 Feb 21)
+
+* [de24ba0] STEP_VERSION: 1.18.12
+* [18cd56e] Fixes typo (#86)
 
 ### 1.18.11 (2018 Feb 05)
 
@@ -318,4 +323,4 @@
 
 -----------------
 
-Updated: 2018 Feb 05
+Updated: 2018 Feb 21
