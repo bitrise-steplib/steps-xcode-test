@@ -550,16 +550,21 @@ func updateScreenshotNames(testLogsDir string) error {
 			return fmt.Errorf("UUID is not a string")
 		}
 
-		origScreenshotPth := filepath.Join(testLogsDir, "Attachments", fmt.Sprintf("Screenshot_%s.png", uuid))
-		if exist, err := pathutil.IsPathExists(origScreenshotPth); err != nil {
-			return err
-		} else if exist {
-			newScreenshotPth := filepath.Join(testLogsDir, "Attachments", screenshotName(startTime, title, uuid)+".png")
-			if err := os.Rename(origScreenshotPth, newScreenshotPth); err != nil {
+		var screenshotExists bool
+		for _, ext := range []string{"png", "jpg"} {
+			origScreenshotPth := filepath.Join(testLogsDir, "Attachments", fmt.Sprintf("Screenshot_%s.%s", uuid, ext))
+			if exist, err := pathutil.IsPathExists(origScreenshotPth); err != nil {
 				return err
+			} else if exist {
+				screenshotExists = true
+				newScreenshotPth := filepath.Join(testLogsDir, "Attachments", screenshotName(startTime, title, uuid)+"."+ext)
+				if err := os.Rename(origScreenshotPth, newScreenshotPth); err != nil {
+					return err
+				}
 			}
-		} else {
-			return fmt.Errorf("screenshot not exists at: %s", origScreenshotPth)
+		}
+		if !screenshotExists {
+			return fmt.Errorf("screenshot not exists")
 		}
 	}
 
@@ -603,7 +608,9 @@ func saveAttachments(projectPath, scheme string) error {
 		return fmt.Errorf("no test attachments found at: %s", testLogAttachmentsDir)
 	}
 
-	// update screenshot name: Screenshot_uuid.png -> start_date_time_title_uuid.png
+	// update screenshot name:
+	// Screenshot_uuid.png -> start_date_time_title_uuid.png
+	// Screenshot_uuid.jpg -> start_date_time_title_uuid.jpg
 	if err := updateScreenshotNames(testLogDir); err != nil {
 		log.Warnf("Failed to update screenshot names, error: %s", err)
 	}
