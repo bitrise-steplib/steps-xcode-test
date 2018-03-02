@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.18.12)
+## Changelog (Current version: 1.18.13)
 
 -----------------
+
+### 1.18.13 (2018 Mar 02)
+
+* [59dfbff] Bump version 1.18.13
+* [76e7343] Find screenshots with .jpg extension (#88)
 
 ### 1.18.12 (2018 Feb 21)
 
@@ -323,4 +328,4 @@
 
 -----------------
 
-Updated: 2018 Feb 21
+Updated: 2018 Mar 02
