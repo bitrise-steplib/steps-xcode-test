@@ -28,6 +28,21 @@ toolkit:
   go:
     package_name: github.com/bitrise-io/steps-xcode-test
 inputs:
+  - project_path: $BITRISE_PROJECT_PATH
+    opts:
+      title: "Project (or Workspace) path"
+      description: |-
+        A `.xcodeproj` or `.xcworkspace` path, relative to
+        the Working directory (if specified).
+      is_required: true
+  - scheme: $BITRISE_SCHEME
+    opts:
+      title: "Scheme name"
+      description: |-
+        The Scheme to use.
+
+        **IMPORTANT**: The Scheme have to be marked as __shared__ in Xcode!
+      is_required: true
   - simulator_device: iPhone 6s Plus
     opts:
       title: "Device"
@@ -86,6 +101,7 @@ inputs:
       - "false"
   - generate_code_coverage_files: "no"
     opts:
+      category: Testing
       title: "Generate code coverage files?"
       description: |-
         In case of `generate_code_coverage_files: "yes"`
@@ -97,21 +113,6 @@ inputs:
         - "yes"
         - "no"
       is_required: true
-  - project_path: $BITRISE_PROJECT_PATH
-    opts:
-      title: "Project (or Workspace) path"
-      description: |-
-        A `.xcodeproj` or `.xcworkspace` path, relative to
-        the Working directory (if specified).
-      is_required: true
-  - scheme: $BITRISE_SCHEME
-    opts:
-      title: "Scheme name"
-      description: |-
-        The Scheme to use.
-
-        **IMPORTANT**: The Scheme have to be marked as __shared__ in Xcode!
-      is_required: true
   - workdir: $BITRISE_SOURCE_DIR
     opts:
       category: Debug
@@ -121,6 +122,7 @@ inputs:
         You can leave it empty to don't change it.
   - is_clean_build: "no"
     opts:
+      category: Debug
       title: "Do a clean Xcode build before testing?"
       value_options:
         - "yes"
@@ -128,6 +130,7 @@ inputs:
       is_required: true
   - output_tool: xcpretty
     opts:
+      category: Debug
       title: Output tool
       description: |-
         If output_tool is set to xcpretty, the xcodebuild output will be prettified by xcpretty.
@@ -216,7 +219,7 @@ inputs:
         If you want to add more options, list that separated by space character.
   - wait_for_simulator_boot: "yes"
     opts:
-      category: Debug
+      category: Experimental
       title: "(Experimental) Wait to simulator boot?"
       description: |-
         Wait to simulator boot or start test immediately?
