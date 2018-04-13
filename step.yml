@@ -30,7 +30,6 @@ toolkit:
 inputs:
   - simulator_device: iPhone 6s Plus
     opts:
-      category: Testing
       title: "Device"
       description: |-
         Set it as it is shown in Xcode's device selection dropdown UI.
@@ -47,7 +46,6 @@ inputs:
       is_required: true
   - simulator_os_version: latest
     opts:
-      category: Testing
       title: "OS version"
       description: |-
         Set it as it is shown in
@@ -62,7 +60,6 @@ inputs:
       is_required: true
   - simulator_platform: iOS Simulator
     opts:
-      category: Testing
       title: Platform
       description: |-
         Set it as it is shown in Xcode's device selection dropdown UI.
@@ -89,7 +86,6 @@ inputs:
       - "false"
   - generate_code_coverage_files: "no"
     opts:
-      category: Testing
       title: "Generate code coverage files?"
       description: |-
         In case of `generate_code_coverage_files: "yes"`
@@ -103,7 +99,6 @@ inputs:
       is_required: true
   - project_path: $BITRISE_PROJECT_PATH
     opts:
-      category: Config
       title: "Project (or Workspace) path"
       description: |-
         A `.xcodeproj` or `.xcworkspace` path, relative to
@@ -111,7 +106,6 @@ inputs:
       is_required: true
   - scheme: $BITRISE_SCHEME
     opts:
-      category: Config
       title: "Scheme name"
       description: |-
         The Scheme to use.
@@ -127,7 +121,6 @@ inputs:
         You can leave it empty to don't change it.
   - is_clean_build: "no"
     opts:
-      category: Debug
       title: "Do a clean Xcode build before testing?"
       value_options:
         - "yes"
@@ -135,7 +128,6 @@ inputs:
       is_required: true
   - output_tool: xcpretty
     opts:
-      category: Debug
       title: Output tool
       description: |-
         If output_tool is set to xcpretty, the xcodebuild output will be prettified by xcpretty.
@@ -182,7 +174,7 @@ inputs:
       - "false"
   - should_build_before_test: "yes"
     opts:
-      category: Debug
+      category: Experimental
       title: "(Experimental) Explicitly perform a build before testing?"
       description: |-
         Previous Xcode versions and configurations may throw the error `iPhoneSimulator: Timed out waiting 120 seconds for simulator to boot, current state is 1.`
@@ -198,7 +190,7 @@ inputs:
       is_required: true
   - should_retry_test_on_fail: "no"
     opts:
-      category: Debug
+      category: Experimental
       title: "(Experimental) Rerun test, when it fails?"
       description: |-
         If `should_retry_test_on_fail: yes` step will retry the test if first attempt failed.
