@@ -91,7 +91,6 @@ inputs:
       is_required: true
   - export_uitest_artifacts: "false"
     opts:
-      category: Testing
       title: Export UITest Artifacts
       description: |-
         If enabled, the attachments of the UITest will be exported into the BITRISE_DEPLOY_DIR, as a compressed ZIP file.
@@ -101,7 +100,6 @@ inputs:
       - "false"
   - generate_code_coverage_files: "no"
     opts:
-      category: Testing
       title: "Generate code coverage files?"
       description: |-
         In case of `generate_code_coverage_files: "yes"`
@@ -113,6 +111,15 @@ inputs:
         - "yes"
         - "no"
       is_required: true
+  - wait_for_simulator_boot: "yes"
+    opts:
+      category: Debug
+      title: "(Experimental) Wait to simulator boot?"
+      description: |-
+        Wait to simulator boot or start test immediately?
+      value_options:
+        - "yes"
+        - "no"
   - workdir: $BITRISE_SOURCE_DIR
     opts:
       category: Debug
@@ -177,7 +184,7 @@ inputs:
       - "false"
   - should_build_before_test: "yes"
     opts:
-      category: Experimental
+      category: Debug
       title: "(Experimental) Explicitly perform a build before testing?"
       description: |-
         Previous Xcode versions and configurations may throw the error `iPhoneSimulator: Timed out waiting 120 seconds for simulator to boot, current state is 1.`
@@ -193,7 +200,7 @@ inputs:
       is_required: true
   - should_retry_test_on_fail: "no"
     opts:
-      category: Experimental
+      category: Debug
       title: "(Experimental) Rerun test, when it fails?"
       description: |-
         If `should_retry_test_on_fail: yes` step will retry the test if first attempt failed.
@@ -217,15 +224,6 @@ inputs:
         `set -o pipefail && XCODEBUILD_TEST_COMMAND | xcpretty --color --report html --color --report html --output "${BITRISE_DEPLOY_DIR}/xcode-test-results-${BITRISE_SCHEME}.html"
 
         If you want to add more options, list that separated by space character.
-  - wait_for_simulator_boot: "yes"
-    opts:
-      category: Experimental
-      title: "(Experimental) Wait to simulator boot?"
-      description: |-
-        Wait to simulator boot or start test immediately?
-      value_options:
-        - "yes"
-        - "no"
 outputs:
 - BITRISE_XCODE_TEST_RESULT:
   opts:
