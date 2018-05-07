@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.18.13)
+## Changelog (Current version: 1.18.14)
 
 -----------------
+
+### 1.18.14 (2018 May 07)
+
+* [394b745] Prepare for 1.18.14
+* [bc6de17] Input grouping fix. (#89)
 
 ### 1.18.13 (2018 Mar 02)
 
@@ -328,4 +333,4 @@
 
 -----------------
 
-Updated: 2018 Mar 02
+Updated: 2018 May 07
