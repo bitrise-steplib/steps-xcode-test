@@ -28,9 +28,23 @@ toolkit:
   go:
     package_name: github.com/bitrise-io/steps-xcode-test
 inputs:
+  - project_path: $BITRISE_PROJECT_PATH
+    opts:
+      title: "Project (or Workspace) path"
+      description: |-
+        A `.xcodeproj` or `.xcworkspace` path, relative to
+        the Working directory (if specified).
+      is_required: true
+  - scheme: $BITRISE_SCHEME
+    opts:
+      title: "Scheme name"
+      description: |-
+        The Scheme to use.
+
+        **IMPORTANT**: The Scheme have to be marked as __shared__ in Xcode!
+      is_required: true
   - simulator_device: iPhone 6s Plus
     opts:
-      category: Testing
       title: "Device"
       description: |-
         Set it as it is shown in Xcode's device selection dropdown UI.
@@ -47,7 +61,6 @@ inputs:
       is_required: true
   - simulator_os_version: latest
     opts:
-      category: Testing
       title: "OS version"
       description: |-
         Set it as it is shown in
@@ -62,7 +75,6 @@ inputs:
       is_required: true
   - simulator_platform: iOS Simulator
     opts:
-      category: Testing
       title: Platform
       description: |-
         Set it as it is shown in Xcode's device selection dropdown UI.
@@ -79,7 +91,6 @@ inputs:
       is_required: true
   - export_uitest_artifacts: "false"
     opts:
-      category: Testing
       title: Export UITest Artifacts
       description: |-
         If enabled, the attachments of the UITest will be exported into the BITRISE_DEPLOY_DIR, as a compressed ZIP file.
@@ -89,7 +100,6 @@ inputs:
       - "false"
   - generate_code_coverage_files: "no"
     opts:
-      category: Testing
       title: "Generate code coverage files?"
       description: |-
         In case of `generate_code_coverage_files: "yes"`
@@ -101,23 +111,15 @@ inputs:
         - "yes"
         - "no"
       is_required: true
-  - project_path: $BITRISE_PROJECT_PATH
+  - wait_for_simulator_boot: "yes"
     opts:
-      category: Config
-      title: "Project (or Workspace) path"
+      category: Debug
+      title: "(Experimental) Wait to simulator boot?"
       description: |-
-        A `.xcodeproj` or `.xcworkspace` path, relative to
-        the Working directory (if specified).
-      is_required: true
-  - scheme: $BITRISE_SCHEME
-    opts:
-      category: Config
-      title: "Scheme name"
-      description: |-
-        The Scheme to use.
-
-        **IMPORTANT**: The Scheme have to be marked as __shared__ in Xcode!
-      is_required: true
+        Wait to simulator boot or start test immediately?
+      value_options:
+        - "yes"
+        - "no"
   - workdir: $BITRISE_SOURCE_DIR
     opts:
       category: Debug
@@ -222,15 +224,6 @@ inputs:
         `set -o pipefail && XCODEBUILD_TEST_COMMAND | xcpretty --color --report html --color --report html --output "${BITRISE_DEPLOY_DIR}/xcode-test-results-${BITRISE_SCHEME}.html"
 
         If you want to add more options, list that separated by space character.
-  - wait_for_simulator_boot: "yes"
-    opts:
-      category: Debug
-      title: "(Experimental) Wait to simulator boot?"
-      description: |-
-        Wait to simulator boot or start test immediately?
-      value_options:
-        - "yes"
-        - "no"
 outputs:
 - BITRISE_XCODE_TEST_RESULT:
   opts:
