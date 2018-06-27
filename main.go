@@ -513,7 +513,7 @@ func updateScreenshotNames(testLogsDir string) error {
 		return err
 	}
 
-	testItems, testSummeryType, err := xcodeutil.CollectTestItemsWithScreenshot(testSummariesContent)
+	testItems, testSummaryType, err := xcodeutil.CollectTestItemsWithScreenshot(testSummariesContent)
 	if err != nil {
 		return err
 	}
@@ -545,7 +545,7 @@ func updateScreenshotNames(testLogsDir string) error {
 		var origScreenshotPth string
 
 		// Renaming the screenshots
-		if testSummeryType == xcodeutil.OldTestSummaries { // Old TestSummaries.plist
+		if testSummaryType == xcodeutil.OldTestSummaries { // Old TestSummaries.plist
 			origScreenshotPth, screenshotExists, err = updateOldSummaryTypeScreenshotName(testItem, testLogsDir, uuid, startTime)
 			if err != nil {
 				log.Warnf("Failed to rename the screenshot: %s - err: %s", filepath.Base(origScreenshotPth), err)
@@ -602,7 +602,6 @@ func updateNewSummaryTypeScreenshotName(testItem map[string]interface{}, testLog
 	attachmentsObj, found := testItem["Attachments"]
 	if !found {
 		return "", false, fmt.Errorf("Attachments not found in the *_TestSummaries.plist")
-
 	}
 
 	attachments, casted := attachmentsObj.([]interface{})
@@ -637,7 +636,6 @@ func updateNewSummaryTypeScreenshotName(testItem map[string]interface{}, testLog
 				continue
 			}
 		}
-
 	}
 	return origScreenshotPth, screenshotExists, nil
 }

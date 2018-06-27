@@ -57,18 +57,18 @@ func collectLastSubtests(testsItem map[string]interface{}) ([]map[string]interfa
 
 // const ...
 const (
-	OldTestSummaries TestSummeryType = "OldTestSummaries"
-	NewTestSummaries TestSummeryType = "NewTestSummaries"
+	OldTestSummaries TestSummaryType = "OldTestSummaries"
+	NewTestSummaries TestSummaryType = "NewTestSummaries"
 )
 
-// TestSummeryType ...
-type TestSummeryType string
+// TestSummaryType ...
+type TestSummaryType string
 
-func collectSubActivitiesWithScreenshots(activitySummaries []map[string]interface{}) ([]map[string]interface{}, TestSummeryType, error) {
-	testSummeryType := OldTestSummaries
+func collectSubActivitiesWithScreenshots(activitySummaries []map[string]interface{}) ([]map[string]interface{}, TestSummaryType, error) {
+	testSummaryType := OldTestSummaries
 
-	var walk func(map[string]interface{}, *TestSummeryType) []map[string]interface{}
-	walk = func(item map[string]interface{}, summeryType *TestSummeryType) []map[string]interface{} {
+	var walk func(map[string]interface{}, *TestSummaryType) []map[string]interface{}
+	walk = func(item map[string]interface{}, summaryType *TestSummaryType) []map[string]interface{} {
 		itemWithScreenshot := []map[string]interface{}{}
 
 		// Old *_TestSummaries.plist
@@ -84,13 +84,13 @@ func collectSubActivitiesWithScreenshots(activitySummaries []map[string]interfac
 		value, found = item["Attachments"]
 		if found {
 			itemWithScreenshot = append(itemWithScreenshot, item)
-			testSummeryType = NewTestSummaries
+			testSummaryType = NewTestSummaries
 		}
 
 		subActivies, err := getValueAsMapStringInterfaceArray(item, "SubActivities")
 		if err == nil {
 			for _, subActivity := range subActivies {
-				subActivityWithScreenshots := walk(subActivity, &testSummeryType)
+				subActivityWithScreenshots := walk(subActivity, &testSummaryType)
 				itemWithScreenshot = append(itemWithScreenshot, subActivityWithScreenshots...)
 			}
 		}
@@ -100,14 +100,14 @@ func collectSubActivitiesWithScreenshots(activitySummaries []map[string]interfac
 
 	summaries := []map[string]interface{}{}
 	for _, summary := range activitySummaries {
-		summaries = append(summaries, walk(summary, &testSummeryType)...)
+		summaries = append(summaries, walk(summary, &testSummaryType)...)
 	}
 
-	return summaries, testSummeryType, nil
+	return summaries, testSummaryType, nil
 }
 
 // CollectTestItemsWithScreenshot ...
-func CollectTestItemsWithScreenshot(testSummariesContent string) ([]map[string]interface{}, TestSummeryType, error) {
+func CollectTestItemsWithScreenshot(testSummariesContent string) ([]map[string]interface{}, TestSummaryType, error) {
 	testSummaryType := OldTestSummaries
 
 	testSummariesPlistData, err := plistutil.NewPlistDataFromContent(testSummariesContent)
