@@ -55,11 +55,23 @@ func collectLastSubtests(testsItem map[string]interface{}) ([]map[string]interfa
 	return walk(testsItem), nil
 }
 
-func collectSubActivitiesWithScreenshots(activitySummaries []map[string]interface{}) ([]map[string]interface{}, error) {
-	var walk func(map[string]interface{}) []map[string]interface{}
-	walk = func(item map[string]interface{}) []map[string]interface{} {
+// const ...
+const (
+	OldTestSummaries TestSummeryType = "OldTestSummaries"
+	NewTestSummaries TestSummeryType = "NewTestSummaries"
+)
+
+// TestSummeryType ...
+type TestSummeryType string
+
+func collectSubActivitiesWithScreenshots(activitySummaries []map[string]interface{}) ([]map[string]interface{}, TestSummeryType, error) {
+	testSummeryType := OldTestSummaries
+
+	var walk func(map[string]interface{}, *TestSummeryType) []map[string]interface{}
+	walk = func(item map[string]interface{}, summeryType *TestSummeryType) []map[string]interface{} {
 		itemWithScreenshot := []map[string]interface{}{}
 
+		// Old *_TestSummaries.plist
 		value, found := item["HasScreenshotData"]
 		if found {
 			hasScreenshot, casted := value.(bool)
@@ -68,10 +80,17 @@ func collectSubActivitiesWithScreenshots(activitySummaries []map[string]interfac
 			}
 		}
 
+		// New *_TestSummaries.plist
+		value, found = item["Attachments"]
+		if found {
+			itemWithScreenshot = append(itemWithScreenshot, item)
+			testSummeryType = NewTestSummaries
+		}
+
 		subActivies, err := getValueAsMapStringInterfaceArray(item, "SubActivities")
 		if err == nil {
 			for _, subActivity := range subActivies {
-				subActivityWithScreenshots := walk(subActivity)
+				subActivityWithScreenshots := walk(subActivity, &testSummeryType)
 				itemWithScreenshot = append(itemWithScreenshot, subActivityWithScreenshots...)
 			}
 		}
@@ -81,35 +100,37 @@ func collectSubActivitiesWithScreenshots(activitySummaries []map[string]interfac
 
 	summaries := []map[string]interface{}{}
 	for _, summary := range activitySummaries {
-		summaries = append(summaries, walk(summary)...)
+		summaries = append(summaries, walk(summary, &testSummeryType)...)
 	}
 
-	return summaries, nil
+	return summaries, testSummeryType, nil
 }
 
 // CollectTestItemsWithScreenshot ...
-func CollectTestItemsWithScreenshot(testSummariesContent string) ([]map[string]interface{}, error) {
+func CollectTestItemsWithScreenshot(testSummariesContent string) ([]map[string]interface{}, TestSummeryType, error) {
+	testSummaryType := OldTestSummaries
+
 	testSummariesPlistData, err := plistutil.NewPlistDataFromContent(testSummariesContent)
 	if err != nil {
-		return []map[string]interface{}{}, err
+		return []map[string]interface{}{}, testSummaryType, err
 	}
 
 	testableSummaries, err := getValueAsMapStringInterfaceArray(testSummariesPlistData, "TestableSummaries")
 	if err != nil {
-		return []map[string]interface{}{}, err
+		return []map[string]interface{}{}, testSummaryType, err
 	}
 
 	subActivitiesWithScreenshot := []map[string]interface{}{}
 	for _, testableSummariesItem := range testableSummaries {
 		tests, err := getValueAsMapStringInterfaceArray(testableSummariesItem, "Tests")
 		if err != nil {
-			return []map[string]interface{}{}, err
+			return []map[string]interface{}{}, testSummaryType, err
 		}
 
 		for _, testsItem := range tests {
 			lastSubtests, err := collectLastSubtests(testsItem)
 			if err != nil {
-				return []map[string]interface{}{}, err
+				return []map[string]interface{}{}, testSummaryType, err
 			}
 
 			for _, lastSubtest := range lastSubtests {
@@ -118,16 +139,17 @@ func CollectTestItemsWithScreenshot(testSummariesContent string) ([]map[string]i
 					continue
 				}
 
-				subActivities, err := collectSubActivitiesWithScreenshots(activitySummaries)
+				var subActivities []map[string]interface{}
+				subActivities, testSummaryType, err = collectSubActivitiesWithScreenshots(activitySummaries)
 				if err != nil {
-					return []map[string]interface{}{}, err
+					return []map[string]interface{}{}, testSummaryType, err
 				}
 				subActivitiesWithScreenshot = append(subActivitiesWithScreenshot, subActivities...)
 			}
 		}
 	}
 
-	return subActivitiesWithScreenshot, nil
+	return subActivitiesWithScreenshot, testSummaryType, nil
 }
 
 // TimestampStrToTime ...

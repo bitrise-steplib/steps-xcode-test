@@ -513,10 +513,12 @@ func updateScreenshotNames(testLogsDir string) error {
 		return err
 	}
 
-	testItems, err := xcodeutil.CollectTestItemsWithScreenshot(testSummariesContent)
+	testItems, testSummeryType, err := xcodeutil.CollectTestItemsWithScreenshot(testSummariesContent)
 	if err != nil {
 		return err
 	}
+
+	log.Printf("testItems: %v", testItems)
 
 	for _, testItem := range testItems {
 		startTimeIntervalObj, found := testItem["StartTimeInterval"]
@@ -552,16 +554,62 @@ func updateScreenshotNames(testLogsDir string) error {
 
 		var screenshotExists bool
 		for _, ext := range []string{"png", "jpg"} {
-			origScreenshotPth := filepath.Join(testLogsDir, "Attachments", fmt.Sprintf("Screenshot_%s.%s", uuid, ext))
-			if exist, err := pathutil.IsPathExists(origScreenshotPth); err != nil {
-				return err
-			} else if exist {
-				screenshotExists = true
-				newScreenshotPth := filepath.Join(testLogsDir, "Attachments", screenshotName(startTime, title, uuid)+"."+ext)
-				if err := os.Rename(origScreenshotPth, newScreenshotPth); err != nil {
+			var origScreenshotPth string
+
+			if testSummeryType == xcodeutil.OldTestSummaries { // Old TestSummaries.plist
+				origScreenshotPth = filepath.Join(testLogsDir, "Attachments", fmt.Sprintf("Screenshot_%s.%s", uuid, ext))
+
+				if exist, err := pathutil.IsPathExists(origScreenshotPth); err != nil {
 					return err
+				} else if exist {
+					screenshotExists = true
+					newScreenshotPth := filepath.Join(testLogsDir, "Attachments", screenshotName(startTime, title, uuid)+"."+ext)
+					if err := os.Rename(origScreenshotPth, newScreenshotPth); err != nil {
+						return err
+					}
+				}
+			} else { // New TestSummaries.plist
+				attachmentsObj, found := testItem["Attachments"]
+				if !found {
+					log.Warnf("Attachments not found")
+					continue
+				}
+
+				attachments, casted := attachmentsObj.([]interface{})
+				if !casted {
+					log.Warnf("Failed to cast attachmentsObj")
+					continue
+				}
+
+				var fileName string
+				for _, attachmentObj := range attachments {
+					attachment, casted := attachmentObj.(map[string]interface{})
+					if !casted {
+						log.Warnf("Failed to cast attachmentObj")
+						continue
+					}
+
+					fileNameObj, found := attachment["Filename"]
+					if found {
+						fileName, casted = fileNameObj.(string)
+						if casted {
+							origScreenshotPth = filepath.Join(testLogsDir, "Attachments", fileName)
+						}
+					}
+
+					if exist, err := pathutil.IsPathExists(origScreenshotPth); err != nil {
+						return err
+					} else if exist {
+						screenshotExists = true
+						newScreenshotPth := filepath.Join(testLogsDir, "Attachments", screenshotName(startTime, fileName, uuid)+"."+ext)
+						if err := os.Rename(origScreenshotPth, newScreenshotPth); err != nil {
+							return err
+						}
+					}
+
 				}
 			}
+
 		}
 		if !screenshotExists {
 			return fmt.Errorf("screenshot not exists")
