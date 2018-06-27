@@ -565,7 +565,8 @@ func updateScreenshotNames(testLogsDir string) error {
 					screenshotExists = true
 					newScreenshotPth := filepath.Join(testLogsDir, "Attachments", screenshotName(startTime, title, uuid)+"."+ext)
 					if err := os.Rename(origScreenshotPth, newScreenshotPth); err != nil {
-						return err
+						log.Warnf("Failed to rename the screenshot: %s", filepath.Base(origScreenshotPth))
+						continue
 					}
 				}
 			} else { // New TestSummaries.plist
@@ -602,8 +603,9 @@ func updateScreenshotNames(testLogsDir string) error {
 					} else if exist {
 						screenshotExists = true
 						newScreenshotPth := filepath.Join(testLogsDir, "Attachments", screenshotName(startTime, fileName, uuid)+"."+ext)
-						if err := os.Rename(origScreenshotPth, newScreenshotPth); err != nil {
-							return err
+						if err := os.Rename(origScreenshotPth, newScreenshotPth); err == nil {
+							log.Warnf("Failed to rename the screenshot: %s", filepath.Base(origScreenshotPth))
+							continue
 						}
 					}
 

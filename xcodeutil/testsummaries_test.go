@@ -3,30 +3,31 @@ package xcodeutil
 import (
 	"testing"
 
+	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/stretchr/testify/require"
 )
 
-// func TestWalkXcodeTestSummaries(t *testing.T) {
-// 	t.Log()
-// 	{
-// 		log, err := fileutil.ReadStringFromFile("../_samples/TestSummaries.plist")
-// 		require.NoError(t, err)
+func TestWalkXcodeTestSummaries(t *testing.T) {
+	t.Log()
+	{
+		log, err := fileutil.ReadStringFromFile("../_samples/TestSummaries.plist")
+		require.NoError(t, err)
 
-// 		testItemsWithScreenshot, err := CollectTestItemsWithScreenshot(log)
-// 		require.NoError(t, err)
-// 		require.Equal(t, 2, len(testItemsWithScreenshot))
-// 	}
+		testItemsWithScreenshot, _, err := CollectTestItemsWithScreenshot(log)
+		require.NoError(t, err)
+		require.Equal(t, 2, len(testItemsWithScreenshot))
+	}
 
-// 	t.Log()
-// 	{
-// 		log, err := fileutil.ReadStringFromFile("../_samples/TestSummaries2.plist")
-// 		require.NoError(t, err)
+	t.Log()
+	{
+		log, err := fileutil.ReadStringFromFile("../_samples/TestSummaries2.plist")
+		require.NoError(t, err)
 
-// 		testItemsWithScreenshot, err := CollectTestItemsWithScreenshot(log)
-// 		require.NoError(t, err)
-// 		require.Equal(t, 2, len(testItemsWithScreenshot))
-// 	}
-// }
+		testItemsWithScreenshot, _, err := CollectTestItemsWithScreenshot(log)
+		require.NoError(t, err)
+		require.Equal(t, 2, len(testItemsWithScreenshot))
+	}
+}
 
 func TestTimestampToTime(t *testing.T) {
 	time, err := TimestampStrToTime("522675441.31045401")
