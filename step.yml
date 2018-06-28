@@ -111,6 +111,15 @@ inputs:
         - "yes"
         - "no"
       is_required: true
+  - verbose: "no"
+    opts:
+      category: Debug
+      title: Enable verbose log?
+      description: |-
+        You can enable the verbose log for easier debugging.
+      value_options:
+        - "yes"
+        - "no"
   - wait_for_simulator_boot: "yes"
     opts:
       category: Debug

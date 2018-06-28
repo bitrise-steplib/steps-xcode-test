@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -86,6 +87,9 @@ type ConfigsModel struct {
 	TestOptions          string
 	XcprettyTestOptions  string
 	WaitForSimulatorBoot string
+
+	// Debug
+	Verbose string
 }
 
 func (configs ConfigsModel) print() {
@@ -115,6 +119,8 @@ func (configs ConfigsModel) print() {
 	log.Printf("- TestOptions: %s", configs.TestOptions)
 	log.Printf("- XcprettyTestOptions: %s", configs.XcprettyTestOptions)
 	log.Printf("- WaitForSimulatorBoot: %s", configs.WaitForSimulatorBoot)
+
+	log.Printf("- Verbose: %s", configs.Verbose)
 }
 
 func createConfigsModelFromEnvs() ConfigsModel {
@@ -143,6 +149,8 @@ func createConfigsModelFromEnvs() ConfigsModel {
 		TestOptions:          os.Getenv("xcodebuild_test_options"),
 		XcprettyTestOptions:  os.Getenv("xcpretty_test_options"),
 		WaitForSimulatorBoot: os.Getenv("wait_for_simulator_boot"),
+
+		Verbose: os.Getenv("verbose"),
 	}
 }
 
@@ -188,7 +196,12 @@ func (configs ConfigsModel) validate() error {
 	if err := validateRequiredInputWithOptions(configs.ExportUITestArtifacts, "export_uitest_artifacts", []string{"true", "false"}); err != nil {
 		return err
 	}
-	return validateRequiredInputWithOptions(configs.WaitForSimulatorBoot, "wait_for_simulator_boot", []string{"yes", "no"})
+
+	if err := validateRequiredInputWithOptions(configs.WaitForSimulatorBoot, "wait_for_simulator_boot", []string{"yes", "no"}); err != nil {
+		return err
+	}
+
+	return validateRequiredInputWithOptions(configs.Verbose, "verbose", []string{"yes", "no"})
 }
 
 //--------------------
@@ -520,6 +533,15 @@ func updateScreenshotNames(testLogsDir string) error {
 		return err
 	}
 
+	logDebugPretty("Test Items with screenshots:", testSummaries.TestItemsWithScreenshots)
+	log.Debugf("TestSummaries version has been set to: %s\n", testSummaries.Version)
+
+	if len(testSummaries.TestItemsWithScreenshots) > 0 {
+		log.Printf("Renaming screenshots")
+	} else {
+		log.Printf("No screenshot found")
+	}
+
 	for _, testItem := range testSummaries.TestItemsWithScreenshots {
 		startTimeIntervalObj, found := testItem["StartTimeInterval"]
 		if !found {
@@ -592,6 +614,7 @@ func updateOldSummaryTypeScreenshotName(testItem map[string]interface{}, testLog
 			if err := os.Rename(origScreenshotPth, newScreenshotPth); err != nil {
 				return origScreenshotPth, false, err
 			}
+			log.Printf("%s => %s", filepath.Base(origScreenshotPth), filepath.Base(newScreenshotPth))
 		}
 	}
 	return origScreenshotPth, true, nil
@@ -637,6 +660,7 @@ func updateNewSummaryTypeScreenshotName(testItem map[string]interface{}, testLog
 				log.Warnf("Failed to rename the screenshot: %s", filepath.Base(origScreenshotPth))
 				continue
 			}
+			log.Printf("Screenshot renamed: %s => %s", filepath.Base(origScreenshotPth), filepath.Base(newScreenshotPth))
 		}
 	}
 	return origScreenshotPth, screenshotExists, nil
@@ -701,6 +725,7 @@ func saveAttachments(projectPath, scheme string) error {
 		log.Warnf("Failed to export: BITRISE_XCODE_TEST_ATTACHMENTS_PATH, error: %s", err)
 	}
 
+	log.Donef("The exported attachments are available in: %s", zipedTestsDerivedDataPath)
 	return nil
 }
 
@@ -718,6 +743,8 @@ func main() {
 
 	fmt.Println()
 	log.Infof("Other Configs:")
+
+	log.SetEnableDebugLog(configs.Verbose == "yes")
 
 	cleanBuild := (configs.IsCleanBuild == "yes")
 	generateCodeCoverage := (configs.GenerateCodeCoverageFiles == "yes")
@@ -850,6 +877,8 @@ func main() {
 	}
 
 	if exportUITestArtifacts {
+		fmt.Println()
+		log.Infof("Exporting attachments")
 		if err := saveAttachments(configs.ProjectPath, configs.Scheme); err != nil {
 			log.Warnf("Failed to export UI test artifacts, error %s", err)
 		}
@@ -877,4 +906,21 @@ that will attach the file to your build as an artifact!`, logPth)
 	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "succeeded"); err != nil {
 		log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 	}
+}
+
+func logDebugPretty(str string, v interface{}) {
+	if str != "" {
+		log.Debugf("%s: %+v\n", str, sprintFDebugPretty(v))
+	} else {
+		log.Debugf("%+v\n", sprintFDebugPretty(v))
+	}
+}
+
+func sprintFDebugPretty(v interface{}) string {
+	b, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	return string(b)
 }

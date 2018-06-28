@@ -71,6 +71,7 @@ workflows:
         - should_build_before_test: "yes"
         - xcodebuild_test_options: -verbose
         - export_uitest_artifacts: "true"
+        - verbose: "yes"
     - script:
         title: Output test
         is_always_run: true
