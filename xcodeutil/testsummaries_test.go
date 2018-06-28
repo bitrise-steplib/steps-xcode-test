@@ -13,9 +13,11 @@ func TestWalkXcodeTestSummaries(t *testing.T) {
 		log, err := fileutil.ReadStringFromFile("../_samples/TestSummaries.plist")
 		require.NoError(t, err)
 
-		testItemsWithScreenshot, _, err := CollectTestItemsWithScreenshot(log)
+		var testSummaries TestSummaries
+		testSummaries.Content = log
+		testSummaries, err = testSummaries.CollectTestItemsWithScreenshotAndSetVersion()
 		require.NoError(t, err)
-		require.Equal(t, 2, len(testItemsWithScreenshot))
+		require.Equal(t, 2, len(testSummaries.TestItemsWithScreenshots))
 	}
 
 	t.Log()
@@ -23,9 +25,11 @@ func TestWalkXcodeTestSummaries(t *testing.T) {
 		log, err := fileutil.ReadStringFromFile("../_samples/TestSummaries2.plist")
 		require.NoError(t, err)
 
-		testItemsWithScreenshot, _, err := CollectTestItemsWithScreenshot(log)
+		var testSummaries TestSummaries
+		testSummaries.Content = log
+		testSummaries, err = testSummaries.CollectTestItemsWithScreenshotAndSetVersion()
 		require.NoError(t, err)
-		require.Equal(t, 2, len(testItemsWithScreenshot))
+		require.Equal(t, 2, len(testSummaries.TestItemsWithScreenshots))
 	}
 }
 

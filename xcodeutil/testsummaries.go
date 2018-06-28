@@ -9,6 +9,22 @@ import (
 	"github.com/bitrise-tools/go-xcode/plistutil"
 )
 
+// const ...
+const (
+	OldTestSummaries TestSummaryType = "OldTestSummaries"
+	NewTestSummaries TestSummaryType = "NewTestSummaries"
+)
+
+// TestSummaryType ...
+type TestSummaryType string
+
+// TestSummaries ...
+type TestSummaries struct {
+	Version                  TestSummaryType
+	Content                  string
+	TestItemsWithScreenshots []map[string]interface{}
+}
+
 func castToMapStringInterfaceArray(obj interface{}) ([]map[string]interface{}, error) {
 	array, ok := obj.([]interface{})
 	if !ok {
@@ -55,15 +71,6 @@ func collectLastSubtests(testsItem map[string]interface{}) ([]map[string]interfa
 	return walk(testsItem), nil
 }
 
-// const ...
-const (
-	OldTestSummaries TestSummaryType = "OldTestSummaries"
-	NewTestSummaries TestSummaryType = "NewTestSummaries"
-)
-
-// TestSummaryType ...
-type TestSummaryType string
-
 func collectSubActivitiesWithScreenshots(activitySummaries []map[string]interface{}) ([]map[string]interface{}, TestSummaryType, error) {
 	testSummaryType := OldTestSummaries
 
@@ -106,31 +113,31 @@ func collectSubActivitiesWithScreenshots(activitySummaries []map[string]interfac
 	return summaries, testSummaryType, nil
 }
 
-// CollectTestItemsWithScreenshot ...
-func CollectTestItemsWithScreenshot(testSummariesContent string) ([]map[string]interface{}, TestSummaryType, error) {
+// CollectTestItemsWithScreenshotAndSetVersion ...
+func (t TestSummaries) CollectTestItemsWithScreenshotAndSetVersion() (TestSummaries, error) {
 	testSummaryType := OldTestSummaries
 
-	testSummariesPlistData, err := plistutil.NewPlistDataFromContent(testSummariesContent)
+	testSummariesPlistData, err := plistutil.NewPlistDataFromContent(t.Content)
 	if err != nil {
-		return []map[string]interface{}{}, testSummaryType, err
+		return t, err
 	}
 
 	testableSummaries, err := getValueAsMapStringInterfaceArray(testSummariesPlistData, "TestableSummaries")
 	if err != nil {
-		return []map[string]interface{}{}, testSummaryType, err
+		return t, err
 	}
 
 	subActivitiesWithScreenshot := []map[string]interface{}{}
 	for _, testableSummariesItem := range testableSummaries {
 		tests, err := getValueAsMapStringInterfaceArray(testableSummariesItem, "Tests")
 		if err != nil {
-			return []map[string]interface{}{}, testSummaryType, err
+			return t, err
 		}
 
 		for _, testsItem := range tests {
 			lastSubtests, err := collectLastSubtests(testsItem)
 			if err != nil {
-				return []map[string]interface{}{}, testSummaryType, err
+				return t, err
 			}
 
 			for _, lastSubtest := range lastSubtests {
@@ -142,14 +149,16 @@ func CollectTestItemsWithScreenshot(testSummariesContent string) ([]map[string]i
 				var subActivities []map[string]interface{}
 				subActivities, testSummaryType, err = collectSubActivitiesWithScreenshots(activitySummaries)
 				if err != nil {
-					return []map[string]interface{}{}, testSummaryType, err
+					return t, err
 				}
 				subActivitiesWithScreenshot = append(subActivitiesWithScreenshot, subActivities...)
 			}
 		}
 	}
 
-	return subActivitiesWithScreenshot, testSummaryType, nil
+	t.TestItemsWithScreenshots = subActivitiesWithScreenshot
+	t.Version = testSummaryType
+	return t, nil
 }
 
 // TimestampStrToTime ...

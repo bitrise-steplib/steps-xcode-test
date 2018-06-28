@@ -499,6 +499,8 @@ func screenshotName(startTime time.Time, title, uuid string) string {
 }
 
 func updateScreenshotNames(testLogsDir string) error {
+	var testSummaries xcodeutil.TestSummaries
+
 	testSummariesPattern := filepath.Join(testLogsDir, "*_TestSummaries.plist")
 	testSummariesPths, err := filepath.Glob(testSummariesPattern)
 	if err != nil {
@@ -508,17 +510,17 @@ func updateScreenshotNames(testLogsDir string) error {
 	}
 	testSummariesPth := testSummariesPths[0]
 
-	testSummariesContent, err := fileutil.ReadStringFromFile(testSummariesPth)
+	testSummaries.Content, err = fileutil.ReadStringFromFile(testSummariesPth)
 	if err != nil {
 		return err
 	}
 
-	testItems, testSummaryType, err := xcodeutil.CollectTestItemsWithScreenshot(testSummariesContent)
+	testSummaries, err = testSummaries.CollectTestItemsWithScreenshotAndSetVersion()
 	if err != nil {
 		return err
 	}
 
-	for _, testItem := range testItems {
+	for _, testItem := range testSummaries.TestItemsWithScreenshots {
 		startTimeIntervalObj, found := testItem["StartTimeInterval"]
 		if !found {
 			return fmt.Errorf("missing StartTimeInterval")
@@ -545,7 +547,7 @@ func updateScreenshotNames(testLogsDir string) error {
 		var origScreenshotPth string
 
 		// Renaming the screenshots
-		if testSummaryType == xcodeutil.OldTestSummaries { // Old TestSummaries.plist
+		if testSummaries.Version == xcodeutil.OldTestSummaries { // Old TestSummaries.plist
 			origScreenshotPth, screenshotExists, err = updateOldSummaryTypeScreenshotName(testItem, testLogsDir, uuid, startTime)
 			if err != nil {
 				log.Warnf("Failed to rename the screenshot: %s - err: %s", filepath.Base(origScreenshotPth), err)
