@@ -683,11 +683,30 @@ func main() {
 
 	log.Printf("* xcodebuild_version: %s (%s)", xcodebuildVersion.Version, xcodebuildVersion.BuildVersion)
 
-	xcprettyVersion, err := cmd.GetXcprettyVersion()
-	if err != nil {
-		log.Warnf("Failed to get the xcpretty version! Error: %s", err)
-	} else {
-		log.Printf("* xcpretty_version: %s", xcprettyVersion)
+	// Detect xcpretty version
+	if configs.OutputTool == "xcpretty" {
+		fmt.Println()
+		log.Infof("Checking output tool")
+		installed, err := IsXcprettyInstalled()
+		if err != nil {
+			fail("Failed to check if xcpretty is installed, error: %s", err)
+		}
+
+		if !installed {
+			log.Warnf(`🚨  xcpretty is not installed`)
+
+			fmt.Println()
+			log.Printf("Installing xcpretty")
+			if err := InstallXcpretty(); err != nil {
+				fail("Failed to install xcpretty, error: %s", err)
+			}
+		}
+
+		xcprettyVersion, err := XcprettyVersion()
+		if err != nil {
+			fail("Failed to determin xcpretty version, error: %s", err)
+		}
+		log.Printf("- xcprettyVersion: %s", xcprettyVersion.String())
 	}
 
 	// Simulator infos
@@ -806,4 +825,9 @@ that will attach the file to your build as an artifact!`, logPth)
 	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "succeeded"); err != nil {
 		log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 	}
+}
+
+func fail(format string, v ...interface{}) {
+	log.Errorf(format, v...)
+	os.Exit(1)
 }

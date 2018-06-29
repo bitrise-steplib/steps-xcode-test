@@ -60,7 +60,7 @@ workflows:
     - certificate-and-profile-installer: {}
     - path::./:
         inputs:
-        - output_tool: xcodebuild
+        - output_tool: xcpretty
         # - is_clean_build: "no"
         - is_clean_build: "yes"
         - generate_code_coverage_files: "no"

@@ -4,7 +4,17 @@
 [[projects]]
   branch = "master"
   name = "github.com/bitrise-io/go-utils"
-  packages = ["colorstring","command","errorutil","fileutil","log","pathutil","progress","stringutil"]
+  packages = [
+    "colorstring",
+    "command",
+    "command/rubycommand",
+    "errorutil",
+    "fileutil",
+    "log",
+    "pathutil",
+    "progress",
+    "stringutil"
+  ]
   revision = "f1da7139131b85ab2a4bd4ffacbdc889a40018a1"
 
 [[projects]]
@@ -40,7 +50,10 @@
 [[projects]]
   branch = "master"
   name = "github.com/stretchr/testify"
-  packages = ["assert","require"]
+  packages = [
+    "assert",
+    "require"
+  ]
   revision = "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f"
 
 [[projects]]
@@ -52,7 +65,10 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix","windows"]
+  packages = [
+    "unix",
+    "windows"
+  ]
   revision = "9167dbfd0f8e88b731dd88cbf73a270701a37bb4"
 
 [[projects]]
@@ -64,6 +80,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6826d2cec41c375e0c03b27f600805a6078f8b45918e9f6c038b36b05068a6d1"
+  inputs-digest = "6b4b6707069d5e8c7d939e4045af0cec1ed06bb2c29033b347b6f28a1df84c89"
   solver-name = "gps-cdcl"
   solver-version = 1
