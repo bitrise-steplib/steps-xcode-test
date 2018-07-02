@@ -512,8 +512,6 @@ func screenshotName(startTime time.Time, title, uuid string) string {
 }
 
 func updateScreenshotNames(testLogsDir string) error {
-	var testSummaries xcodeutil.TestSummaries
-
 	testSummariesPattern := filepath.Join(testLogsDir, "*_TestSummaries.plist")
 	testSummariesPths, err := filepath.Glob(testSummariesPattern)
 	if err != nil {
@@ -521,19 +519,16 @@ func updateScreenshotNames(testLogsDir string) error {
 	} else if len(testSummariesPths) == 0 {
 		return fmt.Errorf("no TestSummaries file found with pattern: %s", testSummariesPattern)
 	}
+
+	//
+	// TestSummaries
 	testSummariesPth := testSummariesPths[0]
-
-	testSummaries.Content, err = fileutil.ReadStringFromFile(testSummariesPth)
+	testSummaries, err := xcodeutil.New(testSummariesPth)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse %s, error: %s", filepath.Base(testSummariesPth), err)
 	}
 
-	testSummaries, err = testSummaries.CollectTestItemsWithScreenshotAndSetVersion()
-	if err != nil {
-		return err
-	}
-
-	logDebugPretty("Test Items with screenshots:", testSummaries.TestItemsWithScreenshots)
+	logDebugPretty("Test items with screenshots:", testSummaries.TestItemsWithScreenshots)
 	log.Debugf("TestSummaries version has been set to: %s\n", testSummaries.Version)
 
 	if len(testSummaries.TestItemsWithScreenshots) > 0 {
@@ -725,7 +720,7 @@ func saveAttachments(projectPath, scheme string) error {
 		log.Warnf("Failed to export: BITRISE_XCODE_TEST_ATTACHMENTS_PATH, error: %s", err)
 	}
 
-	log.Donef("The exported attachments are available in: %s", zipedTestsDerivedDataPath)
+	log.Donef("The zipped attachments are available in: %s", zipedTestsDerivedDataPath)
 	return nil
 }
 
@@ -911,15 +906,16 @@ that will attach the file to your build as an artifact!`, logPth)
 func logDebugPretty(str string, v interface{}) {
 	if str != "" {
 		log.Debugf("%s: %+v\n", str, sprintFDebugPretty(v))
-	} else {
-		log.Debugf("%+v\n", sprintFDebugPretty(v))
+		return
 	}
+
+	log.Debugf("%+v\n", sprintFDebugPretty(v))
 }
 
 func sprintFDebugPretty(v interface{}) string {
 	b, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
-		fmt.Println("error:", err)
+		fmt.Printf("failed to parse %+v:\n error: %s", v, err)
 	}
 
 	return string(b)

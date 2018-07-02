@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-tools/go-xcode/plistutil"
 )
 
@@ -23,6 +24,72 @@ type TestSummaries struct {
 	Version                  TestSummaryType
 	Content                  string
 	TestItemsWithScreenshots []map[string]interface{}
+}
+
+// New returns a TestSummaries from the provided *_TestSummaries.plist's path.
+// It will search for test items with screenhot and it will set the version of the TestSummaries (OldTestSummaries/NewTestSummaries) depending on that the plist has `HasScreenshotData` fields or `Attachments` fileds.
+func New(testSummariesPth string) (*TestSummaries, error) {
+	var testSummaries TestSummaries
+	var err error
+
+	testSummaries.Content, err = fileutil.ReadStringFromFile(testSummariesPth)
+	if err != nil {
+		return nil, err
+	}
+
+	testSummaries, err = testSummaries.collectTestItemsWithScreenshotAndSetVersion()
+	if err != nil {
+		return nil, err
+	}
+
+	return &testSummaries, nil
+}
+
+func (t TestSummaries) collectTestItemsWithScreenshotAndSetVersion() (TestSummaries, error) {
+	testSummaryType := OldTestSummaries
+
+	testSummariesPlistData, err := plistutil.NewPlistDataFromContent(t.Content)
+	if err != nil {
+		return t, err
+	}
+
+	testableSummaries, err := getValueAsMapStringInterfaceArray(testSummariesPlistData, "TestableSummaries")
+	if err != nil {
+		return t, err
+	}
+
+	subActivitiesWithScreenshot := []map[string]interface{}{}
+	for _, testableSummariesItem := range testableSummaries {
+		tests, err := getValueAsMapStringInterfaceArray(testableSummariesItem, "Tests")
+		if err != nil {
+			return t, err
+		}
+
+		for _, testsItem := range tests {
+			lastSubtests, err := collectLastSubtests(testsItem)
+			if err != nil {
+				return t, err
+			}
+
+			for _, lastSubtest := range lastSubtests {
+				activitySummaries, err := getValueAsMapStringInterfaceArray(lastSubtest, "ActivitySummaries")
+				if err != nil {
+					continue
+				}
+
+				var subActivities []map[string]interface{}
+				subActivities, testSummaryType, err = collectSubActivitiesWithScreenshots(activitySummaries)
+				if err != nil {
+					return t, err
+				}
+				subActivitiesWithScreenshot = append(subActivitiesWithScreenshot, subActivities...)
+			}
+		}
+	}
+
+	t.TestItemsWithScreenshots = subActivitiesWithScreenshot
+	t.Version = testSummaryType
+	return t, nil
 }
 
 func castToMapStringInterfaceArray(obj interface{}) ([]map[string]interface{}, error) {
@@ -111,54 +178,6 @@ func collectSubActivitiesWithScreenshots(activitySummaries []map[string]interfac
 	}
 
 	return summaries, testSummaryType, nil
-}
-
-// CollectTestItemsWithScreenshotAndSetVersion ...
-func (t TestSummaries) CollectTestItemsWithScreenshotAndSetVersion() (TestSummaries, error) {
-	testSummaryType := OldTestSummaries
-
-	testSummariesPlistData, err := plistutil.NewPlistDataFromContent(t.Content)
-	if err != nil {
-		return t, err
-	}
-
-	testableSummaries, err := getValueAsMapStringInterfaceArray(testSummariesPlistData, "TestableSummaries")
-	if err != nil {
-		return t, err
-	}
-
-	subActivitiesWithScreenshot := []map[string]interface{}{}
-	for _, testableSummariesItem := range testableSummaries {
-		tests, err := getValueAsMapStringInterfaceArray(testableSummariesItem, "Tests")
-		if err != nil {
-			return t, err
-		}
-
-		for _, testsItem := range tests {
-			lastSubtests, err := collectLastSubtests(testsItem)
-			if err != nil {
-				return t, err
-			}
-
-			for _, lastSubtest := range lastSubtests {
-				activitySummaries, err := getValueAsMapStringInterfaceArray(lastSubtest, "ActivitySummaries")
-				if err != nil {
-					continue
-				}
-
-				var subActivities []map[string]interface{}
-				subActivities, testSummaryType, err = collectSubActivitiesWithScreenshots(activitySummaries)
-				if err != nil {
-					return t, err
-				}
-				subActivitiesWithScreenshot = append(subActivitiesWithScreenshot, subActivities...)
-			}
-		}
-	}
-
-	t.TestItemsWithScreenshots = subActivitiesWithScreenshot
-	t.Version = testSummaryType
-	return t, nil
 }
 
 // TimestampStrToTime ...
