@@ -12,23 +12,23 @@ import (
 
 // const ...
 const (
-	OldTestSummaries TestSummaryType = "OldTestSummaries"
-	NewTestSummaries TestSummaryType = "NewTestSummaries"
+	TestSummariesWithScreenshotData Type = "TestSummariesWithScreenshotData"
+	TestSummariesWithAttachemnts    Type = "TestSummariesWithAttachemnts"
 )
 
-// TestSummaryType ...
-type TestSummaryType string
+// Type ...
+type Type string
 
 // TestSummaries ...
 type TestSummaries struct {
-	Version                  TestSummaryType
+	Type                     Type
 	Content                  string
 	TestItemsWithScreenshots []map[string]interface{}
 }
 
-// New returns a TestSummaries from the provided *_TestSummaries.plist's path.
-// It will search for test items with screenhot and it will set the version of the TestSummaries (OldTestSummaries/NewTestSummaries) depending on that the plist has `HasScreenshotData` fields or `Attachments` fileds.
-func New(testSummariesPth string) (*TestSummaries, error) {
+// NewTestSummaries returns a TestSummaries from the provided *_TestSummaries.plist's path.
+// It will search for test items with screenhot and it will set the type of the TestSummaries (TestSummariesWithScreenshotData/TestSummariesWithAttachemnts) depending on that the plist has `HasScreenshotData` fields or `Attachments` fileds.
+func NewTestSummaries(testSummariesPth string) (*TestSummaries, error) {
 	var testSummaries TestSummaries
 	var err error
 
@@ -37,7 +37,7 @@ func New(testSummariesPth string) (*TestSummaries, error) {
 		return nil, err
 	}
 
-	testSummaries, err = testSummaries.collectTestItemsWithScreenshotAndSetVersion()
+	testSummaries, err = testSummaries.collectTestItemsWithScreenshotAndSetType()
 	if err != nil {
 		return nil, err
 	}
@@ -45,8 +45,8 @@ func New(testSummariesPth string) (*TestSummaries, error) {
 	return &testSummaries, nil
 }
 
-func (t TestSummaries) collectTestItemsWithScreenshotAndSetVersion() (TestSummaries, error) {
-	testSummaryType := OldTestSummaries
+func (t TestSummaries) collectTestItemsWithScreenshotAndSetType() (TestSummaries, error) {
+	testSummaryType := TestSummariesWithScreenshotData
 
 	testSummariesPlistData, err := plistutil.NewPlistDataFromContent(t.Content)
 	if err != nil {
@@ -88,7 +88,7 @@ func (t TestSummaries) collectTestItemsWithScreenshotAndSetVersion() (TestSummar
 	}
 
 	t.TestItemsWithScreenshots = subActivitiesWithScreenshot
-	t.Version = testSummaryType
+	t.Type = testSummaryType
 	return t, nil
 }
 
@@ -138,11 +138,11 @@ func collectLastSubtests(testsItem map[string]interface{}) ([]map[string]interfa
 	return walk(testsItem), nil
 }
 
-func collectSubActivitiesWithScreenshots(activitySummaries []map[string]interface{}) ([]map[string]interface{}, TestSummaryType, error) {
-	testSummaryType := OldTestSummaries
+func collectSubActivitiesWithScreenshots(activitySummaries []map[string]interface{}) ([]map[string]interface{}, Type, error) {
+	testSummaryType := TestSummariesWithScreenshotData
 
-	var walk func(map[string]interface{}, *TestSummaryType) []map[string]interface{}
-	walk = func(item map[string]interface{}, summaryType *TestSummaryType) []map[string]interface{} {
+	var walk func(map[string]interface{}, *Type) []map[string]interface{}
+	walk = func(item map[string]interface{}, summaryType *Type) []map[string]interface{} {
 		itemWithScreenshot := []map[string]interface{}{}
 
 		// Old *_TestSummaries.plist
@@ -158,7 +158,7 @@ func collectSubActivitiesWithScreenshots(activitySummaries []map[string]interfac
 		value, found = item["Attachments"]
 		if found {
 			itemWithScreenshot = append(itemWithScreenshot, item)
-			testSummaryType = NewTestSummaries
+			testSummaryType = TestSummariesWithAttachemnts
 		}
 
 		subActivies, err := getValueAsMapStringInterfaceArray(item, "SubActivities")

@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -22,6 +21,7 @@ import (
 	"github.com/bitrise-io/go-utils/stringutil"
 	cmd "github.com/bitrise-io/steps-xcode-test/command"
 	"github.com/bitrise-io/steps-xcode-test/models"
+	"github.com/bitrise-io/steps-xcode-test/pretty"
 	"github.com/bitrise-io/steps-xcode-test/xcodeutil"
 	shellquote "github.com/kballard/go-shellquote"
 )
@@ -516,20 +516,27 @@ func updateScreenshotNames(testLogsDir string) error {
 	testSummariesPths, err := filepath.Glob(testSummariesPattern)
 	if err != nil {
 		return err
-	} else if len(testSummariesPths) == 0 {
+	}
+
+	switch len(testSummariesPths) {
+	case 0:
 		return fmt.Errorf("no TestSummaries file found with pattern: %s", testSummariesPattern)
+	case 1:
+		break
+	default:
+		log.Warnf("%d TestSummaries files found with pattern: %s. Using the first one - %s", len(testSummariesPths), testSummariesPattern, testSummariesPths[0])
 	}
 
 	//
 	// TestSummaries
 	testSummariesPth := testSummariesPths[0]
-	testSummaries, err := xcodeutil.New(testSummariesPth)
+	testSummaries, err := xcodeutil.NewTestSummaries(testSummariesPth)
 	if err != nil {
 		return fmt.Errorf("failed to parse %s, error: %s", filepath.Base(testSummariesPth), err)
 	}
 
-	logDebugPretty("Test items with screenshots:", testSummaries.TestItemsWithScreenshots)
-	log.Debugf("TestSummaries version has been set to: %s\n", testSummaries.Version)
+	log.Debugf("Test items with screenshots: %s", pretty.Object(testSummaries.TestItemsWithScreenshots))
+	log.Debugf("TestSummaries version has been set to: %s\n", testSummaries.Type)
 
 	if len(testSummaries.TestItemsWithScreenshots) > 0 {
 		log.Printf("Renaming screenshots")
@@ -564,13 +571,13 @@ func updateScreenshotNames(testLogsDir string) error {
 		var origScreenshotPth string
 
 		// Renaming the screenshots
-		if testSummaries.Version == xcodeutil.OldTestSummaries { // Old TestSummaries.plist
+		if testSummaries.Type == xcodeutil.TestSummariesWithScreenshotData { // TestSummariesWithScreenshotData - TestSummaries.plist
 			origScreenshotPth, screenshotExists, err = updateOldSummaryTypeScreenshotName(testItem, testLogsDir, uuid, startTime)
 			if err != nil {
 				log.Warnf("Failed to rename the screenshot: %s - err: %s", filepath.Base(origScreenshotPth), err)
 				continue
 			}
-		} else { // New TestSummaries.plist
+		} else { // TestSummariesWithAttachemnts - TestSummaries.plist
 			origScreenshotPth, screenshotExists, err = updateNewSummaryTypeScreenshotName(testItem, testLogsDir, uuid, startTime)
 			if err != nil {
 				log.Warnf("Failed to rename the screenshot: %s - err: %s", filepath.Base(origScreenshotPth), err)
@@ -901,22 +908,4 @@ that will attach the file to your build as an artifact!`, logPth)
 	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "succeeded"); err != nil {
 		log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 	}
-}
-
-func logDebugPretty(str string, v interface{}) {
-	if str != "" {
-		log.Debugf("%s: %+v\n", str, sprintFDebugPretty(v))
-		return
-	}
-
-	log.Debugf("%+v\n", sprintFDebugPretty(v))
-}
-
-func sprintFDebugPretty(v interface{}) string {
-	b, err := json.MarshalIndent(v, "", "  ")
-	if err != nil {
-		fmt.Printf("failed to parse %+v:\n error: %s", v, err)
-	}
-
-	return string(b)
 }

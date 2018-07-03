@@ -15,7 +15,7 @@ func TestWalkXcodeTestSummaries(t *testing.T) {
 
 		var testSummaries TestSummaries
 		testSummaries.Content = log
-		testSummaries, err = testSummaries.collectTestItemsWithScreenshotAndSetVersion()
+		testSummaries, err = testSummaries.collectTestItemsWithScreenshotAndSetType()
 		require.NoError(t, err)
 		require.Equal(t, 2, len(testSummaries.TestItemsWithScreenshots))
 	}
@@ -27,7 +27,7 @@ func TestWalkXcodeTestSummaries(t *testing.T) {
 
 		var testSummaries TestSummaries
 		testSummaries.Content = log
-		testSummaries, err = testSummaries.collectTestItemsWithScreenshotAndSetVersion()
+		testSummaries, err = testSummaries.collectTestItemsWithScreenshotAndSetType()
 		require.NoError(t, err)
 		require.Equal(t, 2, len(testSummaries.TestItemsWithScreenshots))
 	}
