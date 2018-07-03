@@ -21,6 +21,7 @@ import (
 	"github.com/bitrise-io/go-utils/stringutil"
 	cmd "github.com/bitrise-io/steps-xcode-test/command"
 	"github.com/bitrise-io/steps-xcode-test/models"
+	"github.com/bitrise-io/steps-xcode-test/pretty"
 	"github.com/bitrise-io/steps-xcode-test/xcodeutil"
 	shellquote "github.com/kballard/go-shellquote"
 )
@@ -86,6 +87,9 @@ type ConfigsModel struct {
 	TestOptions          string
 	XcprettyTestOptions  string
 	WaitForSimulatorBoot string
+
+	// Debug
+	Verbose string
 }
 
 func (configs ConfigsModel) print() {
@@ -115,6 +119,8 @@ func (configs ConfigsModel) print() {
 	log.Printf("- TestOptions: %s", configs.TestOptions)
 	log.Printf("- XcprettyTestOptions: %s", configs.XcprettyTestOptions)
 	log.Printf("- WaitForSimulatorBoot: %s", configs.WaitForSimulatorBoot)
+
+	log.Printf("- Verbose: %s", configs.Verbose)
 }
 
 func createConfigsModelFromEnvs() ConfigsModel {
@@ -143,6 +149,8 @@ func createConfigsModelFromEnvs() ConfigsModel {
 		TestOptions:          os.Getenv("xcodebuild_test_options"),
 		XcprettyTestOptions:  os.Getenv("xcpretty_test_options"),
 		WaitForSimulatorBoot: os.Getenv("wait_for_simulator_boot"),
+
+		Verbose: os.Getenv("verbose"),
 	}
 }
 
@@ -188,7 +196,12 @@ func (configs ConfigsModel) validate() error {
 	if err := validateRequiredInputWithOptions(configs.ExportUITestArtifacts, "export_uitest_artifacts", []string{"true", "false"}); err != nil {
 		return err
 	}
-	return validateRequiredInputWithOptions(configs.WaitForSimulatorBoot, "wait_for_simulator_boot", []string{"yes", "no"})
+
+	if err := validateRequiredInputWithOptions(configs.WaitForSimulatorBoot, "wait_for_simulator_boot", []string{"yes", "no"}); err != nil {
+		return err
+	}
+
+	return validateRequiredInputWithOptions(configs.Verbose, "verbose", []string{"yes", "no"})
 }
 
 //--------------------
@@ -503,22 +516,35 @@ func updateScreenshotNames(testLogsDir string) error {
 	testSummariesPths, err := filepath.Glob(testSummariesPattern)
 	if err != nil {
 		return err
-	} else if len(testSummariesPths) == 0 {
+	}
+
+	switch len(testSummariesPths) {
+	case 0:
 		return fmt.Errorf("no TestSummaries file found with pattern: %s", testSummariesPattern)
+	case 1:
+		break
+	default:
+		log.Warnf("%d TestSummaries files found with pattern: %s. Using the first one - %s", len(testSummariesPths), testSummariesPattern, testSummariesPths[0])
 	}
+
+	//
+	// TestSummaries
 	testSummariesPth := testSummariesPths[0]
-
-	testSummariesContent, err := fileutil.ReadStringFromFile(testSummariesPth)
+	testSummaries, err := xcodeutil.NewTestSummaries(testSummariesPth)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse %s, error: %s", filepath.Base(testSummariesPth), err)
 	}
 
-	testItems, err := xcodeutil.CollectTestItemsWithScreenshot(testSummariesContent)
-	if err != nil {
-		return err
+	log.Debugf("Test items with screenshots: %s", pretty.Object(testSummaries.TestItemsWithScreenshots))
+	log.Debugf("TestSummaries version has been set to: %s\n", testSummaries.Type)
+
+	if len(testSummaries.TestItemsWithScreenshots) > 0 {
+		log.Printf("Renaming screenshots")
+	} else {
+		log.Printf("No screenshot found")
 	}
 
-	for _, testItem := range testItems {
+	for _, testItem := range testSummaries.TestItemsWithScreenshots {
 		startTimeIntervalObj, found := testItem["StartTimeInterval"]
 		if !found {
 			return fmt.Errorf("missing StartTimeInterval")
@@ -532,15 +558,6 @@ func updateScreenshotNames(testLogsDir string) error {
 			return err
 		}
 
-		titleObj, found := testItem["Title"]
-		if !found {
-			return fmt.Errorf("missing Title")
-		}
-		title, casted := titleObj.(string)
-		if !casted {
-			return fmt.Errorf("Title is not a string")
-		}
-
 		uuidObj, found := testItem["UUID"]
 		if !found {
 			return fmt.Errorf("missing UUID")
@@ -551,24 +568,104 @@ func updateScreenshotNames(testLogsDir string) error {
 		}
 
 		var screenshotExists bool
-		for _, ext := range []string{"png", "jpg"} {
-			origScreenshotPth := filepath.Join(testLogsDir, "Attachments", fmt.Sprintf("Screenshot_%s.%s", uuid, ext))
-			if exist, err := pathutil.IsPathExists(origScreenshotPth); err != nil {
-				return err
-			} else if exist {
-				screenshotExists = true
-				newScreenshotPth := filepath.Join(testLogsDir, "Attachments", screenshotName(startTime, title, uuid)+"."+ext)
-				if err := os.Rename(origScreenshotPth, newScreenshotPth); err != nil {
-					return err
-				}
+		var origScreenshotPth string
+
+		// Renaming the screenshots
+		if testSummaries.Type == xcodeutil.TestSummariesWithScreenshotData { // TestSummariesWithScreenshotData - TestSummaries.plist
+			origScreenshotPth, screenshotExists, err = updateOldSummaryTypeScreenshotName(testItem, testLogsDir, uuid, startTime)
+			if err != nil {
+				log.Warnf("Failed to rename the screenshot: %s - err: %s", filepath.Base(origScreenshotPth), err)
+				continue
+			}
+		} else { // TestSummariesWithAttachemnts - TestSummaries.plist
+			origScreenshotPth, screenshotExists, err = updateNewSummaryTypeScreenshotName(testItem, testLogsDir, uuid, startTime)
+			if err != nil {
+				log.Warnf("Failed to rename the screenshot: %s - err: %s", filepath.Base(origScreenshotPth), err)
+				continue
 			}
 		}
+
 		if !screenshotExists {
 			return fmt.Errorf("screenshot not exists")
 		}
 	}
 
 	return nil
+}
+
+func updateOldSummaryTypeScreenshotName(testItem map[string]interface{}, testLogsDir, uuid string, startTime time.Time) (string, bool, error) {
+	var origScreenshotPth string
+
+	for _, ext := range []string{"png", "jpg"} {
+		origScreenshotPth = filepath.Join(testLogsDir, "Attachments", fmt.Sprintf("Screenshot_%s.%s", uuid, ext))
+		var newScreenshotPth string
+
+		if exist, err := pathutil.IsPathExists(origScreenshotPth); err != nil {
+			return "", false, err
+		} else if exist {
+			titleObj, found := testItem["Title"]
+			if !found {
+				return origScreenshotPth, false, fmt.Errorf("missing Title")
+			}
+			title, casted := titleObj.(string)
+			if !casted {
+				return origScreenshotPth, false, fmt.Errorf("Title is not a string")
+			}
+
+			newScreenshotPth = filepath.Join(testLogsDir, "Attachments", screenshotName(startTime, title, uuid)+"."+ext)
+			if err := os.Rename(origScreenshotPth, newScreenshotPth); err != nil {
+				return origScreenshotPth, false, err
+			}
+			log.Printf("%s => %s", filepath.Base(origScreenshotPth), filepath.Base(newScreenshotPth))
+		}
+	}
+	return origScreenshotPth, true, nil
+}
+
+func updateNewSummaryTypeScreenshotName(testItem map[string]interface{}, testLogsDir, uuid string, startTime time.Time) (string, bool, error) {
+	var origScreenshotPth string
+	var screenshotExists bool
+
+	attachmentsObj, found := testItem["Attachments"]
+	if !found {
+		return "", false, fmt.Errorf("Attachments not found in the *_TestSummaries.plist")
+	}
+
+	attachments, casted := attachmentsObj.([]interface{})
+	if !casted {
+		return "", false, fmt.Errorf("Failed to cast attachmentsObj")
+	}
+
+	var fileName string
+	for _, attachmentObj := range attachments {
+		attachment, casted := attachmentObj.(map[string]interface{})
+		if !casted {
+			return "", false, fmt.Errorf("Failed to cast attachmentObj")
+		}
+
+		fileNameObj, found := attachment["Filename"]
+		if found {
+			fileName, casted = fileNameObj.(string)
+			if casted {
+				origScreenshotPth = filepath.Join(testLogsDir, "Attachments", fileName)
+			}
+		}
+
+		if exist, err := pathutil.IsPathExists(origScreenshotPth); err != nil {
+			return "", false, err
+		} else if exist {
+			screenshotExists = true
+
+			formattedDate := startTime.Format("2006-01-02_03-04-05")
+			newScreenshotPth := filepath.Join(testLogsDir, "Attachments", (formattedDate + "_" + fileName))
+			if err := os.Rename(origScreenshotPth, newScreenshotPth); err != nil {
+				log.Warnf("Failed to rename the screenshot: %s", filepath.Base(origScreenshotPth))
+				continue
+			}
+			log.Printf("Screenshot renamed: %s => %s", filepath.Base(origScreenshotPth), filepath.Base(newScreenshotPth))
+		}
+	}
+	return origScreenshotPth, screenshotExists, nil
 }
 
 func saveAttachments(projectPath, scheme string) error {
@@ -630,6 +727,7 @@ func saveAttachments(projectPath, scheme string) error {
 		log.Warnf("Failed to export: BITRISE_XCODE_TEST_ATTACHMENTS_PATH, error: %s", err)
 	}
 
+	log.Donef("The zipped attachments are available in: %s", zipedTestsDerivedDataPath)
 	return nil
 }
 
@@ -647,6 +745,8 @@ func main() {
 
 	fmt.Println()
 	log.Infof("Other Configs:")
+
+	log.SetEnableDebugLog(configs.Verbose == "yes")
 
 	cleanBuild := (configs.IsCleanBuild == "yes")
 	generateCodeCoverage := (configs.GenerateCodeCoverageFiles == "yes")
@@ -779,6 +879,8 @@ func main() {
 	}
 
 	if exportUITestArtifacts {
+		fmt.Println()
+		log.Infof("Exporting attachments")
 		if err := saveAttachments(configs.ProjectPath, configs.Scheme); err != nil {
 			log.Warnf("Failed to export UI test artifacts, error %s", err)
 		}
