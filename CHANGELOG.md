@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.18.14)
+## Changelog (Current version: 1.18.15)
 
 -----------------
+
+### 1.18.15 (2018 Jul 03)
+
+* [7b879a8] Prepare for 1.18.15
+* [6b08735] Rename screenshot fix (#91)
 
 ### 1.18.14 (2018 May 07)
 
@@ -333,4 +338,4 @@
 
 -----------------
 
-Updated: 2018 May 07
+Updated: 2018 Jul 03
