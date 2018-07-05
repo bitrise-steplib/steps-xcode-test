@@ -3,7 +3,7 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
   envs:
-  - STEP_VERSION: 1.18.14
+  - STEP_VERSION: 1.18.15
 
   - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-ios-simple-objc-with-uitest.git
   - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
@@ -21,7 +21,7 @@ workflows:
 
   ci-objc:
     envs:
-    - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc.git
+    - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-ios-simple-objc-with-uitest.git
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
     before_run:
@@ -71,6 +71,7 @@ workflows:
         - should_build_before_test: "yes"
         - xcodebuild_test_options: -verbose
         - export_uitest_artifacts: "true"
+        - verbose: "yes"
     - script:
         title: Output test
         is_always_run: true
