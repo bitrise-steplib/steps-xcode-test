@@ -25,13 +25,6 @@ type XcodeBuildTestParamsModel struct {
 	AdditionalOptions    string
 }
 
-// XcodebuildVersionModel ...
-type XcodebuildVersionModel struct {
-	Version      string
-	BuildVersion string
-	MajorVersion int64
-}
-
 // SimInfoModel ...
 type SimInfoModel struct {
 	Name        string
