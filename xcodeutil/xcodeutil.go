@@ -12,6 +12,7 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	cmd "github.com/bitrise-io/steps-xcode-test/command"
 	"github.com/bitrise-io/steps-xcode-test/models"
+	xcodeModels "github.com/bitrise-tools/go-xcode/models"
 	ver "github.com/hashicorp/go-version"
 )
 
@@ -223,7 +224,7 @@ func getXcodeDeveloperDirPath() (string, error) {
 }
 
 // BootSimulator ...
-func BootSimulator(simulator models.SimInfoModel, xcodebuildVersion models.XcodebuildVersionModel) error {
+func BootSimulator(simulator models.SimInfoModel, xcodebuildVersion xcodeModels.XcodebuildVersionModel) error {
 	simulatorApp := "Simulator"
 	if xcodebuildVersion.MajorVersion == 6 {
 		simulatorApp = "iOS Simulator"
@@ -248,17 +249,17 @@ func BootSimulator(simulator models.SimInfoModel, xcodebuildVersion models.Xcode
 }
 
 // GetXcodeVersion ...
-func GetXcodeVersion() (models.XcodebuildVersionModel, error) {
+func GetXcodeVersion() (xcodeModels.XcodebuildVersionModel, error) {
 	cmd := exec.Command("xcodebuild", "-version")
 	outBytes, err := cmd.CombinedOutput()
 	outStr := string(outBytes)
 	if err != nil {
-		return models.XcodebuildVersionModel{}, fmt.Errorf("xcodebuild -version failed, err: %s, details: %s", err, outStr)
+		return xcodeModels.XcodebuildVersionModel{}, fmt.Errorf("xcodebuild -version failed, err: %s, details: %s", err, outStr)
 	}
 
 	split := strings.Split(outStr, "\n")
 	if len(split) == 0 {
-		return models.XcodebuildVersionModel{}, fmt.Errorf("failed to parse xcodebuild version output (%s)", outStr)
+		return xcodeModels.XcodebuildVersionModel{}, fmt.Errorf("failed to parse xcodebuild version output (%s)", outStr)
 	}
 
 	xcodebuildVersion := split[0]
@@ -266,7 +267,7 @@ func GetXcodeVersion() (models.XcodebuildVersionModel, error) {
 
 	split = strings.Split(xcodebuildVersion, " ")
 	if len(split) != 2 {
-		return models.XcodebuildVersionModel{}, fmt.Errorf("failed to parse xcodebuild version output (%s)", outStr)
+		return xcodeModels.XcodebuildVersionModel{}, fmt.Errorf("failed to parse xcodebuild version output (%s)", outStr)
 	}
 
 	version := split[1]
@@ -276,10 +277,10 @@ func GetXcodeVersion() (models.XcodebuildVersionModel, error) {
 
 	majorVersion, err := strconv.ParseInt(majorVersionStr, 10, 32)
 	if err != nil {
-		return models.XcodebuildVersionModel{}, fmt.Errorf("failed to parse xcodebuild version output (%s), error: %s", outStr, err)
+		return xcodeModels.XcodebuildVersionModel{}, fmt.Errorf("failed to parse xcodebuild version output (%s), error: %s", outStr, err)
 	}
 
-	return models.XcodebuildVersionModel{
+	return xcodeModels.XcodebuildVersionModel{
 		Version:      xcodebuildVersion,
 		BuildVersion: buildVersion,
 		MajorVersion: majorVersion,
