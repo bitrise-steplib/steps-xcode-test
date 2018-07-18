@@ -1,9 +1,9 @@
-format_version: "2"
+format_version: 5
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
   envs:
-  - STEP_VERSION: 1.18.15
+  - BITRISE_STEP_VERSION: 1.18.15
 
   - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-ios-simple-objc-with-uitest.git
   - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
@@ -14,6 +14,7 @@ workflows:
   # --- workflow to Step Test
   ci:
     before_run:
+    - audit-this-step
     - go-tests
     after_run:
     - ci-objc
@@ -86,68 +87,15 @@ workflows:
             echo "BITRISE_XCODE_TEST_ATTACHMENTS_PATH: ${BITRISE_XCODE_TEST_ATTACHMENTS_PATH}"
 
   go-tests:
-    before_run:
-    - _install-test-tools
     steps:
-    - script:
-        title: Export go files to test
-        inputs:
-        - content: |-
-            #!/bin/bash
-            set -ex
-
-            no_vendor_paths="$(go list ./... | grep -v vendor)"
-            envman add --key GOLIST_WITHOUT_VENDOR --value "$no_vendor_paths"
-    - script:
-        title: Err check
-        inputs:
-        - content: |-
-            #!/bin/bash
-            set -ex
-
-            errcheck -asserts=true -blank=true $GOLIST_WITHOUT_VENDOR
-    - script:
-        title: Go lint
-        inputs:
-        - content: |-
-            #!/bin/bash
-            set -ex
-
-            while read -r line; do
-              echo "-> Linting: $line"
-              golint_out="$(golint $line)"
-              if [[ "${golint_out}" != "" ]] ; then
-                echo "=> Golint issues found:"
-                echo "${golint_out}"
-                exit 1
-              fi
-            done <<< "$GOLIST_WITHOUT_VENDOR"
-    - script:
-        title: Go test
-        inputs:
-        - content: |-
-            #!/bin/bash
-            set -ex
-
-            go test $(go list ./... | grep -v vendor)
-
-  _install-test-tools:
-    steps:
-    - script:
-        title: Install required testing tools
-        inputs:
-        - content: |-
-            #!/bin/bash
-            set -ex
-
-            # Check for unhandled errors
-            go get -u -v github.com/kisielk/errcheck
-
-            # Go lint
-            go get -u -v github.com/golang/lint/golint
+    - go-list:
+    - golint:
+    - errcheck:
+    - go-test:
 
   # ----------------------------------------------------------------
   # --- Utility workflows
+
   dep-update:
     title: Dep update
     description: |
@@ -163,8 +111,7 @@ workflows:
             dep ensure -v
             dep ensure -v -update
 
-  # ----------------------------------------------------------------
-  # --- workflows to create Release
+  # --- workflow to create Release version
   create-release:
     steps:
     - script:
@@ -175,10 +122,10 @@ workflows:
             set -ex
             go get -u github.com/bitrise-tools/releaseman
             export CI=true
-            releaseman create --version $STEP_VERSION
-
+            releaseman create --version "$BITRISE_STEP_VERSION"
+            
   # ----------------------------------------------------------------
-  # --- workflow to Share this step into a Step Library
+  # --- workflows to Share this step into a Step Library
   audit-this-step:
     steps:
     - script:
@@ -192,9 +139,9 @@ workflows:
     envs:
       # if you want to share this step into a StepLib
       - MY_STEPLIB_REPO_FORK_GIT_URL: $MY_STEPLIB_REPO_FORK_GIT_URL
-      - STEP_ID_IN_STEPLIB: xcode-test
-      - STEP_GIT_VERION_TAG_TO_SHARE: $STEP_VERSION
-      - STEP_GIT_CLONE_URL: https://github.com/bitrise-io/steps-xcode-test.git
+      - BITRISE_STEP_ID: xcode-test
+      - BITRISE_STEP_VERSION: $BITRISE_STEP_VERSION
+      - BITRISE_STEP_GIT_CLONE_URL: https://github.com/bitrise-io/steps-xcode-test.git
     description: |-
       If this is the first time you try to share a Step you should
       first call: $ bitrise share
@@ -209,7 +156,7 @@ workflows:
       as the value of the `MY_STEPLIB_REPO_FORK_GIT_URL` environment.
 
       You're now ready to share this Step, just make sure that
-      the `STEP_ID_IN_STEPLIB` and `STEP_GIT_VERION_TAG_TO_SHARE`
+      the `BITRISE_STEP_ID` and `BITRISE_STEP_VERSION`
       environments are set to the desired values!
 
       To share this Step into a StepLib you can just run: $ bitrise run share-this-step
@@ -224,6 +171,6 @@ workflows:
         - content: |-
             #!/bin/bash
             set -ex
-            bitrise share start -c ${MY_STEPLIB_REPO_FORK_GIT_URL}
-            bitrise share create --stepid ${STEP_ID_IN_STEPLIB} --tag ${STEP_GIT_VERION_TAG_TO_SHARE} --git ${STEP_GIT_CLONE_URL}
+            bitrise share start -c "${MY_STEPLIB_REPO_FORK_GIT_URL}"
+            bitrise share create --stepid "${BITRISE_STEP_ID}" --tag "${BITRISE_STEP_VERSION}" --git "${BITRISE_STEP_GIT_CLONE_URL}"
             bitrise share finish
