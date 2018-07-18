@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.18.15)
+## Changelog (Current version: 1.18.16)
 
 -----------------
+
+### 1.18.16 (2018 Jul 18)
+
+* [3d0bca7] Prepare for 1.18.16
+* [fc0ddf0] go-test update in bitrise.yml (#93)
+* [446ff19] Install xcpretty if it is missing (#92)
 
 ### 1.18.15 (2018 Jul 03)
 
@@ -338,4 +344,4 @@
 
 -----------------
 
-Updated: 2018 Jul 03
+Updated: 2018 Jul 18
