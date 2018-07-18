@@ -23,6 +23,8 @@ import (
 	"github.com/bitrise-io/steps-xcode-test/models"
 	"github.com/bitrise-io/steps-xcode-test/pretty"
 	"github.com/bitrise-io/steps-xcode-test/xcodeutil"
+	"github.com/bitrise-tools/go-xcode/utility"
+	"github.com/bitrise-tools/go-xcode/xcpretty"
 	shellquote "github.com/kballard/go-shellquote"
 )
 
@@ -30,6 +32,7 @@ import (
 //  while booting. So far it seems that a simple retry solves these issues.
 
 const (
+	minSupportedXcodeMajorVersion = 6
 	// This boot timeout can happen when running Unit Tests with Xcode Command Line `xcodebuild`.
 	timeOutMessageIPhoneSimulator = "iPhoneSimulator: Timed out waiting"
 	// This boot timeout can happen when running Xcode (7+) UI tests with Xcode Command Line `xcodebuild`.
@@ -739,8 +742,7 @@ func main() {
 	configs := createConfigsModelFromEnvs()
 	configs.print()
 	if err := configs.validate(); err != nil {
-		log.Errorf("Issue with input: %s", err)
-		os.Exit(1)
+		fail("Issue with input: ", err)
 	}
 
 	fmt.Println()
@@ -762,44 +764,71 @@ func main() {
 	} else if strings.HasSuffix(configs.ProjectPath, ".xcworkspace") {
 		action = "-workspace"
 	} else {
-		log.Errorf("Invalid project file (%s), extension should be (.xcodeproj/.xcworkspace)", configs.ProjectPath)
 		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
 			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 		}
-		os.Exit(1)
+		fail("Invalid project file (%s), extension should be (.xcodeproj/.xcworkspace)", configs.ProjectPath)
 	}
 
 	log.Printf("* action: %s", action)
 
-	// Output tools versions
-	xcodebuildVersion, err := xcodeutil.GetXcodeVersion()
+	// Detect Xcode major version
+	xcodebuildVersion, err := utility.GetXcodeVersion()
 	if err != nil {
-		log.Errorf("Failed to get the version of xcodebuild! Error: %s", err)
-		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
-			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
-		}
-		os.Exit(1)
+		fail("Failed to determine xcode version, error: %s", err)
+	}
+	log.Printf("- xcodebuildVersion: %s (%s)", xcodebuildVersion.Version, xcodebuildVersion.BuildVersion)
+
+	xcodeMajorVersion := xcodebuildVersion.MajorVersion
+	if xcodeMajorVersion < minSupportedXcodeMajorVersion {
+		fail("Invalid xcode major version (%d), should not be less then min supported: %d", xcodeMajorVersion, minSupportedXcodeMajorVersion)
 	}
 
-	log.Printf("* xcodebuild_version: %s (%s)", xcodebuildVersion.Version, xcodebuildVersion.BuildVersion)
+	// Detect xcpretty version
+	outputTool := configs.OutputTool
+	if outputTool == "xcpretty" {
+		fmt.Println()
+		log.Infof("Checking if output tool (xcpretty) is installed")
 
-	xcprettyVersion, err := cmd.GetXcprettyVersion()
-	if err != nil {
-		log.Warnf("Failed to get the xcpretty version! Error: %s", err)
-	} else {
-		log.Printf("* xcpretty_version: %s", xcprettyVersion)
+		installed, err := xcpretty.IsInstalled()
+		if err != nil {
+			log.Warnf("Failed to check if xcpretty is installed, error: %s", err)
+			log.Printf("Switching to xcodebuild for output tool")
+			outputTool = "xcodebuild"
+		} else if !installed {
+			log.Warnf(`xcpretty is not installed`)
+			fmt.Println()
+			log.Printf("Installing xcpretty")
+
+			if err := xcpretty.Install(); err != nil {
+				log.Warnf("Failed to install xcpretty, error: %s", err)
+				log.Printf("Switching to xcodebuild for output tool")
+				outputTool = "xcodebuild"
+			}
+		}
+	}
+
+	if outputTool == "xcpretty" {
+		xcprettyVersion, err := xcpretty.Version()
+		if err != nil {
+			log.Warnf("Failed to determin xcpretty version, error: %s", err)
+			log.Printf("Switching to xcodebuild for output tool")
+			outputTool = "xcodebuild"
+		}
+		log.Printf("- xcprettyVersion: %s", xcprettyVersion.String())
+		fmt.Println()
 	}
 
 	// Simulator infos
 	simulator, err := xcodeutil.GetSimulator(configs.SimulatorPlatform, configs.SimulatorDevice, configs.SimulatorOsVersion)
 	if err != nil {
-		log.Errorf(fmt.Sprintf("failed to get simulator udid, error: %s", err))
 		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
 			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 		}
-		os.Exit(1)
+		fail("failed to get simulator udid, error: ", err)
 	}
 
+	log.Infof("Simulator infos")
 	log.Printf("* simulator_name: %s, UDID: %s, status: %s", simulator.Name, simulator.SimID, simulator.Status)
 
 	// Device Destination
@@ -834,11 +863,10 @@ func main() {
 		log.Infof("Booting simulator (%s)...", simulator.SimID)
 
 		if err := xcodeutil.BootSimulator(simulator, xcodebuildVersion); err != nil {
-			log.Errorf(fmt.Sprintf("failed to boot simulator, error: %s", err))
 			if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
 				log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 			}
-			os.Exit(1)
+			fail("failed to boot simulator, error: ", err)
 		}
 
 		if configs.WaitForSimulatorBoot == "yes" {
@@ -853,7 +881,7 @@ func main() {
 	//
 	// Run build
 	if !singleBuild {
-		if rawXcodebuildOutput, exitCode, buildErr := runBuild(buildParams, configs.OutputTool); buildErr != nil {
+		if rawXcodebuildOutput, exitCode, buildErr := runBuild(buildParams, outputTool); buildErr != nil {
 			if _, err := saveRawOutputToLogFile(rawXcodebuildOutput, false); err != nil {
 				log.Warnf("Failed to save the Raw Output, err: %s", err)
 			}
@@ -870,7 +898,7 @@ func main() {
 
 	//
 	// Run test
-	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, configs.OutputTool, configs.XcprettyTestOptions, true, retryOnFail)
+	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, outputTool, configs.XcprettyTestOptions, true, retryOnFail)
 
 	logPth, err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil))
 
@@ -908,4 +936,9 @@ that will attach the file to your build as an artifact!`, logPth)
 	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "succeeded"); err != nil {
 		log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 	}
+}
+
+func fail(format string, v ...interface{}) {
+	log.Errorf(format, v...)
+	os.Exit(1)
 }
