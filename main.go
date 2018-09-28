@@ -760,7 +760,7 @@ func findTestDir(projectPth string, xcodeVersion int64) (string, string, error) 
 				return "", "", fmt.Errorf("no test logs found at: %s", projectDerivedDataDir)
 			}
 
-			attachementDir := filepath.Join(testLogDir, "Attachments")
+			attachementDir = filepath.Join(testLogDir, "Attachments")
 			if exist, err := pathutil.IsDirExists(attachementDir); err != nil {
 				return "", "", err
 			} else if !exist {
