@@ -516,87 +516,87 @@ func screenshotName(startTime time.Time, title, uuid string) string {
 	return fmt.Sprintf("%s_%s_%s", formattedDate, fixedTitle, uuid)
 }
 
-// func updateScreenshotNames(testLogsDir string) error {
-// 	testSummariesPattern := filepath.Join(testLogsDir, "*_TestSummaries.plist")
-// 	testSummariesPths, err := filepath.Glob(testSummariesPattern)
-// 	if err != nil {
-// 		return err
-// 	}
+func updateScreenshotNames(testLogsDir string) error {
+	testSummariesPattern := filepath.Join(testLogsDir, "*_TestSummaries.plist")
+	testSummariesPths, err := filepath.Glob(testSummariesPattern)
+	if err != nil {
+		return err
+	}
 
-// 	switch len(testSummariesPths) {
-// 	case 0:
-// 		return fmt.Errorf("no TestSummaries file found with pattern: %s", testSummariesPattern)
-// 	case 1:
-// 		break
-// 	default:
-// 		log.Warnf("%d TestSummaries files found with pattern: %s. Using the first one - %s", len(testSummariesPths), testSummariesPattern, testSummariesPths[0])
-// 	}
+	switch len(testSummariesPths) {
+	case 0:
+		return fmt.Errorf("no TestSummaries file found with pattern: %s", testSummariesPattern)
+	case 1:
+		break
+	default:
+		log.Warnf("%d TestSummaries files found with pattern: %s. Using the first one - %s", len(testSummariesPths), testSummariesPattern, testSummariesPths[0])
+	}
 
-// 	//
-// 	// TestSummaries
-// 	testSummariesPth := testSummariesPths[0]
-// 	testSummaries, err := xcodeutil.NewTestSummaries(testSummariesPth)
-// 	if err != nil {
-// 		return fmt.Errorf("failed to parse %s, error: %s", filepath.Base(testSummariesPth), err)
-// 	}
+	//
+	// TestSummaries
+	testSummariesPth := testSummariesPths[0]
+	testSummaries, err := xcodeutil.NewTestSummaries(testSummariesPth)
+	if err != nil {
+		return fmt.Errorf("failed to parse %s, error: %s", filepath.Base(testSummariesPth), err)
+	}
 
-// 	log.Debugf("Test items with screenshots: %s", pretty.Object(testSummaries.TestItemsWithScreenshots))
-// 	log.Debugf("TestSummaries version has been set to: %s\n", testSummaries.Type)
+	log.Debugf("Test items with screenshots: %s", pretty.Object(testSummaries.TestItemsWithScreenshots))
+	log.Debugf("TestSummaries version has been set to: %s\n", testSummaries.Type)
 
-// 	if len(testSummaries.TestItemsWithScreenshots) > 0 {
-// 		log.Printf("Renaming screenshots")
-// 	} else {
-// 		log.Printf("No screenshot found")
-// 	}
+	if len(testSummaries.TestItemsWithScreenshots) > 0 {
+		log.Printf("Renaming screenshots")
+	} else {
+		log.Printf("No screenshot found")
+	}
 
-// 	for _, testItem := range testSummaries.TestItemsWithScreenshots {
-// 		startTimeIntervalObj, found := testItem["StartTimeInterval"]
-// 		if !found {
-// 			return fmt.Errorf("missing StartTimeInterval")
-// 		}
-// 		startTimeInterval, casted := startTimeIntervalObj.(float64)
-// 		if !casted {
-// 			return fmt.Errorf("StartTimeInterval is not a float64")
-// 		}
-// 		startTime, err := xcodeutil.TimestampToTime(startTimeInterval)
-// 		if err != nil {
-// 			return err
-// 		}
+	for _, testItem := range testSummaries.TestItemsWithScreenshots {
+		startTimeIntervalObj, found := testItem["StartTimeInterval"]
+		if !found {
+			return fmt.Errorf("missing StartTimeInterval")
+		}
+		startTimeInterval, casted := startTimeIntervalObj.(float64)
+		if !casted {
+			return fmt.Errorf("StartTimeInterval is not a float64")
+		}
+		startTime, err := xcodeutil.TimestampToTime(startTimeInterval)
+		if err != nil {
+			return err
+		}
 
-// 		uuidObj, found := testItem["UUID"]
-// 		if !found {
-// 			return fmt.Errorf("missing UUID")
-// 		}
-// 		uuid, casted := uuidObj.(string)
-// 		if !casted {
-// 			return fmt.Errorf("UUID is not a string")
-// 		}
+		uuidObj, found := testItem["UUID"]
+		if !found {
+			return fmt.Errorf("missing UUID")
+		}
+		uuid, casted := uuidObj.(string)
+		if !casted {
+			return fmt.Errorf("UUID is not a string")
+		}
 
-// 		var screenshotExists bool
-// 		var origScreenshotPth string
+		var screenshotExists bool
+		var origScreenshotPth string
 
-// 		// Renaming the screenshots
-// 		if testSummaries.Type == xcodeutil.TestSummariesWithScreenshotData { // TestSummariesWithScreenshotData - TestSummaries.plist
-// 			origScreenshotPth, screenshotExists, err = updateOldSummaryTypeScreenshotName(testItem, testLogsDir, uuid, startTime)
-// 			if err != nil {
-// 				log.Warnf("Failed to rename the screenshot: %s - err: %s", filepath.Base(origScreenshotPth), err)
-// 				continue
-// 			}
-// 		} else { // TestSummariesWithAttachemnts - TestSummaries.plist
-// 			origScreenshotPth, screenshotExists, err = updateNewSummaryTypeScreenshotName(testItem, testLogsDir, uuid, startTime)
-// 			if err != nil {
-// 				log.Warnf("Failed to rename the screenshot: %s - err: %s", filepath.Base(origScreenshotPth), err)
-// 				continue
-// 			}
-// 		}
+		// Renaming the screenshots
+		if testSummaries.Type == xcodeutil.TestSummariesWithScreenshotData { // TestSummariesWithScreenshotData - TestSummaries.plist
+			origScreenshotPth, screenshotExists, err = updateOldSummaryTypeScreenshotName(testItem, testLogsDir, uuid, startTime)
+			if err != nil {
+				log.Warnf("Failed to rename the screenshot: %s - err: %s", filepath.Base(origScreenshotPth), err)
+				continue
+			}
+		} else { // TestSummariesWithAttachemnts - TestSummaries.plist
+			origScreenshotPth, screenshotExists, err = updateNewSummaryTypeScreenshotName(testItem, testLogsDir, uuid, startTime)
+			if err != nil {
+				log.Warnf("Failed to rename the screenshot: %s - err: %s", filepath.Base(origScreenshotPth), err)
+				continue
+			}
+		}
 
-// 		if !screenshotExists {
-// 			return fmt.Errorf("screenshot not exists")
-// 		}
-// 	}
+		if !screenshotExists {
+			return fmt.Errorf("screenshot not exists")
+		}
+	}
 
-// 	return nil
-// }
+	return nil
+}
 
 func updateScreenshotNamesXcode10(testLogsDir string) error {
 	testSummariesPattern := filepath.Join(testLogsDir, "TestSummaries.plist")
@@ -755,69 +755,28 @@ func updateNewSummaryTypeScreenshotName(testItem map[string]interface{}, testLog
 	return origScreenshotPth, screenshotExists, nil
 }
 
-func saveAttachments(projectPath, scheme string) error {
-	// find project derived data
-	projectName := strings.TrimSuffix(filepath.Base(projectPath), filepath.Ext(projectPath))
+func saveAttachments(scheme, testDir, attachementDir string, xcodeVersion int64) error {
 
-	// change spaces to _
-	projectName = strings.Replace(projectName, " ", "_", -1)
-
-	userHome := pathutil.UserHomeDir()
-	derivedDataDir := filepath.Join(userHome, "Library/Developer/Xcode/DerivedData")
-
-	projectDerivedDataDirPattern := filepath.Join(derivedDataDir, fmt.Sprintf("%s-*", projectName))
-	projectDerivedDataDirs, err := filepath.Glob(projectDerivedDataDirPattern)
-	if err != nil {
-		return err
-	}
-
-	if len(projectDerivedDataDirs) > 1 {
-		return fmt.Errorf("more than 1 project derived data dir found: %v, with pattern: %s", projectDerivedDataDirs, projectDerivedDataDirPattern)
-	} else if len(projectDerivedDataDirs) == 0 {
-		return fmt.Errorf("no project derived data dir found with pattern: %s", projectDerivedDataDirPattern)
-	}
-	projectDerivedDataDir := projectDerivedDataDirs[0]
-
-	testLogDir := filepath.Join(projectDerivedDataDir, "Logs", "Test")
-	if exist, err := pathutil.IsDirExists(testLogDir); err != nil {
+	if exist, err := pathutil.IsDirExists(attachementDir); err != nil {
 		return err
 	} else if !exist {
-		return fmt.Errorf("no test logs found at: %s", projectDerivedDataDir)
-	}
-
-	xcResultPaths, err := pathsByPattern(testLogDir, "*.xcresult")
-	if err != nil {
-		return err
-	}
-
-	log.Debugf("xcResultPaths: %+v", xcResultPaths)
-
-	xcresultDir := ""
-	if len(xcResultPaths) == 0 {
-		return fmt.Errorf("no test .xcresult found at: %s", testLogDir)
-	} else if len(xcResultPaths) == 1 {
-		xcresultDir = xcResultPaths[0]
-	} else {
-		sort.Strings(xcResultPaths)
-		xcresultDir = xcResultPaths[len(xcResultPaths)-1]
-	}
-
-	xcresultAttachmentDir := path.Join(xcresultDir, "Attachments")
-	log.Debugf("selected xcresultDir: %s", xcresultDir)
-
-	if exist, err := pathutil.IsDirExists(xcresultAttachmentDir); err != nil {
-		return err
-	} else if !exist {
-		return fmt.Errorf("no test attachments found at: %s", xcresultAttachmentDir)
+		return fmt.Errorf("no test attachments found at: %s", attachementDir)
 	}
 
 	// update screenshot name:
 	// Screenshot_uuid.png -> start_date_time_title_uuid.png
 	// Screenshot_uuid.jpg -> start_date_time_title_uuid.jpg
-	if err := updateScreenshotNamesXcode10(xcresultDir); err != nil {
-		log.Warnf("Failed to update screenshot names, error: %s", err)
+	{
+		if xcodeVersion < 10 {
+			if err := updateScreenshotNames(testDir); err != nil {
+				log.Warnf("Failed to update screenshot names, error: %s", err)
+			}
+		} else {
+			if err := updateScreenshotNamesXcode10(testDir); err != nil {
+				log.Warnf("Failed to update screenshot names, error: %s", err)
+			}
+		}
 	}
-
 	// deploy zipped attachments
 	deployDir := os.Getenv("BITRISE_DEPLOY_DIR")
 	if deployDir == "" {
@@ -825,7 +784,7 @@ func saveAttachments(projectPath, scheme string) error {
 	}
 
 	zipedTestsDerivedDataPath := filepath.Join(deployDir, fmt.Sprintf("%s-xc-test-Attachments.zip", scheme))
-	if err := cmd.Zip(xcresultDir, "Attachments", zipedTestsDerivedDataPath); err != nil {
+	if err := cmd.Zip(testDir, "Attachments", zipedTestsDerivedDataPath); err != nil {
 		return err
 	}
 
@@ -1012,7 +971,22 @@ func main() {
 	if exportUITestArtifacts {
 		fmt.Println()
 		log.Infof("Exporting attachments")
-		if err := saveAttachments(configs.ProjectPath, configs.Scheme); err != nil {
+
+		var testDir, attachementDir string
+		if xcodebuildVersion.MajorVersion < 10 {
+			testDir, attachementDir, err = findTestDirs(configs.ProjectPath)
+			if err != nil {
+				log.Warnf("Failed to export UI test artifacts, error %s", err)
+			}
+		} else {
+			testDir, attachementDir, err = findTestDirsForXcode10(configs.ProjectPath)
+			if err != nil {
+				log.Warnf("Failed to export UI test artifacts, error %s", err)
+			}
+
+		}
+
+		if err := saveAttachments(configs.Scheme, testDir, attachementDir, xcodebuildVersion.MajorVersion); err != nil {
 			log.Warnf("Failed to export UI test artifacts, error %s", err)
 		}
 	}
@@ -1044,6 +1018,99 @@ that will attach the file to your build as an artifact!`, logPth)
 func pathsByPattern(paths ...string) ([]string, error) {
 	pattern := filepath.Join(paths...)
 	return filepath.Glob(pattern)
+}
+
+func findTestDirsForXcode10(projectPth string) (string, string, error) {
+	// find project derived data
+	projectName := strings.TrimSuffix(filepath.Base(projectPth), filepath.Ext(projectPth))
+
+	// change spaces to _
+	projectName = strings.Replace(projectName, " ", "_", -1)
+
+	userHome := pathutil.UserHomeDir()
+	derivedDataDir := filepath.Join(userHome, "Library/Developer/Xcode/DerivedData")
+
+	projectDerivedDataDirPattern := filepath.Join(derivedDataDir, fmt.Sprintf("%s-*", projectName))
+	projectDerivedDataDirs, err := filepath.Glob(projectDerivedDataDirPattern)
+	if err != nil {
+		return "", "", err
+	}
+
+	if len(projectDerivedDataDirs) > 1 {
+		return "", "", fmt.Errorf("more than 1 project derived data dir found: %v, with pattern: %s", projectDerivedDataDirs, projectDerivedDataDirPattern)
+	} else if len(projectDerivedDataDirs) == 0 {
+		return "", "", fmt.Errorf("no project derived data dir found with pattern: %s", projectDerivedDataDirPattern)
+	}
+	projectDerivedDataDir := projectDerivedDataDirs[0]
+
+	testLogDir := filepath.Join(projectDerivedDataDir, "Logs", "Test")
+	if exist, err := pathutil.IsDirExists(testLogDir); err != nil {
+		return "", "", err
+	} else if !exist {
+		return "", "", fmt.Errorf("no test logs found at: %s", projectDerivedDataDir)
+	}
+
+	xcResultPaths, err := pathsByPattern(testLogDir, "*.xcresult")
+	if err != nil {
+		return "", "", err
+	}
+
+	log.Debugf("xcResultPaths: %+v", xcResultPaths)
+
+	testDir := ""
+	if len(xcResultPaths) == 0 {
+		return "", "", fmt.Errorf("no test .xcresult found at: %s", testLogDir)
+	} else if len(xcResultPaths) == 1 {
+		testDir = xcResultPaths[0]
+	} else {
+		sort.Strings(xcResultPaths)
+		testDir = xcResultPaths[len(xcResultPaths)-1]
+	}
+
+	attachementDir := path.Join(testDir, "Attachments")
+	log.Debugf("selected testDir: %s", testDir)
+
+	return testDir, attachementDir, nil
+}
+
+func findTestDirs(projectPth string) (string, string, error) {
+	// find project derived data
+	projectName := strings.TrimSuffix(filepath.Base(projectPth), filepath.Ext(projectPth))
+
+	// change spaces to _
+	projectName = strings.Replace(projectName, " ", "_", -1)
+
+	userHome := pathutil.UserHomeDir()
+	derivedDataDir := filepath.Join(userHome, "Library/Developer/Xcode/DerivedData")
+
+	projectDerivedDataDirPattern := filepath.Join(derivedDataDir, fmt.Sprintf("%s-*", projectName))
+	projectDerivedDataDirs, err := filepath.Glob(projectDerivedDataDirPattern)
+	if err != nil {
+		return "", "", err
+	}
+
+	if len(projectDerivedDataDirs) > 1 {
+		return "", "", fmt.Errorf("more than 1 project derived data dir found: %v, with pattern: %s", projectDerivedDataDirs, projectDerivedDataDirPattern)
+	} else if len(projectDerivedDataDirs) == 0 {
+		return "", "", fmt.Errorf("no project derived data dir found with pattern: %s", projectDerivedDataDirPattern)
+	}
+	projectDerivedDataDir := projectDerivedDataDirs[0]
+
+	testLogDir := filepath.Join(projectDerivedDataDir, "Logs", "Test")
+	if exist, err := pathutil.IsDirExists(testLogDir); err != nil {
+		return "", "", err
+	} else if !exist {
+		return "", "", fmt.Errorf("no test logs found at: %s", projectDerivedDataDir)
+	}
+
+	testLogAttachmentsDir := filepath.Join(testLogDir, "Attachments")
+	if exist, err := pathutil.IsDirExists(testLogAttachmentsDir); err != nil {
+		return "", "", err
+	} else if !exist {
+		return "", "", fmt.Errorf("no test attachments found at: %s", testLogAttachmentsDir)
+	}
+
+	return testLogDir, testLogAttachmentsDir, nil
 }
 
 func fail(format string, v ...interface{}) {
