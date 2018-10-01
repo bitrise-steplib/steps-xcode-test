@@ -1,11 +1,10 @@
-format_version: 5
+format_version: 6
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
   envs:
   - BITRISE_STEP_VERSION: 1.18.16
 
-  - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-ios-simple-objc-with-uitest.git
   - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
   - BITRISE_SCHEME: ios-simple-objc
 
@@ -15,7 +14,11 @@ workflows:
   ci:
     before_run:
     - audit-this-step
-    - go-tests
+    steps:
+    - go-list:
+    - golint:
+    - errcheck:
+    - go-test:
     after_run:
     - ci-objc
     - ci-xcode-8
@@ -25,15 +28,16 @@ workflows:
     - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-ios-simple-objc-with-uitest.git
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
-    before_run:
+    after_run:
     - test
+    - check_exported_artifacts
 
   ci-xcode-8:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-samples/ios-xcode-8.0.git
     - BITRISE_PROJECT_PATH: ios-xcode-8.0/ios-xcode-8.0.xcodeproj
     - BITRISE_SCHEME: ios-xcode-8.0
-    before_run:
+    after_run:
     - test
 
   test:
@@ -86,12 +90,23 @@ workflows:
             echo "BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH: ${BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH}"
             echo "BITRISE_XCODE_TEST_ATTACHMENTS_PATH: ${BITRISE_XCODE_TEST_ATTACHMENTS_PATH}"
 
-  go-tests:
+  check_exported_artifacts:
     steps:
-    - go-list:
-    - golint:
-    - errcheck:
-    - go-test:
+    - script:
+        title: Exported attachment test
+        is_always_run: true
+        inputs:
+        - content: |-
+            #!/bin/bash
+            set -e
+
+            if [ ! -f $BITRISE_DEPLOY_DIR/ios-simple-objc-xc-test-Attachments.zip ]; then
+                echo "Exported artifacts - ios-simple-objc-xc-test-Attachments.zip - not found in $BITRISE_DEPLOY_DIR"
+                exit 1
+            fi
+
+            echo "Exported attachments found: $BITRISE_DEPLOY_DIR/ios-simple-objc-xc-test-Attachments.zip"
+
 
   # ----------------------------------------------------------------
   # --- Utility workflows
@@ -110,19 +125,6 @@ workflows:
             go get -u -v github.com/golang/dep/cmd/dep
             dep ensure -v
             dep ensure -v -update
-
-  # --- workflow to create Release version
-  create-release:
-    steps:
-    - script:
-        title:
-        inputs:
-        - content: |
-            #!/bin/bash
-            set -ex
-            go get -u github.com/bitrise-tools/releaseman
-            export CI=true
-            releaseman create --version "$BITRISE_STEP_VERSION"
             
   # ----------------------------------------------------------------
   # --- workflows to Share this step into a Step Library
@@ -134,43 +136,3 @@ workflows:
             #!/bin/bash
             set -ex
             stepman audit --step-yml ./step.yml
-
-  share-this-step:
-    envs:
-      # if you want to share this step into a StepLib
-      - MY_STEPLIB_REPO_FORK_GIT_URL: $MY_STEPLIB_REPO_FORK_GIT_URL
-      - BITRISE_STEP_ID: xcode-test
-      - BITRISE_STEP_VERSION: $BITRISE_STEP_VERSION
-      - BITRISE_STEP_GIT_CLONE_URL: https://github.com/bitrise-io/steps-xcode-test.git
-    description: |-
-      If this is the first time you try to share a Step you should
-      first call: $ bitrise share
-
-      This will print you a guide, and information about how Step sharing
-      works. Please read it at least once!
-
-      As noted in the Step sharing guide you'll have to fork the
-      StepLib you want to share this step into. Once you're done with forking
-      the repository you should set your own fork's git clone URL
-      in the `.bitrise.secrets.yml` file, or here in the `envs` section,
-      as the value of the `MY_STEPLIB_REPO_FORK_GIT_URL` environment.
-
-      You're now ready to share this Step, just make sure that
-      the `BITRISE_STEP_ID` and `BITRISE_STEP_VERSION`
-      environments are set to the desired values!
-
-      To share this Step into a StepLib you can just run: $ bitrise run share-this-step
-
-      Once it finishes the only thing left is to actually create a Pull Request,
-      the way described in the guide printed at the end of the process.
-    before_run:
-    - audit-this-step
-    steps:
-    - script:
-        inputs:
-        - content: |-
-            #!/bin/bash
-            set -ex
-            bitrise share start -c "${MY_STEPLIB_REPO_FORK_GIT_URL}"
-            bitrise share create --stepid "${BITRISE_STEP_ID}" --tag "${BITRISE_STEP_VERSION}" --git "${BITRISE_STEP_GIT_CLONE_URL}"
-            bitrise share finish
