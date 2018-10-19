@@ -1,8 +1,8 @@
 title: Xcode Test for iOS
 summary: |-
-  Runs Xcode's `test` action, on an iOS project.
+  Runs Xcode's `test` action on an iOS project.
 description: |-
-  Runs Xcode's `test` action, on an iOS project.
+  Runs Xcode's `test` action on an iOS project.
 
   Write the tests and run them on every build just to make sure those tiny
   code goblins didn't put something in the code that shouldn't be there while
@@ -41,7 +41,7 @@ inputs:
       description: |-
         The Scheme to use.
 
-        **IMPORTANT**: The Scheme have to be marked as __shared__ in Xcode!
+        **IMPORTANT**: The Scheme has to be marked as __shared__ in Xcode!
       is_required: true
   - simulator_device: iPhone 6s Plus
     opts:
@@ -135,7 +135,7 @@ inputs:
       title: "Working directory"
       description: |-
         Working directory of the step.
-        You can leave it empty to don't change it.
+        You can leave it empty to leave the working directory unchanged.
   - is_clean_build: "no"
     opts:
       category: Debug
@@ -183,11 +183,10 @@ inputs:
       category: Debug
       title: "Run xcodebuild test only"
       description: |-
-        If `single_build: false` step runs `xcodebuild OPTIONS build OPTIONS` before the test,
-        to generate the project derived datas. After that comes `xcodebuild OPTIONS build test OPTIONS`,
-        which command's log is presented in the step's log.
+        If `single_build` is set to false, the step runs `xcodebuild OPTIONS build OPTIONS` before the test 
+        to generate the project derived data. After that comes `xcodebuild OPTIONS build test OPTIONS`. This command's log is presented in the step's log.
 
-        If `single_build: true`, then step calls only `xcodebuild OPTIONS build test OPTIONS`.
+        If `single_build` is set to true, then the step calls only `xcodebuild OPTIONS build test OPTIONS`.
       value_options:
       - "true"
       - "false"
