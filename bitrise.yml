@@ -22,6 +22,7 @@ workflows:
     after_run:
     - ci-objc
     - ci-xcode-8
+    - ci-parallel
 
   ci-objc:
     envs:
@@ -37,6 +38,14 @@ workflows:
     - SAMPLE_APP_URL: https://github.com/bitrise-samples/ios-xcode-8.0.git
     - BITRISE_PROJECT_PATH: ios-xcode-8.0/ios-xcode-8.0.xcodeproj
     - BITRISE_SCHEME: ios-xcode-8.0
+    after_run:
+    - test
+
+  ci-parallel:
+    envs:
+    - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-swift-project-with-parallel-ui-test.git
+    - BITRISE_PROJECT_PATH: BullsEye.xcodeproj
+    - BITRISE_SCHEME: BullsEye
     after_run:
     - test
 
@@ -65,7 +74,7 @@ workflows:
     - certificate-and-profile-installer: {}
     - path::./:
         inputs:
-        - output_tool: xcpretty
+        - output_tool: xcodebuild
         # - is_clean_build: "no"
         - is_clean_build: "yes"
         - generate_code_coverage_files: "no"
