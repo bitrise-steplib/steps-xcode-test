@@ -89,9 +89,9 @@ type ConfigsModel struct {
 	ExportUITestArtifacts     string
 
 	// Not required parameters
-	TestOptions          string
-	XcprettyTestOptions  string
-	WaitForSimulatorBoot string
+	TestOptions         string
+	XcprettyTestOptions string
+	HeadlessMode        string
 
 	// Debug
 	Verbose string
@@ -123,7 +123,7 @@ func (configs ConfigsModel) print() {
 
 	log.Printf("- TestOptions: %s", configs.TestOptions)
 	log.Printf("- XcprettyTestOptions: %s", configs.XcprettyTestOptions)
-	log.Printf("- WaitForSimulatorBoot: %s", configs.WaitForSimulatorBoot)
+	log.Printf("- HeadlessMode: %s", configs.HeadlessMode)
 
 	log.Printf("- Verbose: %s", configs.Verbose)
 }
@@ -151,9 +151,9 @@ func createConfigsModelFromEnvs() ConfigsModel {
 		ExportUITestArtifacts:     os.Getenv("export_uitest_artifacts"),
 
 		// Not required parameters
-		TestOptions:          os.Getenv("xcodebuild_test_options"),
-		XcprettyTestOptions:  os.Getenv("xcpretty_test_options"),
-		WaitForSimulatorBoot: os.Getenv("wait_for_simulator_boot"),
+		TestOptions:         os.Getenv("xcodebuild_test_options"),
+		XcprettyTestOptions: os.Getenv("xcpretty_test_options"),
+		HeadlessMode:        os.Getenv("headless_mode"),
 
 		Verbose: os.Getenv("verbose"),
 	}
@@ -202,7 +202,7 @@ func (configs ConfigsModel) validate() error {
 		return err
 	}
 
-	if err := validateRequiredInputWithOptions(configs.WaitForSimulatorBoot, "wait_for_simulator_boot", []string{"yes", "no"}); err != nil {
+	if err := validateRequiredInputWithOptions(configs.HeadlessMode, "headless_mode", []string{"yes", "no"}); err != nil {
 		return err
 	}
 
@@ -924,8 +924,8 @@ func main() {
 	}
 
 	//
-	// Start simulator
-	if simulator.Status == "Shutdown" {
+	// If headless mode disabled - Start simulator
+	if simulator.Status == "Shutdown" && configs.HeadlessMode == "no" {
 		log.Infof("Booting simulator (%s)...", simulator.SimID)
 
 		if err := xcodeutil.BootSimulator(simulator, xcodebuildVersion); err != nil {
@@ -935,11 +935,9 @@ func main() {
 			fail("failed to boot simulator, error: ", err)
 		}
 
-		if configs.WaitForSimulatorBoot == "yes" {
-			progress.NewDefaultWrapper("Waiting for simulator boot").WrapAction(func() {
-				time.Sleep(60 * time.Second)
-			})
-		}
+		progress.NewDefaultWrapper("Waiting for simulator boot").WrapAction(func() {
+			time.Sleep(60 * time.Second)
+		})
 
 		fmt.Println()
 	}
