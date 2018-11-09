@@ -25,6 +25,7 @@ import (
 	"github.com/bitrise-io/steps-xcode-test/models"
 	"github.com/bitrise-io/steps-xcode-test/pretty"
 	"github.com/bitrise-io/steps-xcode-test/xcodeutil"
+	"github.com/bitrise-tools/go-steputils/stepconf"
 	"github.com/bitrise-tools/go-xcode/utility"
 	"github.com/bitrise-tools/go-xcode/xcpretty"
 	shellquote "github.com/kballard/go-shellquote"
@@ -66,178 +67,35 @@ var xcodeCommandEnvs = []string{"NSUnbufferedIO=YES"}
 // --- Models
 // -----------------------
 
-// ConfigsModel ...
-type ConfigsModel struct {
+// Configs ...
+type Configs struct {
 	// Project Parameters
-	ProjectPath string
-	Scheme      string
+	ProjectPath string `env:"project_path,required"`
+	Scheme      string `env:"scheme,required"`
 
 	// Simulator Configs
-	SimulatorPlatform  string
-	SimulatorDevice    string
-	SimulatorOsVersion string
+	SimulatorPlatform  string `env:"simulator_platform,required"`
+	SimulatorDevice    string `env:"simulator_device,required"`
+	SimulatorOsVersion string `env:"simulator_os_version,required"`
 
 	// Test Run Configs
-	OutputTool    string
-	IsCleanBuild  string
-	IsSingleBuild string
+	OutputTool    string `env:"output_tool,opt[xcpretty,xcodebuild]"`
+	IsCleanBuild  bool   `env:"is_clean_build,opt[yes,no]"`
+	IsSingleBuild bool   `env:"single_build,opt[true,false]"`
 
-	ShouldBuildBeforeTest string
-	ShouldRetryTestOnFail string
+	ShouldBuildBeforeTest bool `env:"should_build_before_test,opt[yes,no]"`
+	ShouldRetryTestOnFail bool `env:"should_retry_test_on_fail,opt[yes,no]"`
 
-	GenerateCodeCoverageFiles string
-	ExportUITestArtifacts     string
+	GenerateCodeCoverageFiles bool `env:"generate_code_coverage_files,opt[yes,no]"`
+	ExportUITestArtifacts     bool `env:"export_uitest_artifacts,opt[true,false]"`
 
 	// Not required parameters
-	TestOptions         string
-	XcprettyTestOptions string
-	HeadlessMode        string
+	TestOptions         string `env:"xcodebuild_test_options"`
+	XcprettyTestOptions string `env:"xcpretty_test_options"`
 
 	// Debug
-	Verbose string
-}
-
-func (configs ConfigsModel) print() {
-	fmt.Println()
-	log.Infof("Project Parameters:")
-	log.Printf("- ProjectPath: %s", configs.ProjectPath)
-	log.Printf("- Scheme: %s", configs.Scheme)
-
-	fmt.Println()
-	log.Infof("Simulator Configs:")
-	log.Printf("- SimulatorPlatform: %s", configs.SimulatorPlatform)
-	log.Printf("- SimulatorDevice: %s", configs.SimulatorDevice)
-	log.Printf("- SimulatorOsVersion: %s", configs.SimulatorOsVersion)
-
-	fmt.Println()
-	log.Infof("Test Run Configs:")
-	log.Printf("- OutputTool: %s", configs.OutputTool)
-	log.Printf("- IsCleanBuild: %s", configs.IsCleanBuild)
-	log.Printf("- IsSingleBuild: %s", configs.IsSingleBuild)
-
-	log.Printf("- ShouldBuildBeforeTest: %s", configs.ShouldBuildBeforeTest)
-	log.Printf("- ShouldRetryTestOnFail: %s", configs.ShouldRetryTestOnFail)
-
-	log.Printf("- GenerateCodeCoverageFiles: %s", configs.GenerateCodeCoverageFiles)
-	log.Printf("- ExportUITestArtifacts: %s", configs.ExportUITestArtifacts)
-
-	log.Printf("- TestOptions: %s", configs.TestOptions)
-	log.Printf("- XcprettyTestOptions: %s", configs.XcprettyTestOptions)
-	log.Printf("- HeadlessMode: %s", configs.HeadlessMode)
-
-	log.Printf("- Verbose: %s", configs.Verbose)
-}
-
-func createConfigsModelFromEnvs() ConfigsModel {
-	return ConfigsModel{
-		// Project Parameters
-		ProjectPath: os.Getenv("project_path"),
-		Scheme:      os.Getenv("scheme"),
-
-		// Simulator Configs
-		SimulatorPlatform:  os.Getenv("simulator_platform"),
-		SimulatorDevice:    os.Getenv("simulator_device"),
-		SimulatorOsVersion: os.Getenv("simulator_os_version"),
-
-		// Test Run Configs
-		OutputTool:    os.Getenv("output_tool"),
-		IsCleanBuild:  os.Getenv("is_clean_build"),
-		IsSingleBuild: os.Getenv("single_build"),
-
-		ShouldBuildBeforeTest: os.Getenv("should_build_before_test"),
-		ShouldRetryTestOnFail: os.Getenv("should_retry_test_on_fail"),
-
-		GenerateCodeCoverageFiles: os.Getenv("generate_code_coverage_files"),
-		ExportUITestArtifacts:     os.Getenv("export_uitest_artifacts"),
-
-		// Not required parameters
-		TestOptions:         os.Getenv("xcodebuild_test_options"),
-		XcprettyTestOptions: os.Getenv("xcpretty_test_options"),
-		HeadlessMode:        os.Getenv("headless_mode"),
-
-		Verbose: os.Getenv("verbose"),
-	}
-}
-
-func (configs ConfigsModel) validate() error {
-	// required
-	if err := validateRequiredInput(configs.ProjectPath, "project_path"); err != nil {
-		return err
-	}
-	if err := validateRequiredInput(configs.Scheme, "scheme"); err != nil {
-		return err
-	}
-
-	if err := validateRequiredInput(configs.SimulatorPlatform, "simulator_platform"); err != nil {
-		return err
-	}
-	if err := validateRequiredInput(configs.SimulatorDevice, "simulator_device"); err != nil {
-		return err
-	}
-	if err := validateRequiredInput(configs.SimulatorOsVersion, "simulator_os_version"); err != nil {
-		return err
-	}
-
-	if err := validateRequiredInputWithOptions(configs.OutputTool, "output_tool", []string{"xcpretty", "xcodebuild"}); err != nil {
-		return err
-	}
-	if err := validateRequiredInputWithOptions(configs.IsCleanBuild, "is_clean_build", []string{"yes", "no"}); err != nil {
-		return err
-	}
-	if err := validateRequiredInputWithOptions(configs.IsSingleBuild, "single_build", []string{"true", "false"}); err != nil {
-		return err
-	}
-
-	if err := validateRequiredInputWithOptions(configs.ShouldBuildBeforeTest, "should_build_before_test", []string{"yes", "no"}); err != nil {
-		return err
-	}
-	if err := validateRequiredInputWithOptions(configs.ShouldRetryTestOnFail, "should_retry_test_on_fail", []string{"yes", "no"}); err != nil {
-		return err
-	}
-
-	if err := validateRequiredInputWithOptions(configs.GenerateCodeCoverageFiles, "generate_code_coverage_files", []string{"yes", "no"}); err != nil {
-		return err
-	}
-	if err := validateRequiredInputWithOptions(configs.ExportUITestArtifacts, "export_uitest_artifacts", []string{"true", "false"}); err != nil {
-		return err
-	}
-
-	if err := validateRequiredInputWithOptions(configs.HeadlessMode, "headless_mode", []string{"yes", "no"}); err != nil {
-		return err
-	}
-
-	return validateRequiredInputWithOptions(configs.Verbose, "verbose", []string{"yes", "no"})
-}
-
-//--------------------
-// Functions
-//--------------------
-
-func validateRequiredInput(value, key string) error {
-	if value == "" {
-		return fmt.Errorf("Missing required input: %s", key)
-	}
-	return nil
-}
-
-func validateRequiredInputWithOptions(value, key string, options []string) error {
-	if err := validateRequiredInput(key, value); err != nil {
-		return err
-	}
-
-	found := false
-	for _, option := range options {
-		if option == value {
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		return fmt.Errorf("Invalid input: (%s) value: (%s), valid options: %s", key, value, strings.Join(options, ", "))
-	}
-
-	return nil
+	Verbose      bool `env:"verbose,opt[yes,no]"`
+	HeadlessMode bool `env:"headless_mode,opt[yes,no]"`
 }
 
 func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
@@ -805,23 +663,14 @@ func fail(format string, v ...interface{}) {
 //--------------------
 
 func main() {
-	configs := createConfigsModelFromEnvs()
-	configs.print()
-	if err := configs.validate(); err != nil {
-		fail("Issue with input: ", err)
+	var configs Configs
+	if err := stepconf.Parse(&configs); err != nil {
+		fail("Issue with input: %s", err)
 	}
 
+	stepconf.Print(configs)
 	fmt.Println()
-	log.Infof("Other Configs:")
-
-	log.SetEnableDebugLog(configs.Verbose == "yes")
-
-	cleanBuild := (configs.IsCleanBuild == "yes")
-	generateCodeCoverage := (configs.GenerateCodeCoverageFiles == "yes")
-	exportUITestArtifacts := (configs.ExportUITestArtifacts == "true")
-	singleBuild := (configs.IsSingleBuild == "true")
-	buildBeforeTest := (configs.ShouldBuildBeforeTest == "yes")
-	retryOnFail := (configs.ShouldRetryTestOnFail == "yes")
+	log.SetEnableDebugLog(configs.Verbose)
 
 	// Project-or-Workspace flag
 	action := ""
@@ -908,24 +757,24 @@ func main() {
 		ProjectPath:       configs.ProjectPath,
 		Scheme:            configs.Scheme,
 		DeviceDestination: deviceDestination,
-		CleanBuild:        cleanBuild,
+		CleanBuild:        configs.IsCleanBuild,
 	}
 
 	buildTestParams := models.XcodeBuildTestParamsModel{
 		BuildParams: buildParams,
 
-		BuildBeforeTest:      buildBeforeTest,
+		BuildBeforeTest:      configs.ShouldBuildBeforeTest,
 		AdditionalOptions:    configs.TestOptions,
-		GenerateCodeCoverage: generateCodeCoverage,
+		GenerateCodeCoverage: configs.GenerateCodeCoverageFiles,
 	}
 
-	if singleBuild {
-		buildTestParams.CleanBuild = cleanBuild
+	if configs.IsSingleBuild {
+		buildTestParams.CleanBuild = configs.IsCleanBuild
 	}
 
 	//
 	// If headless mode disabled - Start simulator
-	if simulator.Status == "Shutdown" && configs.HeadlessMode == "no" {
+	if simulator.Status == "Shutdown" && !configs.HeadlessMode {
 		log.Infof("Booting simulator (%s)...", simulator.SimID)
 
 		if err := xcodeutil.BootSimulator(simulator, xcodebuildVersion); err != nil {
@@ -944,7 +793,7 @@ func main() {
 
 	//
 	// Run build
-	if !singleBuild {
+	if !configs.IsSingleBuild {
 		if rawXcodebuildOutput, exitCode, buildErr := runBuild(buildParams, outputTool); buildErr != nil {
 			if _, err := saveRawOutputToLogFile(rawXcodebuildOutput, false); err != nil {
 				log.Warnf("Failed to save the Raw Output, err: %s", err)
@@ -962,7 +811,7 @@ func main() {
 
 	//
 	// Run test
-	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, outputTool, configs.XcprettyTestOptions, true, retryOnFail)
+	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, outputTool, configs.XcprettyTestOptions, true, configs.ShouldRetryTestOnFail)
 
 	logPth, err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil))
 
@@ -970,7 +819,7 @@ func main() {
 		log.Warnf("Failed to save the Raw Output, error %s", err)
 	}
 
-	if exportUITestArtifacts {
+	if configs.ExportUITestArtifacts {
 		fmt.Println()
 		log.Infof("Exporting attachments")
 
