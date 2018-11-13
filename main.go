@@ -681,6 +681,7 @@ func main() {
 	} else {
 		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
 			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
+			fmt.Println()
 		}
 		fail("Invalid project file (%s), extension should be (.xcodeproj/.xcworkspace)", configs.ProjectPath)
 	}
@@ -693,6 +694,10 @@ func main() {
 		fail("Failed to determine xcode version, error: %s", err)
 	}
 	log.Printf("- xcodebuildVersion: %s (%s)", xcodebuildVersion.Version, xcodebuildVersion.BuildVersion)
+
+	if xcodebuildVersion.MajorVersion < 9 && configs.HeadlessMode {
+		log.Warnf("Headless mode is enabled but it's only availabe with Xcode 9.x or newer.")
+	}
 
 	xcodeMajorVersion := xcodebuildVersion.MajorVersion
 	if xcodeMajorVersion < minSupportedXcodeMajorVersion {

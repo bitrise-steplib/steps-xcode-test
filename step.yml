@@ -128,6 +128,8 @@ inputs:
       description: |-
         If you run your tests in headless mode the xcodebuild will start a simulator in a background.
         In headless mode the simulator will not be visible but your tests (even the screenshots) will run just like if you run a simulator in foreground.
+
+        **NOTE:** Headless mode is available with Xcode 9.x or newer.
       value_options:
         - "yes"
         - "no"
