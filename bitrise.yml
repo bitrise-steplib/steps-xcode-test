@@ -28,6 +28,16 @@ workflows:
     - ci-xcode-8
     - ci-parallel
     - tvos
+  
+  xcode_8_ci: 
+    before_run:
+    - audit-this-step
+    steps:
+    - go-list:
+    - go-test:
+    after_run:
+    - ci-xcode-8_headless_mode
+    - ci-xcode-8
 
   ci-objc_headless_mode:
     envs:
