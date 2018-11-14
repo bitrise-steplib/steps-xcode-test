@@ -20,10 +20,67 @@ workflows:
     - errcheck:
     - go-test:
     after_run:
+    - ci-objc_headless_mode
+    - ci-xcode-8_headless_mode
+    - ci-parallel_headless_mode
+    - tvos_headless_mode
     - ci-objc
     - ci-xcode-8
     - ci-parallel
     - tvos
+  
+  xcode_8_ci: 
+    before_run:
+    - audit-this-step
+    steps:
+    - go-list:
+    - go-test:
+    after_run:
+    - ci-xcode-8_headless_mode
+    - ci-xcode-8
+
+  ci-objc_headless_mode:
+    envs:
+    - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-ios-simple-objc-with-uitest.git
+    - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
+    - BITRISE_SCHEME: ios-simple-objc
+    - SIMULATOR_DEVICE: iPhone 6 Plus
+    - SIMULATOR_PLATFORM: iOS Simulator
+    - HEADLESS_MODE: "yes"
+    after_run:
+    - test
+    - check_exported_artifacts
+
+  ci-xcode-8_headless_mode:
+    envs:
+    - SAMPLE_APP_URL: https://github.com/bitrise-samples/ios-xcode-8.0.git
+    - BITRISE_PROJECT_PATH: ios-xcode-8.0/ios-xcode-8.0.xcodeproj
+    - BITRISE_SCHEME: ios-xcode-8.0
+    - SIMULATOR_DEVICE: iPhone 6 Plus
+    - SIMULATOR_PLATFORM: iOS Simulator
+    - HEADLESS_MODE: "yes"
+    after_run:
+    - test
+
+  tvos_headless_mode:
+    envs:
+    - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-tvos-swift.git
+    - BITRISE_PROJECT_PATH: NPO Live.xcworkspace
+    - BITRISE_SCHEME: NPO Live
+    - SIMULATOR_DEVICE: Apple TV
+    - SIMULATOR_PLATFORM: tvOS Simulator
+    - HEADLESS_MODE: "yes"
+    after_run:
+    - test
+
+  ci-parallel_headless_mode:
+    envs:
+    - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-swift-project-with-parallel-ui-test.git
+    - BITRISE_PROJECT_PATH: BullsEye.xcodeproj
+    - BITRISE_SCHEME: BullsEye
+    - HEADLESS_MODE: "yes"
+    after_run:
+    - test
 
   ci-objc:
     envs:
@@ -32,6 +89,7 @@ workflows:
     - BITRISE_SCHEME: ios-simple-objc
     - SIMULATOR_DEVICE: iPhone 6 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
+    - HEADLESS_MODE: "no"
     after_run:
     - test
     - check_exported_artifacts
@@ -43,6 +101,7 @@ workflows:
     - BITRISE_SCHEME: ios-xcode-8.0
     - SIMULATOR_DEVICE: iPhone 6 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
+    - HEADLESS_MODE: "no"
     after_run:
     - test
 
@@ -53,6 +112,7 @@ workflows:
     - BITRISE_SCHEME: NPO Live
     - SIMULATOR_DEVICE: Apple TV
     - SIMULATOR_PLATFORM: tvOS Simulator
+    - HEADLESS_MODE: "no"
     after_run:
     - test
 
@@ -61,6 +121,7 @@ workflows:
     - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-swift-project-with-parallel-ui-test.git
     - BITRISE_PROJECT_PATH: BullsEye.xcodeproj
     - BITRISE_SCHEME: BullsEye
+    - HEADLESS_MODE: "no"
     after_run:
     - test
 
@@ -99,6 +160,7 @@ workflows:
         - xcodebuild_test_options: -verbose
         - export_uitest_artifacts: "true"
         - verbose: "yes"
+        - headless_mode: $HEADLESS_MODE
     - script:
         title: Output test
         is_always_run: true

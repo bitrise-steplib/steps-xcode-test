@@ -120,12 +120,16 @@ inputs:
       value_options:
         - "yes"
         - "no"
-  - wait_for_simulator_boot: "yes"
+  - headless_mode: "yes"
     opts:
       category: Debug
-      title: "(Experimental) Wait to simulator boot?"
+      title: Run the test in headless mode?
+      summary: In headless mode the simulator is not launched in the foreground.
       description: |-
-        Wait to simulator boot or start test immediately?
+        If you run your tests in headless mode the xcodebuild will start a simulator in a background.
+        In headless mode the simulator will not be visible but your tests (even the screenshots) will run just like if you run a simulator in foreground.
+
+        **NOTE:** Headless mode is available with Xcode 9.x or newer.
       value_options:
         - "yes"
         - "no"
