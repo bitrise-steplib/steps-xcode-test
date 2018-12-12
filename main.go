@@ -438,14 +438,17 @@ func updateScreenshotNames(testLogsDir string, xcodeVersion int64) (bool, error)
 		}
 
 		// Renaming the screenshots
-		var origScreenshotPth string
-		if testSummaries.Type == xcodeutil.TestSummariesWithScreenshotData { // TestSummariesWithScreenshotData - TestSummaries.plist
-			origScreenshotPth, err = updateOldSummaryTypeScreenshotName(testItem, testLogsDir, uuid, startTime)
-		} else {
-			origScreenshotPth, err = updateNewSummaryTypeScreenshotName(testItem, testLogsDir, uuid, startTime)
-		}
-		if err != nil {
-			log.Warnf("Failed to rename the screenshot: %s - err: %s", filepath.Base(origScreenshotPth), err)
+		{
+			var err error
+			var origScreenshotPth string
+			if testSummaries.Type == xcodeutil.TestSummariesWithScreenshotData { // TestSummariesWithScreenshotData - TestSummaries.plist
+				origScreenshotPth, err = updateOldSummaryTypeScreenshotName(testItem, testLogsDir, uuid, startTime)
+			} else {
+				origScreenshotPth, err = updateNewSummaryTypeScreenshotName(testItem, testLogsDir, uuid, startTime)
+			}
+			if err != nil {
+				log.Warnf("Failed to rename the screenshot: %s - err: %s", filepath.Base(origScreenshotPth), err)
+			}
 		}
 	}
 

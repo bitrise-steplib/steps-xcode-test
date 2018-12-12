@@ -14,6 +14,7 @@ workflows:
     - go-test:
     after_run:
     - ci-objc_headless_mode
+    - ci-objc_headless_mode_failing_ui_test
     - ci-xcode-8_headless_mode
     - ci-parallel_headless_mode
     - tvos_headless_mode
