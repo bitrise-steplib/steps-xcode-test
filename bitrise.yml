@@ -42,6 +42,7 @@ workflows:
   ci-objc_headless_mode:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-ios-simple-objc-with-uitest.git
+    - SAMPLE_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
     - SIMULATOR_DEVICE: iPhone 6 Plus
@@ -51,9 +52,23 @@ workflows:
     - test
     - check_exported_artifacts
 
+    ci-objc_headless_mode_failing_ui_test:
+      envs:
+      - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-ios-simple-objc-with-uitest.git
+      - SAMPLE_APP_BRANCH: failing-ui-test
+      - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
+      - BITRISE_SCHEME: ios-simple-objc
+      - SIMULATOR_DEVICE: iPhone 6 Plus
+      - SIMULATOR_PLATFORM: iOS Simulator
+      - HEADLESS_MODE: "yes"
+      after_run:
+      - test
+      - check_exported_artifacts
+
   ci-xcode-8_headless_mode:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-samples/ios-xcode-8.0.git
+    - SAMPLE_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: ios-xcode-8.0/ios-xcode-8.0.xcodeproj
     - BITRISE_SCHEME: ios-xcode-8.0
     - SIMULATOR_DEVICE: iPhone 6 Plus
@@ -65,6 +80,7 @@ workflows:
   tvos_headless_mode:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-tvos-swift.git
+    - SAMPLE_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: NPO Live.xcworkspace
     - BITRISE_SCHEME: NPO Live
     - SIMULATOR_DEVICE: Apple TV
@@ -76,6 +92,7 @@ workflows:
   ci-parallel_headless_mode:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-swift-project-with-parallel-ui-test.git
+    - SAMPLE_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcodeproj
     - BITRISE_SCHEME: BullsEye
     - HEADLESS_MODE: "yes"
@@ -85,6 +102,7 @@ workflows:
   ci-objc:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-ios-simple-objc-with-uitest.git
+    - SAMPLE_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
     - SIMULATOR_DEVICE: iPhone 6 Plus
@@ -97,6 +115,7 @@ workflows:
   ci-xcode-8:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-samples/ios-xcode-8.0.git
+    - SAMPLE_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: ios-xcode-8.0/ios-xcode-8.0.xcodeproj
     - BITRISE_SCHEME: ios-xcode-8.0
     - SIMULATOR_DEVICE: iPhone 6 Plus
@@ -108,6 +127,7 @@ workflows:
   tvos:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-tvos-swift.git
+    - SAMPLE_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: NPO Live.xcworkspace
     - BITRISE_SCHEME: NPO Live
     - SIMULATOR_DEVICE: Apple TV
@@ -119,6 +139,7 @@ workflows:
   ci-parallel:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-swift-project-with-parallel-ui-test.git
+    - SAMPLE_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcodeproj
     - BITRISE_SCHEME: BullsEye
     - HEADLESS_MODE: "no"
@@ -146,7 +167,7 @@ workflows:
             #!/bin/bash
             set -e
             set -v
-            git clone $SAMPLE_APP_URL .
+            git clone -b $SAMPLE_APP_BRANCH --single-branch $SAMPLE_APP_URL .
     - certificate-and-profile-installer: {}
     - path::./:
         inputs:
