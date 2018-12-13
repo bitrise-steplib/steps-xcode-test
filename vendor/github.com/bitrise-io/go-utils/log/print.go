@@ -11,7 +11,9 @@ func printf(severity Severity, withTime bool, format string, v ...interface{}) {
 		message = fmt.Sprintf("%s %s", timestampField(), message)
 	}
 
-	fmt.Fprintln(outWriter, message)
+	if _, err := fmt.Fprintln(outWriter, message); err != nil {
+		fmt.Printf("failed to print message: %s, error: %s\n", message, err)
+	}
 }
 
 // Successf ...
@@ -54,6 +56,11 @@ func Errorf(format string, v ...interface{}) {
 // TSuccessf ...
 func TSuccessf(format string, v ...interface{}) {
 	printf(successSeverity, true, format, v...)
+}
+
+// TDonef ...
+func TDonef(format string, v ...interface{}) {
+	TSuccessf(format, v...)
 }
 
 // TInfof ...

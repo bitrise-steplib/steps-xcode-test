@@ -5,15 +5,20 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 	"syscall"
 	"time"
+
+	cmd "github.com/bitrise-io/steps-xcode-test/command"
+	"github.com/bitrise-io/steps-xcode-test/models"
+	"github.com/bitrise-io/steps-xcode-test/pretty"
+	"github.com/bitrise-io/steps-xcode-test/xcodeutil"
 
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/fileutil"
@@ -21,13 +26,8 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/stringutil"
-	cmd "github.com/bitrise-io/steps-xcode-test/command"
-	"github.com/bitrise-io/steps-xcode-test/models"
-	"github.com/bitrise-io/steps-xcode-test/pretty"
-	"github.com/bitrise-io/steps-xcode-test/xcodeutil"
 	"github.com/bitrise-tools/go-steputils/stepconf"
 	"github.com/bitrise-tools/go-xcode/utility"
-	"github.com/bitrise-tools/go-xcode/xcpretty"
 	shellquote "github.com/kballard/go-shellquote"
 )
 
@@ -274,6 +274,7 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 		xcodebuildArgs = append(xcodebuildArgs, "build")
 	}
 	xcodebuildArgs = append(xcodebuildArgs, "test", "-destination", buildParams.DeviceDestination)
+	xcodebuildArgs = append(xcodebuildArgs, "-resultBundlePath", buildTestParams.TestOutputDir)
 
 	if buildTestParams.GenerateCodeCoverage {
 		xcodebuildArgs = append(xcodebuildArgs, "GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES")
@@ -567,79 +568,33 @@ func saveAttachments(scheme, testDir, attachementDir string, xcodeVersion int64)
 	return nil
 }
 
-func findTestDir(projectPth string, xcodeVersion int64) (string, string, error) {
-	// find project derived data
-	projectName := strings.TrimSuffix(filepath.Base(projectPth), filepath.Ext(projectPth))
-
-	// change spaces to _
-	projectName = strings.Replace(projectName, " ", "_", -1)
-
-	userHome := pathutil.UserHomeDir()
-	derivedDataDir := filepath.Join(userHome, "Library/Developer/Xcode/DerivedData")
-
-	projectDerivedDataDirPattern := filepath.Join(derivedDataDir, fmt.Sprintf("%s-*", projectName))
-	projectDerivedDataDirs, err := filepath.Glob(projectDerivedDataDirPattern)
-	if err != nil {
-		return "", "", err
-	}
-
-	if len(projectDerivedDataDirs) > 1 {
-		return "", "", fmt.Errorf("more than 1 project derived data dir found: %v, with pattern: %s", projectDerivedDataDirs, projectDerivedDataDirPattern)
-	} else if len(projectDerivedDataDirs) == 0 {
-		return "", "", fmt.Errorf("no project derived data dir found with pattern: %s", projectDerivedDataDirPattern)
-	}
-	projectDerivedDataDir := projectDerivedDataDirs[0]
-
-	testLogDir := filepath.Join(projectDerivedDataDir, "Logs", "Test")
-	if exist, err := pathutil.IsDirExists(testLogDir); err != nil {
-		return "", "", err
+func findTestDir(testOutputDir string, xcodeVersion int64) (string, error) {
+	if exist, err := pathutil.IsDirExists(testOutputDir); err != nil {
+		return "", err
 	} else if !exist {
-		return "", "", fmt.Errorf("no test logs found at: %s", projectDerivedDataDir)
+		return "", fmt.Errorf("no test logs found at: %s", testOutputDir)
 	}
 
-	var testDir, attachementDir string
+	const testSummaryFileName = "TestSummaries.plist"
+	if exist, err := pathutil.IsPathExists(path.Join(testOutputDir, testSummaryFileName)); err != nil {
+		return "", err
+	} else if !exist {
+		return "", fmt.Errorf("no %s found at: %s", testSummaryFileName, testOutputDir)
+	}
+
+	var attachementDir string
 	{
-		if xcodeVersion < 10 {
-			testDir = filepath.Join(projectDerivedDataDir, "Logs", "Test")
-			if exist, err := pathutil.IsDirExists(testLogDir); err != nil {
-				return "", "", err
-			} else if !exist {
-				return "", "", fmt.Errorf("no test logs found at: %s", projectDerivedDataDir)
-			}
-
-			attachementDir = filepath.Join(testLogDir, "Attachments")
-			if exist, err := pathutil.IsDirExists(attachementDir); err != nil {
-				return "", "", err
-			} else if !exist {
-				return "", "", fmt.Errorf("no test attachments found at: %s", attachementDir)
-			}
-		} else {
-			xcResultPaths, err := pathsByPattern(testLogDir, "*.xcresult")
-			if err != nil {
-				return "", "", err
-			}
-
-			log.Debugf("xcResultPaths: %+v", xcResultPaths)
-			if len(xcResultPaths) == 0 {
-				return "", "", fmt.Errorf("no test .xcresult found at: %s", testLogDir)
-			} else if len(xcResultPaths) == 1 {
-				testDir = xcResultPaths[0]
-			} else {
-				sort.Strings(xcResultPaths)
-				testDir = xcResultPaths[len(xcResultPaths)-1]
-			}
-
-			attachementDir = path.Join(testDir, "Attachments")
+		attachementDir = filepath.Join(testOutputDir, "Attachments")
+		if exist, err := pathutil.IsDirExists(attachementDir); err != nil {
+			return "", err
+		} else if !exist {
+			return "", fmt.Errorf("no test attachments found at: %s", attachementDir)
 		}
 	}
 
-	log.Debugf("selected testDir: %s", testDir)
-	return testDir, attachementDir, nil
-}
-
-func pathsByPattern(paths ...string) ([]string, error) {
-	pattern := filepath.Join(paths...)
-	return filepath.Glob(pattern)
+	log.Debugf("Test output dir: %s", testOutputDir)
+	log.Debugf("Attachment dir: %s", attachementDir)
+	return attachementDir, nil
 }
 
 func fail(format string, v ...interface{}) {
@@ -695,35 +650,12 @@ func main() {
 
 	// Detect xcpretty version
 	outputTool := configs.OutputTool
-	if outputTool == "xcpretty" {
-		fmt.Println()
-		log.Infof("Checking if output tool (xcpretty) is installed")
-
-		installed, err := xcpretty.IsInstalled()
-		if err != nil {
-			log.Warnf("Failed to check if xcpretty is installed, error: %s", err)
-			log.Printf("Switching to xcodebuild for output tool")
-			outputTool = "xcodebuild"
-		} else if !installed {
-			log.Warnf(`xcpretty is not installed`)
-			fmt.Println()
-			log.Printf("Installing xcpretty")
-
-			if err := xcpretty.Install(); err != nil {
-				log.Warnf("Failed to install xcpretty, error: %s", err)
-				log.Printf("Switching to xcodebuild for output tool")
-				outputTool = "xcodebuild"
-			}
-		}
-	}
-
-	if outputTool == "xcpretty" {
-		xcprettyVersion, err := xcpretty.Version()
-		if err != nil {
-			log.Warnf("Failed to determin xcpretty version, error: %s", err)
-			log.Printf("Switching to xcodebuild for output tool")
-			outputTool = "xcodebuild"
-		}
+	xcprettyVersion, err := InstallXcpretty()
+	if err != nil {
+		log.Warnf("%s", err)
+		log.Printf("Switching to xcodebuild for output tool")
+		outputTool = "xcodebuild"
+	} else {
 		log.Printf("- xcprettyVersion: %s", xcprettyVersion.String())
 		fmt.Println()
 	}
@@ -746,6 +678,17 @@ func main() {
 	log.Printf("* device_destination: %s", deviceDestination)
 	fmt.Println()
 
+	// Create temporary directory for test outputs
+	var testOutputDir string
+	{
+		tempDir, err := ioutil.TempDir("", "XCUITestOutput")
+		if err != nil {
+			fail("Could not create test output temporary directory.")
+		}
+		// Leaving the output dir in place after exiting
+		testOutputDir = path.Join(tempDir, "Test.xcresult")
+	}
+
 	buildParams := models.XcodeBuildParamsModel{
 		Action:            action,
 		ProjectPath:       configs.ProjectPath,
@@ -757,6 +700,7 @@ func main() {
 	buildTestParams := models.XcodeBuildTestParamsModel{
 		BuildParams: buildParams,
 
+		TestOutputDir:        testOutputDir,
 		BuildBeforeTest:      configs.ShouldBuildBeforeTest,
 		AdditionalOptions:    configs.TestOptions,
 		GenerateCodeCoverage: configs.GenerateCodeCoverageFiles,
@@ -817,12 +761,12 @@ func main() {
 		fmt.Println()
 		log.Infof("Exporting attachments")
 
-		testDir, attachementDir, err := findTestDir(configs.ProjectPath, xcodebuildVersion.MajorVersion)
+		attachementDir, err := findTestDir(buildTestParams.TestOutputDir, xcodebuildVersion.MajorVersion)
 		if err != nil {
 			log.Warnf("Failed to export UI test artifacts, error %s", err)
 		}
 
-		if err := saveAttachments(configs.Scheme, testDir, attachementDir, xcodebuildVersion.MajorVersion); err != nil {
+		if err := saveAttachments(configs.Scheme, buildTestParams.TestOutputDir, attachementDir, xcodebuildVersion.MajorVersion); err != nil {
 			log.Warnf("Failed to export UI test artifacts, error %s", err)
 		}
 	}
