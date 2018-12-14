@@ -1,13 +1,6 @@
 format_version: 6
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
-app:
-  envs:
-  - BITRISE_STEP_VERSION: 1.18.16
-
-  - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
-  - BITRISE_SCHEME: ios-simple-objc
-
 workflows:
   # ----------------------------------------------------------------
   # --- workflow to Step Test
@@ -49,7 +42,7 @@ workflows:
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
     after_run:
-    - test
+    - _test
     - check_exported_artifacts
 
     ci-objc_headless_mode_failing_ui_test:
@@ -62,7 +55,7 @@ workflows:
       - SIMULATOR_PLATFORM: iOS Simulator
       - HEADLESS_MODE: "yes"
       after_run:
-      - test
+      - _test
       - check_exported_artifacts
 
   ci-xcode-8_headless_mode:
@@ -75,7 +68,7 @@ workflows:
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
     after_run:
-    - test
+    - _test
 
   tvos_headless_mode:
     envs:
@@ -87,7 +80,7 @@ workflows:
     - SIMULATOR_PLATFORM: tvOS Simulator
     - HEADLESS_MODE: "yes"
     after_run:
-    - test
+    - _test
 
   ci-parallel_headless_mode:
     envs:
@@ -97,7 +90,7 @@ workflows:
     - BITRISE_SCHEME: BullsEye
     - HEADLESS_MODE: "yes"
     after_run:
-    - test
+    - _test
 
   ci-objc:
     envs:
@@ -109,7 +102,7 @@ workflows:
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "no"
     after_run:
-    - test
+    - _test
     - check_exported_artifacts
 
   ci-xcode-8:
@@ -122,7 +115,7 @@ workflows:
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "no"
     after_run:
-    - test
+    - _test
 
   tvos:
     envs:
@@ -134,7 +127,7 @@ workflows:
     - SIMULATOR_PLATFORM: tvOS Simulator
     - HEADLESS_MODE: "no"
     after_run:
-    - test
+    - _test
 
   ci-parallel:
     envs:
@@ -144,9 +137,9 @@ workflows:
     - BITRISE_SCHEME: BullsEye
     - HEADLESS_MODE: "no"
     after_run:
-    - test
+    - _test
 
-  test:
+  _test:
     steps:
     - script:
         inputs:
