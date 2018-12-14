@@ -446,7 +446,6 @@ func updateScreenshotNames(testLogsDir string, xcodeVersion int64) (bool, error)
 		}
 		if err != nil {
 			log.Warnf("Failed to rename the screenshot: %s - err: %s", filepath.Base(origScreenshotPth), err)
-			return false, fmt.Errorf("screenshot not exists")
 		}
 	}
 
