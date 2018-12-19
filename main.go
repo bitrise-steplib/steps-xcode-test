@@ -98,6 +98,8 @@ type Configs struct {
 	HeadlessMode bool `env:"headless_mode,opt[yes,no]"`
 }
 
+const testSummaryFileName = "TestSummaries.plist"
+
 func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
 	r, err := regexp.Compile("(?i)" + searchStr)
 	if err != nil {
@@ -375,34 +377,19 @@ func screenshotName(startTime time.Time, title, uuid string) string {
 	return fmt.Sprintf("%s_%s_%s", formattedDate, fixedTitle, uuid)
 }
 
-func updateScreenshotNames(testLogsDir string, xcodeVersion int64) (bool, error) {
-	var testSummariesPattern string
-	if xcodeVersion < 10 {
-		testSummariesPattern = filepath.Join(testLogsDir, "*_TestSummaries.plist")
-	} else {
-		testSummariesPattern = filepath.Join(testLogsDir, "TestSummaries.plist")
-	}
-
-	testSummariesPths, err := filepath.Glob(testSummariesPattern)
-	if err != nil {
-		return false, err
-	}
-
-	switch len(testSummariesPths) {
-	case 0:
-		return false, fmt.Errorf("no TestSummaries file found with pattern: %s in %s", testSummariesPattern, testLogsDir)
-	case 1:
-		break
-	default:
-		log.Warnf("%d TestSummaries files found with pattern: %s. Using the first one - %s", len(testSummariesPths), testSummariesPattern, testSummariesPths[0])
+func updateScreenshotNames(testLogsDir string) (bool, error) {
+	testSummariesPath := filepath.Join(testLogsDir, testSummaryFileName)
+	if exist, err := pathutil.IsPathExists(testSummariesPath); err != nil {
+		return false, fmt.Errorf("Failed to check if file exists: %s", testSummariesPath)
+	} else if !exist {
+		return false, fmt.Errorf("no TestSummaries file found: %s", testSummariesPath)
 	}
 
 	//
 	// TestSummaries
-	testSummariesPth := testSummariesPths[0]
-	testSummaries, err := xcodeutil.NewTestSummaries(testSummariesPth)
+	testSummaries, err := xcodeutil.NewTestSummaries(testSummariesPath)
 	if err != nil {
-		return false, fmt.Errorf("failed to parse %s, error: %s", filepath.Base(testSummariesPth), err)
+		return false, fmt.Errorf("failed to parse %s, error: %s", filepath.Base(testSummariesPath), err)
 	}
 
 	log.Debugf("Test items with screenshots: %s", pretty.Object(testSummaries.TestItemsWithScreenshots))
@@ -490,7 +477,7 @@ func updateNewSummaryTypeScreenshotName(testItem map[string]interface{}, testLog
 
 	attachmentsObj, found := testItem["Attachments"]
 	if !found {
-		return "", fmt.Errorf("Attachments not found in the *_TestSummaries.plist")
+		return "", fmt.Errorf("Attachments not found in the TestSummaries.plist")
 	}
 
 	attachments, casted := attachmentsObj.([]interface{})
@@ -528,7 +515,7 @@ func updateNewSummaryTypeScreenshotName(testItem map[string]interface{}, testLog
 	return origScreenshotPth, nil
 }
 
-func saveAttachments(scheme, testDir, attachementDir string, xcodeVersion int64) error {
+func saveAttachments(scheme, testDir, attachementDir string) error {
 
 	if exist, err := pathutil.IsDirExists(attachementDir); err != nil {
 		return err
@@ -541,7 +528,7 @@ func saveAttachments(scheme, testDir, attachementDir string, xcodeVersion int64)
 	// Screenshot_uuid.jpg -> start_date_time_title_uuid.jpg
 	var found bool
 	var err error
-	if found, err = updateScreenshotNames(testDir, xcodeVersion); err != nil {
+	if found, err = updateScreenshotNames(testDir); err != nil {
 		log.Warnf("Failed to update screenshot names, error: %s", err)
 	}
 
@@ -575,7 +562,6 @@ func getAttachmentDir(testOutputDir string) (string, error) {
 		return "", fmt.Errorf("no test logs found at: %s", testOutputDir)
 	}
 
-	const testSummaryFileName = "TestSummaries.plist"
 	if exist, err := pathutil.IsPathExists(path.Join(testOutputDir, testSummaryFileName)); err != nil {
 		return "", err
 	} else if !exist {
@@ -766,7 +752,7 @@ func main() {
 			log.Warnf("Failed to export UI test artifacts, error %s", err)
 		}
 
-		if err := saveAttachments(configs.Scheme, buildTestParams.TestOutputDir, attachementDir, xcodebuildVersion.MajorVersion); err != nil {
+		if err := saveAttachments(configs.Scheme, buildTestParams.TestOutputDir, attachementDir); err != nil {
 			log.Warnf("Failed to export UI test artifacts, error %s", err)
 		}
 	}
