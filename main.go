@@ -568,7 +568,7 @@ func saveAttachments(scheme, testDir, attachementDir string, xcodeVersion int64)
 	return nil
 }
 
-func findTestDir(testOutputDir string, xcodeVersion int64) (string, error) {
+func getAttachmentDir(testOutputDir string) (string, error) {
 	if exist, err := pathutil.IsDirExists(testOutputDir); err != nil {
 		return "", err
 	} else if !exist {
@@ -761,7 +761,7 @@ func main() {
 		fmt.Println()
 		log.Infof("Exporting attachments")
 
-		attachementDir, err := findTestDir(buildTestParams.TestOutputDir, xcodebuildVersion.MajorVersion)
+		attachementDir, err := getAttachmentDir(buildTestParams.TestOutputDir)
 		if err != nil {
 			log.Warnf("Failed to export UI test artifacts, error %s", err)
 		}
