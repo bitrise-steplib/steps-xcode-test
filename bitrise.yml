@@ -5,6 +5,8 @@ workflows:
   # ----------------------------------------------------------------
   # --- workflow to Step Test
   ci:
+    envs:
+    - ORIG_BITRISE_SOURCE_DIR: $BITRISE_SOURCE_DIR
     before_run:
     - audit-this-step
     steps:
@@ -15,16 +17,14 @@ workflows:
     after_run:
     # headless tests first, as otherwise running emulator is reused
     - ci-objc_headless_mode
+    - _script_wrapper_for_headless_failing_ui_test
     - ci-objc_headless_mode_xcpretty
-    - ci-xcode-8_headless_mode
     - ci-parallel_headless_mode
     - tvos_headless_mode
     - ci-objc
-    - ci-xcode-8
     - ci-parallel
     - tvos
-    # failing ui test is last, so does not stop the other testcases from running
-    - ci-objc_headless_mode_failing_ui_test
+
 
   
   xcode_8_ci: 
@@ -65,6 +65,19 @@ workflows:
     - _test
     - check_exported_artifacts
     - check_xcpretty_html_report
+
+  _script_wrapper_for_headless_failing_ui_test:
+    steps:
+    - script:
+        title: Start a failing workflow, wrapped in a script.
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            bitrise run ci-objc_headless_mode_failing_ui_test
+            if [ $? -ne 1 ] ; then
+              echo "Workflow was excepted to fail, exit code not 1."
+              exit 1
+            fi
 
   ci-objc_headless_mode_failing_ui_test:
     envs:
@@ -173,7 +186,7 @@ workflows:
     - script:
         inputs:
         - content: |-
-            #!/bin/bash
+            #!/bin/env bash
             set -e
             set -v
             rm -rf ./_tmp
@@ -187,6 +200,13 @@ workflows:
         inputs:
         - content: |-
             #!/bin/bash
+            echo BITRISE_SOURCE_DIR: ${BITRISE_SOURCE_DIR}
+            echo ORIG_BITRISE_SOURCE_DIR: ${ORIG_BITRISE_SOURCE_DIR}
+            echo working directory: $(pwd)
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/env bash
             set -e
             set -v
             git clone -b $SAMPLE_APP_BRANCH --single-branch $SAMPLE_APP_URL .
@@ -216,6 +236,10 @@ workflows:
             fi
             echo "BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH: ${BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH}"
             echo "BITRISE_XCODE_TEST_ATTACHMENTS_PATH: ${BITRISE_XCODE_TEST_ATTACHMENTS_PATH}"
+    - change-workdir:
+        title: Switch back to work dir at the start.
+        inputs:
+        - path: ${ORIG_BITRISE_SOURCE_DIR}
 
   check_exported_artifacts:
     steps:
@@ -224,7 +248,7 @@ workflows:
         is_always_run: true
         inputs:
         - content: |-
-            #!/bin/bash
+            #!/bin/env bash
             set -e
 
             if [ ! -f $BITRISE_DEPLOY_DIR/ios-simple-objc-xc-test-Attachments.zip ]; then
@@ -241,7 +265,7 @@ workflows:
         is_always_run: true
         inputs:
         - content: |-
-            #!/bin/bash
+            #!/bin/env bash
             set -e
 
             if [ ! -f $BITRISE_DEPLOY_DIR/xcode-test-results-ios-simple-objc.html ]; then
@@ -263,7 +287,7 @@ workflows:
         title: Dependency update
         inputs:
         - content: |-
-            #!/bin/bash
+            #!/bin/env bash
             set -ex
             go get -u -v github.com/golang/dep/cmd/dep
             dep ensure -v
@@ -276,6 +300,6 @@ workflows:
     - script:
         inputs:
         - content: |-
-            #!/bin/bash
+            #!/bin/env bash
             set -ex
             stepman audit --step-yml ./step.yml
