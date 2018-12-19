@@ -1,12 +1,14 @@
 format_version: 6
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
+app:
+  envs:
+  - ORIG_BITRISE_SOURCE_DIR: $BITRISE_SOURCE_DIR
+
 workflows:
   # ----------------------------------------------------------------
   # --- workflow to Step Test
   ci:
-    envs:
-    - ORIG_BITRISE_SOURCE_DIR: $BITRISE_SOURCE_DIR
     before_run:
     - audit-this-step
     steps:
@@ -24,8 +26,6 @@ workflows:
     - ci-objc
     - ci-parallel
     - tvos
-
-
   
   xcode_8_ci: 
     before_run:
@@ -36,6 +36,7 @@ workflows:
     after_run:
     - ci-xcode-8_headless_mode
     - ci-xcode-8
+
 
   ci-objc_headless_mode:
     envs:
