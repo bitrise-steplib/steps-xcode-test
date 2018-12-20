@@ -200,7 +200,7 @@ workflows:
     - script:
         inputs:
         - content: |-
-            #!/bin/bash
+            #!/bin/env bash
             echo BITRISE_SOURCE_DIR: ${BITRISE_SOURCE_DIR}
             echo ORIG_BITRISE_SOURCE_DIR: ${ORIG_BITRISE_SOURCE_DIR}
             echo working directory: $(pwd)

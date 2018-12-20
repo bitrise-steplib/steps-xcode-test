@@ -427,14 +427,16 @@ func updateScreenshotNames(testLogsDir string) (bool, error) {
 		// Renaming the screenshots
 		{
 			var err error
-			var origScreenshotPth string
+			var screenshotsExist bool
 			if testSummaries.Type == xcodeutil.TestSummariesWithScreenshotData { // TestSummariesWithScreenshotData - TestSummaries.plist
-				origScreenshotPth, err = updateOldSummaryTypeScreenshotName(testItem, testLogsDir, uuid, startTime)
+				screenshotsExist, err = updateOldSummaryTypeScreenshotName(testItem, testLogsDir, uuid, startTime)
 			} else {
-				origScreenshotPth, err = updateNewSummaryTypeScreenshotName(testItem, testLogsDir, uuid, startTime)
+				screenshotsExist, err = updateNewSummaryTypeScreenshotName(testItem, testLogsDir, uuid, startTime)
 			}
 			if err != nil {
-				log.Warnf("Failed to rename the screenshot: %s - err: %s", filepath.Base(origScreenshotPth), err)
+				log.Warnf("Failed to rename the screenshot: %s", err)
+			} else if !screenshotsExist {
+				log.Warnf("No screenshots renamed for test item: %s", pretty.Object(testItem))
 			}
 		}
 	}
@@ -442,55 +444,56 @@ func updateScreenshotNames(testLogsDir string) (bool, error) {
 	return true, nil
 }
 
-func updateOldSummaryTypeScreenshotName(testItem map[string]interface{}, testLogsDir, uuid string, startTime time.Time) (string, error) {
-	var origScreenshotPth string
-
+func updateOldSummaryTypeScreenshotName(testItem map[string]interface{}, testLogsDir, uuid string, startTime time.Time) (bool, error) {
+	var screenshotCount int
 	for _, ext := range []string{"png", "jpg"} {
-		origScreenshotPth = filepath.Join(testLogsDir, "Attachments", fmt.Sprintf("Screenshot_%s.%s", uuid, ext))
+		origScreenshotPth := filepath.Join(testLogsDir, "Attachments", fmt.Sprintf("Screenshot_%s.%s", uuid, ext))
 		var newScreenshotPth string
 
 		if exist, err := pathutil.IsPathExists(origScreenshotPth); err != nil {
-			return "", err
+			return false, fmt.Errorf("%s - err: %s", origScreenshotPth, err)
 		} else if exist {
 			titleObj, found := testItem["Title"]
 			if !found {
-				return origScreenshotPth, fmt.Errorf("missing Title")
+				return false, fmt.Errorf("%s - err: %s", filepath.Base(origScreenshotPth), "missing Title")
 			}
 			title, casted := titleObj.(string)
 			if !casted {
-				return origScreenshotPth, fmt.Errorf("Title is not a string")
+				return false, fmt.Errorf("%s - err: %s", filepath.Base(origScreenshotPth), "Title is not a string")
 			}
 
 			newScreenshotPth = filepath.Join(testLogsDir, "Attachments", screenshotName(startTime, title, uuid)+"."+ext)
 			if err := os.Rename(origScreenshotPth, newScreenshotPth); err != nil {
-				return origScreenshotPth, err
+				log.Warnf("Failed to rename the screenshot: %s", filepath.Base(origScreenshotPth))
+				continue
 			}
+			screenshotCount++
 			log.Printf("%s => %s", filepath.Base(origScreenshotPth), filepath.Base(newScreenshotPth))
 		}
 	}
-	return origScreenshotPth, nil
+	return screenshotCount > 0, nil
 }
 
-func updateNewSummaryTypeScreenshotName(testItem map[string]interface{}, testLogsDir, uuid string, startTime time.Time) (string, error) {
-	var origScreenshotPth string
-
+func updateNewSummaryTypeScreenshotName(testItem map[string]interface{}, testLogsDir, uuid string, startTime time.Time) (bool, error) {
 	attachmentsObj, found := testItem["Attachments"]
 	if !found {
-		return "", fmt.Errorf("Attachments not found in the TestSummaries.plist")
+		return false, fmt.Errorf("Attachments not found in the TestSummaries.plist")
 	}
 
 	attachments, casted := attachmentsObj.([]interface{})
 	if !casted {
-		return "", fmt.Errorf("Failed to cast attachmentsObj")
+		return false, fmt.Errorf("Failed to cast attachmentsObj")
 	}
 
-	var fileName string
+	var screenshoutCount int
 	for _, attachmentObj := range attachments {
 		attachment, casted := attachmentObj.(map[string]interface{})
 		if !casted {
-			return "", fmt.Errorf("Failed to cast attachmentObj")
+			return false, fmt.Errorf("Failed to cast attachmentObj")
 		}
 
+		var fileName string
+		var origScreenshotPth string
 		fileNameObj, found := attachment["Filename"]
 		if found {
 			fileName, casted = fileNameObj.(string)
@@ -500,7 +503,7 @@ func updateNewSummaryTypeScreenshotName(testItem map[string]interface{}, testLog
 		}
 
 		if exist, err := pathutil.IsPathExists(origScreenshotPth); err != nil {
-			return "", err
+			return false, err
 		} else if exist {
 			formattedDate := startTime.Format("2006-01-02_03-04-05")
 			newScreenshotPth := filepath.Join(testLogsDir, "Attachments", (formattedDate + "_" + fileName))
@@ -508,10 +511,11 @@ func updateNewSummaryTypeScreenshotName(testItem map[string]interface{}, testLog
 				log.Warnf("Failed to rename the screenshot: %s", filepath.Base(origScreenshotPth))
 				continue
 			}
+			screenshoutCount = screenshoutCount + 1
 			log.Printf("Screenshot renamed: %s => %s", filepath.Base(origScreenshotPth), filepath.Base(newScreenshotPth))
 		}
 	}
-	return origScreenshotPth, nil
+	return screenshoutCount > 0, nil
 }
 
 func saveAttachments(scheme, testDir, attachementDir string) error {
