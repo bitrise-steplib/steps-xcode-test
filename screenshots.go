@@ -58,7 +58,7 @@ func updateScreenshotNames(testLogsDir string) (bool, error) {
 		{
 			var renameMap map[string]string
 			switch testSummaries.Type {
-			case xcodeutil.TestSummariesWithScreenshotData:
+			case xcodeutil.ScreenshotsLegacy:
 				{
 					title, err := getTitleOldSummaryType(testItem)
 					if err != nil {
@@ -75,7 +75,7 @@ func updateScreenshotNames(testLogsDir string) (bool, error) {
 					}
 					renameMap = prepareRenameOldSummaryType(title, uuid, startTime, attachementDir(testLogsDir))
 				}
-			case xcodeutil.TestSummariesWithAttachemnts:
+			case xcodeutil.ScreenshotsAsAttachments:
 				{
 					var fromFileNames []string
 					if fromFileNames, err = collectNewSummaryTypeFilenames(testItem); err != nil {
@@ -91,7 +91,6 @@ func updateScreenshotNames(testLogsDir string) (bool, error) {
 			}
 		}
 	}
-
 	return true, nil
 }
 

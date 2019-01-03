@@ -10,10 +10,14 @@ import (
 	"github.com/bitrise-tools/go-xcode/plistutil"
 )
 
+// ScreenshotsCategory descdribes the screenshot atttachment's type
+type ScreenshotsCategory string
+
 // const ...
 const (
-	TestSummariesWithScreenshotData Type = "TestSummariesWithScreenshotData"
-	TestSummariesWithAttachemnts    Type = "TestSummariesWithAttachemnts"
+	ScreenshotsLegacy        ScreenshotsCategory = "ScreenshotsLegacy"
+	ScreenshotsAsAttachments ScreenshotsCategory = "ScreenshotsAsAttachments"
+	ScreenshotsNone          ScreenshotsCategory = "ScreenshotsNone"
 )
 
 // Type ...
@@ -21,7 +25,7 @@ type Type string
 
 // TestSummaries ...
 type TestSummaries struct {
-	Type                     Type
+	Type                     ScreenshotsCategory
 	Content                  string
 	TestItemsWithScreenshots []map[string]interface{}
 }
@@ -46,7 +50,7 @@ func NewTestSummaries(testSummariesPth string) (*TestSummaries, error) {
 }
 
 func (t TestSummaries) collectTestItemsWithScreenshotAndSetType() (TestSummaries, error) {
-	testSummaryType := TestSummariesWithScreenshotData
+	testSummaryType := ScreenshotsLegacy
 
 	testSummariesPlistData, err := plistutil.NewPlistDataFromContent(t.Content)
 	if err != nil {
@@ -138,27 +142,39 @@ func collectLastSubtests(testsItem map[string]interface{}) ([]map[string]interfa
 	return walk(testsItem), nil
 }
 
-func collectSubActivitiesWithScreenshots(activitySummaries []map[string]interface{}) ([]map[string]interface{}, Type, error) {
-	testSummaryType := TestSummariesWithScreenshotData
+func collectSubActivitiesWithScreenshots(activitySummaries []map[string]interface{}) ([]map[string]interface{}, ScreenshotsCategory, error) {
+	testSummaryType := ScreenshotsAsAttachments
 
-	var walk func(map[string]interface{}, *Type) []map[string]interface{}
-	walk = func(item map[string]interface{}, summaryType *Type) []map[string]interface{} {
+	var walk func(map[string]interface{}, *ScreenshotsCategory) []map[string]interface{}
+	walk = func(item map[string]interface{}, summaryType *ScreenshotsCategory) []map[string]interface{} {
 		itemWithScreenshot := []map[string]interface{}{}
 
-		// Old *_TestSummaries.plist
-		value, found := item["HasScreenshotData"]
-		if found {
-			hasScreenshot, casted := value.(bool)
-			if casted && hasScreenshot {
-				itemWithScreenshot = append(itemWithScreenshot, item)
+		getAttachmentType := func(item map[string]interface{}) ScreenshotsCategory {
+			value, found := item["Attachments"]
+			if found {
+				return ScreenshotsAsAttachments
 			}
+			value, found = item["HasScreenshotData"]
+			if found {
+				hasScreenshot, casted := value.(bool)
+				if casted && hasScreenshot {
+					return ScreenshotsLegacy
+				}
+			}
+			return ScreenshotsNone
 		}
 
-		// New *_TestSummaries.plist
-		value, found = item["Attachments"]
-		if found {
-			itemWithScreenshot = append(itemWithScreenshot, item)
-			testSummaryType = TestSummariesWithAttachemnts
+		switch getAttachmentType(item) {
+		case ScreenshotsAsAttachments: // New *_TestSummaries.plist
+			{
+				itemWithScreenshot = append(itemWithScreenshot, item)
+			}
+		case ScreenshotsLegacy: // Old *_TestSummaries.plist
+			{
+				testSummaryType = ScreenshotsLegacy
+				itemWithScreenshot = append(itemWithScreenshot, item)
+			}
+		case ScreenshotsNone:
 		}
 
 		subActivies, err := getValueAsMapStringInterfaceArray(item, "SubActivities")
