@@ -1,12 +1,14 @@
-package xcodeutil
+package testresults
 
 import (
+	"reflect"
 	"testing"
 
-	"github.com/bitrise-io/go-utils/fileutil"
+	"github.com/bitrise-tools/go-xcode/plistutil"
 	"github.com/stretchr/testify/require"
 )
 
+/*
 func TestWalkXcodeTestSummaries(t *testing.T) {
 	t.Log()
 	{
@@ -32,6 +34,7 @@ func TestWalkXcodeTestSummaries(t *testing.T) {
 		require.Equal(t, 2, len(testSummaries.TestItemsWithScreenshots))
 	}
 }
+*/
 
 func TestTimestampToTime(t *testing.T) {
 	time, err := TimestampStrToTime("522675441.31045401")
@@ -43,4 +46,43 @@ func TestTimestampToTime(t *testing.T) {
 	require.Equal(t, 11, time.Hour())
 	require.Equal(t, 37, time.Minute())
 	require.Equal(t, 21, time.Second())
+}
+
+func Test_parseTestSummaries(t *testing.T) {
+	const testSummariesPth = "action_TestSummaries.plist"
+	testSummariesPlistData, err := plistutil.NewPlistDataFromFile(testSummariesPth)
+	if err != nil {
+		t.Errorf("failed to parse TestSummaries file: %s, error: %s", testSummariesPth, err)
+	}
+
+	type args struct {
+		testSummariesContent plistutil.PlistData
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *[]TestResult
+		wantErr bool
+	}{
+		{
+			name: "Smoke",
+			args: args{
+				testSummariesContent: testSummariesPlistData,
+			},
+			want:    nil,
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseTestSummaries(tt.args.testSummariesContent)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseTestSummaries() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("parseTestSummaries() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }

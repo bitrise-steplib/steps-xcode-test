@@ -10,7 +10,7 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/steps-xcode-test/pretty"
-	"github.com/bitrise-io/steps-xcode-test/xcodeutil"
+	"github.com/bitrise-io/steps-xcode-test/xcodeutil/testresults"
 )
 
 func attachementDir(testOutputDir string) string {
@@ -26,7 +26,7 @@ func updateScreenshotNames(testLogsDir string) (bool, error) {
 	}
 
 	// TestSummaries
-	testSummaries, err := xcodeutil.NewTestSummaries(testSummariesPath)
+	testSummaries, err := testresults.New(testSummariesPath)
 	if err != nil {
 		return false, fmt.Errorf("failed to parse %s, error: %s", filepath.Base(testSummariesPath), err)
 	}
@@ -50,7 +50,7 @@ func updateScreenshotNames(testLogsDir string) (bool, error) {
 		if !casted {
 			return false, fmt.Errorf("StartTimeInterval is not a float64")
 		}
-		startTime, err := xcodeutil.TimestampToTime(startTimeInterval)
+		startTime, err := testresults.TimestampToTime(startTimeInterval)
 		if err != nil {
 			return false, err
 		}
@@ -58,7 +58,7 @@ func updateScreenshotNames(testLogsDir string) (bool, error) {
 		{
 			var renameMap map[string]string
 			switch testSummaries.Type {
-			case xcodeutil.ScreenshotsLegacy:
+			case testresults.ScreenshotsLegacy:
 				{
 					title, err := getTitleOldSummaryType(testItem)
 					if err != nil {
@@ -75,7 +75,7 @@ func updateScreenshotNames(testLogsDir string) (bool, error) {
 					}
 					renameMap = prepareRenameOldSummaryType(title, uuid, startTime, attachementDir(testLogsDir))
 				}
-			case xcodeutil.ScreenshotsAsAttachments:
+			case testresults.ScreenshotsAsAttachments:
 				{
 					var fromFileNames []string
 					if fromFileNames, err = collectNewSummaryTypeFilenames(testItem); err != nil {

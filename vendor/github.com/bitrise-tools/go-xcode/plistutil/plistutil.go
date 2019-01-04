@@ -1,6 +1,7 @@
 package plistutil
 
 import (
+	"errors"
 	"time"
 
 	"github.com/bitrise-io/go-utils/fileutil"
@@ -181,4 +182,33 @@ func (data PlistData) GetMapStringInterface(forKey string) (PlistData, bool) {
 		return casted, true
 	}
 	return nil, false
+}
+
+func castToMapStringInterfaceArray(obj interface{}) ([]PlistData, error) {
+	array, ok := obj.([]interface{})
+	if !ok {
+		return nil, errors.New("failed to cast to []interface{}")
+	}
+
+	casted := []PlistData{}
+	for _, item := range array {
+		mapStringInterface, ok := item.(map[string]interface{})
+		if !ok {
+			return nil, errors.New("failed to cast to map[string]interface{}")
+		}
+
+		casted = append(casted, mapStringInterface)
+	}
+
+	return casted, nil
+}
+
+// GetMapStringInterfaceArray ...
+func (data PlistData) GetMapStringInterfaceArray(forKey string) ([]PlistData, error) {
+	value, ok := data[forKey]
+	if !ok {
+		return nil, errors.New("key not found")
+	}
+
+	return castToMapStringInterfaceArray(value)
 }

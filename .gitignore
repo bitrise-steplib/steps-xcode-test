@@ -3,3 +3,4 @@ _tmp/
 go/bin/
 go/pkg/
 .gows*
+.vscode/
