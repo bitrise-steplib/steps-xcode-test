@@ -1,7 +1,6 @@
 package testresults
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -91,7 +90,7 @@ func parseFailureSummaries(failureSummariesData []plistutil.PlistData) (*[]Failu
 	return &failureSummaries, nil
 }
 
-func parseSceenshots(activitySummary plistutil.PlistData) ([]ActivityScreenshot, error) {
+func parseSceenshots(activitySummary plistutil.PlistData, activityUUID string, activityStartTime time.Time) ([]ActivityScreenshot, error) {
 	getAttachmentType := func(item map[string]interface{}) ScreenshotsType {
 		value, found := item["Attachments"]
 		if found {
@@ -137,7 +136,15 @@ func parseSceenshots(activitySummary plistutil.PlistData) ([]ActivityScreenshot,
 		}
 	case ScreenshotsLegacy:
 		{
-			return nil, errors.New("Not impl")
+			attachments := make([]ActivityScreenshot, 2)
+			for i, ext := range []string{"png", "jpg"} {
+				fileName := fmt.Sprintf("Screenshot_%s.%s", activityUUID, ext)
+				attachments[i] = ActivityScreenshot{
+					FilePath:  fileName,
+					Timestamp: activityStartTime,
+				}
+			}
+			return attachments, nil
 		}
 	case ScreenshotsNone:
 		{
@@ -159,9 +166,17 @@ func parseActivites(activitySummariesData []plistutil.PlistData) ([]Activity, er
 		}
 		UUID, found := activity.GetString("UUID")
 		if !found {
-			return nil, fmt.Errorf("key UUID not found for activity")
+			return nil, fmt.Errorf("key UUID not found for activity: %s", activity)
 		}
-		var screenshots, err = parseSceenshots(activity)
+		timeStampFloat, found := activity.GetFloat64("StartTimeInterval")
+		if !found {
+			return nil, fmt.Errorf("key StartTimeInterval not found for activity: %s", activity)
+		}
+		timeStamp, err := TimestampToTime(timeStampFloat)
+		if err != nil {
+			return nil, fmt.Errorf("can not convert timestamp: %f, error: %s", timeStampFloat, err)
+		}
+		screenshots, err := parseSceenshots(activity, UUID, timeStamp)
 		if err != nil {
 			return nil, fmt.Errorf("Screenshot invalid format, error: %s", err)
 		}
