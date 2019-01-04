@@ -58,6 +58,20 @@ func (data PlistData) GetUInt64(forKey string) (uint64, bool) {
 	return casted, true
 }
 
+// GetFloat64 ...
+func (data PlistData) GetFloat64(forKey string) (float64, bool) {
+	value, ok := data[forKey]
+	if !ok {
+		return 0, false
+	}
+
+	casted, ok := value.(float64)
+	if !ok {
+		return 0, false
+	}
+	return casted, true
+}
+
 // GetBool ...
 func (data PlistData) GetBool(forKey string) (bool, bool) {
 	value, ok := data[forKey]

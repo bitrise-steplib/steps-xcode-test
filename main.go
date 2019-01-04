@@ -370,23 +370,15 @@ func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) (stri
 }
 
 func saveAttachments(scheme, testDir, attachementDir string) error {
-
 	if exist, err := pathutil.IsDirExists(attachementDir); err != nil {
 		return err
 	} else if !exist {
 		return fmt.Errorf("no test attachments found at: %s", attachementDir)
 	}
 
-	// update screenshot name:
-	// Screenshot_uuid.png -> start_date_time_title_uuid.png
-	// Screenshot_uuid.jpg -> start_date_time_title_uuid.jpg
-	var found bool
-	var err error
-	if found, err = updateScreenshotNames(testDir); err != nil {
+	if found, err := UpdateScreenshotNames(testDir, attachementDir); err != nil {
 		log.Warnf("Failed to update screenshot names, error: %s", err)
-	}
-
-	if !found {
+	} else if !found {
 		return nil
 	}
 

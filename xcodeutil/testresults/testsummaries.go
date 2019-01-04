@@ -1,11 +1,13 @@
 package testresults
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
 	"time"
 
+	"github.com/bitrise-io/steps-xcode-test/pretty"
 	"github.com/bitrise-tools/go-xcode/plistutil"
 )
 
@@ -21,10 +23,10 @@ const (
 
 // FailureSummaries describes a failed test
 type FailureSummaries struct {
-	FileName             string `plist:"FileName"`
-	LineNumber           string `plist:"LineNumber"`
-	Message              string `plist:"Message"`
-	IsPerformanceFailure bool   `plist:"PerformanceFailure"`
+	FileName             string
+	LineNumber           uint64
+	Message              string
+	IsPerformanceFailure bool
 }
 
 // ActivityScreenshot describes a screenshot attached to a Activity
@@ -37,7 +39,7 @@ type ActivityScreenshot struct {
 type Activity struct {
 	Title         string
 	UUID          string
-	Screenhsot    *ActivityScreenshot
+	Screenhsots   []ActivityScreenshot
 	SubActivities []Activity
 }
 
@@ -49,25 +51,8 @@ type TestResult struct {
 	Activities  []Activity
 }
 
-// type TestSummary {
-// 	TestCase Test `plist:"Tests"`
-// }
-
-// type TestSummaries {
-// 	Summaries TestSummary `plist:"TestableSummaries"`
-// }
-
-/*
-// TestSummaries ...
-type TestSummaries struct {
-	Type                     ScreenshotsType
-	Content                  string
-	TestItemsWithScreenshots []map[string]interface{}
-}
-*/
-
 // New parses an *_TestSummaries.plist and returns an array containing test results and screenshots
-func New(testSummariesPth string) (*[]TestResult, error) {
+func New(testSummariesPth string) ([]TestResult, error) {
 	testSummariesPlistData, err := plistutil.NewPlistDataFromFile(testSummariesPth)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse TestSummaries file: %s, error: %s", testSummariesPth, err)
@@ -82,19 +67,19 @@ func parseFailureSummaries(failureSummariesData []plistutil.PlistData) (*[]Failu
 
 		fileName, found := failureSummary.GetString("FileName")
 		if !found {
-			return nil, fmt.Errorf("key FileName not found for FailureSummaries: %s", failureSummariesData)
+			return nil, fmt.Errorf("key FileName not found for FailureSummaries: %s", pretty.Object(failureSummariesData))
 		}
-		lineNumber, found := failureSummary.GetString("LineNumber")
+		lineNumber, found := failureSummary.GetUInt64("LineNumber")
 		if !found {
-			return nil, fmt.Errorf("key lineNumber not found for FailureSummaries: %s", failureSummariesData)
+			return nil, fmt.Errorf("key lineNumber not found for FailureSummaries: %s", pretty.Object(failureSummariesData))
 		}
 		message, found := failureSummary.GetString("Message")
 		if !found {
-			return nil, fmt.Errorf("key Message not found for FailureSummaries: %s", failureSummariesData)
+			return nil, fmt.Errorf("key Message not found for FailureSummaries: %s", pretty.Object(failureSummariesData))
 		}
 		isPerformanceFailure, found := failureSummary.GetBool("PerformanceFailure")
 		if !found {
-			return nil, fmt.Errorf("key PerformanceFailure not found for FailureSummaries: %s", failureSummariesData)
+			return nil, fmt.Errorf("key PerformanceFailure not found for FailureSummaries: %s", pretty.Object(failureSummariesData))
 		}
 		failureSummaries[i] = FailureSummaries{
 			FileName:             fileName,
@@ -106,21 +91,63 @@ func parseFailureSummaries(failureSummariesData []plistutil.PlistData) (*[]Failu
 	return &failureSummaries, nil
 }
 
-func parseSceenshot(activitySummary plistutil.PlistData) (*ActivityScreenshot, error) {
-		// getAttachmentType := func(item map[string]interface{}) ScreenshotsType {
-	// 	value, found := item["Attachments"]
-	// 	if found {
-	// 		return ScreenshotsAsAttachments
-	// 	}
-	// 	value, found = item["HasScreenshotData"]
-	// 	if found {
-	// 		hasScreenshot, casted := value.(bool)
-	// 		if casted && hasScreenshot {
-	// 			return ScreenshotsLegacy
-	// 		}
-	// 	}
-	// 	return ScreenshotsNone
-	// }
+func parseSceenshots(activitySummary plistutil.PlistData) ([]ActivityScreenshot, error) {
+	getAttachmentType := func(item map[string]interface{}) ScreenshotsType {
+		value, found := item["Attachments"]
+		if found {
+			return ScreenshotsAsAttachments
+		}
+		value, found = item["HasScreenshotData"]
+		if found {
+			hasScreenshot, casted := value.(bool)
+			if casted && hasScreenshot {
+				return ScreenshotsLegacy
+			}
+		}
+		return ScreenshotsNone
+	}
+
+	switch getAttachmentType(activitySummary) {
+	case ScreenshotsAsAttachments:
+		{
+			attachmentsData, err := activitySummary.GetMapStringInterfaceArray("Attachments")
+			if err != nil {
+				return nil, fmt.Errorf("no key Attachments, or invalid format")
+			}
+			attachments := make([]ActivityScreenshot, len(attachmentsData))
+			for i, attachment := range attachmentsData {
+				filenName, found := attachment.GetString("Filename")
+				if !found {
+					return nil, fmt.Errorf("no key Filename found for attachment: %s", pretty.Object(attachment))
+				}
+				timeStampFloat, found := attachment.GetFloat64("Timestamp")
+				if !found {
+					return nil, fmt.Errorf("no key Timestamp found for attachment: %s", pretty.Object(attachment))
+				}
+				timeStamp, err := TimestampToTime(timeStampFloat)
+				if err != nil {
+					return nil, fmt.Errorf("can not convert timestamp: %f, error: %s", timeStampFloat, err)
+				}
+				attachments[i] = ActivityScreenshot{
+					FilePath:  filenName,
+					Timestamp: timeStamp,
+				}
+			}
+			return attachments, nil
+		}
+	case ScreenshotsLegacy:
+		{
+			return nil, errors.New("Not impl")
+		}
+	case ScreenshotsNone:
+		{
+			return nil, nil
+		}
+	default:
+		{
+			return nil, fmt.Errorf("unhandled screenshot type")
+		}
+	}
 }
 
 func parseActivites(activitySummariesData []plistutil.PlistData) ([]Activity, error) {
@@ -134,23 +161,27 @@ func parseActivites(activitySummariesData []plistutil.PlistData) ([]Activity, er
 		if !found {
 			return nil, fmt.Errorf("key UUID not found for activity")
 		}
+		var screenshots, err = parseSceenshots(activity)
+		if err != nil {
+			return nil, fmt.Errorf("Screenshot invalid format, error: %s", err)
+		}
 		var subActivities []Activity
-		if subActivitiesData, err := activity.GetMapStringInterfaceArray("SubActivities") && err != nil {
-			if subActivities, err := parseActivites(subActivitiesData) && err != nil {
+		if subActivitiesData, err := activity.GetMapStringInterfaceArray("SubActivities"); err == nil {
+			if subActivities, err = parseActivites(subActivitiesData); err != nil {
 				return nil, err
 			}
 		}
 		activities[i] = Activity{
 			Title:         title,
 			UUID:          UUID,
-			Screenhsot:    parseSceenshot(activity),
+			Screenhsots:   screenshots,
 			SubActivities: subActivities,
 		}
 	}
 	return activities, nil
 }
 
-func parseTestSummaries(testSummariesContent plistutil.PlistData) (*[]TestResult, error) {
+func parseTestSummaries(testSummariesContent plistutil.PlistData) ([]TestResult, error) {
 	testableSummaries, err := testSummariesContent.GetMapStringInterfaceArray("TestableSummaries")
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse test summaries plist, key TestableSummaries is not a string map")
@@ -163,15 +194,14 @@ func parseTestSummaries(testSummariesContent plistutil.PlistData) (*[]TestResult
 			return nil, fmt.Errorf("failed to parse test summaries plist, key Tests is not a string map")
 		}
 
-		testResults = make([]TestResult, len(tests))
 		for _, testsItem := range tests {
 			lastSubtests, err := collectLastSubtests(testsItem)
 			if err != nil {
 				return nil, err
 			}
-			log.Printf("%s", lastSubtests)
+			log.Printf("lastSubtests %s", pretty.Object(lastSubtests))
 
-			for i, test := range lastSubtests {
+			for _, test := range lastSubtests {
 				testID, found := test.GetString("TestIdentifier")
 				if !found {
 					return nil, fmt.Errorf("key TestIdentifier not found for test")
@@ -195,121 +225,25 @@ func parseTestSummaries(testSummariesContent plistutil.PlistData) (*[]TestResult
 				{
 					activitySummariesData, err := test.GetMapStringInterfaceArray("ActivitySummaries")
 					if err != nil {
-						return nil, fmt.Errorf("no activity summaries found for test")
+						log.Printf("no activity summaries found for test: %s", test)
 					}
 					activitySummaries, err = parseActivites(activitySummariesData)
 					if err != nil {
 						return nil, fmt.Errorf("failed to parse activities, error: %s", err)
 					}
 				}
-				testResults[i] = TestResult{
+				testResults = append(testResults, TestResult{
 					ID:          testID,
 					TestStatus:  testStatus,
 					FailureInfo: failureSummaries,
 					Activities:  activitySummaries,
-				}
+				})
 			}
 		}
 	}
-
-	return nil, nil
+	return testResults, nil
 }
 
-/*
-// NewTestSummaries returns a TestSummaries from the provided *_TestSummaries.plist's path.
-// It will search for test items with screenhot and it will set the type of the TestSummaries (TestSummariesWithScreenshotData/TestSummariesWithAttachemnts) depending on that the plist has `HasScreenshotData` fields or `Attachments` fileds.
-func NewTestSummaries(testSummariesPth string) (*TestSummaries, error) {
-	var testSummaries TestSummaries
-	var err error
-
-	testSummaries.Content, err = fileutil.ReadStringFromFile(testSummariesPth)
-	if err != nil {
-		return nil, err
-	}
-
-	testSummaries, err = testSummaries.collectTestItemsWithScreenshotAndSetType()
-	if err != nil {
-		return nil, err
-	}
-
-	return &testSummaries, nil
-}
-
-func (t TestSummaries) collectTestItemsWithScreenshotAndSetType() (TestSummaries, error) {
-	testSummaryType := ScreenshotsLegacy
-
-	testSummariesPlistData, err := plistutil.NewPlistDataFromContent(t.Content)
-	if err != nil {
-		return t, err
-	}
-
-	testableSummaries, err := testSummariesPlistData.GetMapStringInterfaceArray("TestableSummaries")
-	if err != nil {
-		return t, err
-	}
-
-	subActivitiesWithScreenshot := []map[string]interface{}{}
-	for _, testableSummariesItem := range testableSummaries {
-		tests, err := getValueAsMapStringInterfaceArray(testableSummariesItem, "Tests")
-		if err != nil {
-			return t, err
-		}
-
-		for _, testsItem := range tests {
-			lastSubtests, err := collectLastSubtests(testsItem)
-			if err != nil {
-				return t, err
-			}
-
-			for _, lastSubtest := range lastSubtests {
-				activitySummaries, err := getValueAsMapStringInterfaceArray(lastSubtest, "ActivitySummaries")
-				if err != nil {
-					continue
-				}
-
-				var subActivities []map[string]interface{}
-				subActivities, testSummaryType, err = collectSubActivitiesWithScreenshots(activitySummaries)
-				if err != nil {
-					return t, err
-				}
-				subActivitiesWithScreenshot = append(subActivitiesWithScreenshot, subActivities...)
-			}
-		}
-	}
-
-	t.TestItemsWithScreenshots = subActivitiesWithScreenshot
-	t.Type = testSummaryType
-	return t, nil
-}
-
-func castToMapStringInterfaceArray(obj interface{}) ([]map[string]interface{}, error) {
-	array, ok := obj.([]interface{})
-	if !ok {
-		return nil, errors.New("failed to cast to []interface{}")
-	}
-
-	casted := []map[string]interface{}{}
-	for _, item := range array {
-		mapStringInterface, ok := item.(map[string]interface{})
-		if !ok {
-			return nil, errors.New("failed to cast to map[string]interface{}")
-		}
-
-		casted = append(casted, mapStringInterface)
-	}
-
-	return casted, nil
-}
-
-func getValueAsMapStringInterfaceArray(obj map[string]interface{}, key string) ([]map[string]interface{}, error) {
-	value, found := obj[key]
-	if !found {
-		return nil, fmt.Errorf("no value found for: %s", key)
-	}
-
-	return castToMapStringInterfaceArray(value)
-}
-*/
 func collectLastSubtests(testsItem plistutil.PlistData) ([]plistutil.PlistData, error) {
 	var walk func(plistutil.PlistData) []plistutil.PlistData
 	walk = func(item plistutil.PlistData) []plistutil.PlistData {
@@ -327,62 +261,6 @@ func collectLastSubtests(testsItem plistutil.PlistData) ([]plistutil.PlistData, 
 
 	return walk(testsItem), nil
 }
-
-/*
-func collectSubActivitiesWithScreenshots(activitySummaries []map[string]interface{}) ([]map[string]interface{}, ScreenshotsType, error) {
-	testSummaryType := ScreenshotsAsAttachments
-
-	var walk func(map[string]interface{}, *ScreenshotsType) []map[string]interface{}
-	walk = func(item map[string]interface{}, summaryType *ScreenshotsType) []map[string]interface{} {
-		itemWithScreenshot := []map[string]interface{}{}
-
-		getAttachmentType := func(item map[string]interface{}) ScreenshotsType {
-			value, found := item["Attachments"]
-			if found {
-				return ScreenshotsAsAttachments
-			}
-			value, found = item["HasScreenshotData"]
-			if found {
-				hasScreenshot, casted := value.(bool)
-				if casted && hasScreenshot {
-					return ScreenshotsLegacy
-				}
-			}
-			return ScreenshotsNone
-		}
-
-		switch getAttachmentType(item) {
-		case ScreenshotsAsAttachments: // New *_TestSummaries.plist
-			{
-				itemWithScreenshot = append(itemWithScreenshot, item)
-			}
-		case ScreenshotsLegacy: // Old *_TestSummaries.plist
-			{
-				testSummaryType = ScreenshotsLegacy
-				itemWithScreenshot = append(itemWithScreenshot, item)
-			}
-		case ScreenshotsNone:
-		}
-
-		subActivies, err := getValueAsMapStringInterfaceArray(item, "SubActivities")
-		if err == nil {
-			for _, subActivity := range subActivies {
-				subActivityWithScreenshots := walk(subActivity, &testSummaryType)
-				itemWithScreenshot = append(itemWithScreenshot, subActivityWithScreenshots...)
-			}
-		}
-
-		return itemWithScreenshot
-	}
-
-	summaries := []map[string]interface{}{}
-	for _, summary := range activitySummaries {
-		summaries = append(summaries, walk(summary, &testSummaryType)...)
-	}
-
-	return summaries, testSummaryType, nil
-}
-*/
 
 // TimestampStrToTime ...
 func TimestampStrToTime(timestampStr string) (time.Time, error) {

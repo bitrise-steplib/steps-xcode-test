@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/bitrise-io/steps-xcode-test/pretty"
 	"github.com/bitrise-tools/go-xcode/plistutil"
 	"github.com/stretchr/testify/require"
 )
@@ -76,6 +77,7 @@ func Test_parseTestSummaries(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := parseTestSummaries(tt.args.testSummariesContent)
+			t.Logf(pretty.Object(got))
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseTestSummaries() error = %v, wantErr %v", err, tt.wantErr)
 				return
