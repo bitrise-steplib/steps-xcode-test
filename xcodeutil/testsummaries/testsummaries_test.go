@@ -1,4 +1,4 @@
-package testresults
+package testsummaries
 
 import (
 	"reflect"
@@ -84,6 +84,32 @@ func Test_parseTestSummaries(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("parseTestSummaries() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_parseFailureSummaries(t *testing.T) {
+	type args struct {
+		failureSummariesData []plistutil.PlistData
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *[]FailureSummaries
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseFailureSummaries(tt.args.failureSummariesData)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseFailureSummaries() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("parseFailureSummaries() = %v, want %v", got, tt.want)
 			}
 		})
 	}

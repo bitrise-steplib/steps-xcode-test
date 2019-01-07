@@ -218,11 +218,14 @@ func castToMapStringInterfaceArray(obj interface{}) ([]PlistData, error) {
 }
 
 // GetMapStringInterfaceArray ...
-func (data PlistData) GetMapStringInterfaceArray(forKey string) ([]PlistData, error) {
+func (data PlistData) GetMapStringInterfaceArray(forKey string) ([]PlistData, bool) {
 	value, ok := data[forKey]
 	if !ok {
-		return nil, errors.New("key not found")
+		return nil, false
 	}
-
-	return castToMapStringInterfaceArray(value)
+	mapStringInterfaceArray, err := castToMapStringInterfaceArray(value)
+	if err != nil {
+		return nil, false
+	}
+	return mapStringInterfaceArray, true
 }
