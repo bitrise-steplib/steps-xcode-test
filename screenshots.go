@@ -29,50 +29,51 @@ func UpdateScreenshotNames(testSummariesPath string, attachementDir string) (boo
 	}
 	log.Debugf("Test results: %s", pretty.Object(testResults))
 
+	return commitRename(createRenamePlan(testResults, attachementDir)), nil
+}
+
+func createRenamePlan(testResults []testsummaries.TestResult, attachmentDir string) map[string]string {
 	renameMap := make(map[string]string)
 	for _, testResult := range testResults {
-		var filterScreenshotsFromActivityTree func(activities []testsummaries.Activity) []testsummaries.Activity
-		filterScreenshotsFromActivityTree = func(activities []testsummaries.Activity) []testsummaries.Activity {
-			activitiesWithScreensots := make([]testsummaries.Activity, 0)
-			for _, activity := range activities {
-				if len(activity.Screenshots) > 0 {
-					activitiesWithScreensots = append(activitiesWithScreensots, activity)
-				}
-				activitiesWithScreensots = append(activitiesWithScreensots,
-					filterScreenshotsFromActivityTree(activity.SubActivities)...)
-			}
-			return activitiesWithScreensots
-		}
-		activitiesWithScreensots := filterScreenshotsFromActivityTree(testResult.Activities)
+		activitiesWithScreensots := filterActivitiesWithScreenshotsFromTree(testResult.Activities)
 
-		var mapScreenshotsToTargetFileName = func(activities []testsummaries.Activity) map[string]string {
-			renameMap := make(map[string]string)
-			for _, activity := range activities {
-				for _, screenshot := range activity.Screenshots {
-					toFileName := fmt.Sprintf("%s_%s_%s_%s%s", replaceUnsupportedFilenameCharacters(testResult.ID),
-						screenshot.Timestamp.Format(targetScreenshotTimeFormat),
-						replaceUnsupportedFilenameCharacters(activity.Title),
-						activity.UUID,
-						filepath.Ext(screenshot.FilePath))
-					fromFileName := filepath.Join(attachementDir, screenshot.FilePath)
-					if testResult.TestStatus != "Success" {
-						renameMap[fromFileName] = filepath.Join(attachementDir, "Failures", toFileName)
-					} else {
-						renameMap[fromFileName] = filepath.Join(attachementDir, toFileName)
-					}
+		testRenames := make(map[string]string)
+		for _, activity := range activitiesWithScreensots {
+			for _, screenshot := range activity.Screenshots {
+				toFileName := fmt.Sprintf("%s_%s_%s_%s%s", replaceUnsupportedFilenameCharacters(testResult.ID),
+					screenshot.TimeCreated.Format(targetScreenshotTimeFormat),
+					replaceUnsupportedFilenameCharacters(activity.Title),
+					activity.UUID,
+					filepath.Ext(screenshot.FileName))
+				fromFileName := filepath.Join(attachmentDir, screenshot.FileName)
+				if testResult.TestStatus != "Success" {
+					renameMap[fromFileName] = filepath.Join(attachmentDir, "Failures", toFileName)
+				} else {
+					renameMap[fromFileName] = filepath.Join(attachmentDir, toFileName)
 				}
 			}
-			return renameMap
 		}
-		testRenameMap := mapScreenshotsToTargetFileName(activitiesWithScreensots)
-		for k, v := range testRenameMap {
+
+		for k, v := range testRenames {
 			renameMap[k] = v
 		}
 	}
-	return commitRename(renameMap), nil
+	return renameMap
 }
 
-// Replaces characters '/' and ':', which are unsupported in filnenames on MacOS
+func filterActivitiesWithScreenshotsFromTree(activities []testsummaries.Activity) []testsummaries.Activity {
+	var activitiesWithScreensots []testsummaries.Activity
+	for _, activity := range activities {
+		if len(activity.Screenshots) > 0 {
+			activitiesWithScreensots = append(activitiesWithScreensots, activity)
+		}
+		activitiesWithScreensots = append(activitiesWithScreensots,
+			filterActivitiesWithScreenshotsFromTree(activity.SubActivities)...)
+	}
+	return activitiesWithScreensots
+}
+
+// Replaces characters '/' and ':', which are unsupported in filnenames on macOS
 func replaceUnsupportedFilenameCharacters(s string) string {
 	s = strings.Replace(s, "/", "-", -1)
 	s = strings.Replace(s, ":", "-", -1)

@@ -399,7 +399,7 @@ func saveAttachments(scheme, testSummariesPath, attachementDir string) error {
 	return nil
 }
 
-func getAttachmentDir(testOutputDir string) (testSummariesPath string, attachmentDir string, err error) {
+func getSummariesAndAttachmentPath(testOutputDir string) (testSummariesPath string, attachmentDir string, err error) {
 	const testSummaryFileName = "TestSummaries.plist"
 	if exist, err := pathutil.IsDirExists(testOutputDir); err != nil {
 		return "", "", err
@@ -593,7 +593,7 @@ func main() {
 		fmt.Println()
 		log.Infof("Exporting attachments")
 
-		testSummariesPath, attachementDir, err := getAttachmentDir(buildTestParams.TestOutputDir)
+		testSummariesPath, attachementDir, err := getSummariesAndAttachmentPath(buildTestParams.TestOutputDir)
 		if err != nil {
 			log.Warnf("Failed to export UI test artifacts, error %s", err)
 		}

@@ -102,7 +102,7 @@ func Test_parseFailureSummaries(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    []FailureSummaries
+		want    []FailureSummary
 		wantErr bool
 	}{
 		{
@@ -113,7 +113,7 @@ func Test_parseFailureSummaries(t *testing.T) {
 				"Message":            "((NO) is true) failed",
 				"PerformanceFailure": false,
 			}}},
-			want: []FailureSummaries{{
+			want: []FailureSummary{{
 				FileName:             "/tmp/ios_simple_objcUITests.m",
 				LineNumber:           64,
 				Message:              "((NO) is true) failed",
@@ -330,7 +330,7 @@ func Test_parseSceenshots(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    []ActivityScreenshot
+		want    []Screenshot
 		wantErr bool
 	}{
 		{
@@ -351,9 +351,9 @@ func Test_parseSceenshots(t *testing.T) {
 				activityUUID:      "C02EF626-0892-4B50-9B98-70D6F2C3EFE5",
 				activityStartTime: time.Time{},
 			},
-			want: []ActivityScreenshot{{
-				FilePath:  fileName,
-				Timestamp: TimestampToTime(attachmentTimeStampFloat),
+			want: []Screenshot{{
+				FileName:    fileName,
+				TimeCreated: TimestampToTime(attachmentTimeStampFloat),
 			}},
 			wantErr: false,
 		},
@@ -369,14 +369,14 @@ func Test_parseSceenshots(t *testing.T) {
 				activityUUID:      activityUUIDinLegacyScreenshotName,
 				activityStartTime: activityStartTimeForLegacyScreenshot,
 			},
-			want: []ActivityScreenshot{
+			want: []Screenshot{
 				{
-					FilePath:  fmt.Sprintf("Screenshot_%s.%s", activityUUIDinLegacyScreenshotName, "png"),
-					Timestamp: activityStartTimeForLegacyScreenshot,
+					FileName:    fmt.Sprintf("Screenshot_%s.%s", activityUUIDinLegacyScreenshotName, "png"),
+					TimeCreated: activityStartTimeForLegacyScreenshot,
 				},
 				{
-					FilePath:  fmt.Sprintf("Screenshot_%s.%s", activityUUIDinLegacyScreenshotName, "jpg"),
-					Timestamp: activityStartTimeForLegacyScreenshot,
+					FileName:    fmt.Sprintf("Screenshot_%s.%s", activityUUIDinLegacyScreenshotName, "jpg"),
+					TimeCreated: activityStartTimeForLegacyScreenshot,
 				}},
 			wantErr: false,
 		},

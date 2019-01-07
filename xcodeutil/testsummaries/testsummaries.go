@@ -20,25 +20,25 @@ const (
 	ScreenshotsNone          ScreenshotsType = "ScreenshotsNone"
 )
 
-// FailureSummaries describes a failed test
-type FailureSummaries struct {
+// FailureSummary describes a failed test
+type FailureSummary struct {
 	FileName             string
 	LineNumber           uint64
 	Message              string
 	IsPerformanceFailure bool
 }
 
-// ActivityScreenshot describes a screenshot attached to a Activity
-type ActivityScreenshot struct {
-	FilePath  string
-	Timestamp time.Time
+// Screenshot describes a screenshot attached to a Activity
+type Screenshot struct {
+	FileName    string
+	TimeCreated time.Time
 }
 
 // Activity describes a single xcode UI test activity
 type Activity struct {
 	Title         string
 	UUID          string
-	Screenshots   []ActivityScreenshot
+	Screenshots   []Screenshot
 	SubActivities []Activity
 }
 
@@ -46,7 +46,7 @@ type Activity struct {
 type TestResult struct {
 	ID          string
 	TestStatus  string
-	FailureInfo []FailureSummaries
+	FailureInfo []FailureSummary
 	Activities  []Activity
 }
 
@@ -89,7 +89,7 @@ func parseTestSummaries(testSummariesContent plistutil.PlistData) ([]TestResult,
 				if !found {
 					return nil, fmt.Errorf("key TestStatus not found for test")
 				}
-				var failureSummaries []FailureSummaries
+				var failureSummaries []FailureSummary
 				if testStatus == "Failure" {
 					failureSummariesData, found := test.GetMapStringInterfaceArray("FailureSummaries")
 					if !found {
@@ -141,8 +141,8 @@ func collectLastSubtests(testsItem plistutil.PlistData) ([]plistutil.PlistData, 
 	return walk(testsItem), nil
 }
 
-func parseFailureSummaries(failureSummariesData []plistutil.PlistData) ([]FailureSummaries, error) {
-	var failureSummaries = make([]FailureSummaries, len(failureSummariesData))
+func parseFailureSummaries(failureSummariesData []plistutil.PlistData) ([]FailureSummary, error) {
+	var failureSummaries = make([]FailureSummary, len(failureSummariesData))
 	for i, failureSummary := range failureSummariesData {
 		fileName, found := failureSummary.GetString("FileName")
 		if !found {
@@ -160,7 +160,7 @@ func parseFailureSummaries(failureSummariesData []plistutil.PlistData) ([]Failur
 		if !found {
 			return nil, fmt.Errorf("key PerformanceFailure not found for FailureSummaries: %s", pretty.Object(failureSummariesData))
 		}
-		failureSummaries[i] = FailureSummaries{
+		failureSummaries[i] = FailureSummary{
 			FileName:             fileName,
 			LineNumber:           lineNumber,
 			Message:              message,
@@ -208,7 +208,7 @@ func parseActivites(activitySummariesData []plistutil.PlistData) ([]Activity, er
 	return activities, nil
 }
 
-func parseSceenshots(activitySummary plistutil.PlistData, activityUUID string, activityStartTime time.Time) ([]ActivityScreenshot, error) {
+func parseSceenshots(activitySummary plistutil.PlistData, activityUUID string, activityStartTime time.Time) ([]Screenshot, error) {
 	getAttachmentType := func(item map[string]interface{}) ScreenshotsType {
 		value, found := item["Attachments"]
 		if found {
@@ -231,7 +231,7 @@ func parseSceenshots(activitySummary plistutil.PlistData, activityUUID string, a
 			if !found {
 				return nil, fmt.Errorf("no key Attachments, or invalid format")
 			}
-			attachments := make([]ActivityScreenshot, len(attachmentsData))
+			attachments := make([]Screenshot, len(attachmentsData))
 			for i, attachment := range attachmentsData {
 				filenName, found := attachment.GetString("Filename")
 				if !found {
@@ -242,21 +242,21 @@ func parseSceenshots(activitySummary plistutil.PlistData, activityUUID string, a
 					return nil, fmt.Errorf("no key Timestamp found for attachment: %s", pretty.Object(attachment))
 				}
 				timeStamp := TimestampToTime(timeStampFloat)
-				attachments[i] = ActivityScreenshot{
-					FilePath:  filenName,
-					Timestamp: timeStamp,
+				attachments[i] = Screenshot{
+					FileName:    filenName,
+					TimeCreated: timeStamp,
 				}
 			}
 			return attachments, nil
 		}
 	case ScreenshotsLegacy:
 		{
-			attachments := make([]ActivityScreenshot, 2)
+			attachments := make([]Screenshot, 2)
 			for i, ext := range []string{"png", "jpg"} {
 				fileName := fmt.Sprintf("Screenshot_%s.%s", activityUUID, ext)
-				attachments[i] = ActivityScreenshot{
-					FilePath:  fileName,
-					Timestamp: activityStartTime,
+				attachments[i] = Screenshot{
+					FileName:    fileName,
+					TimeCreated: activityStartTime,
 				}
 			}
 			return attachments, nil
