@@ -6,7 +6,6 @@ import (
 
 	"github.com/bitrise-io/steps-xcode-test/pretty"
 	"github.com/bitrise-tools/go-xcode/plistutil"
-	"github.com/stretchr/testify/require"
 )
 
 /*
@@ -39,14 +38,28 @@ func TestWalkXcodeTestSummaries(t *testing.T) {
 
 func TestTimestampToTime(t *testing.T) {
 	time, err := TimestampStrToTime("522675441.31045401")
-	require.NoError(t, err)
-
-	require.Equal(t, 2017, time.Year())
-	require.Equal(t, 7, int(time.Month()))
-	require.Equal(t, 25, time.Day())
-	require.Equal(t, 11, time.Hour())
-	require.Equal(t, 37, time.Minute())
-	require.Equal(t, 21, time.Second())
+	if err != nil {
+		t.Errorf("TimestampStrToTime() want: %v, got: %v", err, nil)
+	}
+	want := []int{
+		2017,
+		7,
+		25,
+		11,
+		37,
+		21,
+	}
+	got := []int{
+		time.Year(),
+		int(time.Month()),
+		time.Day(),
+		time.Hour(),
+		time.Minute(),
+		time.Second(),
+	}
+	if !reflect.DeepEqual(want, got) {
+		t.Errorf("TimestampStrToTime() want: %v, got: %v", want, got)
+	}
 }
 
 func Test_parseTestSummaries(t *testing.T) {
@@ -99,7 +112,9 @@ func Test_parseFailureSummaries(t *testing.T) {
 		want    *[]FailureSummaries
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
