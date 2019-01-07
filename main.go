@@ -96,8 +96,6 @@ type Configs struct {
 	HeadlessMode bool `env:"headless_mode,opt[yes,no]"`
 }
 
-const testSummaryFileName = "TestSummaries.plist"
-
 func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
 	r, err := regexp.Compile("(?i)" + searchStr)
 	if err != nil {
@@ -369,14 +367,14 @@ func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) (stri
 	return logPth, nil
 }
 
-func saveAttachments(scheme, testDir, attachementDir string) error {
+func saveAttachments(scheme, testSummariesPath, attachementDir string) error {
 	if exist, err := pathutil.IsDirExists(attachementDir); err != nil {
 		return err
 	} else if !exist {
 		return fmt.Errorf("no test attachments found at: %s", attachementDir)
 	}
 
-	if found, err := UpdateScreenshotNames(testDir, attachementDir); err != nil {
+	if found, err := UpdateScreenshotNames(testSummariesPath, attachementDir); err != nil {
 		log.Warnf("Failed to update screenshot names, error: %s", err)
 	} else if !found {
 		return nil
@@ -389,7 +387,7 @@ func saveAttachments(scheme, testDir, attachementDir string) error {
 	}
 
 	zipedTestsDerivedDataPath := filepath.Join(deployDir, fmt.Sprintf("%s-xc-test-Attachments.zip", scheme))
-	if err := cmd.Zip(testDir, "Attachments", zipedTestsDerivedDataPath); err != nil {
+	if err := cmd.Zip(filepath.Dir(attachementDir), filepath.Base(attachementDir), zipedTestsDerivedDataPath); err != nil {
 		return err
 	}
 
@@ -401,32 +399,34 @@ func saveAttachments(scheme, testDir, attachementDir string) error {
 	return nil
 }
 
-func getAttachmentDir(testOutputDir string) (string, error) {
+func getAttachmentDir(testOutputDir string) (testSummariesPath string, attachmentDir string, err error) {
+	const testSummaryFileName = "TestSummaries.plist"
 	if exist, err := pathutil.IsDirExists(testOutputDir); err != nil {
-		return "", err
+		return "", "", err
 	} else if !exist {
-		return "", fmt.Errorf("no test logs found at: %s", testOutputDir)
+		return "", "", fmt.Errorf("no test logs found at: %s", testOutputDir)
 	}
 
-	if exist, err := pathutil.IsPathExists(path.Join(testOutputDir, testSummaryFileName)); err != nil {
-		return "", err
+	testSummariesPath = path.Join(testOutputDir, testSummaryFileName)
+	if exist, err := pathutil.IsPathExists(testSummariesPath); err != nil {
+		return "", "", err
 	} else if !exist {
-		return "", fmt.Errorf("no %s found at: %s", testSummaryFileName, testOutputDir)
+		return "", "", fmt.Errorf("no test summaries found at: %s", testSummariesPath)
 	}
 
 	var attachementDir string
 	{
 		attachementDir = filepath.Join(testOutputDir, "Attachments")
 		if exist, err := pathutil.IsDirExists(attachementDir); err != nil {
-			return "", err
+			return "", "", err
 		} else if !exist {
-			return "", fmt.Errorf("no test attachments found at: %s", attachementDir)
+			return "", "", fmt.Errorf("no test attachments found at: %s", attachementDir)
 		}
 	}
 
-	log.Debugf("Test output dir: %s", testOutputDir)
+	log.Debugf("Test summaries path: %s", testSummariesPath)
 	log.Debugf("Attachment dir: %s", attachementDir)
-	return attachementDir, nil
+	return testSummariesPath, attachementDir, nil
 }
 
 func fail(format string, v ...interface{}) {
@@ -593,12 +593,12 @@ func main() {
 		fmt.Println()
 		log.Infof("Exporting attachments")
 
-		attachementDir, err := getAttachmentDir(buildTestParams.TestOutputDir)
+		testSummariesPath, attachementDir, err := getAttachmentDir(buildTestParams.TestOutputDir)
 		if err != nil {
 			log.Warnf("Failed to export UI test artifacts, error %s", err)
 		}
 
-		if err := saveAttachments(configs.Scheme, buildTestParams.TestOutputDir, attachementDir); err != nil {
+		if err := saveAttachments(configs.Scheme, testSummariesPath, attachementDir); err != nil {
 			log.Warnf("Failed to export UI test artifacts, error %s", err)
 		}
 	}

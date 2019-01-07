@@ -17,8 +17,7 @@ const targetScreenshotTimeFormat = "2006-01-02_03-04-05"
 // UpdateScreenshotNames ...
 // Screenshot_uuid.png -> TestID_start_date_time_title_uuid.png
 // Screenshot_uuid.jpg -> TestID_start_date_time_title_uuid.jpg
-func UpdateScreenshotNames(testLogsDir string, attachementDir string) (bool, error) {
-	testSummariesPath := filepath.Join(testLogsDir, testSummaryFileName)
+func UpdateScreenshotNames(testSummariesPath string, attachementDir string) (bool, error) {
 	if exist, err := pathutil.IsPathExists(testSummariesPath); err != nil {
 		return false, fmt.Errorf("Failed to check if file exists: %s", testSummariesPath)
 	} else if !exist {
