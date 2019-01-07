@@ -38,7 +38,7 @@ type ActivityScreenshot struct {
 type Activity struct {
 	Title         string
 	UUID          string
-	Screenhsots   []ActivityScreenshot
+	Screenshots   []ActivityScreenshot
 	SubActivities []Activity
 }
 
@@ -46,7 +46,7 @@ type Activity struct {
 type TestResult struct {
 	ID          string
 	TestStatus  string
-	FailureInfo *[]FailureSummaries
+	FailureInfo []FailureSummaries
 	Activities  []Activity
 }
 
@@ -89,7 +89,7 @@ func parseTestSummaries(testSummariesContent plistutil.PlistData) ([]TestResult,
 				if !found {
 					return nil, fmt.Errorf("key TestStatus not found for test")
 				}
-				var failureSummaries *[]FailureSummaries
+				var failureSummaries []FailureSummaries
 				if testStatus == "Failure" {
 					failureSummariesData, found := test.GetMapStringInterfaceArray("FailureSummaries")
 					if !found {
@@ -141,10 +141,9 @@ func collectLastSubtests(testsItem plistutil.PlistData) ([]plistutil.PlistData, 
 	return walk(testsItem), nil
 }
 
-func parseFailureSummaries(failureSummariesData []plistutil.PlistData) (*[]FailureSummaries, error) {
+func parseFailureSummaries(failureSummariesData []plistutil.PlistData) ([]FailureSummaries, error) {
 	var failureSummaries = make([]FailureSummaries, len(failureSummariesData))
 	for i, failureSummary := range failureSummariesData {
-
 		fileName, found := failureSummary.GetString("FileName")
 		if !found {
 			return nil, fmt.Errorf("key FileName not found for FailureSummaries: %s", pretty.Object(failureSummariesData))
@@ -168,7 +167,7 @@ func parseFailureSummaries(failureSummariesData []plistutil.PlistData) (*[]Failu
 			IsPerformanceFailure: isPerformanceFailure,
 		}
 	}
-	return &failureSummaries, nil
+	return failureSummaries, nil
 }
 
 func parseActivites(activitySummariesData []plistutil.PlistData) ([]Activity, error) {
@@ -176,34 +175,33 @@ func parseActivites(activitySummariesData []plistutil.PlistData) ([]Activity, er
 	for i, activity := range activitySummariesData {
 		title, found := activity.GetString("Title")
 		if !found {
-			return nil, fmt.Errorf("key Title not found for activity: %s", activity)
+			return nil, fmt.Errorf("key Title not found for activity: %s", pretty.Object(activity))
 		}
 		UUID, found := activity.GetString("UUID")
 		if !found {
-			return nil, fmt.Errorf("key UUID not found for activity: %s", activity)
+			return nil, fmt.Errorf("key UUID not found for activity: %s", pretty.Object(activity))
 		}
 		timeStampFloat, found := activity.GetFloat64("StartTimeInterval")
 		if !found {
-			return nil, fmt.Errorf("key StartTimeInterval not found for activity: %s", activity)
+			return nil, fmt.Errorf("key StartTimeInterval not found for activity: %s", pretty.Object(activity))
 		}
-		timeStamp, err := TimestampToTime(timeStampFloat)
-		if err != nil {
-			return nil, fmt.Errorf("can not convert timestamp: %f, error: %s", timeStampFloat, err)
-		}
+		timeStamp := TimestampToTime(timeStampFloat)
 		screenshots, err := parseSceenshots(activity, UUID, timeStamp)
 		if err != nil {
 			return nil, fmt.Errorf("Screenshot invalid format, error: %s", err)
 		}
 		var subActivities []Activity
-		if subActivitiesData, found := activity.GetMapStringInterfaceArray("SubActivities"); !found {
+		if subActivitiesData, found := activity.GetMapStringInterfaceArray("SubActivities"); found {
 			if subActivities, err = parseActivites(subActivitiesData); err != nil {
 				return nil, err
 			}
+		} else {
+			log.Printf("No subactivities found for activity: %s", pretty.Object(activity))
 		}
 		activities[i] = Activity{
 			Title:         title,
 			UUID:          UUID,
-			Screenhsots:   screenshots,
+			Screenshots:   screenshots,
 			SubActivities: subActivities,
 		}
 	}
@@ -243,10 +241,7 @@ func parseSceenshots(activitySummary plistutil.PlistData, activityUUID string, a
 				if !found {
 					return nil, fmt.Errorf("no key Timestamp found for attachment: %s", pretty.Object(attachment))
 				}
-				timeStamp, err := TimestampToTime(timeStampFloat)
-				if err != nil {
-					return nil, fmt.Errorf("can not convert timestamp: %f, error: %s", timeStampFloat, err)
-				}
+				timeStamp := TimestampToTime(timeStampFloat)
 				attachments[i] = ActivityScreenshot{
 					FilePath:  filenName,
 					Timestamp: timeStamp,
@@ -284,12 +279,12 @@ func TimestampStrToTime(timestampStr string) (time.Time, error) {
 		return time.Time{}, err
 	}
 
-	return TimestampToTime(timestamp)
+	return TimestampToTime(timestamp), nil
 }
 
 // TimestampToTime ...
-func TimestampToTime(timestamp float64) (time.Time, error) {
+func TimestampToTime(timestamp float64) time.Time {
 	timestampInNanosec := int64(timestamp * float64(time.Second))
 	referenceDate := time.Date(2001, 1, 1, 0, 0, 0, 0, time.UTC)
-	return referenceDate.Add(time.Duration(timestampInNanosec)), nil
+	return referenceDate.Add(time.Duration(timestampInNanosec))
 }

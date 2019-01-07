@@ -36,7 +36,7 @@ func UpdateScreenshotNames(testLogsDir string, attachementDir string) (bool, err
 		filterScreenshotsFromActivityTree = func(activities []testsummaries.Activity) []testsummaries.Activity {
 			activitiesWithScreensots := make([]testsummaries.Activity, 0)
 			for _, activity := range activities {
-				if len(activity.Screenhsots) > 0 {
+				if len(activity.Screenshots) > 0 {
 					activitiesWithScreensots = append(activitiesWithScreensots, activity)
 				}
 				activitiesWithScreensots = append(activitiesWithScreensots,
@@ -49,7 +49,7 @@ func UpdateScreenshotNames(testLogsDir string, attachementDir string) (bool, err
 		var mapScreenshotsToTargetFileName = func(activities []testsummaries.Activity) map[string]string {
 			renameMap := make(map[string]string)
 			for _, activity := range activities {
-				for _, screenshot := range activity.Screenhsots {
+				for _, screenshot := range activity.Screenshots {
 					toFileName := fmt.Sprintf("%s_%s_%s_%s%s", replaceUnsupportedFilenameCharacters(testResult.ID),
 						screenshot.Timestamp.Format(targetScreenshotTimeFormat),
 						replaceUnsupportedFilenameCharacters(activity.Title),
