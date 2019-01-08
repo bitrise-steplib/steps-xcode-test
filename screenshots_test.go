@@ -41,7 +41,7 @@ func Test_createRenamePlan(t *testing.T) {
 			args: args{
 				testResults: []testsummaries.TestResult{{
 					ID:          testID,
-					TestStatus:  "Success",
+					Status:      "Success",
 					FailureInfo: nil,
 					Activities: []testsummaries.Activity{{
 						Title: activityTitle,
@@ -63,7 +63,7 @@ func Test_createRenamePlan(t *testing.T) {
 			args: args{
 				testResults: []testsummaries.TestResult{{
 					ID:          testID,
-					TestStatus:  "Failure",
+					Status:      "Failure",
 					FailureInfo: nil,
 					Activities: []testsummaries.Activity{{
 						Title: activityTitle,
@@ -85,7 +85,7 @@ func Test_createRenamePlan(t *testing.T) {
 			args: args{
 				testResults: []testsummaries.TestResult{{
 					ID:          testID,
-					TestStatus:  "Success",
+					Status:      "Success",
 					FailureInfo: nil,
 					Activities: []testsummaries.Activity{{
 						Title:       "Launch",

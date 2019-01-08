@@ -45,7 +45,7 @@ type Activity struct {
 // TestResult describes a single UI test's output
 type TestResult struct {
 	ID          string
-	TestStatus  string
+	Status      string
 	FailureInfo []FailureSummary
 	Activities  []Activity
 }
@@ -113,7 +113,7 @@ func parseTestSummaries(testSummariesContent plistutil.PlistData) ([]TestResult,
 				}
 				testResults = append(testResults, TestResult{
 					ID:          testID,
-					TestStatus:  testStatus,
+					Status:      testStatus,
 					FailureInfo: failureSummaries,
 					Activities:  activitySummaries,
 				})

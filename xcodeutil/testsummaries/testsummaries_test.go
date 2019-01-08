@@ -72,7 +72,7 @@ func Test_parseTestSummaries(t *testing.T) {
 			want: []TestResult{
 				{
 					ID:          testID,
-					TestStatus:  testStatus,
+					Status:      testStatus,
 					FailureInfo: nil,
 					Activities:  make([]Activity, 0),
 				},

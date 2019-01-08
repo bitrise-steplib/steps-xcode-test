@@ -46,7 +46,7 @@ func createRenamePlan(testResults []testsummaries.TestResult, attachmentDir stri
 					activity.UUID,
 					filepath.Ext(screenshot.FileName))
 				fromFileName := filepath.Join(attachmentDir, screenshot.FileName)
-				if testResult.TestStatus != "Success" {
+				if testResult.Status != "Success" {
 					renameMap[fromFileName] = filepath.Join(attachmentDir, "Failures", toFileName)
 				} else {
 					renameMap[fromFileName] = filepath.Join(attachmentDir, toFileName)
