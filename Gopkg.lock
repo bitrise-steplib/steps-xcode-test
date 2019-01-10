@@ -3,7 +3,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:97fd4c6fa762de1ba30a1d341f5511cad56ca1487ca8b286bcdaf04a0358d12b"
+  digest = "1:6083fc4e90fe661aad326c42fa16fb85774cb55711560d1208c82ff290534836"
   name = "github.com/bitrise-io/go-utils"
   packages = [
     "colorstring",
@@ -19,7 +19,7 @@
     "stringutil",
   ]
   pruneopts = ""
-  revision = "f1da7139131b85ab2a4bd4ffacbdc889a40018a1"
+  revision = "2a09aab8380d7842750328aebd5671bcccea89c8"
 
 [[projects]]
   branch = "master"
@@ -31,7 +31,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:165bebf2fc00916648e90c424a19105b0d3afc72ead558e7ae7a56edcde7524c"
+  digest = "1:3dece49a95897b517c2e7fd103a32e5126fb548b635aa91745d31be3a3a96586"
   name = "github.com/bitrise-tools/go-xcode"
   packages = [
     "models",
@@ -41,77 +41,50 @@
     "xcpretty",
   ]
   pruneopts = ""
-  revision = "07db8cf760f5213241e12c0595158aedce96669a"
-
-[[projects]]
-  digest = "1:56c130d885a4aacae1dd9c7b71cfe39912c7ebc1ff7d2b46083c8812996dc43b"
-  name = "github.com/davecgh/go-spew"
-  packages = ["spew"]
-  pruneopts = ""
-  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
-  version = "v1.1.0"
+  revision = "b278b67ed298829932d08fbe05e7590bca753bdf"
 
 [[projects]]
   branch = "master"
-  digest = "1:98b38236d3f349e1376d786c1c3d097ab81f93f6850857a95c8ef9ca361f28d6"
+  digest = "1:8c7fb7f81c06add10a17362abc1ae569ff9765a26c061c6b6e67c909f4f414db"
   name = "github.com/hashicorp/go-version"
   packages = ["."]
   pruneopts = ""
-  revision = "4fe82ae3040f80a03d04d2cccb5606a626b8e1ee"
+  revision = "b5a281d3160aa11950a6182bd9a9dc2cb1e02d50"
 
 [[projects]]
   branch = "master"
-  digest = "1:60933a9b794dd76601b4ef174ecc399339460c6484926f643189fd66eb5e3f3c"
+  digest = "1:63e7368fcf6b54804076eaec26fd9cf0c4466166b272393db4b93102e1e962df"
   name = "github.com/kballard/go-shellquote"
   packages = ["."]
   pruneopts = ""
-  revision = "cd60e84ee657ff3dc51de0b4f55dd299a3e136f2"
-
-[[projects]]
-  digest = "1:256484dbbcd271f9ecebc6795b2df8cad4c458dd0f5fd82a8c2fa0c29f233411"
-  name = "github.com/pmezard/go-difflib"
-  packages = ["difflib"]
-  pruneopts = ""
-  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
-  version = "v1.0.0"
+  revision = "95032a82bc518f77982ea72343cc1ade730072f0"
 
 [[projects]]
   branch = "master"
-  digest = "1:3b4870930878fb464616897c4e4bc100d323a8f95c3d8bbff0952d372571f7f7"
-  name = "github.com/stretchr/testify"
-  packages = [
-    "assert",
-    "require",
-  ]
-  pruneopts = ""
-  revision = "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f"
-
-[[projects]]
-  branch = "master"
-  digest = "1:c3415eeb330bf30a2d8181e516ec79804c198f3d171ab9c9364f29dbe76c05d9"
+  digest = "1:59b49c47c11a48f1054529207f65907c014ecf5f9a7c0d9c0f1616dec7b062ed"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = ""
-  revision = "94eea52f7b742c7cbe0b03b22f0c4c8631ece122"
+  revision = "ff983b9c42bc9fbf91556e191cc8efb585c16908"
 
 [[projects]]
   branch = "master"
-  digest = "1:a9b593bd80a86f44d3334e03e966cf2800ec5f01cc4464a5a2ac3424e12ec84e"
+  digest = "1:04494e21fbf5896db7542267f6a66013a7f289a2d202929bf9ec58de0cc783c2"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = ""
-  revision = "9167dbfd0f8e88b731dd88cbf73a270701a37bb4"
+  revision = "cb59ee3660675d463e86971646692ea3e470021c"
 
 [[projects]]
   branch = "master"
-  digest = "1:ac8b19a1e2c4c474da6dfbc28db0d8d17ee1e944fe8167db7208b6caccfbfc24"
+  digest = "1:e43acd1190dde7223727f1f8aeac537156d33bf87776d5637e672e1c6b354be4"
   name = "howett.net/plist"
   packages = ["."]
   pruneopts = ""
-  revision = "233df3c4f07b0c562da0e8a6fb850681ac49bb90"
+  revision = "591f970eefbbeb04d7b37f334a0c4c3256e32876"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -130,7 +103,6 @@
     "github.com/bitrise-tools/go-xcode/xcpretty",
     "github.com/hashicorp/go-version",
     "github.com/kballard/go-shellquote",
-    "github.com/stretchr/testify/require",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

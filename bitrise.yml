@@ -3,10 +3,7 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
   envs:
-  - BITRISE_STEP_VERSION: 1.18.16
-
-  - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
-  - BITRISE_SCHEME: ios-simple-objc
+  - ORIG_BITRISE_SOURCE_DIR: $BITRISE_SOURCE_DIR
 
 workflows:
   # ----------------------------------------------------------------
@@ -20,12 +17,13 @@ workflows:
     - errcheck:
     - go-test:
     after_run:
+    # headless tests first, as otherwise running emulator is reused
     - ci-objc_headless_mode
-    - ci-xcode-8_headless_mode
+    - _script_wrapper_for_headless_failing_ui_test
+    - ci-objc_headless_mode_xcpretty
     - ci-parallel_headless_mode
     - tvos_headless_mode
     - ci-objc
-    - ci-xcode-8
     - ci-parallel
     - tvos
   
@@ -39,98 +37,157 @@ workflows:
     - ci-xcode-8_headless_mode
     - ci-xcode-8
 
+
   ci-objc_headless_mode:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-ios-simple-objc-with-uitest.git
+    - SAMPLE_APP_BRANCH: master
+    - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
     - SIMULATOR_DEVICE: iPhone 6 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
     after_run:
-    - test
+    - _test
+    - check_exported_artifacts
+
+  ci-objc_headless_mode_xcpretty:
+    envs:
+    - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-ios-simple-objc-with-uitest.git
+    - SAMPLE_APP_BRANCH: master
+    - OUTPUT_TOOL: xcpretty
+    - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
+    - BITRISE_SCHEME: ios-simple-objc
+    - SIMULATOR_DEVICE: iPhone 6 Plus
+    - SIMULATOR_PLATFORM: iOS Simulator
+    - HEADLESS_MODE: "yes"
+    after_run:
+    - _test
+    - check_exported_artifacts
+    - check_xcpretty_html_report
+
+  _script_wrapper_for_headless_failing_ui_test:
+    steps:
+    - script:
+        title: Start a failing workflow, wrapped in a script.
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            bitrise run ci-objc_headless_mode_failing_ui_test
+            if [ $? -ne 1 ] ; then
+              echo "Workflow was excepted to fail, exit code not 1."
+              exit 1
+            fi
+
+  ci-objc_headless_mode_failing_ui_test:
+    envs:
+    - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-ios-simple-objc-with-uitest.git
+    - SAMPLE_APP_BRANCH: failing-ui-test
+    - OUTPUT_TOOL: xcodebuild
+    - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
+    - BITRISE_SCHEME: ios-simple-objc
+    - SIMULATOR_DEVICE: iPhone 6 Plus
+    - SIMULATOR_PLATFORM: iOS Simulator
+    - HEADLESS_MODE: "yes"
+    after_run:
+    - _test
     - check_exported_artifacts
 
   ci-xcode-8_headless_mode:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-samples/ios-xcode-8.0.git
+    - SAMPLE_APP_BRANCH: master
+    - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: ios-xcode-8.0/ios-xcode-8.0.xcodeproj
     - BITRISE_SCHEME: ios-xcode-8.0
     - SIMULATOR_DEVICE: iPhone 6 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
     after_run:
-    - test
+    - _test
 
   tvos_headless_mode:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-tvos-swift.git
+    - SAMPLE_APP_BRANCH: master
+    - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: NPO Live.xcworkspace
     - BITRISE_SCHEME: NPO Live
     - SIMULATOR_DEVICE: Apple TV
     - SIMULATOR_PLATFORM: tvOS Simulator
     - HEADLESS_MODE: "yes"
     after_run:
-    - test
+    - _test
 
   ci-parallel_headless_mode:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-swift-project-with-parallel-ui-test.git
+    - SAMPLE_APP_BRANCH: master
+    - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: BullsEye.xcodeproj
     - BITRISE_SCHEME: BullsEye
     - HEADLESS_MODE: "yes"
     after_run:
-    - test
+    - _test
 
   ci-objc:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-ios-simple-objc-with-uitest.git
+    - SAMPLE_APP_BRANCH: master
+    - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
     - SIMULATOR_DEVICE: iPhone 6 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "no"
     after_run:
-    - test
+    - _test
     - check_exported_artifacts
 
   ci-xcode-8:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-samples/ios-xcode-8.0.git
+    - SAMPLE_APP_BRANCH: master
+    - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: ios-xcode-8.0/ios-xcode-8.0.xcodeproj
     - BITRISE_SCHEME: ios-xcode-8.0
     - SIMULATOR_DEVICE: iPhone 6 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "no"
     after_run:
-    - test
+    - _test
 
   tvos:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-tvos-swift.git
+    - SAMPLE_APP_BRANCH: master
+    - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: NPO Live.xcworkspace
     - BITRISE_SCHEME: NPO Live
     - SIMULATOR_DEVICE: Apple TV
     - SIMULATOR_PLATFORM: tvOS Simulator
     - HEADLESS_MODE: "no"
     after_run:
-    - test
+    - _test
 
   ci-parallel:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-swift-project-with-parallel-ui-test.git
+    - SAMPLE_APP_BRANCH: master
+    - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: BullsEye.xcodeproj
     - BITRISE_SCHEME: BullsEye
     - HEADLESS_MODE: "no"
     after_run:
-    - test
+    - _test
 
-  test:
+  _test:
     steps:
     - script:
         inputs:
         - content: |-
-            #!/bin/bash
+            #!/bin/env bash
             set -e
             set -v
             rm -rf ./_tmp
@@ -143,14 +200,21 @@ workflows:
     - script:
         inputs:
         - content: |-
-            #!/bin/bash
+            #!/bin/env bash
+            echo BITRISE_SOURCE_DIR: ${BITRISE_SOURCE_DIR}
+            echo ORIG_BITRISE_SOURCE_DIR: ${ORIG_BITRISE_SOURCE_DIR}
+            echo working directory: $(pwd)
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/env bash
             set -e
             set -v
-            git clone $SAMPLE_APP_URL .
+            git clone -b $SAMPLE_APP_BRANCH --single-branch $SAMPLE_APP_URL .
     - certificate-and-profile-installer: {}
     - path::./:
         inputs:
-        - output_tool: xcodebuild
+        - output_tool: $OUTPUT_TOOL
         # - is_clean_build: "no"
         - is_clean_build: "yes"
         - generate_code_coverage_files: "no"
@@ -173,6 +237,10 @@ workflows:
             fi
             echo "BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH: ${BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH}"
             echo "BITRISE_XCODE_TEST_ATTACHMENTS_PATH: ${BITRISE_XCODE_TEST_ATTACHMENTS_PATH}"
+    - change-workdir:
+        title: Switch back to work dir at the start.
+        inputs:
+        - path: ${ORIG_BITRISE_SOURCE_DIR}
 
   check_exported_artifacts:
     steps:
@@ -181,7 +249,7 @@ workflows:
         is_always_run: true
         inputs:
         - content: |-
-            #!/bin/bash
+            #!/bin/env bash
             set -e
 
             if [ ! -f $BITRISE_DEPLOY_DIR/ios-simple-objc-xc-test-Attachments.zip ]; then
@@ -191,6 +259,22 @@ workflows:
 
             echo "Exported attachments found: $BITRISE_DEPLOY_DIR/ios-simple-objc-xc-test-Attachments.zip"
 
+  check_xcpretty_html_report:
+    steps:
+    - script:
+        title: Check xcpretty html report
+        is_always_run: true
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+
+            if [ ! -f $BITRISE_DEPLOY_DIR/xcode-test-results-ios-simple-objc.html ]; then
+                echo "Exported xcpretty html report - xcode-test-results-ios-simple-objc.html - not found in $BITRISE_DEPLOY_DIR"
+                exit 1
+            fi
+
+            echo "Exported xcpretty html report found: $BITRISE_DEPLOY_DIR/xcode-test-results-ios-simple-objc.html"
 
   # ----------------------------------------------------------------
   # --- Utility workflows
@@ -204,7 +288,7 @@ workflows:
         title: Dependency update
         inputs:
         - content: |-
-            #!/bin/bash
+            #!/bin/env bash
             set -ex
             go get -u -v github.com/golang/dep/cmd/dep
             dep ensure -v
@@ -217,6 +301,6 @@ workflows:
     - script:
         inputs:
         - content: |-
-            #!/bin/bash
+            #!/bin/env bash
             set -ex
             stepman audit --step-yml ./step.yml
