@@ -251,6 +251,10 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 		return fullOutputStr, exitCode, testError
 	}
 
+	// Clean output directory, otherwise after retry test run, xcodebuild fails with `error: Existing file at -resultBundlePath "..."`
+	if err := os.RemoveAll(buildTestParams.TestOutputDir); err != nil {
+		log.Errorf("failed to clean test output directory: %s, error: %s", buildTestParams.TestOutputDir, err)
+	}
 	buildParams := buildTestParams.BuildParams
 
 	xcodebuildArgs := []string{buildParams.Action, buildParams.ProjectPath, "-scheme", buildParams.Scheme}
