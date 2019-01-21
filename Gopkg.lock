@@ -3,7 +3,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:6083fc4e90fe661aad326c42fa16fb85774cb55711560d1208c82ff290534836"
+  digest = "1:b9164766bc379bf20bec4dead3f9ab4e32d49d4123e8c208d2e63ba50279a4bc"
   name = "github.com/bitrise-io/go-utils"
   packages = [
     "colorstring",
@@ -18,20 +18,20 @@
     "progress",
     "stringutil",
   ]
-  pruneopts = ""
+  pruneopts = "UT"
   revision = "2a09aab8380d7842750328aebd5671bcccea89c8"
 
 [[projects]]
   branch = "master"
-  digest = "1:3511df2e558e2755b01ce5670ddc536fa031e63e5b4974bb0f35aac53704f06e"
+  digest = "1:dacd83ec550d6d5c2ac83e57f20d45a25a39d79c73be4451771f92572a1f6344"
   name = "github.com/bitrise-tools/go-steputils"
   packages = ["stepconf"]
-  pruneopts = ""
+  pruneopts = "UT"
   revision = "ec226b2359fcd806be64f0ad2217d8e741a1ff11"
 
 [[projects]]
   branch = "master"
-  digest = "1:3dece49a95897b517c2e7fd103a32e5126fb548b635aa91745d31be3a3a96586"
+  digest = "1:ca237a61afc1b1733f3b1275b146247988a735596203a180c56c71e6b90fc237"
   name = "github.com/bitrise-tools/go-xcode"
   packages = [
     "models",
@@ -40,50 +40,50 @@
     "xcodebuild",
     "xcpretty",
   ]
-  pruneopts = ""
+  pruneopts = "UT"
   revision = "b278b67ed298829932d08fbe05e7590bca753bdf"
 
 [[projects]]
-  branch = "master"
-  digest = "1:8c7fb7f81c06add10a17362abc1ae569ff9765a26c061c6b6e67c909f4f414db"
+  digest = "1:950caca7dfcf796419232ba996c9c3539d09f26af27ba848c4508e604c13efbb"
   name = "github.com/hashicorp/go-version"
   packages = ["."]
-  pruneopts = ""
-  revision = "b5a281d3160aa11950a6182bd9a9dc2cb1e02d50"
+  pruneopts = "UT"
+  revision = "d40cf49b3a77bba84a7afdbd7f1dc295d114efb1"
+  version = "v1.1.0"
 
 [[projects]]
   branch = "master"
-  digest = "1:63e7368fcf6b54804076eaec26fd9cf0c4466166b272393db4b93102e1e962df"
+  digest = "1:400e113a367b511b9b09ca642ee11d9885485a93838526d697033af334a2fdde"
   name = "github.com/kballard/go-shellquote"
   packages = ["."]
-  pruneopts = ""
+  pruneopts = "UT"
   revision = "95032a82bc518f77982ea72343cc1ade730072f0"
 
 [[projects]]
   branch = "master"
-  digest = "1:59b49c47c11a48f1054529207f65907c014ecf5f9a7c0d9c0f1616dec7b062ed"
+  digest = "1:38f553aff0273ad6f367cb0a0f8b6eecbaef8dc6cb8b50e57b6a81c1d5b1e332"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  pruneopts = ""
+  pruneopts = "UT"
   revision = "ff983b9c42bc9fbf91556e191cc8efb585c16908"
 
 [[projects]]
   branch = "master"
-  digest = "1:04494e21fbf5896db7542267f6a66013a7f289a2d202929bf9ec58de0cc783c2"
+  digest = "1:72f402ba458cb14ed7964c8b9a38d992f27834b3cf3479f3b08ea9e5334811b3"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
-  pruneopts = ""
-  revision = "cb59ee3660675d463e86971646692ea3e470021c"
+  pruneopts = "UT"
+  revision = "770c60269bf0ef965e9e7ac8bedcb6bca2a1cefd"
 
 [[projects]]
   branch = "master"
-  digest = "1:e43acd1190dde7223727f1f8aeac537156d33bf87776d5637e672e1c6b354be4"
+  digest = "1:c10265d5a71326618d37e97169eddb3582f78e8ac7dcf87403b4cf619efd519a"
   name = "howett.net/plist"
   packages = ["."]
-  pruneopts = ""
+  pruneopts = "UT"
   revision = "591f970eefbbeb04d7b37f334a0c4c3256e32876"
 
 [solve-meta]
