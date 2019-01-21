@@ -19,7 +19,7 @@ const targetScreenshotTimeFormat = "2006-01-02_03-04-05"
 // Screenshot_uuid.jpg -> TestID_start_date_time_title_uuid.jpg
 func UpdateScreenshotNames(testSummariesPath string, attachementDir string) (bool, error) {
 	if exist, err := pathutil.IsPathExists(testSummariesPath); err != nil {
-		return false, fmt.Errorf("Failed to check if file exists: %s", testSummariesPath)
+		return false, fmt.Errorf("failed to check if file exists: %s", testSummariesPath)
 	} else if !exist {
 		return false, fmt.Errorf("no TestSummaries file found: %s", testSummariesPath)
 	}
