@@ -27,6 +27,21 @@ workflows:
     - ci-parallel
     - tvos
   
+  manual_test-retry_after_fail:
+    envs:
+    - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-ios-simple-objc-with-uitest.git
+    - SAMPLE_APP_BRANCH: failing-ui-test
+    - OUTPUT_TOOL: xcpretty
+    - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
+    - BITRISE_SCHEME: ios-simple-objc
+    - SIMULATOR_DEVICE: iPhone 6 Plus
+    - SIMULATOR_PLATFORM: iOS Simulator
+    - HEADLESS_MODE: "yes"
+    - RETRY_ON_FAIL: "yes"
+    after_run:
+    - _test
+    - check_exported_artifacts
+
   xcode_8_ci: 
     before_run:
     - audit-this-step
@@ -36,7 +51,6 @@ workflows:
     after_run:
     - ci-xcode-8_headless_mode
     - ci-xcode-8
-
 
   ci-objc_headless_mode:
     envs:
@@ -48,6 +62,7 @@ workflows:
     - SIMULATOR_DEVICE: iPhone 6 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
+    - RETRY_ON_FAIL: "no"
     after_run:
     - _test
     - check_exported_artifacts
@@ -62,6 +77,7 @@ workflows:
     - SIMULATOR_DEVICE: iPhone 6 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
+    - RETRY_ON_FAIL: "no"
     after_run:
     - _test
     - check_exported_artifacts
@@ -90,6 +106,7 @@ workflows:
     - SIMULATOR_DEVICE: iPhone 6 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
+    - RETRY_ON_FAIL: "no"
     after_run:
     - _test
     - check_exported_artifacts
@@ -104,6 +121,7 @@ workflows:
     - SIMULATOR_DEVICE: iPhone 6 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
+    - RETRY_ON_FAIL: "no"
     after_run:
     - _test
 
@@ -117,6 +135,7 @@ workflows:
     - SIMULATOR_DEVICE: Apple TV
     - SIMULATOR_PLATFORM: tvOS Simulator
     - HEADLESS_MODE: "yes"
+    - RETRY_ON_FAIL: "no"
     after_run:
     - _test
 
@@ -128,6 +147,7 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcodeproj
     - BITRISE_SCHEME: BullsEye
     - HEADLESS_MODE: "yes"
+    - RETRY_ON_FAIL: "no"
     after_run:
     - _test
 
@@ -141,6 +161,7 @@ workflows:
     - SIMULATOR_DEVICE: iPhone 6 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "no"
+    - RETRY_ON_FAIL: "no"
     after_run:
     - _test
     - check_exported_artifacts
@@ -155,6 +176,7 @@ workflows:
     - SIMULATOR_DEVICE: iPhone 6 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "no"
+    - RETRY_ON_FAIL: "no"
     after_run:
     - _test
 
@@ -168,6 +190,7 @@ workflows:
     - SIMULATOR_DEVICE: Apple TV
     - SIMULATOR_PLATFORM: tvOS Simulator
     - HEADLESS_MODE: "no"
+    - RETRY_ON_FAIL: "no"
     after_run:
     - _test
 
@@ -179,6 +202,7 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcodeproj
     - BITRISE_SCHEME: BullsEye
     - HEADLESS_MODE: "no"
+    - RETRY_ON_FAIL: "no"
     after_run:
     - _test
 
@@ -215,8 +239,8 @@ workflows:
     - path::./:
         inputs:
         - output_tool: $OUTPUT_TOOL
-        # - is_clean_build: "no"
         - is_clean_build: "yes"
+        - should_retry_test_on_fail: $RETRY_ON_FAIL
         - generate_code_coverage_files: "no"
         - simulator_device: $SIMULATOR_DEVICE
         - simulator_platform: $SIMULATOR_PLATFORM
