@@ -3,6 +3,22 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:78e80602d71837c404478f9fc6ff0a10e354b990261a5c8f05eccc6ed347614d"
+  name = "github.com/Sirupsen/logrus"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "d7b6bf5e4d26448fd977d07d745a2a66097ddecb"
+
+[[projects]]
+  digest = "1:73efbb654761e7e4087e4d9b912cfca51aed11329ab31888a377b46e1a3e065e"
+  name = "github.com/bitrise-io/bitrise"
+  packages = ["configs"]
+  pruneopts = "UT"
+  revision = "5d52fad1a1fbe34417296f1fbf6d3672c5d5efc9"
+  version = "1.27.1"
+
+[[projects]]
+  branch = "master"
   digest = "1:b9164766bc379bf20bec4dead3f9ab4e32d49d4123e8c208d2e63ba50279a4bc"
   name = "github.com/bitrise-io/go-utils"
   packages = [
@@ -31,7 +47,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ca237a61afc1b1733f3b1275b146247988a735596203a180c56c71e6b90fc237"
+  digest = "1:fdfc24a0fc8d18988dba54a553688bd7faba941f5d0009da5a2e1dd21e4b4340"
   name = "github.com/bitrise-tools/go-xcode"
   packages = [
     "models",
@@ -41,7 +57,7 @@
     "xcpretty",
   ]
   pruneopts = "UT"
-  revision = "b278b67ed298829932d08fbe05e7590bca753bdf"
+  revision = "b3f7172f910693d60973a07b61db757aca81f778"
 
 [[projects]]
   digest = "1:950caca7dfcf796419232ba996c9c3539d09f26af27ba848c4508e604c13efbb"
@@ -60,23 +76,31 @@
   revision = "95032a82bc518f77982ea72343cc1ade730072f0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:38f553aff0273ad6f367cb0a0f8b6eecbaef8dc6cb8b50e57b6a81c1d5b1e332"
-  name = "golang.org/x/crypto"
-  packages = ["ssh/terminal"]
+  digest = "1:31e761d97c76151dde79e9d28964a812c46efc5baee4085b86f68f0c654450de"
+  name = "github.com/konsorten/go-windows-terminal-sequences"
+  packages = ["."]
   pruneopts = "UT"
-  revision = "ff983b9c42bc9fbf91556e191cc8efb585c16908"
+  revision = "f55edac94c9bbba5d6182a4be46d86a2c9b5b50e"
+  version = "v1.0.2"
 
 [[projects]]
   branch = "master"
-  digest = "1:72f402ba458cb14ed7964c8b9a38d992f27834b3cf3479f3b08ea9e5334811b3"
+  digest = "1:058e9504b9a79bfe86092974d05bb3298d2aa0c312d266d43148de289a5065d9"
+  name = "golang.org/x/crypto"
+  packages = ["ssh/terminal"]
+  pruneopts = "UT"
+  revision = "8dd112bcdc25174059e45e07517d9fc663123347"
+
+[[projects]]
+  branch = "master"
+  digest = "1:1be6480d6816d23e125645a42e38c9a2637a460d8470f432be6ffc02306c5488"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "770c60269bf0ef965e9e7ac8bedcb6bca2a1cefd"
+  revision = "b294cbcfc56d2a65a30c02c78722b5df061e99b8"
 
 [[projects]]
   branch = "master"
@@ -90,6 +114,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/bitrise-io/bitrise/configs",
     "github.com/bitrise-io/go-utils/command",
     "github.com/bitrise-io/go-utils/fileutil",
     "github.com/bitrise-io/go-utils/log",

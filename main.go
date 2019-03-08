@@ -15,6 +15,7 @@ import (
 	"syscall"
 	"time"
 
+	bitriseConfigs "github.com/bitrise-io/bitrise/configs"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
@@ -590,7 +591,23 @@ func main() {
 	logPth, err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil))
 
 	if err != nil {
-		log.Warnf("Failed to save the Raw Output, error %s", err)
+		log.Warnf("Failed to save the Raw Output, error: %s", err)
+	}
+
+	// exporting xcresult only if test result dir is present
+	if testResultPath := os.Getenv(bitriseConfigs.BitriseTestResultDirEnvKey); len(testResultPath) > 0 {
+		fmt.Println()
+		log.Infof("Exporting test results")
+
+		// the leading `/` means to copy not the content but the whole dir
+		// -a means a better recursive, with symlinks handling and everything
+		cmd := command.New("cp", "-a", buildTestParams.TestOutputDir, testResultPath+"/")
+
+		log.Donef("$ %s", cmd.PrintableCommandArgs())
+
+		if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
+			log.Warnf("Failed to export test results, error: %s, output: %s", err, out)
+		}
 	}
 
 	if configs.ExportUITestArtifacts {
@@ -599,11 +616,11 @@ func main() {
 
 		testSummariesPath, attachementDir, err := getSummariesAndAttachmentPath(buildTestParams.TestOutputDir)
 		if err != nil {
-			log.Warnf("Failed to export UI test artifacts, error %s", err)
+			log.Warnf("Failed to export UI test artifacts, error: %s", err)
 		}
 
 		if err := saveAttachments(configs.Scheme, testSummariesPath, attachementDir); err != nil {
-			log.Warnf("Failed to export UI test artifacts, error %s", err)
+			log.Warnf("Failed to export UI test artifacts, error: %s", err)
 		}
 	}
 
