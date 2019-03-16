@@ -646,4 +646,8 @@ that will attach the file to your build as an artifact!`, logPth)
 	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "succeeded"); err != nil {
 		log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 	}
+
+	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCRESULT_PATH", buildTestParams.TestOutputDir); err != nil {
+		log.Warnf("Failed to export: BITRISE_XCRESULT_PATH, error: %s", err)
+	}
 }
