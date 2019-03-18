@@ -251,6 +251,11 @@ outputs:
 
       If the compilation fails this log will contain the compilation output,
       if the tests can be started it'll only include the test output.
+- BITRISE_XCRESULT_PATH:
+  opts:
+    title: The path of the generated `.xcresult`
+    description: |-
+      The path of the generated `.xcresult`.
 - BITRISE_XCODE_TEST_ATTACHMENTS_PATH:
   opts:
     title: The full, test attachments zip path
