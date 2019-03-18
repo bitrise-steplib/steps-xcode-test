@@ -259,8 +259,15 @@ workflows:
               echo "No BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH file generated!"
               exit 1
             fi
+
+            if [ ! -d $BITRISE_XCRESULT_PATH ]; then
+                echo "Xcode results not found in $BITRISE_XCRESULT_PATH"
+                exit 1
+            fi
+
             echo "BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH: ${BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH}"
             echo "BITRISE_XCODE_TEST_ATTACHMENTS_PATH: ${BITRISE_XCODE_TEST_ATTACHMENTS_PATH}"
+            echo "BITRISE_XCRESULT_PATH: $BITRISE_XCRESULT_PATH"
     - change-workdir:
         title: Switch back to work dir at the start.
         inputs:
