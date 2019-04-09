@@ -113,7 +113,7 @@ inputs:
       is_required: true
   - disable_index_while_building: "yes"
     opts:
-      title: "Index while building"
+      title: "Disable index while building"
       description: |-
         Disable indexig during the build.
 
