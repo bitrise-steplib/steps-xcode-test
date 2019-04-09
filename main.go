@@ -88,7 +88,7 @@ type Configs struct {
 	GenerateCodeCoverageFiles bool `env:"generate_code_coverage_files,opt[yes,no]"`
 	ExportUITestArtifacts     bool `env:"export_uitest_artifacts,opt[true,false]"`
 
-	IndexWhileBuilding bool `env:"index_while_building,opt[yes,no]"`
+	DisableIndexWhileBuilding bool `env:"disable_index_while_building,opt[yes,no]"`
 
 	// Not required parameters
 	TestOptions         string `env:"xcodebuild_test_options"`
@@ -221,7 +221,7 @@ func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (stri
 	// Disable indexig during the build.
 	// Indexing is needed for autocomplete, ability to quickly jump to definition, get class and method help by alt clicking.
 	// Which are not needed in CI environment.
-	if !buildParams.IndexWhileBuilding {
+	if buildParams.DisableIndexWhileBuilding {
 		xcodebuildArgs = append(xcodebuildArgs, "COMPILER_INDEX_STORE_ENABLE=NO")
 	}
 	xcodebuildArgs = append(xcodebuildArgs, "build", "-destination", buildParams.DeviceDestination)
@@ -289,7 +289,7 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 	// Disable indexig during the build.
 	// Indexing is needed for autocomplete, ability to quickly jump to definition, get class and method help by alt clicking.
 	// Which are not needed in CI environment.
-	if !buildParams.IndexWhileBuilding {
+	if buildParams.DisableIndexWhileBuilding {
 		xcodebuildArgs = append(xcodebuildArgs, "COMPILER_INDEX_STORE_ENABLE=NO")
 	}
 
@@ -544,12 +544,12 @@ func main() {
 	}
 
 	buildParams := models.XcodeBuildParamsModel{
-		Action:             action,
-		ProjectPath:        configs.ProjectPath,
-		Scheme:             configs.Scheme,
-		DeviceDestination:  deviceDestination,
-		CleanBuild:         configs.IsCleanBuild,
-		IndexWhileBuilding: configs.IndexWhileBuilding,
+		Action:                    action,
+		ProjectPath:               configs.ProjectPath,
+		Scheme:                    configs.Scheme,
+		DeviceDestination:         deviceDestination,
+		CleanBuild:                configs.IsCleanBuild,
+		DisableIndexWhileBuilding: configs.DisableIndexWhileBuilding,
 	}
 
 	buildTestParams := models.XcodeBuildTestParamsModel{

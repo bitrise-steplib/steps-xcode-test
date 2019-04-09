@@ -8,12 +8,12 @@ import "fmt"
 
 // XcodeBuildParamsModel ...
 type XcodeBuildParamsModel struct {
-	Action             string
-	ProjectPath        string
-	Scheme             string
-	DeviceDestination  string
-	CleanBuild         bool
-	IndexWhileBuilding bool
+	Action                    string
+	ProjectPath               string
+	Scheme                    string
+	DeviceDestination         string
+	CleanBuild                bool
+	DisableIndexWhileBuilding bool
 }
 
 // XcodeBuildTestParamsModel ...

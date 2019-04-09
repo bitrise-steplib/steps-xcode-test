@@ -111,11 +111,11 @@ inputs:
         - "yes"
         - "no"
       is_required: true
-  - index_while_building: "no"
+  - disable_index_while_building: "yes"
     opts:
       title: "Index while building"
       description: |-
-        Enable indexig during the build.
+        Disable indexig during the build.
 
         Indexing is needed for
         
