@@ -16,17 +16,17 @@ import (
 	"time"
 
 	bitriseConfigs "github.com/bitrise-io/bitrise/configs"
+	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/stringutil"
+	"github.com/bitrise-io/go-xcode/utility"
 	cmd "github.com/bitrise-io/steps-xcode-test/command"
 	"github.com/bitrise-io/steps-xcode-test/models"
 	"github.com/bitrise-io/steps-xcode-test/xcodeutil"
-	"github.com/bitrise-tools/go-steputils/stepconf"
-	"github.com/bitrise-tools/go-xcode/utility"
 	shellquote "github.com/kballard/go-shellquote"
 )
 
