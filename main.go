@@ -218,7 +218,7 @@ func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (stri
 		xcodebuildArgs = append(xcodebuildArgs, "clean")
 	}
 
-	// Disable indexig during the build.
+	// Disable indexing during the build.
 	// Indexing is needed for autocomplete, ability to quickly jump to definition, get class and method help by alt clicking.
 	// Which are not needed in CI environment.
 	if buildParams.DisableIndexWhileBuilding {
@@ -286,7 +286,7 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 		xcodebuildArgs = append(xcodebuildArgs, "build")
 	}
 
-	// Disable indexig during the build.
+	// Disable indexing during the build.
 	// Indexing is needed for autocomplete, ability to quickly jump to definition, get class and method help by alt clicking.
 	// Which are not needed in CI environment.
 	if buildParams.DisableIndexWhileBuilding {

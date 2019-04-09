@@ -115,7 +115,7 @@ inputs:
     opts:
       title: "Disable index while building"
       description: |-
-        Disable indexig during the build.
+        Disable indexing during the build.
 
         Indexing is needed for
         
