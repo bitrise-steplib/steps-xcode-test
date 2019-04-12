@@ -3,7 +3,7 @@ package xcodeutil
 import (
 	"testing"
 
-	"github.com/bitrise-io/steps-xcode-test/models"
+	"github.com/bitrise-steplib/steps-xcode-test/models"
 )
 
 func TestIsOsVersionGreater(t *testing.T) {

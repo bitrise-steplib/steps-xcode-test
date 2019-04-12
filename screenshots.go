@@ -8,8 +8,8 @@ import (
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
-	"github.com/bitrise-io/steps-xcode-test/pretty"
-	"github.com/bitrise-io/steps-xcode-test/xcodeutil/testsummaries"
+	"github.com/bitrise-steplib/steps-xcode-test/pretty"
+	"github.com/bitrise-steplib/steps-xcode-test/xcodeutil/testsummaries"
 )
 
 const targetScreenshotTimeFormat = "2006-01-02_03-04-05"

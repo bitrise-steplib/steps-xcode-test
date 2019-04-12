@@ -24,9 +24,9 @@ import (
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/stringutil"
 	"github.com/bitrise-io/go-xcode/utility"
-	cmd "github.com/bitrise-io/steps-xcode-test/command"
-	"github.com/bitrise-io/steps-xcode-test/models"
-	"github.com/bitrise-io/steps-xcode-test/xcodeutil"
+	cmd "github.com/bitrise-steplib/steps-xcode-test/command"
+	"github.com/bitrise-steplib/steps-xcode-test/models"
+	"github.com/bitrise-steplib/steps-xcode-test/xcodeutil"
 	shellquote "github.com/kballard/go-shellquote"
 )
 
@@ -281,7 +281,7 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 	// for builds < 120 seconds or fixed Xcode versions, one should
 	// have the possibility of opting out, because the explicit build arg
 	// leads the project to be compiled twice and increase the duration
-	// Related issue link: https://github.com/bitrise-io/steps-xcode-test/issues/55
+	// Related issue link: https://github.com/bitrise-steplib/steps-xcode-test/issues/55
 	if buildTestParams.BuildBeforeTest {
 		xcodebuildArgs = append(xcodebuildArgs, "build")
 	}
