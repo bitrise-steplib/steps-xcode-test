@@ -19,6 +19,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:dacd83ec550d6d5c2ac83e57f20d45a25a39d79c73be4451771f92572a1f6344"
+  name = "github.com/bitrise-io/go-steputils"
+  packages = ["stepconf"]
+  pruneopts = "UT"
+  revision = "ec226b2359fcd806be64f0ad2217d8e741a1ff11"
+
+[[projects]]
+  branch = "master"
   digest = "1:b9164766bc379bf20bec4dead3f9ab4e32d49d4123e8c208d2e63ba50279a4bc"
   name = "github.com/bitrise-io/go-utils"
   packages = [
@@ -39,16 +47,8 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:dacd83ec550d6d5c2ac83e57f20d45a25a39d79c73be4451771f92572a1f6344"
-  name = "github.com/bitrise-tools/go-steputils"
-  packages = ["stepconf"]
-  pruneopts = "UT"
-  revision = "ec226b2359fcd806be64f0ad2217d8e741a1ff11"
-
-[[projects]]
-  branch = "master"
   digest = "1:fdfc24a0fc8d18988dba54a553688bd7faba941f5d0009da5a2e1dd21e4b4340"
-  name = "github.com/bitrise-tools/go-xcode"
+  name = "github.com/bitrise-io/go-xcode"
   packages = [
     "models",
     "plistutil",
@@ -115,17 +115,17 @@
   analyzer-version = 1
   input-imports = [
     "github.com/bitrise-io/bitrise/configs",
+    "github.com/bitrise-io/go-steputils/stepconf",
     "github.com/bitrise-io/go-utils/command",
     "github.com/bitrise-io/go-utils/fileutil",
     "github.com/bitrise-io/go-utils/log",
     "github.com/bitrise-io/go-utils/pathutil",
     "github.com/bitrise-io/go-utils/progress",
     "github.com/bitrise-io/go-utils/stringutil",
-    "github.com/bitrise-tools/go-steputils/stepconf",
-    "github.com/bitrise-tools/go-xcode/models",
-    "github.com/bitrise-tools/go-xcode/plistutil",
-    "github.com/bitrise-tools/go-xcode/utility",
-    "github.com/bitrise-tools/go-xcode/xcpretty",
+    "github.com/bitrise-io/go-xcode/models",
+    "github.com/bitrise-io/go-xcode/plistutil",
+    "github.com/bitrise-io/go-xcode/utility",
+    "github.com/bitrise-io/go-xcode/xcpretty",
     "github.com/hashicorp/go-version",
     "github.com/kballard/go-shellquote",
   ]

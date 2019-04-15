@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bitrise-io/steps-xcode-test/pretty"
-	"github.com/bitrise-io/steps-xcode-test/xcodeutil/testsummaries"
+	"github.com/bitrise-steplib/steps-xcode-test/pretty"
+	"github.com/bitrise-steplib/steps-xcode-test/xcodeutil/testsummaries"
 )
 
 func Test_createRenamePlan(t *testing.T) {
