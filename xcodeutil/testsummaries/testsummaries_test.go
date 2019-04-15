@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bitrise-io/steps-xcode-test/pretty"
-	"github.com/bitrise-tools/go-xcode/plistutil"
+	"github.com/bitrise-steplib/steps-xcode-test/pretty"
+	"github.com/bitrise-io/go-xcode/plistutil"
 )
 
 func TestTimestampToTime(t *testing.T) {

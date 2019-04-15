@@ -16,17 +16,17 @@ import (
 	"time"
 
 	bitriseConfigs "github.com/bitrise-io/bitrise/configs"
+	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/stringutil"
-	cmd "github.com/bitrise-io/steps-xcode-test/command"
-	"github.com/bitrise-io/steps-xcode-test/models"
-	"github.com/bitrise-io/steps-xcode-test/xcodeutil"
-	"github.com/bitrise-tools/go-steputils/stepconf"
-	"github.com/bitrise-tools/go-xcode/utility"
+	"github.com/bitrise-io/go-xcode/utility"
+	cmd "github.com/bitrise-steplib/steps-xcode-test/command"
+	"github.com/bitrise-steplib/steps-xcode-test/models"
+	"github.com/bitrise-steplib/steps-xcode-test/xcodeutil"
 	shellquote "github.com/kballard/go-shellquote"
 )
 
@@ -87,6 +87,8 @@ type Configs struct {
 
 	GenerateCodeCoverageFiles bool `env:"generate_code_coverage_files,opt[yes,no]"`
 	ExportUITestArtifacts     bool `env:"export_uitest_artifacts,opt[true,false]"`
+
+	DisableIndexWhileBuilding bool `env:"disable_index_while_building,opt[yes,no]"`
 
 	// Not required parameters
 	TestOptions         string `env:"xcodebuild_test_options"`
@@ -215,6 +217,13 @@ func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (stri
 	if buildParams.CleanBuild {
 		xcodebuildArgs = append(xcodebuildArgs, "clean")
 	}
+
+	// Disable indexing during the build.
+	// Indexing is needed for autocomplete, ability to quickly jump to definition, get class and method help by alt clicking.
+	// Which are not needed in CI environment.
+	if buildParams.DisableIndexWhileBuilding {
+		xcodebuildArgs = append(xcodebuildArgs, "COMPILER_INDEX_STORE_ENABLE=NO")
+	}
 	xcodebuildArgs = append(xcodebuildArgs, "build", "-destination", buildParams.DeviceDestination)
 
 	log.Infof("Building the project...")
@@ -272,10 +281,18 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 	// for builds < 120 seconds or fixed Xcode versions, one should
 	// have the possibility of opting out, because the explicit build arg
 	// leads the project to be compiled twice and increase the duration
-	// Related issue link: https://github.com/bitrise-io/steps-xcode-test/issues/55
+	// Related issue link: https://github.com/bitrise-steplib/steps-xcode-test/issues/55
 	if buildTestParams.BuildBeforeTest {
 		xcodebuildArgs = append(xcodebuildArgs, "build")
 	}
+
+	// Disable indexing during the build.
+	// Indexing is needed for autocomplete, ability to quickly jump to definition, get class and method help by alt clicking.
+	// Which are not needed in CI environment.
+	if buildParams.DisableIndexWhileBuilding {
+		xcodebuildArgs = append(xcodebuildArgs, "COMPILER_INDEX_STORE_ENABLE=NO")
+	}
+
 	xcodebuildArgs = append(xcodebuildArgs, "test", "-destination", buildParams.DeviceDestination)
 	xcodebuildArgs = append(xcodebuildArgs, "-resultBundlePath", buildTestParams.TestOutputDir)
 
@@ -527,11 +544,12 @@ func main() {
 	}
 
 	buildParams := models.XcodeBuildParamsModel{
-		Action:            action,
-		ProjectPath:       configs.ProjectPath,
-		Scheme:            configs.Scheme,
-		DeviceDestination: deviceDestination,
-		CleanBuild:        configs.IsCleanBuild,
+		Action:                    action,
+		ProjectPath:               configs.ProjectPath,
+		Scheme:                    configs.Scheme,
+		DeviceDestination:         deviceDestination,
+		CleanBuild:                configs.IsCleanBuild,
+		DisableIndexWhileBuilding: configs.DisableIndexWhileBuilding,
 	}
 
 	buildTestParams := models.XcodeBuildTestParamsModel{

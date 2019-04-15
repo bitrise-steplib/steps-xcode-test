@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/bitrise-io/go-utils/log"
-	"github.com/bitrise-tools/go-xcode/xcpretty"
+	"github.com/bitrise-io/go-xcode/xcpretty"
 	version "github.com/hashicorp/go-version"
 )
 
