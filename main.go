@@ -553,8 +553,7 @@ func main() {
 	}
 
 	buildTestParams := models.XcodeBuildTestParamsModel{
-		BuildParams: buildParams,
-
+		BuildParams:          buildParams,
 		TestOutputDir:        testOutputDir,
 		BuildBeforeTest:      configs.ShouldBuildBeforeTest,
 		AdditionalOptions:    configs.TestOptions,
@@ -613,18 +612,16 @@ func main() {
 	}
 
 	// exporting xcresult only if test result dir is present
-	if testResultPath := os.Getenv(bitriseConfigs.BitriseTestResultDirEnvKey); len(testResultPath) > 0 {
+	if addonResultPath := os.Getenv(bitriseConfigs.BitriseTestResultDirEnvKey); len(addonResultPath) > 0 {
 		fmt.Println()
 		log.Infof("Exporting test results")
 
-		// the leading `/` means to copy not the content but the whole dir
-		// -a means a better recursive, with symlinks handling and everything
-		cmd := command.New("cp", "-a", buildTestParams.TestOutputDir, testResultPath+"/")
-
-		log.Donef("$ %s", cmd.PrintableCommandArgs())
-
-		if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-			log.Warnf("Failed to export test results, error: %s, output: %s", err, out)
+		if err := copyToResultAddonDir(addonCopy{
+			sourceTestOutputDir:   buildTestParams.TestOutputDir,
+			targetAddonPath:       addonResultPath,
+			targetAddonBundleName: buildTestParams.BuildParams.Scheme,
+		}); err != nil {
+			log.Warnf("Failed to export test results, error: %s", err)
 		}
 	}
 
