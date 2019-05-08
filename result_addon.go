@@ -18,6 +18,7 @@ type addonCopy struct {
 }
 
 func copyToResultAddonDir(info addonCopy) error {
+	info.targetAddonBundleName = replaceUnsupportedFilenameCharacters(info.targetAddonBundleName)
 	addonPerStepOutputDir := filepath.Join(info.targetAddonPath, info.targetAddonBundleName)
 	if err := os.MkdirAll(addonPerStepOutputDir, 0700); err != nil {
 		return fmt.Errorf("failed to create directory (%s), error: %s", addonPerStepOutputDir, err)
