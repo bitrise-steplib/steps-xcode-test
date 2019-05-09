@@ -616,7 +616,7 @@ func main() {
 		fmt.Println()
 		log.Infof("Exporting test results")
 
-		if err := copyToResultAddonDir(addonCopy{
+		if err := copyAndSaveMetadata(addonCopy{
 			sourceTestOutputDir:   buildTestParams.TestOutputDir,
 			targetAddonPath:       addonResultPath,
 			targetAddonBundleName: buildTestParams.BuildParams.Scheme,
