@@ -612,7 +612,7 @@ func main() {
 	}
 
 	// exporting xcresult only if test result dir is present
-	if addonResultPath := os.Getenv(bitriseConfigs.BitriseTestResultDirEnvKey); len(addonResultPath) > 0 {
+	if addonResultPath := os.Getenv(bitriseConfigs.BitrisePerStepTestResultDirEnvKey); len(addonResultPath) > 0 {
 		fmt.Println()
 		log.Infof("Exporting test results")
 
