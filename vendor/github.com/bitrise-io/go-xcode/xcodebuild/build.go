@@ -53,6 +53,7 @@ type CommandBuilder struct {
 	forceProvisioningProfile          string
 	forceCodeSignIdentity             string
 	disableCodesign                   bool
+	disableIndexWhileBuilding         bool
 
 	// buildaction
 	customBuildActions []string
@@ -147,6 +148,12 @@ func (c *CommandBuilder) SetDisableCodesign(disable bool) *CommandBuilder {
 	return c
 }
 
+// SetDisableIndexWhileBuilding ...
+func (c *CommandBuilder) SetDisableIndexWhileBuilding(disable bool) *CommandBuilder {
+	c.disableIndexWhileBuilding = disable
+	return c
+}
+
 func (c *CommandBuilder) cmdSlice() []string {
 	slice := []string{toolName}
 
@@ -167,11 +174,7 @@ func (c *CommandBuilder) cmdSlice() []string {
 	}
 
 	if c.disableCodesign {
-		slice = append(slice, "CODE_SIGN_IDENTITY=")
-		slice = append(slice, "CODE_SIGNING_REQUIRED=NO")
-		slice = append(slice, "PROVISIONING_PROFILE_SPECIFIER=")
-		slice = append(slice, "PROVISIONING_PROFILE=")
-		slice = append(slice, "DEVELOPMENT_TEAM=")
+		slice = append(slice, "CODE_SIGNING_ALLOWED=NO")
 	} else {
 		if c.forceDevelopmentTeam != "" {
 			slice = append(slice, fmt.Sprintf("DEVELOPMENT_TEAM=%s", c.forceDevelopmentTeam))
@@ -194,6 +197,10 @@ func (c *CommandBuilder) cmdSlice() []string {
 		// "-destination" "id=07933176-D03B-48D3-A853-0800707579E6" => (need the plus `"` marks between the `destination` and the `id`)
 		slice = append(slice, "-destination")
 		slice = append(slice, c.destination)
+	}
+
+	if c.disableIndexWhileBuilding {
+		slice = append(slice, "COMPILER_INDEX_STORE_ENABLE=NO")
 	}
 
 	slice = append(slice, c.customBuildActions...)
