@@ -265,7 +265,8 @@ workflows:
                 exit 1
             fi
 
-            if [ $(find ${BITRISE_TEST_DEPLOY_DIR} -regex "${BITRISE_TEST_DEPLOY_DIR}/.*/${BITRISE_SCHEME}/test-info\.json" | grep -q .) ]; then
+            # Check and REMOVE test-info.json
+            if [ $(find ${BITRISE_TEST_DEPLOY_DIR} -type f -delete -print -regex "${BITRISE_TEST_DEPLOY_DIR}/.*/${BITRISE_SCHEME}/test-info\.json" | grep -q .) ]; then
                echo "${BITRISE_TEST_DEPLOY_DIR} does not contain test-info.json."
                exit 1
             fi
