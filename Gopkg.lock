@@ -3,11 +3,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:6ab7a72d995ed7cd18df2ed88733e3f1ccb8004f88bdc206442df73e088a82c6"
+  digest = "1:551d79f86d5dbc8154f3b97f37f59ff1f66bf639f7af92c7c382d3141a6203cf"
   name = "github.com/Sirupsen/logrus"
   packages = ["."]
   pruneopts = "UT"
-  revision = "5521996833c095f5ac75d99687cef8ad344ded12"
+  revision = "f0375eb5b588893ff556c71dee32d98e57a9b777"
 
 [[projects]]
   digest = "1:c26c6f48d8add3ddfe9b3abf7b5d8fe2eb8f3d59f3e31e59f4488a23663e8b6b"
@@ -89,7 +89,7 @@
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "UT"
-  revision = "e1dfcc566284e143ba8f9afbb3fa563f2a0d212b"
+  revision = "cbcb750295291b33242907a04be40e80801d0cfc"
 
 [[projects]]
   branch = "master"
