@@ -502,6 +502,13 @@ func main() {
 		fail("Invalid xcode major version (%d), should not be less then min supported: %d", xcodeMajorVersion, minSupportedXcodeMajorVersion)
 	}
 
+	if configs.ExportUITestArtifacts && xcodeMajorVersion >= 11 {
+		// The test result bundle (xcresult) structure changed in Xcode 13:
+		// it does not contains TestSummaries.plist
+		// nor Attachments directly.
+		log.Warnf("The test result bundle structure changed in Xcode 11 it does not contain TestSummaries.plist and Attachments directly, nothing to export.")
+	}
+
 	// Detect xcpretty version
 	outputTool := configs.OutputTool
 	xcprettyVersion, err := InstallXcpretty()
@@ -625,7 +632,11 @@ func main() {
 		}
 	}
 
-	if configs.ExportUITestArtifacts {
+	if configs.ExportUITestArtifacts && xcodeMajorVersion < 11 {
+		// The test result bundle (xcresult) structure changed in Xcode 13:
+		// it does not contains TestSummaries.plist
+		// nor Attachments directly.
+
 		fmt.Println()
 		log.Infof("Exporting attachments")
 
