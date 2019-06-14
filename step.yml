@@ -95,6 +95,8 @@ inputs:
       description: |-
         If enabled, the attachments of the UITest will be exported into the BITRISE_DEPLOY_DIR, as a compressed ZIP file.
         Attachments include screenshots taken during the UI test, and other artifacts.
+
+        __NOTE:__ works only with Xcode version < 11.
       value_options:
       - "true"
       - "false"
