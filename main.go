@@ -503,9 +503,8 @@ func main() {
 	}
 
 	if configs.ExportUITestArtifacts && xcodeMajorVersion >= 11 {
-		// The test result bundle (xcresult) structure changed in Xcode 13:
-		// it does not contains TestSummaries.plist
-		// nor Attachments directly.
+		// The test result bundle (xcresult) structure changed in Xcode 11:
+		// it does not contains TestSummaries.plist nor Attachments directly.
 		log.Warnf("Export UITest Artifacts (export_uitest_artifacts) turned on, but Xcode version >= 11. The test result bundle structure changed in Xcode 11 it does not contain TestSummaries.plist and Attachments directly, nothing to export.")
 	}
 
@@ -633,10 +632,8 @@ func main() {
 	}
 
 	if configs.ExportUITestArtifacts && xcodeMajorVersion < 11 {
-		// The test result bundle (xcresult) structure changed in Xcode 13:
-		// it does not contains TestSummaries.plist
-		// nor Attachments directly.
-
+		// The test result bundle (xcresult) structure changed in Xcode 11:
+		// it does not contains TestSummaries.plist nor Attachments directly.
 		fmt.Println()
 		log.Infof("Exporting attachments")
 
