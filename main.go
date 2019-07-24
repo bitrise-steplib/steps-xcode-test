@@ -146,7 +146,7 @@ func runXcodeBuildCmd(useStdOut bool, args ...string) (string, int, error) {
 func runPrettyXcodeBuildCmd(useStdOut bool, xcprettyArgs []string, xcodebuildArgs []string) (string, int, error) {
 	//
 	buildCmd := cmd.CreateXcodebuildCmd(xcodebuildArgs...)
-	prettyCmd := xcprettyArgs
+	prettyCmd := cmd.CreateXcprettyCmd(xcprettyArgs...)
 	//
 	var buildOutBuffer bytes.Buffer
 	//
@@ -585,7 +585,9 @@ func main() {
 	//
 	// Run build
 	if !configs.IsSingleBuild {
+		log.Printf("buildParams: %s", buildParams)
 		if rawXcodebuildOutput, exitCode, buildErr := runBuild(buildParams, outputTool); buildErr != nil {
+			log.Printf("rawXcodebuildOutput: %s", rawXcodebuildOutput)
 			if _, err := saveRawOutputToLogFile(rawXcodebuildOutput, false); err != nil {
 				log.Warnf("Failed to save the Raw Output, err: %s", err)
 			}
