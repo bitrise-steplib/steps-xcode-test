@@ -146,7 +146,7 @@ func runXcodeBuildCmd(useStdOut bool, args ...string) (string, int, error) {
 func runPrettyXcodeBuildCmd(useStdOut bool, xcprettyArgs []string, xcodebuildArgs []string) (string, int, error) {
 	//
 	buildCmd := cmd.CreateXcodebuildCmd(xcodebuildArgs...)
-	prettyCmd := cmd.CreateXcprettyCmd(xcprettyArgs...)
+	prettyCmd := xcprettyArgs
 	//
 	var buildOutBuffer bytes.Buffer
 	//
