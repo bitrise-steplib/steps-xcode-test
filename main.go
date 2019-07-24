@@ -311,16 +311,10 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 
 	xcprettyArgs := []string{}
 	if xcprettyOptions != "" {
-		options = xcprettyOptions
-		err = ""
-		// options, err := shellquote.Split(xcprettyOptions)
-		if err != nil {
-			return "", 1, fmt.Errorf("failed to parse additional options (%s), error: %s", xcprettyOptions, err)
-		}
 		// get and delete the xcpretty output file, if exists
 		xcprettyOutputFilePath := ""
 		isNextOptOutputPth := false
-		for _, aOpt := range options {
+		for _, aOpt := range xcprettyOptions {
 			if isNextOptOutputPth {
 				xcprettyOutputFilePath = aOpt
 				break
