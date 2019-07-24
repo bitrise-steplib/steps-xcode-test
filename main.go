@@ -302,10 +302,7 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 	}
 
 	if buildTestParams.AdditionalOptions != "" {
-		options, err := shellquote.Split(buildTestParams.AdditionalOptions)
-		if err != nil {
-			return "", 1, fmt.Errorf("failed to parse additional options (%s), error: %s", buildTestParams.AdditionalOptions, err)
-		}
+		options := strings.Fields(buildTestParams.AdditionalOptions)
 		xcodebuildArgs = append(xcodebuildArgs, options...)
 	}
 
