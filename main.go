@@ -311,7 +311,9 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 
 	xcprettyArgs := []string{}
 	if xcprettyOptions != "" {
-		options, err := shellquote.Split(xcprettyOptions)
+		options = xcprettyOptions
+		err = ""
+		// options, err := shellquote.Split(xcprettyOptions)
 		if err != nil {
 			return "", 1, fmt.Errorf("failed to parse additional options (%s), error: %s", xcprettyOptions, err)
 		}
