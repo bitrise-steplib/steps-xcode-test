@@ -311,10 +311,11 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 
 	xcprettyArgs := []string{}
 	if xcprettyOptions != "" {
+		options := strings.Fields(xcprettyOptions)
 		// get and delete the xcpretty output file, if exists
 		xcprettyOutputFilePath := ""
 		isNextOptOutputPth := false
-		for _, aOpt := range xcprettyOptions {
+		for _, aOpt := range options {
 			if isNextOptOutputPth {
 				xcprettyOutputFilePath = aOpt
 				break
