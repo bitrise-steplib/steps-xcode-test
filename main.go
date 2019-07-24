@@ -27,7 +27,6 @@ import (
 	cmd "github.com/bitrise-steplib/steps-xcode-test/command"
 	"github.com/bitrise-steplib/steps-xcode-test/models"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodeutil"
-	shellquote "github.com/kballard/go-shellquote"
 )
 
 // On performance limited OS X hosts (ex: VMs) the iPhone/iOS Simulator might time out
