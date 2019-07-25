@@ -2,10 +2,10 @@ package testsummaries
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"time"
 
+	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-xcode/plistutil"
 	"github.com/bitrise-steplib/steps-xcode-test/pretty"
 )
@@ -78,7 +78,7 @@ func parseTestSummaries(testSummariesContent plistutil.PlistData) ([]TestResult,
 			if err != nil {
 				return nil, err
 			}
-			log.Printf("lastSubtests %s", pretty.Object(lastSubtests))
+			log.Debugf("lastSubtests %s", pretty.Object(lastSubtests))
 
 			for _, test := range lastSubtests {
 				testID, found := test.GetString("TestIdentifier")
@@ -104,7 +104,7 @@ func parseTestSummaries(testSummariesContent plistutil.PlistData) ([]TestResult,
 				{
 					activitySummariesData, found := test.GetMapStringInterfaceArray("ActivitySummaries")
 					if !found {
-						log.Printf("no activity summaries found for test: %s", test)
+						log.Infof("no activity summaries found for test: %s", test)
 					}
 					activitySummaries, err = parseActivites(activitySummariesData)
 					if err != nil {
@@ -196,7 +196,7 @@ func parseActivites(activitySummariesData []plistutil.PlistData) ([]Activity, er
 				return nil, err
 			}
 		} else {
-			log.Printf("No subactivities found for activity: %s", pretty.Object(activity))
+			log.Debugf("No subactivities found for activity: %s", pretty.Object(activity))
 		}
 		activities[i] = Activity{
 			Title:         title,
