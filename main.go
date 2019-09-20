@@ -25,9 +25,9 @@ import (
 	"github.com/bitrise-io/go-utils/stringutil"
 	"github.com/bitrise-io/go-xcode/utility"
 	cache "github.com/bitrise-io/go-xcode/xcodecache"
-	"github.com/bitrise-io/steps-xcode-test/models"
-	"github.com/bitrise-io/steps-xcode-test/xcodeutil"
 	cmd "github.com/bitrise-steplib/steps-xcode-test/command"
+	"github.com/bitrise-steplib/steps-xcode-test/models"
+	"github.com/bitrise-steplib/steps-xcode-test/xcodeutil"
 	shellquote "github.com/kballard/go-shellquote"
 )
 

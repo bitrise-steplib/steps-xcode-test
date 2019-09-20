@@ -65,27 +65,6 @@
   revision = "8b9f4c7811585f131fca4871997948fce06cf821"
 
 [[projects]]
-  digest = "1:4d99f9c8f9935a349315ad7bc050657290a4c9526c91095231e970b73232e3fb"
-  name = "github.com/bitrise-steplib/steps-xcode-test"
-  packages = [
-    "command",
-    "models",
-    "pretty",
-    "xcodeutil/testsummaries",
-  ]
-  pruneopts = "UT"
-  revision = "f008558ffc47dbc9bd41a08f5e6a6fc18388a692"
-  version = "2.2.0"
-
-[[projects]]
-  branch = "master"
-  digest = "1:cd99f11561902ea5fb600e79c5dda03fa715d325a67c39fa7704ca137e467753"
-  name = "github.com/bitrise-tools/go-xcode"
-  packages = ["plistutil"]
-  pruneopts = "UT"
-  revision = "07ccf582b6b1afa2c33e133447a3e22c811ffd90"
-
-[[projects]]
   digest = "1:88e0b0baeb9072f0a4afbcf12dda615fc8be001d1802357538591155998da21b"
   name = "github.com/hashicorp/go-version"
   packages = ["."]
@@ -168,10 +147,6 @@
     "github.com/bitrise-io/go-xcode/utility",
     "github.com/bitrise-io/go-xcode/xcodecache",
     "github.com/bitrise-io/go-xcode/xcpretty",
-    "github.com/bitrise-steplib/steps-xcode-test/command",
-    "github.com/bitrise-steplib/steps-xcode-test/models",
-    "github.com/bitrise-steplib/steps-xcode-test/pretty",
-    "github.com/bitrise-steplib/steps-xcode-test/xcodeutil/testsummaries",
     "github.com/hashicorp/go-version",
     "github.com/kballard/go-shellquote",
   ]
