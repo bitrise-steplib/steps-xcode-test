@@ -24,9 +24,10 @@ import (
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/stringutil"
 	"github.com/bitrise-io/go-xcode/utility"
+	cache "github.com/bitrise-io/go-xcode/xcodecache"
+	"github.com/bitrise-io/steps-xcode-test/models"
+	"github.com/bitrise-io/steps-xcode-test/xcodeutil"
 	cmd "github.com/bitrise-steplib/steps-xcode-test/command"
-	"github.com/bitrise-steplib/steps-xcode-test/models"
-	"github.com/bitrise-steplib/steps-xcode-test/xcodeutil"
 	shellquote "github.com/kballard/go-shellquote"
 )
 
@@ -604,6 +605,11 @@ func main() {
 				log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 			}
 			os.Exit(1)
+		}
+
+		// Cache swift PM
+		if err := cache.CollectPackagesCache(buildParams.ProjectPath); err != nil {
+			log.Warnf("Failed to mark swift packages for caching, error: %s", err)
 		}
 	}
 
