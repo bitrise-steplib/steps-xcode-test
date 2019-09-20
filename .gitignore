@@ -1,3 +1,4 @@
+steps-xcode-test
 .bitrise*
 _tmp/
 go/bin/
