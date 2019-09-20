@@ -118,7 +118,7 @@ workflows:
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: ios-xcode-8.0/ios-xcode-8.0.xcodeproj
     - BITRISE_SCHEME: ios-xcode-8.0
-    - SIMULATOR_DEVICE: iPhone 8 Plus
+    - SIMULATOR_DEVICE: iPhone 6 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
     - RETRY_ON_FAIL: "no"
