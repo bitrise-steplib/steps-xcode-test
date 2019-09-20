@@ -142,7 +142,7 @@ workflows:
   ci-parallel_headless_mode:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - SAMPLE_APP_BRANCH: swift_4
+    - SAMPLE_APP_BRANCH: master
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: BullsEye.xcodeproj
     - BITRISE_SCHEME: BullsEye
@@ -214,7 +214,7 @@ workflows:
             #!/bin/env bash
             set -e
             set -v
-            rm -rf ./_tmp
+            # rm -rf ./_tmp
     - change-workdir:
         title: Switch working dir to test / _tmp dir
         run_if: true
@@ -234,7 +234,7 @@ workflows:
             #!/bin/env bash
             set -e
             set -v
-            git clone -b $SAMPLE_APP_BRANCH --single-branch $SAMPLE_APP_URL .
+            # git clone -b $SAMPLE_APP_BRANCH --single-branch $SAMPLE_APP_URL .
     - certificate-and-profile-installer: {}
     - path::./:
         inputs:
