@@ -34,7 +34,7 @@ workflows:
     - OUTPUT_TOOL: xcpretty
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
-    - SIMULATOR_DEVICE: iPhone 6 Plus
+    - SIMULATOR_DEVICE: iPhone 8 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
     - RETRY_ON_FAIL: "yes"
@@ -59,7 +59,7 @@ workflows:
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
-    - SIMULATOR_DEVICE: iPhone 6 Plus
+    - SIMULATOR_DEVICE: iPhone 8 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
     - RETRY_ON_FAIL: "no"
@@ -74,7 +74,7 @@ workflows:
     - OUTPUT_TOOL: xcpretty
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
-    - SIMULATOR_DEVICE: iPhone 6 Plus
+    - SIMULATOR_DEVICE: iPhone 8 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
     - RETRY_ON_FAIL: "no"
@@ -103,7 +103,7 @@ workflows:
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
-    - SIMULATOR_DEVICE: iPhone 6 Plus
+    - SIMULATOR_DEVICE: iPhone 8 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
     - RETRY_ON_FAIL: "no"
@@ -118,7 +118,7 @@ workflows:
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: ios-xcode-8.0/ios-xcode-8.0.xcodeproj
     - BITRISE_SCHEME: ios-xcode-8.0
-    - SIMULATOR_DEVICE: iPhone 6 Plus
+    - SIMULATOR_DEVICE: iPhone 8 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
     - RETRY_ON_FAIL: "no"
@@ -158,7 +158,7 @@ workflows:
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
-    - SIMULATOR_DEVICE: iPhone 6 Plus
+    - SIMULATOR_DEVICE: iPhone 8 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "no"
     - RETRY_ON_FAIL: "no"
