@@ -11,7 +11,7 @@
   name = "github.com/bitrise-io/go-utils"
 
 [[constraint]]
-  branch = "master"
+  branch = "TOOL-1126-swiftpm-cache"
   name = "github.com/bitrise-io/go-xcode"
 
 [[constraint]]
