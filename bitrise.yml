@@ -55,7 +55,7 @@ workflows:
   ci-objc_headless_mode:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
-    - SAMPLE_APP_BRANCH: master
+    - SAMPLE_APP_BRANCH: TOOL-1126-swiftpm-cache
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
@@ -70,7 +70,7 @@ workflows:
   ci-objc_headless_mode_xcpretty:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
-    - SAMPLE_APP_BRANCH: master
+    - SAMPLE_APP_BRANCH: TOOL-1126-swiftpm-cache
     - OUTPUT_TOOL: xcpretty
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
@@ -154,7 +154,7 @@ workflows:
   ci-objc:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
-    - SAMPLE_APP_BRANCH: master
+    - SAMPLE_APP_BRANCH: TOOL-1126-swiftpm-cache
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
@@ -289,6 +289,13 @@ workflows:
         - content: |-
             #!/bin/env bash
             set -e
+            version=`xcodebuild -version`
+            regex="Xcode ([0-9]*)."
+            if [[ $version =~ $regex ]]; then
+              if [[ ${BASH_REMATCH[1]} -ge 11 ]]; then
+                exit 0
+              fi
+            fi
 
             if [ ! -f $BITRISE_DEPLOY_DIR/ios-simple-objc-xc-test-Attachments.zip ]; then
                 echo "Exported artifacts - ios-simple-objc-xc-test-Attachments.zip - not found in $BITRISE_DEPLOY_DIR"
