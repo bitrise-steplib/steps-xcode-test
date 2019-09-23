@@ -197,7 +197,7 @@ workflows:
   ci-parallel:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - SAMPLE_APP_BRANCH: swift_4
+    - SAMPLE_APP_BRANCH: master
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: BullsEye.xcodeproj
     - BITRISE_SCHEME: BullsEye
