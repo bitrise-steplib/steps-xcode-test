@@ -606,11 +606,6 @@ func main() {
 			}
 			os.Exit(1)
 		}
-
-		// Cache swift PM
-		if err := cache.CollectPackagesCache(buildParams.ProjectPath); err != nil {
-			log.Warnf("Failed to mark swift packages for caching, error: %s", err)
-		}
 	}
 
 	//
@@ -621,6 +616,11 @@ func main() {
 
 	if err != nil {
 		log.Warnf("Failed to save the Raw Output, error: %s", err)
+	}
+
+	// Cache swift PM
+	if err := cache.CollectPackagesCache(buildParams.ProjectPath); err != nil {
+		log.Warnf("Failed to mark swift packages for caching, error: %s", err)
 	}
 
 	// exporting xcresult only if test result dir is present
