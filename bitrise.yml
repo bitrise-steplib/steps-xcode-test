@@ -55,7 +55,7 @@ workflows:
   ci-objc_headless_mode:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
-    - SAMPLE_APP_BRANCH: TOOL-1126-swiftpm-cache
+    - SAMPLE_APP_BRANCH: master
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
@@ -70,7 +70,7 @@ workflows:
   ci-objc_headless_mode_xcpretty:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
-    - SAMPLE_APP_BRANCH: TOOL-1126-swiftpm-cache
+    - SAMPLE_APP_BRANCH: master
     - OUTPUT_TOOL: xcpretty
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
@@ -146,6 +146,8 @@ workflows:
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: BullsEye.xcodeproj
     - BITRISE_SCHEME: BullsEye
+    - SIMULATOR_DEVICE: iPhone 8 Plus
+    - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
     - RETRY_ON_FAIL: "no"
     after_run:
@@ -154,7 +156,7 @@ workflows:
   ci-objc:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
-    - SAMPLE_APP_BRANCH: TOOL-1126-swiftpm-cache
+    - SAMPLE_APP_BRANCH: master
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
@@ -201,6 +203,8 @@ workflows:
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: BullsEye.xcodeproj
     - BITRISE_SCHEME: BullsEye
+    - SIMULATOR_DEVICE: iPhone 8 Plus
+    - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "no"
     - RETRY_ON_FAIL: "no"
     after_run:
