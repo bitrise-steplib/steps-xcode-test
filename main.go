@@ -624,7 +624,7 @@ func main() {
 	}
 
 	// Cache swift PM
-	if err := cache.CollectPackagesCache(buildParams.ProjectPath); err != nil {
+	if err := cache.CollectPackagesCache(absProjectPath); err != nil {
 		log.Warnf("Failed to mark swift packages for caching, error: %s", err)
 	}
 
