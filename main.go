@@ -473,7 +473,7 @@ func main() {
 
 	absProjectPath, err := pathutil.AbsPath(configs.ProjectPath)
 	if err != nil {
-		fail("Failed to get absolute project path, error: %$s", err)
+		fail("Failed to get absolute project path, error: %s", err)
 	}
 
 	// Project-or-Workspace flag
