@@ -50,8 +50,8 @@
   revision = "ad86bf775472ce1934affb9d3cb7d5ea3dffd16f"
 
 [[projects]]
-  branch = "TOOL-1126-swiftpm-cache"
-  digest = "1:40d242dc3c387296f4c7a40d9460a04d1803f7fe2fa1d5e183a678cba0c414c6"
+  branch = "master"
+  digest = "1:5b3acf821f140188039785d6f5d05c8dbb78da470266e24c848572bb9962001b"
   name = "github.com/bitrise-io/go-xcode"
   packages = [
     "models",
@@ -62,7 +62,7 @@
     "xcpretty",
   ]
   pruneopts = "UT"
-  revision = "58a15192a92bddb1d90b24dc6164e8221bf4c1c4"
+  revision = "39758b99f466fbd5271280a29e55d6982e0de8bd"
 
 [[projects]]
   digest = "1:88e0b0baeb9072f0a4afbcf12dda615fc8be001d1802357538591155998da21b"
@@ -94,18 +94,18 @@
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "UT"
-  revision = "a832865fa7ada6126f4c6124ac49f71be71bff2a"
+  revision = "f9e2070545dcd4128a854a97ddf10fbfc3c4b6e4"
 
 [[projects]]
   branch = "master"
-  digest = "1:7711a885664a85941a1d9d339f7f12c742cd8f88def90e74f89805508cfca97f"
+  digest = "1:5b617d7853b8c2432735f83315f16c7f463fdaf79a5fe165f5b8205931017d95"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "c990c680b611ac1aeb7d8f2af94a825f98d69720"
+  revision = "b397fe3ad8ed895c98fa54584f61835a88e65ff5"
 
 [[projects]]
   digest = "1:1093f2eb4b344996604f7d8b29a16c5b22ab9e1b25652140d3fede39f640d5cd"
