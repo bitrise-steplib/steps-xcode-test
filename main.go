@@ -98,6 +98,8 @@ type Configs struct {
 	// Debug
 	Verbose      bool `env:"verbose,opt[yes,no]"`
 	HeadlessMode bool `env:"headless_mode,opt[yes,no]"`
+
+	CacheLevel string `env:"cache_level,opt[none,swift_packages]"`
 }
 
 func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
@@ -500,7 +502,7 @@ func main() {
 	log.Printf("- xcodebuildVersion: %s (%s)", xcodebuildVersion.Version, xcodebuildVersion.BuildVersion)
 
 	if xcodebuildVersion.MajorVersion < 9 && configs.HeadlessMode {
-		log.Warnf("Headless mode is enabled but it's only availabe with Xcode 9.x or newer.")
+		log.Warnf("Headless mode is enabled but it's only available with Xcode 9.x or newer.")
 	}
 
 	xcodeMajorVersion := xcodebuildVersion.MajorVersion
@@ -623,11 +625,6 @@ func main() {
 		log.Warnf("Failed to save the Raw Output, error: %s", err)
 	}
 
-	// Cache swift PM
-	if err := cache.CollectPackagesCache(absProjectPath); err != nil {
-		log.Warnf("Failed to mark swift packages for caching, error: %s", err)
-	}
-
 	// exporting xcresult only if test result dir is present
 	if addonResultPath := os.Getenv(bitriseConfigs.BitrisePerStepTestResultDirEnvKey); len(addonResultPath) > 0 {
 		fmt.Println()
@@ -679,6 +676,13 @@ that will attach the file to your build as an artifact!`, logPth)
 			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 		}
 		os.Exit(1)
+	}
+
+	// Cache swift PM
+	if configs.CacheLevel == "swift_packages" {
+		if err := cache.CollectPackagesCache(absProjectPath); err != nil {
+			log.Warnf("Failed to mark swift packages for caching, error: %s", err)
+		}
 	}
 
 	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "succeeded"); err != nil {

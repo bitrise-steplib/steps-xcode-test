@@ -259,6 +259,17 @@ inputs:
         `set -o pipefail && XCODEBUILD_TEST_COMMAND | xcpretty --color --report html --color --report html --output "${BITRISE_DEPLOY_DIR}/xcode-test-results-${BITRISE_SCHEME}.html"
 
         If you want to add more options, list that separated by space character.
+  - cache_level: swift_packages
+    opts:
+      category: Debug
+      title: Enable caching of Swift Package Manager packages
+      description: |-
+        Available options:
+        - `none` : Disable caching
+        - `swift_packages` : Cache Swift PM packages added to the Xcode project
+      value_options:
+      - "none"
+      - "swift_packages"
 outputs:
 - BITRISE_XCODE_TEST_RESULT:
   opts:
