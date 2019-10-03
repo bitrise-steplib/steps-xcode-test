@@ -43,7 +43,7 @@ inputs:
 
         **IMPORTANT**: The Scheme has to be marked as __shared__ in Xcode!
       is_required: true
-  - simulator_device: iPhone 6s Plus
+  - simulator_device: iPhone 8 Plus
     opts:
       title: "Device"
       description: |-
@@ -53,11 +53,11 @@ inputs:
         actual available options depend on which versions
         are installed):
 
-        * iPhone 6
-        * iPhone 6 Plus
-        * iPad
-        * iPad Air
-        * Apple TV 1080p (don't forget to set the platform to `tvOS Simulator` to use this option!)
+        * iPhone 8 Plus
+        * iPhone Xs Max
+        * iPad Air (3rd generation)
+        * iPad Pro (12.9-inch) (3rd generation)
+        * Apple TV 4K (don't forget to set the platform to `tvOS Simulator` to use this option!)
       is_required: true
   - simulator_os_version: latest
     opts:

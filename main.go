@@ -24,6 +24,7 @@ import (
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/stringutil"
 	"github.com/bitrise-io/go-xcode/utility"
+	cache "github.com/bitrise-io/go-xcode/xcodecache"
 	cmd "github.com/bitrise-steplib/steps-xcode-test/command"
 	"github.com/bitrise-steplib/steps-xcode-test/models"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodeutil"
@@ -470,18 +471,23 @@ func main() {
 	fmt.Println()
 	log.SetEnableDebugLog(configs.Verbose)
 
+	absProjectPath, err := pathutil.AbsPath(configs.ProjectPath)
+	if err != nil {
+		fail("Failed to get absolute project path, error: %s", err)
+	}
+
 	// Project-or-Workspace flag
 	action := ""
-	if strings.HasSuffix(configs.ProjectPath, ".xcodeproj") {
+	if strings.HasSuffix(absProjectPath, ".xcodeproj") {
 		action = "-project"
-	} else if strings.HasSuffix(configs.ProjectPath, ".xcworkspace") {
+	} else if strings.HasSuffix(absProjectPath, ".xcworkspace") {
 		action = "-workspace"
 	} else {
 		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
 			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 			fmt.Println()
 		}
-		fail("Invalid project file (%s), extension should be (.xcodeproj/.xcworkspace)", configs.ProjectPath)
+		fail("Invalid project file (%s), extension should be (.xcodeproj/.xcworkspace)", absProjectPath)
 	}
 
 	log.Printf("* action: %s", action)
@@ -551,7 +557,7 @@ func main() {
 
 	buildParams := models.XcodeBuildParamsModel{
 		Action:                    action,
-		ProjectPath:               configs.ProjectPath,
+		ProjectPath:               absProjectPath,
 		Scheme:                    configs.Scheme,
 		DeviceDestination:         deviceDestination,
 		CleanBuild:                configs.IsCleanBuild,
@@ -615,6 +621,11 @@ func main() {
 
 	if err != nil {
 		log.Warnf("Failed to save the Raw Output, error: %s", err)
+	}
+
+	// Cache swift PM
+	if err := cache.CollectPackagesCache(absProjectPath); err != nil {
+		log.Warnf("Failed to mark swift packages for caching, error: %s", err)
 	}
 
 	// exporting xcresult only if test result dir is present

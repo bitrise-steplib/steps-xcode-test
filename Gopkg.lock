@@ -2,32 +2,36 @@
 
 
 [[projects]]
-  branch = "master"
-  digest = "1:551d79f86d5dbc8154f3b97f37f59ff1f66bf639f7af92c7c382d3141a6203cf"
+  digest = "1:04457f9f6f3ffc5fea48e71d62f2ca256637dee0a04d710288e27e05c8b41976"
   name = "github.com/Sirupsen/logrus"
   packages = ["."]
   pruneopts = "UT"
-  revision = "f0375eb5b588893ff556c71dee32d98e57a9b777"
+  revision = "839c75faf7f98a33d445d181f3018b5c3409a45e"
+  version = "v1.4.2"
 
 [[projects]]
+  branch = "master"
   digest = "1:c26c6f48d8add3ddfe9b3abf7b5d8fe2eb8f3d59f3e31e59f4488a23663e8b6b"
   name = "github.com/bitrise-io/bitrise"
   packages = ["configs"]
   pruneopts = "UT"
-  revision = "a7523d99944aaf56c644dec41f374f746db9a453"
-  version = "1.29.0"
+  revision = "099ec60f02cc67ebd8b086e71abe0c2bd6a58c03"
 
 [[projects]]
   branch = "master"
-  digest = "1:dacd83ec550d6d5c2ac83e57f20d45a25a39d79c73be4451771f92572a1f6344"
+  digest = "1:5e4f167418977858782db1d8820e8c2ccd368c8857e0806bcbd07d0bc09e1e38"
   name = "github.com/bitrise-io/go-steputils"
-  packages = ["stepconf"]
+  packages = [
+    "cache",
+    "stepconf",
+    "tools",
+  ]
   pruneopts = "UT"
-  revision = "cecc766da84859e37e780d9d1c416f0f3993e6b1"
+  revision = "f540824d77dfd382ce84fd0ee0a9da2fba1cce0a"
 
 [[projects]]
   branch = "master"
-  digest = "1:6c30bc101389db9ea7e8292d5e19ee4d1fc0fadb9baaa268112a69738cecb9bf"
+  digest = "1:4993a67a1b558da96bee5669e2b6ec3c71544702ca574bcb844f0fbf24e5e669"
   name = "github.com/bitrise-io/go-utils"
   packages = [
     "colorstring",
@@ -43,21 +47,22 @@
     "stringutil",
   ]
   pruneopts = "UT"
-  revision = "8898129615c9e407fc6b0e60ea882f2b18ec4dc2"
+  revision = "ad86bf775472ce1934affb9d3cb7d5ea3dffd16f"
 
 [[projects]]
   branch = "master"
-  digest = "1:aa138ebd73beb98a054e19479e5d661bae6284e0b39dc4662ed0ee612bfd1015"
+  digest = "1:5b3acf821f140188039785d6f5d05c8dbb78da470266e24c848572bb9962001b"
   name = "github.com/bitrise-io/go-xcode"
   packages = [
     "models",
     "plistutil",
     "utility",
     "xcodebuild",
+    "xcodecache",
     "xcpretty",
   ]
   pruneopts = "UT"
-  revision = "a49d262bd2151997b9b18f882654eae3aab31a9d"
+  revision = "39758b99f466fbd5271280a29e55d6982e0de8bd"
 
 [[projects]]
   digest = "1:88e0b0baeb9072f0a4afbcf12dda615fc8be001d1802357538591155998da21b"
@@ -89,18 +94,33 @@
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "UT"
-  revision = "cbcb750295291b33242907a04be40e80801d0cfc"
+  revision = "f9e2070545dcd4128a854a97ddf10fbfc3c4b6e4"
 
 [[projects]]
   branch = "master"
-  digest = "1:646036a04e163f383d101f40e36fd3354676c7dcccc226d825200a6b9509727a"
+  digest = "1:5b617d7853b8c2432735f83315f16c7f463fdaf79a5fe165f5b8205931017d95"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "a5b02f93d862f065920dd6a40dddc66b60d0dec4"
+  revision = "b397fe3ad8ed895c98fa54584f61835a88e65ff5"
+
+[[projects]]
+  digest = "1:1093f2eb4b344996604f7d8b29a16c5b22ab9e1b25652140d3fede39f640d5cd"
+  name = "golang.org/x/text"
+  packages = [
+    "internal/gen",
+    "internal/triegen",
+    "internal/ucd",
+    "transform",
+    "unicode/cldr",
+    "unicode/norm",
+  ]
+  pruneopts = "UT"
+  revision = "342b2e1fbaa52c93f31447ad2c6abc048c63e475"
+  version = "v0.3.2"
 
 [[projects]]
   branch = "master"
@@ -125,6 +145,7 @@
     "github.com/bitrise-io/go-xcode/models",
     "github.com/bitrise-io/go-xcode/plistutil",
     "github.com/bitrise-io/go-xcode/utility",
+    "github.com/bitrise-io/go-xcode/xcodecache",
     "github.com/bitrise-io/go-xcode/xcpretty",
     "github.com/hashicorp/go-version",
     "github.com/kballard/go-shellquote",
