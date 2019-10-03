@@ -98,6 +98,8 @@ type Configs struct {
 	// Debug
 	Verbose      bool `env:"verbose,opt[yes,no]"`
 	HeadlessMode bool `env:"headless_mode,opt[yes,no]"`
+
+	CacheLevel string `env:"cache_level,opt[none,swift_packages]"`
 }
 
 func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
@@ -624,8 +626,10 @@ func main() {
 	}
 
 	// Cache swift PM
-	if err := cache.CollectPackagesCache(absProjectPath); err != nil {
-		log.Warnf("Failed to mark swift packages for caching, error: %s", err)
+	if configs.CacheLevel == "swift_packages" {
+		if err := cache.CollectPackagesCache(absProjectPath); err != nil {
+			log.Warnf("Failed to mark swift packages for caching, error: %s", err)
+		}
 	}
 
 	// exporting xcresult only if test result dir is present
