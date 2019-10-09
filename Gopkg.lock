@@ -50,8 +50,8 @@
   revision = "ad86bf775472ce1934affb9d3cb7d5ea3dffd16f"
 
 [[projects]]
-  branch = "master"
-  digest = "1:5b3acf821f140188039785d6f5d05c8dbb78da470266e24c848572bb9962001b"
+  branch = "TOOL-1126-swiftpm-cache"
+  digest = "1:db675aefb66f9ac2c318361e8f9f9e73244452588c03ba60465136dde4613bb8"
   name = "github.com/bitrise-io/go-xcode"
   packages = [
     "models",
@@ -62,7 +62,7 @@
     "xcpretty",
   ]
   pruneopts = "UT"
-  revision = "39758b99f466fbd5271280a29e55d6982e0de8bd"
+  revision = "4658515ae9146ed2fc7be6cc421cfa3d36702e3c"
 
 [[projects]]
   digest = "1:88e0b0baeb9072f0a4afbcf12dda615fc8be001d1802357538591155998da21b"
