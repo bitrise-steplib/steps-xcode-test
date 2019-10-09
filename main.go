@@ -240,6 +240,7 @@ func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (stri
 func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcprettyOptions string, isAutomaticRetryOnReason, isRetryOnFail bool, swiftPackagesPath string) (string, int, error) {
 	handleTestError := func(fullOutputStr string, exitCode int, testError error) (string, int, error) {
 		if isStringFoundInOutput(cache.SwiftPackagesStateInvalid, fullOutputStr) {
+			log.RWarnf("xcode-test", "swift-packages-cache-invalid", nil, "swift packages cache is in an invalid state")
 			if err := os.RemoveAll(swiftPackagesPath); err != nil {
 				log.Errorf("failed to remove Swift package caches, error: %s", err)
 				return fullOutputStr, exitCode, testError
