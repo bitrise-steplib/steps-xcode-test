@@ -239,7 +239,7 @@ func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (stri
 
 func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcprettyOptions string, isAutomaticRetryOnReason, isRetryOnFail bool, swiftPackagesPath string) (string, int, error) {
 	handleTestError := func(fullOutputStr string, exitCode int, testError error) (string, int, error) {
-		if isStringFoundInOutput(cache.SwiftPackagesStateInvalid, fullOutputStr) {
+		if swiftPackagesPath != "" && isStringFoundInOutput(cache.SwiftPackagesStateInvalid, fullOutputStr) {
 			log.RWarnf("xcode-test", "swift-packages-cache-invalid", nil, "swift packages cache is in an invalid state")
 			if err := os.RemoveAll(swiftPackagesPath); err != nil {
 				log.Errorf("failed to remove Swift package caches, error: %s", err)
@@ -486,11 +486,6 @@ func main() {
 		fail("Failed to get absolute project path, error: %s", err)
 	}
 
-	swiftPackagesPath, err := cache.SwiftPackagesPath(absProjectPath)
-	if err != nil {
-		fail("Failed to get Swift Packages path, error: %s", err)
-	}
-
 	// Project-or-Workspace flag
 	action := ""
 	if strings.HasSuffix(absProjectPath, ".xcodeproj") {
@@ -628,6 +623,15 @@ func main() {
 		}
 	}
 
+	var swiftPackagesPath string
+	if xcodeMajorVersion >= 11 {
+		var err error
+		swiftPackagesPath, err = cache.SwiftPackagesPath(absProjectPath)
+		if err != nil {
+			fail("Failed to get Swift Packages path, error: %s", err)
+		}
+	}
+
 	//
 	// Run test
 	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, outputTool, configs.XcprettyTestOptions, true, configs.ShouldRetryTestOnFail, swiftPackagesPath)
@@ -692,7 +696,7 @@ that will attach the file to your build as an artifact!`, logPth)
 	}
 
 	// Cache swift PM
-	if configs.CacheLevel == "swift_packages" {
+	if xcodeMajorVersion >= 11 && configs.CacheLevel == "swift_packages" {
 		if err := cache.CollectSwiftPackages(absProjectPath); err != nil {
 			log.Warnf("Failed to mark swift packages for caching, error: %s", err)
 		}
