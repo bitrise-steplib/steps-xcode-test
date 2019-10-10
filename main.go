@@ -537,7 +537,7 @@ func main() {
 	}
 
 	// Simulator infos
-	simulator, err := simulatorPkg.GetSimulatorInfo(configs.SimulatorPlatform, configs.SimulatorDevice)
+	simulator, err := simulatorPkg.GetSimulatorInfo(configs.SimulatorOsVersion, configs.SimulatorDevice)
 	if err != nil {
 		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
 			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
