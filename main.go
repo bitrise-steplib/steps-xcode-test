@@ -237,8 +237,16 @@ func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (stri
 	return runXcodeBuildCmd(false, xcodebuildArgs...)
 }
 
-func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcprettyOptions string, isAutomaticRetryOnReason, isRetryOnFail bool) (string, int, error) {
+func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcprettyOptions string, isAutomaticRetryOnReason, isRetryOnFail bool, swiftPackagesPath string) (string, int, error) {
 	handleTestError := func(fullOutputStr string, exitCode int, testError error) (string, int, error) {
+		if swiftPackagesPath != "" && isStringFoundInOutput(cache.SwiftPackagesStateInvalid, fullOutputStr) {
+			log.RWarnf("xcode-test", "swift-packages-cache-invalid", nil, "swift packages cache is in an invalid state")
+			if err := os.RemoveAll(swiftPackagesPath); err != nil {
+				log.Errorf("failed to remove Swift package caches, error: %s", err)
+				return fullOutputStr, exitCode, testError
+			}
+		}
+
 		//
 		// Automatic retry
 		for _, retryReasonPattern := range automaticRetryReasonPatterns {
@@ -246,7 +254,7 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 				log.Warnf("Automatic retry reason found in log: %s", retryReasonPattern)
 				if isAutomaticRetryOnReason {
 					log.Printf("isAutomaticRetryOnReason=true - retrying...")
-					return runTest(buildTestParams, outputTool, xcprettyOptions, false, false)
+					return runTest(buildTestParams, outputTool, xcprettyOptions, false, false, swiftPackagesPath)
 				}
 				log.Errorf("isAutomaticRetryOnReason=false, no more retry, stopping the test!")
 				return fullOutputStr, exitCode, testError
@@ -258,7 +266,7 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 		if isRetryOnFail {
 			log.Warnf("Test run failed")
 			log.Printf("isRetryOnFail=true - retrying...")
-			return runTest(buildTestParams, outputTool, xcprettyOptions, false, false)
+			return runTest(buildTestParams, outputTool, xcprettyOptions, false, false, swiftPackagesPath)
 		}
 
 		return fullOutputStr, exitCode, testError
@@ -615,9 +623,18 @@ func main() {
 		}
 	}
 
+	var swiftPackagesPath string
+	if xcodeMajorVersion >= 11 {
+		var err error
+		swiftPackagesPath, err = cache.SwiftPackagesPath(absProjectPath)
+		if err != nil {
+			fail("Failed to get Swift Packages path, error: %s", err)
+		}
+	}
+
 	//
 	// Run test
-	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, outputTool, configs.XcprettyTestOptions, true, configs.ShouldRetryTestOnFail)
+	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, outputTool, configs.XcprettyTestOptions, true, configs.ShouldRetryTestOnFail, swiftPackagesPath)
 
 	logPth, err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil))
 
@@ -679,8 +696,8 @@ that will attach the file to your build as an artifact!`, logPth)
 	}
 
 	// Cache swift PM
-	if configs.CacheLevel == "swift_packages" {
-		if err := cache.CollectPackagesCache(absProjectPath); err != nil {
+	if xcodeMajorVersion >= 11 && configs.CacheLevel == "swift_packages" {
+		if err := cache.CollectSwiftPackages(absProjectPath); err != nil {
 			log.Warnf("Failed to mark swift packages for caching, error: %s", err)
 		}
 	}
