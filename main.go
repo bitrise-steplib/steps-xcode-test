@@ -23,11 +23,11 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/stringutil"
+	simulatorPkg "github.com/bitrise-io/go-xcode/simulator"
 	"github.com/bitrise-io/go-xcode/utility"
 	cache "github.com/bitrise-io/go-xcode/xcodecache"
 	cmd "github.com/bitrise-steplib/steps-xcode-test/command"
 	"github.com/bitrise-steplib/steps-xcode-test/models"
-	simulatorPkg "github.com/bitrise-io/go-xcode/simulator"
 	shellquote "github.com/kballard/go-shellquote"
 )
 
@@ -537,12 +537,31 @@ func main() {
 	}
 
 	// Simulator infos
-	simulator, err := simulatorPkg.GetSimulatorInfo(configs.SimulatorOsVersion, configs.SimulatorDevice)
-	if err != nil {
+	var simulator simulatorPkg.InfoModel
+	var errGetSimulator error
+	if configs.SimulatorOsVersion == "latest" {
+		simulatorPlatformSplit := strings.Split(configs.SimulatorPlatform, " Simulator")
+		if len(simulatorPlatformSplit) == 0 {
+			errGetSimulator = fmt.Errorf("failed to parse simulator platform (%s)", configs.SimulatorPlatform)
+		}
+
+		var simulatorDevice = configs.SimulatorDevice
+		if simulatorDevice == "iPad" {
+			log.Warnf("Given device (%s) is deprecated, using (iPad 2)...", simulatorDevice)
+			simulatorDevice = "iPad 2"
+		}
+
+		desiredPlatform := simulatorPlatformSplit[0]
+		simulator, _, errGetSimulator = simulatorPkg.GetLatestSimulatorInfoAndVersion(desiredPlatform, simulatorDevice)
+	} else {
+		simulator, errGetSimulator = simulatorPkg.GetSimulatorInfo(configs.SimulatorOsVersion, configs.SimulatorDevice)
+	}
+
+	if errGetSimulator != nil {
 		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
 			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 		}
-		fail("failed to get simulator udid, error: ", err)
+		fail("failed to get simulator udid, error: ", errGetSimulator)
 	}
 
 	log.Infof("Simulator infos")
