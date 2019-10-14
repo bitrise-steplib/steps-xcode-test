@@ -23,7 +23,7 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/stringutil"
-	simulatorPkg "github.com/bitrise-io/go-xcode/simulator"
+	simulator "github.com/bitrise-io/go-xcode/simulator"
 	"github.com/bitrise-io/go-xcode/utility"
 	cache "github.com/bitrise-io/go-xcode/xcodecache"
 	cmd "github.com/bitrise-steplib/steps-xcode-test/command"
@@ -537,7 +537,7 @@ func main() {
 	}
 
 	// Simulator infos
-	var simulator simulatorPkg.InfoModel
+	var sim simulator.InfoModel
 	var errGetSimulator error
 	if configs.SimulatorOsVersion == "latest" {
 		simulatorPlatformSplit := strings.Split(configs.SimulatorPlatform, " Simulator")
@@ -552,9 +552,9 @@ func main() {
 		}
 
 		desiredPlatform := simulatorPlatformSplit[0]
-		simulator, _, errGetSimulator = simulatorPkg.GetLatestSimulatorInfoAndVersion(desiredPlatform, simulatorDevice)
+		sim, _, errGetSimulator = simulator.GetLatestSimulatorInfoAndVersion(desiredPlatform, simulatorDevice)
 	} else {
-		simulator, errGetSimulator = simulatorPkg.GetSimulatorInfo(configs.SimulatorOsVersion, configs.SimulatorDevice)
+		sim, errGetSimulator = simulator.GetSimulatorInfo(configs.SimulatorOsVersion, configs.SimulatorDevice)
 	}
 
 	if errGetSimulator != nil {
@@ -565,10 +565,10 @@ func main() {
 	}
 
 	log.Infof("Simulator infos")
-	log.Printf("* simulator_name: %s, UDID: %s, status: %s", simulator.Name, simulator.ID, simulator.Status)
+	log.Printf("* simulator_name: %s, UDID: %s, status: %s", sim.Name, sim.ID, sim.Status)
 
 	// Device Destination
-	deviceDestination := fmt.Sprintf("id=%s", simulator.ID)
+	deviceDestination := fmt.Sprintf("id=%s", sim.ID)
 
 	log.Printf("* device_destination: %s", deviceDestination)
 	fmt.Println()
@@ -607,10 +607,10 @@ func main() {
 
 	//
 	// If headless mode disabled - Start simulator
-	if simulator.Status == "Shutdown" && !configs.HeadlessMode {
-		log.Infof("Booting simulator (%s)...", simulator.ID)
+	if sim.Status == "Shutdown" && !configs.HeadlessMode {
+		log.Infof("Booting simulator (%s)...", sim.ID)
 
-		if err := simulatorPkg.BootSimulator(simulator, xcodebuildVersion); err != nil {
+		if err :=  simulator.BootSimulator(sim, xcodebuildVersion); err != nil {
 			if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
 				log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 			}
