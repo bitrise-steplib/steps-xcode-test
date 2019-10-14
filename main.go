@@ -538,6 +538,7 @@ func main() {
 
 	// Simulator infos
 	var sim simulator.InfoModel
+	var osVersion string
 	var errGetSimulator error
 	if configs.SimulatorOsVersion == "latest" {
 		simulatorPlatformSplit := strings.Split(configs.SimulatorPlatform, " Simulator")
@@ -552,7 +553,7 @@ func main() {
 		}
 
 		desiredPlatform := simulatorPlatformSplit[0]
-		sim, _, errGetSimulator = simulator.GetLatestSimulatorInfoAndVersion(desiredPlatform, simulatorDevice)
+		sim, osVersion, errGetSimulator = simulator.GetLatestSimulatorInfoAndVersion(desiredPlatform, simulatorDevice)
 	} else {
 		sim, errGetSimulator = simulator.GetSimulatorInfo(configs.SimulatorOsVersion, configs.SimulatorDevice)
 	}
@@ -565,7 +566,7 @@ func main() {
 	}
 
 	log.Infof("Simulator infos")
-	log.Printf("* simulator_name: %s, UDID: %s, status: %s", sim.Name, sim.ID, sim.Status)
+	log.Printf("* simulator_name: %s, version: %s, UDID: %s, status: %s", sim.Name, osVersion, sim.ID, sim.Status)
 
 	// Device Destination
 	deviceDestination := fmt.Sprintf("id=%s", sim.ID)
