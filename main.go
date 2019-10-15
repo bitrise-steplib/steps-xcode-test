@@ -537,21 +537,23 @@ func main() {
 	}
 
 	// Simulator infos
-	var sim simulator.InfoModel
-	var osVersion string
-	var errGetSimulator error
-	if configs.SimulatorOsVersion == "latest" {
-		simulatorPlatformSplit := strings.Split(configs.SimulatorPlatform, " Simulator")
-		if len(simulatorPlatformSplit) == 0 {
-			errGetSimulator = fmt.Errorf("failed to parse simulator platform (%s)", configs.SimulatorPlatform)
-		}
+	var (
+		sim             simulator.InfoModel
+		osVersion       string
+		errGetSimulator error
+	)
 
+	if configs.SimulatorOsVersion == "latest" {
 		var simulatorDevice = configs.SimulatorDevice
 		if simulatorDevice == "iPad" {
 			log.Warnf("Given device (%s) is deprecated, using (iPad 2)...", simulatorDevice)
 			simulatorDevice = "iPad 2"
 		}
 
+		simulatorPlatformSplit := strings.Split(configs.SimulatorPlatform, " Simulator")
+		if len(simulatorPlatformSplit) == 0 {
+			errGetSimulator = fmt.Errorf("failed to parse simulator platform (%s)", configs.SimulatorPlatform)
+		}
 		desiredPlatform := simulatorPlatformSplit[0]
 		sim, osVersion, errGetSimulator = simulator.GetLatestSimulatorInfoAndVersion(desiredPlatform, simulatorDevice)
 	} else {
@@ -611,7 +613,7 @@ func main() {
 	if sim.Status == "Shutdown" && !configs.HeadlessMode {
 		log.Infof("Booting simulator (%s)...", sim.ID)
 
-		if err :=  simulator.BootSimulator(sim, xcodebuildVersion); err != nil {
+		if err := simulator.BootSimulator(sim, xcodebuildVersion); err != nil {
 			if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
 				log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 			}
