@@ -550,12 +550,8 @@ func main() {
 			simulatorDevice = "iPad 2"
 		}
 
-		simulatorPlatformSplit := strings.Split(configs.SimulatorPlatform, " Simulator")
-		if len(simulatorPlatformSplit) == 0 {
-			errGetSimulator = fmt.Errorf("failed to parse simulator platform (%s)", configs.SimulatorPlatform)
-		}
-		desiredPlatform := simulatorPlatformSplit[0]
-		sim, osVersion, errGetSimulator = simulator.GetLatestSimulatorInfoAndVersion(desiredPlatform, simulatorDevice)
+		platform := strings.TrimSuffix(configs.SimulatorPlatform, " Simulator")
+		sim, osVersion, errGetSimulator = simulator.GetLatestSimulatorInfoAndVersion(platform, simulatorDevice)
 	} else {
 		sim, errGetSimulator = simulator.GetSimulatorInfo(configs.SimulatorOsVersion, configs.SimulatorDevice)
 	}
