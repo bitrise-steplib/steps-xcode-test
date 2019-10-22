@@ -23,11 +23,11 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/stringutil"
+	simulator "github.com/bitrise-io/go-xcode/simulator"
 	"github.com/bitrise-io/go-xcode/utility"
 	cache "github.com/bitrise-io/go-xcode/xcodecache"
 	cmd "github.com/bitrise-steplib/steps-xcode-test/command"
 	"github.com/bitrise-steplib/steps-xcode-test/models"
-	"github.com/bitrise-steplib/steps-xcode-test/xcodeutil"
 	shellquote "github.com/kballard/go-shellquote"
 )
 
@@ -537,19 +537,37 @@ func main() {
 	}
 
 	// Simulator infos
-	simulator, err := xcodeutil.GetSimulator(configs.SimulatorPlatform, configs.SimulatorDevice, configs.SimulatorOsVersion)
-	if err != nil {
+	var (
+		sim             simulator.InfoModel
+		osVersion       string
+		errGetSimulator error
+	)
+
+	if configs.SimulatorOsVersion == "latest" {
+		var simulatorDevice = configs.SimulatorDevice
+		if simulatorDevice == "iPad" {
+			log.Warnf("Given device (%s) is deprecated, using (iPad 2)...", simulatorDevice)
+			simulatorDevice = "iPad 2"
+		}
+
+		platform := strings.TrimSuffix(configs.SimulatorPlatform, " Simulator")
+		sim, osVersion, errGetSimulator = simulator.GetLatestSimulatorInfoAndVersion(platform, simulatorDevice)
+	} else {
+		sim, errGetSimulator = simulator.GetSimulatorInfo(configs.SimulatorOsVersion, configs.SimulatorDevice)
+	}
+
+	if errGetSimulator != nil {
 		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
 			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 		}
-		fail("failed to get simulator udid, error: ", err)
+		fail("failed to get simulator udid, error: ", errGetSimulator)
 	}
 
 	log.Infof("Simulator infos")
-	log.Printf("* simulator_name: %s, UDID: %s, status: %s", simulator.Name, simulator.SimID, simulator.Status)
+	log.Printf("* simulator_name: %s, version: %s, UDID: %s, status: %s", sim.Name, osVersion, sim.ID, sim.Status)
 
 	// Device Destination
-	deviceDestination := fmt.Sprintf("id=%s", simulator.SimID)
+	deviceDestination := fmt.Sprintf("id=%s", sim.ID)
 
 	log.Printf("* device_destination: %s", deviceDestination)
 	fmt.Println()
@@ -588,10 +606,10 @@ func main() {
 
 	//
 	// If headless mode disabled - Start simulator
-	if simulator.Status == "Shutdown" && !configs.HeadlessMode {
-		log.Infof("Booting simulator (%s)...", simulator.SimID)
+	if sim.Status == "Shutdown" && !configs.HeadlessMode {
+		log.Infof("Booting simulator (%s)...", sim.ID)
 
-		if err := xcodeutil.BootSimulator(simulator, xcodebuildVersion); err != nil {
+		if err := simulator.BootSimulator(sim, xcodebuildVersion); err != nil {
 			if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
 				log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 			}
