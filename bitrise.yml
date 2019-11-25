@@ -60,7 +60,7 @@ workflows:
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
     - SIMULATOR_DEVICE: iPhone 8 Plus
-    - SIMULATOR_OS_VERSION: "13.1"
+    - SIMULATOR_OS_VERSION: latest
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
     - RETRY_ON_FAIL: "no"
