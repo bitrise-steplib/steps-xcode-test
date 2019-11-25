@@ -60,6 +60,7 @@ workflows:
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
     - SIMULATOR_DEVICE: iPhone 8 Plus
+    - SIMULATOR_OS_VERSION: "13.1"
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
     - RETRY_ON_FAIL: "no"
@@ -247,6 +248,7 @@ workflows:
         - should_retry_test_on_fail: $RETRY_ON_FAIL
         - generate_code_coverage_files: "no"
         - simulator_device: $SIMULATOR_DEVICE
+        - simulator_os_version: $SIMULATOR_OS_VERSION
         - simulator_platform: $SIMULATOR_PLATFORM
         - should_build_before_test: "yes"
         - xcodebuild_test_options: -verbose
@@ -373,6 +375,7 @@ workflows:
         - should_retry_test_on_fail: $RETRY_ON_FAIL
         - generate_code_coverage_files: "no"
         - simulator_device: $SIMULATOR_DEVICE
+        - simulator_os_version: $SIMULATOR_OS_VERSION
         - simulator_platform: $SIMULATOR_PLATFORM
         - should_build_before_test: "no"
         - xcodebuild_test_options: -verbose
