@@ -210,11 +210,11 @@ func parseActivites(activitySummariesData []plistutil.PlistData) ([]Activity, er
 
 func parseSceenshots(activitySummary plistutil.PlistData, activityUUID string, activityStartTime time.Time) ([]Screenshot, error) {
 	getAttachmentType := func(item map[string]interface{}) ScreenshotsType {
-		value, found := item["Attachments"]
+		_, found := item["Attachments"]
 		if found {
 			return ScreenshotsAsAttachments
 		}
-		value, found = item["HasScreenshotData"]
+		value, found := item["HasScreenshotData"]
 		if found {
 			hasScreenshot, casted := value.(bool)
 			if casted && hasScreenshot {

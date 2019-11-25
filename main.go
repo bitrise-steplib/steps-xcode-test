@@ -548,7 +548,7 @@ func main() {
 		var simulatorDevice = configs.SimulatorDevice
 		if simulatorDevice == "iPad" {
 			log.Warnf("Given device (%s) is deprecated, using (iPad 2)...", simulatorDevice)
-			simulatorDevice = "iPad 2"
+			simulatorDevice = "iPad Air (3rd generation)"
 		}
 
 		sim, osVersion, errGetSimulator = simulator.GetLatestSimulatorInfoAndVersion(platform, simulatorDevice)
