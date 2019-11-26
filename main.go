@@ -543,24 +543,31 @@ func main() {
 		errGetSimulator error
 	)
 
+	platform := strings.TrimSuffix(configs.SimulatorPlatform, " Simulator")
 	if configs.SimulatorOsVersion == "latest" {
 		var simulatorDevice = configs.SimulatorDevice
 		if simulatorDevice == "iPad" {
 			log.Warnf("Given device (%s) is deprecated, using (iPad 2)...", simulatorDevice)
-			simulatorDevice = "iPad 2"
+			simulatorDevice = "iPad Air (3rd generation)"
 		}
 
-		platform := strings.TrimSuffix(configs.SimulatorPlatform, " Simulator")
 		sim, osVersion, errGetSimulator = simulator.GetLatestSimulatorInfoAndVersion(platform, simulatorDevice)
 	} else {
-		sim, errGetSimulator = simulator.GetSimulatorInfo(configs.SimulatorOsVersion, configs.SimulatorDevice)
+		normalizedOsVersion := configs.SimulatorOsVersion
+		osVersionSplit := strings.Split(normalizedOsVersion, ".")
+		if len(osVersionSplit) > 2 {
+			normalizedOsVersion = strings.Join(osVersionSplit[0:2], ".")
+		}
+		platformAndVersion := fmt.Sprintf("%s %s", platform, normalizedOsVersion)
+
+		sim, errGetSimulator = simulator.GetSimulatorInfo(platformAndVersion, configs.SimulatorDevice)
 	}
 
 	if errGetSimulator != nil {
 		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
 			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 		}
-		fail("failed to get simulator udid, error: ", errGetSimulator)
+		fail("failed to get simulator udid, error: %s", errGetSimulator)
 	}
 
 	log.Infof("Simulator infos")
