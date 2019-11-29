@@ -34,7 +34,7 @@ workflows:
     - OUTPUT_TOOL: xcpretty
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
-    - SIMULATOR_DEVICE: iPhone 8 Plus
+    - SIMULATOR_DEVICES: iPhone 8 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
     - RETRY_ON_FAIL: "yes"
@@ -59,7 +59,7 @@ workflows:
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
-    - SIMULATOR_DEVICE: iPhone 8 Plus
+    - SIMULATOR_DEVICES: iPhone 8 Plus
     - SIMULATOR_OS_VERSION: latest
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
@@ -75,7 +75,7 @@ workflows:
     - OUTPUT_TOOL: xcpretty
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
-    - SIMULATOR_DEVICE: iPhone 8 Plus
+    - SIMULATOR_DEVICES: iPhone 8 Plus
     - SIMULATOR_OS_VERSION: latest
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
@@ -105,7 +105,7 @@ workflows:
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
-    - SIMULATOR_DEVICE: iPhone 8 Plus
+    - SIMULATOR_DEVICES: iPhone 8 Plus
     - SIMULATOR_OS_VERSION: latest
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
@@ -121,7 +121,7 @@ workflows:
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: ios-xcode-8.0/ios-xcode-8.0.xcodeproj
     - BITRISE_SCHEME: ios-xcode-8.0
-    - SIMULATOR_DEVICE: iPhone 6 Plus
+    - SIMULATOR_DEVICES: iPhone 6 Plus
     - SIMULATOR_OS_VERSION: latest
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
@@ -136,7 +136,7 @@ workflows:
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: NPO Live.xcworkspace
     - BITRISE_SCHEME: NPO Live
-    - SIMULATOR_DEVICE: Apple TV
+    - SIMULATOR_DEVICES: Apple TV
     - SIMULATOR_OS_VERSION: latest
     - SIMULATOR_PLATFORM: tvOS Simulator
     - HEADLESS_MODE: "yes"
@@ -151,7 +151,7 @@ workflows:
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: BullsEye.xcodeproj
     - BITRISE_SCHEME: BullsEye
-    - SIMULATOR_DEVICE: iPhone 8 Plus
+    - SIMULATOR_DEVICES: iPhone 8 Plus
     - SIMULATOR_OS_VERSION: latest
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "yes"
@@ -166,7 +166,23 @@ workflows:
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
-    - SIMULATOR_DEVICE: iPhone 8 Plus
+    - SIMULATOR_DEVICES: iPhone 8 Plus
+    - SIMULATOR_OS_VERSION: latest
+    - SIMULATOR_PLATFORM: iOS Simulator
+    - HEADLESS_MODE: "no"
+    - RETRY_ON_FAIL: "no"
+    after_run:
+    - _test
+    - check_exported_artifacts
+
+  ci-objc-multiple-devices:
+    envs:
+    - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
+    - SAMPLE_APP_BRANCH: master
+    - OUTPUT_TOOL: xcodebuild
+    - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
+    - BITRISE_SCHEME: ios-simple-objc
+    - SIMULATOR_DEVICES: 'iPhone 8,iPhone SE'
     - SIMULATOR_OS_VERSION: latest
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "no"
@@ -182,7 +198,7 @@ workflows:
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: ios-xcode-8.0/ios-xcode-8.0.xcodeproj
     - BITRISE_SCHEME: ios-xcode-8.0
-    - SIMULATOR_DEVICE: iPhone 6 Plus
+    - SIMULATOR_DEVICES: iPhone 6 Plus
     - SIMULATOR_OS_VERSION: latest
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "no"
@@ -197,7 +213,7 @@ workflows:
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: NPO Live.xcworkspace
     - BITRISE_SCHEME: NPO Live
-    - SIMULATOR_DEVICE: Apple TV
+    - SIMULATOR_DEVICES: Apple TV
     - SIMULATOR_OS_VERSION: latest
     - SIMULATOR_PLATFORM: tvOS Simulator
     - HEADLESS_MODE: "no"
@@ -212,7 +228,7 @@ workflows:
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: BullsEye.xcodeproj
     - BITRISE_SCHEME: BullsEye
-    - SIMULATOR_DEVICE: iPhone 8 Plus
+    - SIMULATOR_DEVICES: iPhone 8 Plus
     - SIMULATOR_OS_VERSION: latest
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "no"
@@ -256,7 +272,7 @@ workflows:
         - is_clean_build: "yes"
         - should_retry_test_on_fail: $RETRY_ON_FAIL
         - generate_code_coverage_files: "no"
-        - simulator_device: $SIMULATOR_DEVICE
+        - simulator_devices: "$SIMULATOR_DEVICES"
         - simulator_os_version: $SIMULATOR_OS_VERSION
         - simulator_platform: $SIMULATOR_PLATFORM
         - should_build_before_test: "yes"
@@ -343,7 +359,7 @@ workflows:
     - OUTPUT_TOOL: xcodebuild
     - BITRISE_PROJECT_PATH: sample-swiftpm.xcodeproj
     - BITRISE_SCHEME: "sample swiftpm"
-    - SIMULATOR_DEVICE: iPhone 8 Plus
+    - SIMULATOR_DEVICES: iPhone 8 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "no"
     - RETRY_ON_FAIL: "no"
@@ -383,7 +399,7 @@ workflows:
         - is_clean_build: "no"
         - should_retry_test_on_fail: $RETRY_ON_FAIL
         - generate_code_coverage_files: "no"
-        - simulator_device: $SIMULATOR_DEVICE
+        - simulator_devices: $SIMULATOR_DEVICES
         - simulator_os_version: latest
         - simulator_platform: $SIMULATOR_PLATFORM
         - should_build_before_test: "no"

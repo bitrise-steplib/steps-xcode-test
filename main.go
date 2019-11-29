@@ -75,7 +75,7 @@ type Configs struct {
 
 	// Simulator Configs
 	SimulatorPlatform  string `env:"simulator_platform,required"`
-	SimulatorDevice    string `env:"simulator_device,required"`
+	SimulatorDevices   string `env:"simulator_devices,required"`
 	SimulatorOsVersion string `env:"simulator_os_version,required"`
 
 	// Test Run Configs
@@ -227,7 +227,11 @@ func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (stri
 	if buildParams.DisableIndexWhileBuilding {
 		xcodebuildArgs = append(xcodebuildArgs, "COMPILER_INDEX_STORE_ENABLE=NO")
 	}
-	xcodebuildArgs = append(xcodebuildArgs, "build", "-destination", buildParams.DeviceDestination)
+	xcodebuildArgs = append(xcodebuildArgs, "build")
+
+	for _, destination := range buildParams.DeviceDestinations {
+		xcodebuildArgs = append(xcodebuildArgs, "-destination", destination)
+	}
 
 	log.Infof("Building the project...")
 
@@ -304,7 +308,12 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 		xcodebuildArgs = append(xcodebuildArgs, "COMPILER_INDEX_STORE_ENABLE=NO")
 	}
 
-	xcodebuildArgs = append(xcodebuildArgs, "test", "-destination", buildParams.DeviceDestination)
+	xcodebuildArgs = append(xcodebuildArgs, "test")
+
+	for _, destination := range buildParams.DeviceDestinations {
+		xcodebuildArgs = append(xcodebuildArgs, "-destination", destination)
+	}
+
 	xcodebuildArgs = append(xcodebuildArgs, "-resultBundlePath", buildTestParams.TestOutputDir)
 
 	if buildTestParams.GenerateCodeCoverage {
@@ -467,6 +476,64 @@ func fail(format string, v ...interface{}) {
 	os.Exit(1)
 }
 
+func getSimulatorsInfo(configs Configs) []simulator.InfoModel {
+	var (
+		sim             simulator.InfoModel
+		errGetSimulator error
+	)
+
+	platform := strings.TrimSuffix(configs.SimulatorPlatform, " Simulator")
+	simulatorDevices := strings.Split(configs.SimulatorDevices, ",")
+
+	var results []simulator.InfoModel
+
+	if configs.SimulatorOsVersion == "latest" {
+
+		for _, device := range simulatorDevices {
+			if device == "iPad" {
+				log.Warnf("Given device (%s) is deprecated, using (iPad 2)...", device)
+				device = "iPad Air (3rd generation)"
+			}
+			sim, _, errGetSimulator = simulator.GetLatestSimulatorInfoAndVersion(platform, device)
+			checkSimulatorError(errGetSimulator)
+			results = append(results, sim)
+		}
+
+	} else {
+
+		normalizedOsVersion := configs.SimulatorOsVersion
+		osVersionSplit := strings.Split(normalizedOsVersion, ".")
+		if len(osVersionSplit) > 2 {
+			normalizedOsVersion = strings.Join(osVersionSplit[0:2], ".")
+		}
+		platformAndVersion := fmt.Sprintf("%s %s", platform, normalizedOsVersion)
+
+		for _, device := range simulatorDevices {
+			sim, errGetSimulator = simulator.GetSimulatorInfo(platformAndVersion, device)
+			checkSimulatorError(errGetSimulator)
+			results = append(results, sim)
+		}
+	}
+	return results
+}
+
+func checkSimulatorError(errGetSimulator error) {
+	if errGetSimulator != nil {
+		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
+			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
+		}
+		fail("failed to get simulator udid, error: %s", errGetSimulator)
+	}
+}
+
+func getDeviceDestinations(sims []simulator.InfoModel) []string {
+	var destinations []string
+	for _, sim := range sims {
+		destinations = append(destinations, fmt.Sprintf("id=%s", sim.ID))
+	}
+	return destinations
+}
+
 //--------------------
 // Main
 //--------------------
@@ -537,47 +604,21 @@ func main() {
 	}
 
 	// Simulator infos
-	var (
-		sim             simulator.InfoModel
-		osVersion       string
-		errGetSimulator error
-	)
-
-	platform := strings.TrimSuffix(configs.SimulatorPlatform, " Simulator")
-	if configs.SimulatorOsVersion == "latest" {
-		var simulatorDevice = configs.SimulatorDevice
-		if simulatorDevice == "iPad" {
-			log.Warnf("Given device (%s) is deprecated, using (iPad 2)...", simulatorDevice)
-			simulatorDevice = "iPad Air (3rd generation)"
-		}
-
-		sim, osVersion, errGetSimulator = simulator.GetLatestSimulatorInfoAndVersion(platform, simulatorDevice)
-	} else {
-		normalizedOsVersion := configs.SimulatorOsVersion
-		osVersionSplit := strings.Split(normalizedOsVersion, ".")
-		if len(osVersionSplit) > 2 {
-			normalizedOsVersion = strings.Join(osVersionSplit[0:2], ".")
-		}
-		platformAndVersion := fmt.Sprintf("%s %s", platform, normalizedOsVersion)
-
-		sim, errGetSimulator = simulator.GetSimulatorInfo(platformAndVersion, configs.SimulatorDevice)
-	}
-
-	if errGetSimulator != nil {
-		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
-			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
-		}
-		fail("failed to get simulator udid, error: %s", errGetSimulator)
-	}
+	sims := getSimulatorsInfo(configs)
 
 	log.Infof("Simulator infos")
-	log.Printf("* simulator_name: %s, version: %s, UDID: %s, status: %s", sim.Name, osVersion, sim.ID, sim.Status)
+
+	for _, sim := range sims {
+		log.Printf("* simulator_name: %s, UDID: %s, status: %s", sim.Name, sim.ID, sim.Status)
+	}
 
 	// Device Destination
-	deviceDestination := fmt.Sprintf("id=%s", sim.ID)
+	deviceDestinations := getDeviceDestinations(sims)
 
-	log.Printf("* device_destination: %s", deviceDestination)
+	log.Printf("* device_destinations: %s", deviceDestinations)
 	fmt.Println()
+
+	// -----------------
 
 	// Create temporary directory for test outputs
 	var testOutputDir string
@@ -594,7 +635,7 @@ func main() {
 		Action:                    action,
 		ProjectPath:               absProjectPath,
 		Scheme:                    configs.Scheme,
-		DeviceDestination:         deviceDestination,
+		DeviceDestinations:        deviceDestinations,
 		CleanBuild:                configs.IsCleanBuild,
 		DisableIndexWhileBuilding: configs.DisableIndexWhileBuilding,
 	}
@@ -613,17 +654,25 @@ func main() {
 
 	//
 	// If headless mode disabled - Start simulator
-	if sim.Status == "Shutdown" && !configs.HeadlessMode {
-		log.Infof("Booting simulator (%s)...", sim.ID)
+	var booted bool = false
 
-		if err := simulator.BootSimulator(sim, xcodebuildVersion); err != nil {
-			if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
-				log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
+	for _, sim := range sims {
+		if sim.Status == "Shutdown" && !configs.HeadlessMode {
+			log.Infof("Booting simulator (%s)...", sim.ID)
+
+			if err := simulator.BootSimulator(sim, xcodebuildVersion); err != nil {
+				if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
+					log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
+				}
+				fail("failed to boot simulator, error: ", err)
 			}
-			fail("failed to boot simulator, error: ", err)
-		}
 
-		progress.NewDefaultWrapper("Waiting for simulator boot").WrapAction(func() {
+			booted = true
+		}
+	}
+
+	if booted {
+		progress.NewDefaultWrapper("Waiting for simulators boot").WrapAction(func() {
 			time.Sleep(60 * time.Second)
 		})
 

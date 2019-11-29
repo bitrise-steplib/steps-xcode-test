@@ -9,7 +9,7 @@ type XcodeBuildParamsModel struct {
 	Action                    string
 	ProjectPath               string
 	Scheme                    string
-	DeviceDestination         string
+	DeviceDestinations        []string
 	CleanBuild                bool
 	DisableIndexWhileBuilding bool
 }
