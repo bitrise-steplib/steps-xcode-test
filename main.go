@@ -467,6 +467,37 @@ func fail(format string, v ...interface{}) {
 	os.Exit(1)
 }
 
+func prepareSimulator(platform, version, device string) (string, simulator.InfoModel, error) {
+	var (
+		sim             simulator.InfoModel
+		osVersion       string
+		errGetSimulator error
+	)
+
+	platform = strings.TrimSuffix(platform, " Simulator")
+
+	if version == "latest" {
+		var simulatorDevice = device
+		if simulatorDevice == "iPad" {
+			log.Warnf("Given device (%s) is deprecated, using (iPad 2)...", simulatorDevice)
+			simulatorDevice = "iPad Air (3rd generation)"
+		}
+
+		sim, osVersion, errGetSimulator = simulator.GetLatestSimulatorInfoAndVersion(platform, simulatorDevice)
+	} else {
+		normalizedOsVersion := version
+		osVersionSplit := strings.Split(normalizedOsVersion, ".")
+		if len(osVersionSplit) > 2 {
+			normalizedOsVersion = strings.Join(osVersionSplit[0:2], ".")
+		}
+		platformAndVersion := fmt.Sprintf("%s %s", platform, normalizedOsVersion)
+
+		sim, errGetSimulator = simulator.GetSimulatorInfo(platformAndVersion, device)
+	}
+
+	return osVersion, sim, errGetSimulator
+}
+
 //--------------------
 // Main
 //--------------------
@@ -537,31 +568,7 @@ func main() {
 	}
 
 	// Simulator infos
-	var (
-		sim             simulator.InfoModel
-		osVersion       string
-		errGetSimulator error
-	)
-
-	platform := strings.TrimSuffix(configs.SimulatorPlatform, " Simulator")
-	if configs.SimulatorOsVersion == "latest" {
-		var simulatorDevice = configs.SimulatorDevice
-		if simulatorDevice == "iPad" {
-			log.Warnf("Given device (%s) is deprecated, using (iPad 2)...", simulatorDevice)
-			simulatorDevice = "iPad Air (3rd generation)"
-		}
-
-		sim, osVersion, errGetSimulator = simulator.GetLatestSimulatorInfoAndVersion(platform, simulatorDevice)
-	} else {
-		normalizedOsVersion := configs.SimulatorOsVersion
-		osVersionSplit := strings.Split(normalizedOsVersion, ".")
-		if len(osVersionSplit) > 2 {
-			normalizedOsVersion = strings.Join(osVersionSplit[0:2], ".")
-		}
-		platformAndVersion := fmt.Sprintf("%s %s", platform, normalizedOsVersion)
-
-		sim, errGetSimulator = simulator.GetSimulatorInfo(platformAndVersion, configs.SimulatorDevice)
-	}
+	osVersion, sim, errGetSimulator := prepareSimulator(configs.SimulatorPlatform, configs.SimulatorOsVersion, configs.SimulatorDevice)
 
 	if errGetSimulator != nil {
 		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
