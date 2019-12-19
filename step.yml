@@ -1,12 +1,24 @@
 title: Xcode Test for iOS
-summary: |-
-  Runs Xcode's `test` action on an iOS project.
+summary: Runs your project's pre-defined Xcode tests on every build.
 description: |-
-  Runs Xcode's `test` action on an iOS project.
+  This Steps runs all those Xcode tests that are included in your project. If the tests are written correctly, you do not even have to configure this Step. The Step will work if your project has test targets and your Workflow has the **Deploy to Bitrise.io** Step which exports the test results and (code coverage files if needed) to the Test Reports page. This Step does not need any code signing files since the Step deploys only the test results to [bitrise.io](https://www.bitrise.io).
+  
+  ### Configuring the Step
+  If you click into the Step, there are some required input fields whose input must be set in accordance with the Xcode configuration of the project.  The **Scheme name** input field must be marked as Shared in Xcode. The **Device**, **OS version**, **Platform** input fields must be set to the value that's shown in Xcode’s device selection dropdown menu.
+  If you wish to export code coverage files as well, set the "Generate code coverage files?" to `yes`.
 
-  Write the tests and run them on every build just to make sure those tiny
-  code goblins didn't put something in the code that shouldn't be there while
-  you were at the daily Scrum meeting.
+  ### Troubleshooting
+  If the **Deploy to Bitrise.io** Step is missing from your Workflow, then the **Xcode for iOS** Step will not be able to export the test results on the Test Reports page and you won't be able to view them either.
+  The xcpretty output tool does not support parallel tests. If parallel tests are enabled in your project, go to the Step’s Debug section and set the **Output tool** input’s value to xcodebuild.
+  If the Xcode test fails with the error `Unable to find a destination matching the provided destination specifier`, then check our [system reports](https://github.com/bitrise-io/bitrise.io/tree/master/system_reports) to see if the requested simulator is on the stack or not. If it is not, then pick a simulator that is on the stack.
+
+  ### Useful links
+  [About Test Reports](https://devcenter.bitrise.io/testing/test-reports/)
+  [Running Xcode Tests for iOS](https://devcenter.bitrise.io/testing/running-xcode-tests/)
+
+  ### Related Steps
+  [Deploy to Bitrise.io](https://www.bitrise.io/integrations/steps/deploy-to-bitrise-io)
+  [iOS Device Testing](https://www.bitrise.io/integrations/steps/virtual-device-testing-for-ios)
 website: https://github.com/bitrise-steplib/steps-xcode-test
 source_code_url: https://github.com/bitrise-steplib/steps-xcode-test
 support_url: https://github.com/bitrise-steplib/steps-xcode-test/issues
