@@ -1,5 +1,6 @@
 title: Xcode Test for iOS
-summary: Runs your project's pre-defined Xcode tests on every build.
+summary: |-
+  Runs your project's pre-defined Xcode tests on every build.
 description: |-
   This Steps runs all those Xcode tests that are included in your project. If the tests are written correctly, you do not even have to configure this Step. The Step will work if your project has test targets and your Workflow has the **Deploy to Bitrise.io** Step which exports the test results and (code coverage files if needed) to the Test Reports page. This Step does not need any code signing files since the Step deploys only the test results to [bitrise.io](https://www.bitrise.io).
   
