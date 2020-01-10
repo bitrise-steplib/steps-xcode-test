@@ -14,12 +14,12 @@ description: |-
   If the Xcode test fails with the error `Unable to find a destination matching the provided destination specifier`, then check our [system reports](https://github.com/bitrise-io/bitrise.io/tree/master/system_reports) to see if the requested simulator is on the stack or not. If it is not, then pick a simulator that is on the stack.
 
   ### Useful links
-  [About Test Reports](https://devcenter.bitrise.io/testing/test-reports/)
-  [Running Xcode Tests for iOS](https://devcenter.bitrise.io/testing/running-xcode-tests/)
+  - [About Test Reports](https://devcenter.bitrise.io/testing/test-reports/)
+  - [Running Xcode Tests for iOS](https://devcenter.bitrise.io/testing/running-xcode-tests/)
 
   ### Related Steps
-  [Deploy to Bitrise.io](https://www.bitrise.io/integrations/steps/deploy-to-bitrise-io)
-  [iOS Device Testing](https://www.bitrise.io/integrations/steps/virtual-device-testing-for-ios)
+  - [Deploy to Bitrise.io](https://www.bitrise.io/integrations/steps/deploy-to-bitrise-io)
+  - [iOS Device Testing](https://www.bitrise.io/integrations/steps/virtual-device-testing-for-ios)
 website: https://github.com/bitrise-steplib/steps-xcode-test
 source_code_url: https://github.com/bitrise-steplib/steps-xcode-test
 support_url: https://github.com/bitrise-steplib/steps-xcode-test/issues
