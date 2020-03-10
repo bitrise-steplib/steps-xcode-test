@@ -243,7 +243,7 @@ inputs:
   - should_build_before_test: "yes"
     opts:
       category: Debug
-      title: "(Experimental) Explicitly perform a build before testing?"
+      title: "Should run a build before testing?"
       description: |-
         Previous Xcode versions and configurations may throw the error `iPhoneSimulator: Timed out waiting 120 seconds for simulator to boot, current state is 1.`
         when the compilation before performing the tests takes too long.
@@ -259,7 +259,7 @@ inputs:
   - should_retry_test_on_fail: "no"
     opts:
       category: Debug
-      title: "(Experimental) Rerun test, when it fails?"
+      title: "Should retry test on failure?"
       description: |-
         If `should_retry_test_on_fail: yes` step will retry the test if first attempt failed.
       value_options:
@@ -279,7 +279,7 @@ inputs:
 
         In case of leaving this input on default value:
 
-        `set -o pipefail && XCODEBUILD_TEST_COMMAND | xcpretty --color --report html --color --report html --output "${BITRISE_DEPLOY_DIR}/xcode-test-results-${BITRISE_SCHEME}.html"
+        `set -o pipefail && XCODEBUILD_TEST_COMMAND | xcpretty --color --report html --output "${BITRISE_DEPLOY_DIR}/xcode-test-results-${BITRISE_SCHEME}.html"
 
         If you want to add more options, list that separated by space character.
   - cache_level: swift_packages

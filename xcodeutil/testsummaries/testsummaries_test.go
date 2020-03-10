@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bitrise-steplib/steps-xcode-test/pretty"
 	"github.com/bitrise-io/go-xcode/plistutil"
+	"github.com/bitrise-steplib/steps-xcode-test/pretty"
 )
 
 func TestTimestampToTime(t *testing.T) {
@@ -74,7 +74,7 @@ func Test_parseTestSummaries(t *testing.T) {
 					ID:          testID,
 					Status:      testStatus,
 					FailureInfo: nil,
-					Activities:  make([]Activity, 0),
+					Activities:  nil,
 				},
 			},
 			wantErr: false,

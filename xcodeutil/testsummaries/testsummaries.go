@@ -102,13 +102,11 @@ func parseTestSummaries(testSummariesContent plistutil.PlistData) ([]TestResult,
 				}
 				var activitySummaries []Activity
 				{
-					activitySummariesData, found := test.GetMapStringInterfaceArray("ActivitySummaries")
-					if !found {
-						log.Infof("no activity summaries found for test: %s", test)
-					}
-					activitySummaries, err = parseActivites(activitySummariesData)
-					if err != nil {
-						return nil, fmt.Errorf("failed to parse activities, error: %s", err)
+					if activitySummariesData, found := test.GetMapStringInterfaceArray("ActivitySummaries"); found {
+						activitySummaries, err = parseActivites(activitySummariesData)
+						if err != nil {
+							return nil, fmt.Errorf("failed to parse activities, error: %s", err)
+						}
 					}
 				}
 				testResults = append(testResults, TestResult{
