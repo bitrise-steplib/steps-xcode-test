@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -83,8 +84,10 @@ type Configs struct {
 	IsCleanBuild  bool   `env:"is_clean_build,opt[yes,no]"`
 	IsSingleBuild bool   `env:"single_build,opt[true,false]"`
 
-	ShouldBuildBeforeTest bool `env:"should_build_before_test,opt[yes,no]"`
-	ShouldRetryTestOnFail bool `env:"should_retry_test_on_fail,opt[yes,no]"`
+	ShouldBuildBeforeTest         bool `env:"should_build_before_test,opt[yes,no]"`
+	ShouldRetryTestOnFail         bool `env:"should_retry_test_on_fail,opt[yes,no]"`
+	ShouldRetryIndividualFailures bool `env:"should_retry_individual_failures,opt[yes,no]"`
+	TestFailureRetryLimit         int  `env:"test_failure_retry_limit,opt[1,2,3,4,5]"`
 
 	GenerateCodeCoverageFiles bool `env:"generate_code_coverage_files,opt[yes,no]"`
 	ExportUITestArtifacts     bool `env:"export_uitest_artifacts,opt[true,false]"`
@@ -237,7 +240,7 @@ func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (stri
 	return runXcodeBuildCmd(false, xcodebuildArgs...)
 }
 
-func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcprettyOptions string, isAutomaticRetryOnReason, isRetryOnFail bool, swiftPackagesPath string) (string, int, error) {
+func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcprettyOptions string, isAutomaticRetryOnReason, isRetryOnFail, isRetryIndividualFailures bool, retryLimit, retryAttempt int, swiftPackagesPath string) (string, int, error) {
 	handleTestError := func(fullOutputStr string, exitCode int, testError error) (string, int, error) {
 		if swiftPackagesPath != "" && isStringFoundInOutput(cache.SwiftPackagesStateInvalid, fullOutputStr) {
 			log.RWarnf("xcode-test", "swift-packages-cache-invalid", nil, "swift packages cache is in an invalid state")
@@ -247,29 +250,60 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 			}
 		}
 
+		currentAttempt := retryAttempt + 1
+
+		// If the currentAttempt is greater than the limit, we are out of retries so we will skip out.
+		// Or if there are no retries set we will also skip out.
+		if (currentAttempt > retryLimit) || !(isAutomaticRetryOnReason || isRetryIndividualFailures || isRetryOnFail) {
+			log.Errorf("isAutomaticRetryOnReason=%v, isRetryOnFail=%v, isRetryIndividualFailures=%v is no more retry, stopping the test!", isAutomaticRetryOnReason, isRetryOnFail, isRetryIndividualFailures)
+			return fullOutputStr, exitCode, testError
+		}
+
 		//
 		// Automatic retry
 		for _, retryReasonPattern := range automaticRetryReasonPatterns {
 			if isStringFoundInOutput(retryReasonPattern, fullOutputStr) {
 				log.Warnf("Automatic retry reason found in log: %s", retryReasonPattern)
 				if isAutomaticRetryOnReason {
-					log.Printf("isAutomaticRetryOnReason=true - retrying...")
-					return runTest(buildTestParams, outputTool, xcprettyOptions, false, false, swiftPackagesPath)
+					log.Printf("isAutomaticRetryOnReason=true - retrying... attempt: %d of %d", currentAttempt, retryLimit)
+					return runTest(buildTestParams, outputTool, xcprettyOptions, isAutomaticRetryOnReason, isRetryOnFail, isRetryIndividualFailures, retryLimit, currentAttempt, swiftPackagesPath)
 				}
-				log.Errorf("isAutomaticRetryOnReason=false, no more retry, stopping the test!")
-				return fullOutputStr, exitCode, testError
+			}
+		}
+
+		// Retry individual failures superceeds entire trest retry. This is designed to keep from unnecessarily building the entire
+		// target a second time and running all of the other tests, that have already passed, again.
+		if xcodeBuildVersion, err := utility.GetXcodeVersion(); err == nil && xcodeBuildVersion.MajorVersion >= 11 {
+			if isRetryIndividualFailures {
+				log.Warnf("Test run fialed")
+
+				failurePaths := getFailureResults(buildTestParams.TestOutputDir)
+				onlyTestOpts := getAdditionalOptionsFromTestFailures(failurePaths)
+
+				// We need to ensure that there are actually test failures here. If there are, we know that the build
+				// was successful and we can proceed with the retry without building again. If there are no test failures,
+				// we assume that there was an issue with the build, so we want to allow rebuilding.
+				if len(failurePaths) > 0 {
+					newBuildTestParams := models.XcodeBuildTestParamsModel{
+						buildTestParams.BuildParams,
+						buildTestParams.TestOutputDir,
+						false, // Clean build is false
+						false, // Build before test is false
+						buildTestParams.GenerateCodeCoverage,
+						buildTestParams.AdditionalOptions + " " + onlyTestOpts,
+					}
+
+					log.Printf("isRetryIndividualFailures=true - retrying... attempt: %d of %d", currentAttempt, retryLimit)
+					return runTest(newBuildTestParams, outputTool, xcprettyOptions, isAutomaticRetryOnReason, isRetryOnFail, isRetryIndividualFailures, retryLimit, currentAttempt, swiftPackagesPath)
+				}
 			}
 		}
 
 		//
-		// Retry on fail
-		if isRetryOnFail {
-			log.Warnf("Test run failed")
-			log.Printf("isRetryOnFail=true - retrying...")
-			return runTest(buildTestParams, outputTool, xcprettyOptions, false, false, swiftPackagesPath)
-		}
-
-		return fullOutputStr, exitCode, testError
+		// If we are here it must be Retry on fail
+		log.Warnf("Test run failed")
+		log.Printf("isRetryOnFail=true - retrying...")
+		return runTest(buildTestParams, outputTool, xcprettyOptions, isAutomaticRetryOnReason, isRetryOnFail, isRetryIndividualFailures, retryLimit, currentAttempt, swiftPackagesPath)
 	}
 
 	// Clean output directory, otherwise after retry test run, xcodebuild fails with `error: Existing file at -resultBundlePath "..."`
@@ -295,6 +329,9 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 	// Related issue link: https://github.com/bitrise-steplib/steps-xcode-test/issues/55
 	if buildTestParams.BuildBeforeTest {
 		xcodebuildArgs = append(xcodebuildArgs, "build")
+		xcodebuildArgs = append(xcodebuildArgs, "test", "-destination", buildParams.DeviceDestination)
+	} else {
+		xcodebuildArgs = append(xcodebuildArgs, "test-without-building", "-destination", buildParams.DeviceDestination)
 	}
 
 	// Disable indexing during the build.
@@ -304,7 +341,6 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 		xcodebuildArgs = append(xcodebuildArgs, "COMPILER_INDEX_STORE_ENABLE=NO")
 	}
 
-	xcodebuildArgs = append(xcodebuildArgs, "test", "-destination", buildParams.DeviceDestination)
 	xcodebuildArgs = append(xcodebuildArgs, "-resultBundlePath", buildTestParams.TestOutputDir)
 
 	if buildTestParams.GenerateCodeCoverage {
@@ -368,6 +404,38 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 		return handleTestError(rawOutput, exit, err)
 	}
 	return rawOutput, exit, nil
+}
+
+// Returns a slice of the individual test cases that failed.
+func getFailureResults(testResultPath string) []string {
+	var out bytes.Buffer
+
+	cmd := cmd.CreateXcTestResultCmd(testResultPath)
+	cmd.Stdout = &out
+
+	if err := cmd.Run(); err != nil {
+		log.Errorf("There was an error getting the failure results: %v", err)
+	}
+
+	var testResult models.XcodeActionsInvocationRecord
+	if err := json.Unmarshal(out.Bytes(), &testResult); err != nil {
+		log.Errorf("There was an error Unmarshaling the test result: %v", err)
+	}
+
+	return testResult.TestFailures()
+}
+
+// Returns a string of "only-testing" options from the individal test failures
+// Note: This method will escape spaces in test target names.
+func getAdditionalOptionsFromTestFailures(failures []string) string {
+	opts := ""
+
+	for _, path := range failures {
+		escaped := strings.ReplaceAll(path, " ", "\\ ")
+		opts += "-only-testing:" + escaped + " "
+	}
+
+	return strings.Trim(opts, " ")
 }
 
 func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) (string, error) {
@@ -659,7 +727,7 @@ func main() {
 
 	//
 	// Run test
-	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, outputTool, configs.XcprettyTestOptions, true, configs.ShouldRetryTestOnFail, swiftPackagesPath)
+	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, outputTool, configs.XcprettyTestOptions, true, configs.ShouldRetryTestOnFail, configs.ShouldRetryTestOnFail, configs.TestFailureRetryLimit, 0, swiftPackagesPath)
 
 	logPth, err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil))
 

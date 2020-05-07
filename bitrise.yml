@@ -255,6 +255,8 @@ workflows:
         - output_tool: $OUTPUT_TOOL
         - is_clean_build: "yes"
         - should_retry_test_on_fail: $RETRY_ON_FAIL
+        - should_retry_individual_failures: $RETRY_INDIVIDUAL_FAILURES
+        - test_failure_retry_limit: $TEST_FAILURE_RETRY_LIMIT
         - generate_code_coverage_files: "no"
         - simulator_device: $SIMULATOR_DEVICE
         - simulator_os_version: $SIMULATOR_OS_VERSION
@@ -382,6 +384,8 @@ workflows:
         - output_tool: $OUTPUT_TOOL
         - is_clean_build: "no"
         - should_retry_test_on_fail: $RETRY_ON_FAIL
+        - should_retry_individual_failures: $RETRY_INDIVIDUAL_FAILURES
+        - test_failure_retry_limit: $TEST_FAILURE_RETRY_LIMIT
         - generate_code_coverage_files: "no"
         - simulator_device: $SIMULATOR_DEVICE
         - simulator_os_version: latest

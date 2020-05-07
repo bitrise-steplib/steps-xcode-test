@@ -266,6 +266,27 @@ inputs:
         - "yes"
         - "no"
       is_required: true
+  - should_retry_individual_failures: "no"
+    opts:
+      category: Debug
+      title: "Should retry individual test failures?"
+      description: |-
+        If `should_retry_individual_failures: yes` setp will retry only the individual tests that failed without cleaning or rebuilding. 
+      value_options:
+        - "yes"
+        - "no"
+  - test_failure_retry_limit: 1
+    opts:
+      category: Debug
+      title: "Test failure retry attempts limit"
+      description: |-
+        The number of retry attempts that can be made.
+      value_options:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
   - xcpretty_test_options: --color --report html --output "${BITRISE_DEPLOY_DIR}/xcode-test-results-${BITRISE_SCHEME}.html"
     opts:
       category: Debug

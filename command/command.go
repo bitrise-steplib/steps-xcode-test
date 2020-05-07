@@ -83,6 +83,12 @@ func CreateXcprettyCmd(xcprettydArgs ...string) *exec.Cmd {
 	return exec.Command("xcpretty", xcprettydArgs...)
 }
 
+// Create XcTestResultCmd ...
+// This command is only useful for Xcode builds whoes major version is greater than or eqaul to 11.
+func CreateXcTestResultCmd(testResultPath string) *exec.Cmd {
+	return exec.Command("xcrun", "xcresulttool", "get", "--path", testResultPath, "--format", "json")
+}
+
 // Zip ...
 func Zip(targetDir, targetRelPathToZip, zipPath string) error {
 	zipCmd := exec.Command("/usr/bin/zip", "-rTy", zipPath, targetRelPathToZip)
