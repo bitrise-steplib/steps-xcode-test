@@ -27,6 +27,7 @@ type XcodeBuildTestParamsModel struct {
 	BuildBeforeTest      bool
 	GenerateCodeCoverage bool
 	AdditionalOptions    string
+	OnlyTestOptions      string
 }
 
 //=======================================
@@ -46,7 +47,7 @@ func (r *XcodeActionsInvocationRecord) TestFailures() []string {
 	failures := []string{}
 
 	for _, failure := range r.Issues.TestFailureSummaries.Values {
-        failures = append(failures, failure.TestPath())
+		failures = append(failures, failure.TestPath())
 	}
 
 	return failures

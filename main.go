@@ -290,7 +290,8 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 						false, // Clean build is false
 						false, // Build before test is false
 						buildTestParams.GenerateCodeCoverage,
-						buildTestParams.AdditionalOptions + " " + onlyTestOpts,
+						buildTestParams.AdditionalOptions,
+						onlyTestOpts,
 					}
 
 					log.Printf("isRetryIndividualFailures=true - retrying... attempt: %d of %d", currentAttempt, retryLimit)
@@ -349,10 +350,22 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 	}
 
 	if buildTestParams.AdditionalOptions != "" {
-		options, err := shellquote.Split(buildTestParams.AdditionalOptions)
+		options, err := parseAdditionalOptions(buildTestParams.AdditionalOptions)
+
 		if err != nil {
-			return "", 1, fmt.Errorf("failed to parse additional options (%s), error: %s", buildTestParams.AdditionalOptions, err)
+			return "", 1, err
 		}
+
+		xcodebuildArgs = append(xcodebuildArgs, options...)
+	}
+
+	if buildTestParams.OnlyTestOptions != "" {
+		options, err := parseAdditionalOptions(buildTestParams.OnlyTestOptions)
+
+		if err != nil {
+			return "", 1, err
+		}
+
 		xcodebuildArgs = append(xcodebuildArgs, options...)
 	}
 
@@ -436,6 +449,16 @@ func getAdditionalOptionsFromTestFailures(failures []string) string {
 	}
 
 	return strings.Trim(opts, " ")
+}
+
+func parseAdditionalOptions(options string) ([]string, error) {
+	parsedOptions, err := shellquote.Split(options)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse additional options (%s), error: %s", options, err)
+	}
+
+	return parsedOptions, err
 }
 
 func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) (string, error) {
@@ -672,6 +695,7 @@ func main() {
 		TestOutputDir:        testOutputDir,
 		BuildBeforeTest:      configs.ShouldBuildBeforeTest,
 		AdditionalOptions:    configs.TestOptions,
+		OnlyTestOptions:      "", // OnlyTestOptions will start empty as we expect to run all tests.
 		GenerateCodeCoverage: configs.GenerateCodeCoverageFiles,
 	}
 
