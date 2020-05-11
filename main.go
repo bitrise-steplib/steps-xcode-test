@@ -291,7 +291,7 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 						newOutputDir = buildTestParams.TestOutputDir[0:lastSlashIndex]
 					}
 
-					newOutputDir = path.Join(newOutputDir, "Test_Retry_" + string(currentAttempt) + ".xcresult")
+					newOutputDir = path.Join(newOutputDir, "Test_Retry_"+string(currentAttempt)+".xcresult")
 
 					newBuildTestParams := models.XcodeBuildTestParamsModel{
 						buildTestParams.BuildParams,
