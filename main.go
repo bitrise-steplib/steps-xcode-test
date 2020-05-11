@@ -255,7 +255,7 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 		// If the currentAttempt is greater than the limit, we are out of retries so we will skip out.
 		// Or if there are no retries set we will also skip out.
 		if (currentAttempt > retryLimit) || !(isAutomaticRetryOnReason || isRetryIndividualFailures || isRetryOnFail) {
-			log.Errorf("isAutomaticRetryOnReason=%v, isRetryOnFail=%v, isRetryIndividualFailures=%v is no more retry, stopping the test!", isAutomaticRetryOnReason, isRetryOnFail, isRetryIndividualFailures)
+			log.Errorf("isAutomaticRetryOnReason=%v, isRetryOnFail=%v, isRetryIndividualFailures=%v no more retry, stopping the test!", isAutomaticRetryOnReason, isRetryOnFail, isRetryIndividualFailures)
 			return fullOutputStr, exitCode, testError
 		}
 
@@ -284,9 +284,18 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 				// was successful and we can proceed with the retry without building again. If there are no test failures,
 				// we assume that there was an issue with the build, so we want to allow rebuilding.
 				if len(failurePaths) > 0 {
+					newOutputDir := ""
+					lastSlashIndex := strings.LastIndex(buildTestParams.TestOutputDir, "/")
+
+					if lastSlashIndex >= 0 {
+						newOutputDir = buildTestParams.TestOutputDir[0:lastSlashIndex]
+					}
+
+					newOutputDir = path.Join(newOutputDir, "Test_Retry_" + string(currentAttempt) + ".xcresult")
+
 					newBuildTestParams := models.XcodeBuildTestParamsModel{
 						buildTestParams.BuildParams,
-						buildTestParams.TestOutputDir,
+						newOutputDir,
 						false, // Clean build is false
 						false, // Build before test is false
 						buildTestParams.GenerateCodeCoverage,
