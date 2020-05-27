@@ -592,12 +592,12 @@ func main() {
 	}
 
 	buildParams := models.XcodeBuildParamsModel{
-		Action:                     action,
-		ProjectPath:                absProjectPath,
-		Scheme:                     configs.Scheme,
-		DeviceDestination:          deviceDestination,
-		CleanBuild:                 configs.IsCleanBuild,
-		DisableIndexWhileBuilding:  configs.DisableIndexWhileBuilding,
+		Action:                    action,
+		ProjectPath:               absProjectPath,
+		Scheme:                    configs.Scheme,
+		DeviceDestination:         deviceDestination,
+		CleanBuild:                configs.IsCleanBuild,
+		DisableIndexWhileBuilding: configs.DisableIndexWhileBuilding,
 	}
 
 	buildTestParams := models.XcodeBuildTestParamsModel{
