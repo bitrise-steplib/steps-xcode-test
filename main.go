@@ -83,8 +83,9 @@ type Configs struct {
 	IsCleanBuild  bool   `env:"is_clean_build,opt[yes,no]"`
 	IsSingleBuild bool   `env:"single_build,opt[true,false]"`
 
-	ShouldBuildBeforeTest bool `env:"should_build_before_test,opt[yes,no]"`
-	ShouldRetryTestOnFail bool `env:"should_retry_test_on_fail,opt[yes,no]"`
+	ShouldBuildBeforeTest      bool `env:"should_build_before_test,opt[yes,no]"`
+	ShouldRetryTestOnFail      bool `env:"should_retry_test_on_fail,opt[yes,no]"`
+	ShouldSaveLogFileOnSuccess bool `env:"should_save_log_file_on_success,opt[yes,no]"`
 
 	GenerateCodeCoverageFiles bool `env:"generate_code_coverage_files,opt[yes,no]"`
 	ExportUITestArtifacts     bool `env:"export_uitest_artifacts,opt[true,false]"`
@@ -370,7 +371,7 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 	return rawOutput, exit, nil
 }
 
-func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) (string, error) {
+func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool, shouldSaveInSuccess bool) (string, error) {
 	tmpDir, err := pathutil.NormalizedOSTempDirPath("xcodebuild-output")
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp dir, error: %s", err)
@@ -381,7 +382,7 @@ func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) (stri
 		return "", fmt.Errorf("failed to write xcodebuild output to file, error: %s", err)
 	}
 
-	if !isRunSuccess {
+	if !isRunSuccess || shouldSaveInSuccess {
 		deployDir := os.Getenv("BITRISE_DEPLOY_DIR")
 		if deployDir == "" {
 			return "", errors.New("no BITRISE_DEPLOY_DIR found")
@@ -591,12 +592,12 @@ func main() {
 	}
 
 	buildParams := models.XcodeBuildParamsModel{
-		Action:                    action,
-		ProjectPath:               absProjectPath,
-		Scheme:                    configs.Scheme,
-		DeviceDestination:         deviceDestination,
-		CleanBuild:                configs.IsCleanBuild,
-		DisableIndexWhileBuilding: configs.DisableIndexWhileBuilding,
+		Action:                     action,
+		ProjectPath:                absProjectPath,
+		Scheme:                     configs.Scheme,
+		DeviceDestination:          deviceDestination,
+		CleanBuild:                 configs.IsCleanBuild,
+		DisableIndexWhileBuilding:  configs.DisableIndexWhileBuilding,
 	}
 
 	buildTestParams := models.XcodeBuildTestParamsModel{
@@ -634,7 +635,7 @@ func main() {
 	// Run build
 	if !configs.IsSingleBuild {
 		if rawXcodebuildOutput, exitCode, buildErr := runBuild(buildParams, outputTool); buildErr != nil {
-			if _, err := saveRawOutputToLogFile(rawXcodebuildOutput, false); err != nil {
+			if _, err := saveRawOutputToLogFile(rawXcodebuildOutput, false, configs.ShouldSaveLogFileOnSuccess); err != nil {
 				log.Warnf("Failed to save the Raw Output, err: %s", err)
 			}
 
@@ -661,7 +662,7 @@ func main() {
 	// Run test
 	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, outputTool, configs.XcprettyTestOptions, true, configs.ShouldRetryTestOnFail, swiftPackagesPath)
 
-	logPth, err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil))
+	logPth, err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil), configs.ShouldSaveLogFileOnSuccess)
 
 	if err != nil {
 		log.Warnf("Failed to save the Raw Output, error: %s", err)
