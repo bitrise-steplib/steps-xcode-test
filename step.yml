@@ -266,6 +266,16 @@ inputs:
         - "yes"
         - "no"
       is_required: true
+- should_save_log_file_on_success: "no"
+  opts:
+    category: Debug
+    title: "Should save log file on success?"
+    description: |-
+      If `should_save_log_file_on_success: yes` step will save the log file not only on failure but also in success.
+    value_options:
+      - "yes"
+      - "no"
+    is_required: true
   - xcpretty_test_options: --color --report html --output "${BITRISE_DEPLOY_DIR}/xcode-test-results-${BITRISE_SCHEME}.html"
     opts:
       category: Debug
