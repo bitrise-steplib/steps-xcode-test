@@ -367,10 +367,12 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 	if err != nil {
 		return handleTestError(rawOutput, exit, err)
 	}
+
+	log.Infof("")
 	return rawOutput, exit, nil
 }
 
-func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) (string, error) {
+func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess, didLogToStdout bool) (string, error) {
 	tmpDir, err := pathutil.NormalizedOSTempDirPath("xcodebuild-output")
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp dir, error: %s", err)
@@ -381,7 +383,7 @@ func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) (stri
 		return "", fmt.Errorf("failed to write xcodebuild output to file, error: %s", err)
 	}
 
-	if !isRunSuccess {
+	if !isRunSuccess || !didLogToStdout {
 		deployDir := os.Getenv("BITRISE_DEPLOY_DIR")
 		if deployDir == "" {
 			return "", errors.New("no BITRISE_DEPLOY_DIR found")
@@ -634,7 +636,7 @@ func main() {
 	// Run build
 	if !configs.IsSingleBuild {
 		if rawXcodebuildOutput, exitCode, buildErr := runBuild(buildParams, outputTool); buildErr != nil {
-			if _, err := saveRawOutputToLogFile(rawXcodebuildOutput, false); err != nil {
+			if _, err := saveRawOutputToLogFile(rawXcodebuildOutput, false, false); err != nil {
 				log.Warnf("Failed to save the Raw Output, err: %s", err)
 			}
 
@@ -661,7 +663,7 @@ func main() {
 	// Run test
 	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, outputTool, configs.XcprettyTestOptions, true, configs.ShouldRetryTestOnFail, swiftPackagesPath)
 
-	logPth, err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil))
+	logPth, err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil), outputTool != "xcodebuild")
 
 	if err != nil {
 		log.Warnf("Failed to save the Raw Output, error: %s", err)
