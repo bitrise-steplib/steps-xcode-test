@@ -134,7 +134,10 @@ func runXcodeBuildCmd(useStdOut bool, args ...string) (string, int, error) {
 
 	log.Printf("$ %s", cmdArgsForPrint)
 
-	err := buildCmd.Run()
+	var err error
+	progress.SimpleProgress(".", 2*time.Minute, func() {
+		err = buildCmd.Run()
+	})
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
 			waitStatus, ok := exitError.Sys().(syscall.WaitStatus)
