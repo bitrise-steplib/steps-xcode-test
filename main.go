@@ -470,7 +470,7 @@ func printLastLinesOfRawXcodebuildLog(rawXcodebuildOutput string, logPath string
 	if !isRunSuccess {
 		log.Errorf(lastLines)
 	} else {
-		log.Infof(colorstring.Yellow(lastLines))
+		log.Infof(lastLines)
 	}
 
 	fmt.Println(stringutil.LastNLines(rawXcodebuildOutput, 20))
@@ -479,13 +479,15 @@ func printLastLinesOfRawXcodebuildLog(rawXcodebuildOutput string, logPath string
 		log.Warnf("If you can't find the reason of the error in the log, please check the raw-xcodebuild-output.log.")
 	}
 
-	log.Infof(colorstring.Yellow(`The log file is stored in $BITRISE_DEPLOY_DIR, and its full path
+	log.Infof(colorstring.Magenta(fmt.Sprintf(`
+The log file is stored in $BITRISE_DEPLOY_DIR, and its full path
 is available in the $BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH environment variable.
 
 You can check the full, unfiltered and unformatted Xcode output in the file:
 %s
 If you have the Deploy to Bitrise.io step (after this step),
-that will attach the file to your build as an artifact!`, logPath))
+that will attach the file to your build as an artifact!
+`, logPath)))
 }
 
 func fail(format string, v ...interface{}) {
