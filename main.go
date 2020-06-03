@@ -361,7 +361,7 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 	if outputTool == "xcpretty" {
 		rawOutput, exit, err = runPrettyXcodeBuildCmd(true, xcprettyArgs, xcodebuildArgs)
 	} else {
-		rawOutput, exit, err = runXcodeBuildCmd(true, xcodebuildArgs...)
+		rawOutput, exit, err = runXcodeBuildCmd(false, xcodebuildArgs...)
 	}
 
 	if err != nil {
@@ -705,7 +705,7 @@ func main() {
 		log.Warnf("xcode test exit code: %d", exitCode)
 		log.Errorf("xcode test failed, error: %s", testErr)
 		log.Errorf("\nLast lines of the Xcode's build log:")
-		fmt.Println(stringutil.LastNLines(rawXcodebuildOutput, 10))
+		fmt.Println(stringutil.LastNLines(rawXcodebuildOutput, 20))
 		log.Warnf(`If you can't find the reason of the error in the log, please check the raw-xcodebuild-output.log
 The log file is stored in $BITRISE_DEPLOY_DIR, and its full path
 is available in the $BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH environment variable.
