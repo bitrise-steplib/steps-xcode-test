@@ -112,22 +112,15 @@ func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
 	return r.MatchString(outputToSearchIn)
 }
 
-func runXcodeBuildCmd(useStdOut bool, args ...string) (string, int, error) {
+func runXcodeBuildCmd(args ...string) (string, int, error) {
 	// command
 	buildCmd := cmd.CreateXcodebuildCmd(args...)
 	// output buffer
 	var outBuffer bytes.Buffer
-	// additional output writers, like StdOut
-	outWritters := []io.Writer{}
-	if useStdOut {
-		outWritters = append(outWritters, os.Stdout)
-	}
-	// unify as a single writer
-	outWritter := cmd.CreateBufferedWriter(&outBuffer, outWritters...)
-	// and set the writer
+	// set command streams and env
 	buildCmd.Stdin = nil
-	buildCmd.Stdout = outWritter
-	buildCmd.Stderr = outWritter
+	buildCmd.Stdout = &outBuffer
+	buildCmd.Stderr = &outBuffer
 	buildCmd.Env = append(os.Environ(), xcodeCommandEnvs...)
 
 	cmdArgsForPrint := cmd.PrintableCommandArgsWithEnvs(buildCmd.Args, xcodeCommandEnvs)
@@ -135,7 +128,7 @@ func runXcodeBuildCmd(useStdOut bool, args ...string) (string, int, error) {
 	log.Printf("$ %s", cmdArgsForPrint)
 
 	var err error
-	progress.SimpleProgress(".", 2*time.Minute, func() {
+	progress.SimpleProgress(".", time.Minute, func() {
 		err = buildCmd.Run()
 	})
 	if err != nil {
@@ -238,7 +231,7 @@ func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (stri
 	if outputTool == "xcpretty" {
 		return runPrettyXcodeBuildCmd(false, []string{}, xcodebuildArgs)
 	}
-	return runXcodeBuildCmd(false, xcodebuildArgs...)
+	return runXcodeBuildCmd(xcodebuildArgs...)
 }
 
 func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcprettyOptions string, isAutomaticRetryOnReason, isRetryOnFail bool, swiftPackagesPath string) (string, int, error) {
@@ -365,14 +358,13 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 	if outputTool == "xcpretty" {
 		rawOutput, exit, err = runPrettyXcodeBuildCmd(true, xcprettyArgs, xcodebuildArgs)
 	} else {
-		rawOutput, exit, err = runXcodeBuildCmd(false, xcodebuildArgs...)
+		rawOutput, exit, err = runXcodeBuildCmd(xcodebuildArgs...)
 	}
 
 	if err != nil {
 		return handleTestError(rawOutput, exit, err)
 	}
 
-	log.Infof("")
 	return rawOutput, exit, nil
 }
 
@@ -489,8 +481,7 @@ is available in the $BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH environment variabl
 You can check the full, unfiltered and unformatted Xcode output in the file:
 %s
 If you have the Deploy to Bitrise.io step (after this step),
-that will attach the file to your build as an artifact!
-`, logPath)))
+that will attach the file to your build as an artifact!`, logPath)))
 }
 
 func fail(format string, v ...interface{}) {
@@ -737,6 +728,7 @@ func main() {
 	}
 
 	if testErr != nil {
+		fmt.Println()
 		log.Warnf("Xcode Test command exit code: %d", exitCode)
 		log.Errorf("Xcode Test command failed, error: %s", testErr)
 
@@ -753,6 +745,7 @@ func main() {
 		}
 	}
 
+	fmt.Println()
 	log.Infof("Xcode Test command succeeded.")
 	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "succeeded"); err != nil {
 		log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
