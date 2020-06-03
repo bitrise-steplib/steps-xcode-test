@@ -17,6 +17,7 @@ import (
 
 	bitriseConfigs "github.com/bitrise-io/bitrise/configs"
 	"github.com/bitrise-io/go-steputils/stepconf"
+	"github.com/bitrise-io/go-utils/colorstring"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
@@ -111,29 +112,25 @@ func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
 	return r.MatchString(outputToSearchIn)
 }
 
-func runXcodeBuildCmd(useStdOut bool, args ...string) (string, int, error) {
+func runXcodeBuildCmd(args ...string) (string, int, error) {
 	// command
 	buildCmd := cmd.CreateXcodebuildCmd(args...)
 	// output buffer
 	var outBuffer bytes.Buffer
-	// additional output writers, like StdOut
-	outWritters := []io.Writer{}
-	if useStdOut {
-		outWritters = append(outWritters, os.Stdout)
-	}
-	// unify as a single writer
-	outWritter := cmd.CreateBufferedWriter(&outBuffer, outWritters...)
-	// and set the writer
+	// set command streams and env
 	buildCmd.Stdin = nil
-	buildCmd.Stdout = outWritter
-	buildCmd.Stderr = outWritter
+	buildCmd.Stdout = &outBuffer
+	buildCmd.Stderr = &outBuffer
 	buildCmd.Env = append(os.Environ(), xcodeCommandEnvs...)
 
 	cmdArgsForPrint := cmd.PrintableCommandArgsWithEnvs(buildCmd.Args, xcodeCommandEnvs)
 
 	log.Printf("$ %s", cmdArgsForPrint)
 
-	err := buildCmd.Run()
+	var err error
+	progress.SimpleProgress(".", time.Minute, func() {
+		err = buildCmd.Run()
+	})
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
 			waitStatus, ok := exitError.Sys().(syscall.WaitStatus)
@@ -234,7 +231,7 @@ func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (stri
 	if outputTool == "xcpretty" {
 		return runPrettyXcodeBuildCmd(false, []string{}, xcodebuildArgs)
 	}
-	return runXcodeBuildCmd(false, xcodebuildArgs...)
+	return runXcodeBuildCmd(xcodebuildArgs...)
 }
 
 func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcprettyOptions string, isAutomaticRetryOnReason, isRetryOnFail bool, swiftPackagesPath string) (string, int, error) {
@@ -361,16 +358,17 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 	if outputTool == "xcpretty" {
 		rawOutput, exit, err = runPrettyXcodeBuildCmd(true, xcprettyArgs, xcodebuildArgs)
 	} else {
-		rawOutput, exit, err = runXcodeBuildCmd(true, xcodebuildArgs...)
+		rawOutput, exit, err = runXcodeBuildCmd(xcodebuildArgs...)
 	}
 
 	if err != nil {
 		return handleTestError(rawOutput, exit, err)
 	}
+
 	return rawOutput, exit, nil
 }
 
-func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) (string, error) {
+func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess, didLogToStdout bool) (string, error) {
 	tmpDir, err := pathutil.NormalizedOSTempDirPath("xcodebuild-output")
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp dir, error: %s", err)
@@ -381,7 +379,7 @@ func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess bool) (stri
 		return "", fmt.Errorf("failed to write xcodebuild output to file, error: %s", err)
 	}
 
-	if !isRunSuccess {
+	if !isRunSuccess || !didLogToStdout {
 		deployDir := os.Getenv("BITRISE_DEPLOY_DIR")
 		if deployDir == "" {
 			return "", errors.New("no BITRISE_DEPLOY_DIR found")
@@ -460,6 +458,30 @@ func getSummariesAndAttachmentPath(testOutputDir string) (testSummariesPath stri
 	log.Debugf("Test summaries path: %s", testSummariesPath)
 	log.Debugf("Attachment dir: %s", attachementDir)
 	return testSummariesPath, attachementDir, nil
+}
+
+func printLastLinesOfRawXcodebuildLog(rawXcodebuildOutput string, logPath string, isRunSuccess bool) {
+	const lastLines = "\nLast lines of the build log:"
+	if !isRunSuccess {
+		log.Errorf(lastLines)
+	} else {
+		log.Infof(lastLines)
+	}
+
+	fmt.Println(stringutil.LastNLines(rawXcodebuildOutput, 20))
+
+	if !isRunSuccess {
+		log.Warnf("If you can't find the reason of the error in the log, please check the raw-xcodebuild-output.log.")
+	}
+
+	log.Infof(colorstring.Magenta(fmt.Sprintf(`
+The log file is stored in $BITRISE_DEPLOY_DIR, and its full path
+is available in the $BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH environment variable.
+
+You can check the full, unfiltered and unformatted Xcode output in the file:
+%s
+If you have the Deploy to Bitrise.io step (after this step),
+that will attach the file to your build as an artifact!`, logPath)))
 }
 
 func fail(format string, v ...interface{}) {
@@ -634,7 +656,7 @@ func main() {
 	// Run build
 	if !configs.IsSingleBuild {
 		if rawXcodebuildOutput, exitCode, buildErr := runBuild(buildParams, outputTool); buildErr != nil {
-			if _, err := saveRawOutputToLogFile(rawXcodebuildOutput, false); err != nil {
+			if _, err := saveRawOutputToLogFile(rawXcodebuildOutput, false, false); err != nil {
 				log.Warnf("Failed to save the Raw Output, err: %s", err)
 			}
 
@@ -661,7 +683,7 @@ func main() {
 	// Run test
 	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, outputTool, configs.XcprettyTestOptions, true, configs.ShouldRetryTestOnFail, swiftPackagesPath)
 
-	logPth, err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil))
+	logPth, err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil), outputTool != "xcodebuild")
 
 	if err != nil {
 		log.Warnf("Failed to save the Raw Output, error: %s", err)
@@ -701,19 +723,15 @@ func main() {
 		log.Warnf("Failed to export: BITRISE_XCRESULT_PATH, error: %s", err)
 	}
 
-	if testErr != nil {
-		log.Warnf("xcode test exit code: %d", exitCode)
-		log.Errorf("xcode test failed, error: %s", testErr)
-		log.Errorf("\nLast lines of the Xcode's build log:")
-		fmt.Println(stringutil.LastNLines(rawXcodebuildOutput, 10))
-		log.Warnf(`If you can't find the reason of the error in the log, please check the raw-xcodebuild-output.log
-The log file is stored in $BITRISE_DEPLOY_DIR, and its full path
-is available in the $BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH environment variable.
+	if testErr != nil || outputTool == "xcodebuild" {
+		printLastLinesOfRawXcodebuildLog(rawXcodebuildOutput, logPth, testErr == nil)
+	}
 
-You can check the full, unfiltered and unformatted Xcode output in the file:
-%s
-If you have the Deploy to Bitrise.io step (after this step),
-that will attach the file to your build as an artifact!`, logPth)
+	if testErr != nil {
+		fmt.Println()
+		log.Warnf("Xcode Test command exit code: %d", exitCode)
+		log.Errorf("Xcode Test command failed, error: %s", testErr)
+
 		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
 			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 		}
@@ -727,6 +745,8 @@ that will attach the file to your build as an artifact!`, logPth)
 		}
 	}
 
+	fmt.Println()
+	log.Infof("Xcode Test command succeeded.")
 	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "succeeded"); err != nil {
 		log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 	}
