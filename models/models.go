@@ -12,6 +12,7 @@ type XcodeBuildParamsModel struct {
 	DeviceDestination         string
 	CleanBuild                bool
 	DisableIndexWhileBuilding bool
+	SPM                       bool
 }
 
 // XcodeBuildTestParamsModel ...

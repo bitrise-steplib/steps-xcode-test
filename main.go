@@ -274,8 +274,11 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 		return "", 1, fmt.Errorf("failed to clean test output directory: %s, error: %s", buildTestParams.TestOutputDir, err)
 	}
 	buildParams := buildTestParams.BuildParams
-
-	xcodebuildArgs := []string{buildParams.Action, buildParams.ProjectPath, "-scheme", buildParams.Scheme}
+	xcodebuildArgs := []string{}
+	if !buildParams.SPM {
+		xcodebuildArgs = append(xcodebuildArgs, buildParams.Action, buildParams.ProjectPath)
+	}
+	xcodebuildArgs = append(xcodebuildArgs, "-scheme", buildParams.Scheme)
 	if buildTestParams.CleanBuild {
 		xcodebuildArgs = append(xcodebuildArgs, "clean")
 	}
@@ -509,11 +512,14 @@ func main() {
 	}
 
 	// Project-or-Workspace flag
+	spm := false
 	action := ""
 	if strings.HasSuffix(absProjectPath, ".xcodeproj") {
 		action = "-project"
 	} else if strings.HasSuffix(absProjectPath, ".xcworkspace") {
 		action = "-workspace"
+	} else if strings.HasSuffix(absProjectPath, "Package.swift") {
+		spm = true
 	} else {
 		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
 			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
@@ -619,6 +625,7 @@ func main() {
 		DeviceDestination:         deviceDestination,
 		CleanBuild:                configs.IsCleanBuild,
 		DisableIndexWhileBuilding: configs.DisableIndexWhileBuilding,
+		SPM:                       spm,
 	}
 
 	buildTestParams := models.XcodeBuildTestParamsModel{
