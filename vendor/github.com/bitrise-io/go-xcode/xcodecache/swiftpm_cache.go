@@ -21,11 +21,13 @@ func SwiftPackagesPath(xcodeProjectPath string) (string, error) {
 		return "", fmt.Errorf("project path not an absolute path: %s", xcodeProjectPath)
 	}
 
-	if !strings.HasSuffix(xcodeProjectPath, ".xcodeproj") && !strings.HasSuffix(xcodeProjectPath, ".xcworkspace") {
-		return "", fmt.Errorf("invalid Xcode project path %s, no .xcodeproj or .xcworkspace suffix found", xcodeProjectPath)
+	if !strings.HasSuffix(xcodeProjectPath, ".xcodeproj") && !strings.HasSuffix(xcodeProjectPath, ".xcworkspace") && !strings.HasSuffix(xcodeProjectPath, "Package.swift") {
+		return "", fmt.Errorf("invalid Xcode project path %s, no .xcodeproj or .xcworkspace suffix, or Package.swift file found", xcodeProjectPath)
 	}
 
-	projectDerivedData, err := xcodeProjectDerivedDataPath(xcodeProjectPath)
+	trimmedXcodeProjectPath := strings.TrimSuffix(xcodeProjectPath, "/Package.swift")
+
+	projectDerivedData, err := xcodeProjectDerivedDataPath(trimmedXcodeProjectPath)
 	if err != nil {
 		return "", err
 	}
