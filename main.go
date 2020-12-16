@@ -213,7 +213,11 @@ func runPrettyXcodeBuildCmd(useStdOut bool, xcprettyArgs []string, xcodebuildArg
 }
 
 func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (string, int, error) {
-	xcodebuildArgs := []string{buildParams.Action, buildParams.ProjectPath, "-scheme", buildParams.Scheme}
+	xcodebuildArgs := []string{}
+	if !buildParams.SPM {
+		xcodebuildArgs = append(xcodebuildArgs, buildParams.Action, buildParams.ProjectPath)
+	}
+	xcodebuildArgs = append(xcodebuildArgs, "-scheme", buildParams.Scheme)
 	if buildParams.CleanBuild {
 		xcodebuildArgs = append(xcodebuildArgs, "clean")
 	}

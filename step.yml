@@ -53,10 +53,10 @@ toolkit:
 inputs:
   - project_path: $BITRISE_PROJECT_PATH
     opts:
-      title: "Project (or Workspace) path"
+      title: "Project (or Workspace or Package.swift) path"
       description: |-
         A `.xcodeproj` or `.xcworkspace` path, relative to
-        the Working directory (if specified).
+        the Working directory (if specified). If this is a Swift package, this should be the path to the Package.swift file.
       is_required: true
   - scheme: $BITRISE_SCHEME
     opts:
