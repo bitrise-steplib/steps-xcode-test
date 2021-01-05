@@ -22,7 +22,7 @@ func InstallXcpretty() (*version.Version, error) {
 
 	installed, err := xcpretty.IsInstalled()
 	if err != nil {
-		return nil, createError(installationCheckError, err)
+		return nil, fmt.Errorf("%s: %s", installationCheckError, err)
 	} else if !installed {
 		log.Warnf(`xcpretty is not installed`)
 		fmt.Println()
@@ -30,19 +30,19 @@ func InstallXcpretty() (*version.Version, error) {
 
 		cmdModelSlice, err := xcpretty.Install()
 		if err != nil {
-			return nil, createError(installError, err)
+			return nil, fmt.Errorf("%s: %s", installError, err)
 		}
 
 		for _, cmd := range cmdModelSlice {
 			if err := cmd.Run(); err != nil {
-				return nil, createError(installError, err)
+				return nil, fmt.Errorf("%s: %s", installError, err)
 			}
 		}
 	}
 
 	xcprettyVersion, err := xcpretty.Version()
 	if err != nil {
-		return nil, createError(determineVersionError, err)
+		return nil, fmt.Errorf("%s: %s", determineVersionError, err)
 	}
 	return xcprettyVersion, nil
 }
@@ -51,8 +51,4 @@ func InstallXcpretty() (*version.Version, error) {
 // checking whether xcpretty is installed.
 func IsXcprettyInstallationCheckError(err error) bool {
 	return strings.Contains(err.Error(), installationCheckError)
-}
-
-func createError(errorMessage string, err error) error {
-	return fmt.Errorf("%s, error: %s", errorMessage, err)
 }
