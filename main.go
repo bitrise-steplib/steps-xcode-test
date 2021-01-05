@@ -48,6 +48,8 @@ const (
 	appAccessibilityIsNotLoaded              = `UI Testing Failure - App accessibility isn't loaded`
 	testRunnerFailedToInitializeForUITesting = `Test runner failed to initialize for UI testing`
 	timedOutRegisteringForTestingEvent       = `Timed out registering for testing event accessibility notifications`
+
+	xcodeBuild = "xcodebuild"
 )
 
 var automaticRetryReasonPatterns = []string{
@@ -491,7 +493,7 @@ func handleXcprettyInstallError(err error) (string, error) {
 
 	log.Warnf("%s", err)
 	log.Printf("Switching to xcodebuild for output tool")
-	return "xcodebuild", nil
+	return xcodeBuild, nil
 }
 
 func fail(format string, v ...interface{}) {
@@ -694,7 +696,7 @@ func main() {
 	// Run test
 	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, outputTool, configs.XcprettyTestOptions, true, configs.ShouldRetryTestOnFail, swiftPackagesPath)
 
-	logPth, err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil), outputTool != "xcodebuild")
+	logPth, err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil), outputTool != xcodeBuild)
 
 	if err != nil {
 		log.Warnf("Failed to save the Raw Output, error: %s", err)
@@ -734,7 +736,7 @@ func main() {
 		log.Warnf("Failed to export: BITRISE_XCRESULT_PATH, error: %s", err)
 	}
 
-	if testErr != nil || outputTool == "xcodebuild" {
+	if testErr != nil || outputTool == xcodeBuild {
 		printLastLinesOfRawXcodebuildLog(rawXcodebuildOutput, logPth, testErr == nil)
 	}
 
