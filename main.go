@@ -550,9 +550,10 @@ func main() {
 	outputTool := configs.OutputTool
 	xcprettyVersion, err := InstallXcpretty()
 	if err != nil {
-		log.Warnf("%s", err)
-		log.Printf("Switching to xcodebuild for output tool")
-		outputTool = "xcodebuild"
+		outputTool, err = handleXcprettyInstallError(err)
+		if err != nil {
+			fail("An error occured during installing xcpretty: %s", err)
+		}
 	} else {
 		log.Printf("- xcprettyVersion: %s", xcprettyVersion.String())
 		fmt.Println()
@@ -750,4 +751,14 @@ func main() {
 	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "succeeded"); err != nil {
 		log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 	}
+}
+
+func handleXcprettyInstallError(err error) (string, error) {
+	if IsXcprettyInstallationCheckError(err) {
+		return "", err
+	}
+
+	log.Warnf("%s", err)
+	log.Printf("Switching to xcodebuild for output tool")
+	return "xcodebuild", nil
 }
