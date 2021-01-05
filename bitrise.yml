@@ -341,7 +341,7 @@ workflows:
     - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-swiftpm.git
     - SAMPLE_APP_BRANCH: master
     - OUTPUT_TOOL: xcodebuild
-    - BITRISE_PROJECT_PATH: sample-swiftpm.xcodeproj
+    - BITRISE_PROJECT_PATH: sample-swiftpm2/sample-swiftpm2.xcodeproj
     - BITRISE_SCHEME: "sample swiftpm"
     - SIMULATOR_DEVICE: iPhone 8 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
