@@ -442,7 +442,7 @@ func TestIsStringFoundInOutput_appAccessibilityIsNotLoaded(t *testing.T) {
 
 func Test_GivenXcprettyInstallationCheckError_WhenTheErrorIsHandled_ThenExpectAnEmptyOutputToolAndErrorToBeReturned(t *testing.T) {
 	// Given
-	givenError := errors.New(installationCheckError)
+	givenError := newXcprettyInstallationCheckError("an error occurred")
 
 	// When
 	outputTool, err := handleXcprettyInstallError(givenError)
@@ -454,7 +454,7 @@ func Test_GivenXcprettyInstallationCheckError_WhenTheErrorIsHandled_ThenExpectAn
 
 func Test_GivenXcprettyDetermineVersionError_WhenTheErrorIsHandled_ThenExpectTheXcodeBuildOutputToolToBeReturned(t *testing.T) {
 	// Given
-	givenError := errors.New(determineVersionError)
+	givenError := errors.New("determineVersionError")
 
 	// When
 	outputTool, err := handleXcprettyInstallError(givenError)

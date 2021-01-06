@@ -487,7 +487,7 @@ that will attach the file to your build as an artifact!`, logPath)))
 }
 
 func handleXcprettyInstallError(err error) (string, error) {
-	if IsXcprettyInstallationCheckError(err) {
+	if isXcprettyInstallationCheckError(err) {
 		return "", err
 	}
 
