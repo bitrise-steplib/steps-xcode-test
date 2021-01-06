@@ -24,6 +24,10 @@ const (
 	xmlRealTag           = "real"
 	xmlStringTag         = "string"
 	xmlTrueTag           = "true"
+
+	// magic value used in the XML encoding of UIDs
+	// (stored as a dictionary mapping CF$UID->integer)
+	xmlCFUIDMagic = "CF$UID"
 )
 
 func formatXMLFloat(f float64) string {
@@ -141,7 +145,10 @@ func (p *xmlPlistGenerator) writePlistValue(pval cfValue) {
 	case *cfArray:
 		p.writeArray(pval)
 	case cfUID:
-		p.writePlistValue(pval.toDict())
+		p.openTag(xmlDictTag)
+		p.element(xmlKeyTag, xmlCFUIDMagic)
+		p.element(xmlIntegerTag, strconv.FormatUint(uint64(pval), 10))
+		p.closeTag(xmlDictTag)
 	}
 }
 

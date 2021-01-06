@@ -177,8 +177,13 @@ func (p *xmlPlistParser) parseXMLElement(element xml.StartElement) cfValue {
 			}
 		}
 
-		dict := &cfDictionary{keys: keys, values: values}
-		return dict.maybeUID(false)
+		if len(keys) == 1 && keys[0] == "CF$UID" && len(values) == 1 {
+			if integer, ok := values[0].(*cfNumber); ok {
+				return cfUID(integer.value)
+			}
+		}
+
+		return &cfDictionary{keys: keys, values: values}
 	case "array":
 		p.ntags++
 		values := make([]cfValue, 0, 10)
