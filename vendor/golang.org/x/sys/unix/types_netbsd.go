@@ -33,6 +33,7 @@ package unix
 #include <sys/signal.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/uio.h>
@@ -106,6 +107,8 @@ type Stat_t C.struct_stat
 
 type Statfs_t C.struct_statfs
 
+type Statvfs_t C.struct_statvfs
+
 type Flock_t C.struct_flock
 
 type Dirent C.struct_dirent
@@ -116,6 +119,13 @@ type Fsid C.fsid_t
 
 const (
 	PathMax = C.PATH_MAX
+)
+
+// Fstatvfs/Statvfs flags
+
+const (
+	ST_WAIT   = C.ST_WAIT
+	ST_NOWAIT = C.ST_NOWAIT
 )
 
 // Advice to Fadvise
@@ -170,6 +180,7 @@ const (
 	SizeofSockaddrUnix     = C.sizeof_struct_sockaddr_un
 	SizeofSockaddrDatalink = C.sizeof_struct_sockaddr_dl
 	SizeofLinger           = C.sizeof_struct_linger
+	SizeofIovec            = C.sizeof_struct_iovec
 	SizeofIPMreq           = C.sizeof_struct_ip_mreq
 	SizeofIPv6Mreq         = C.sizeof_struct_ipv6_mreq
 	SizeofMsghdr           = C.sizeof_struct_msghdr

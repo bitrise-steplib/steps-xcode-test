@@ -2,12 +2,12 @@
 
 
 [[projects]]
-  digest = "1:04457f9f6f3ffc5fea48e71d62f2ca256637dee0a04d710288e27e05c8b41976"
+  digest = "1:1760ee71834b3d0c59ffb6e0f9444fb68aec64bd6630b99b349fb111f74022fa"
   name = "github.com/Sirupsen/logrus"
   packages = ["."]
   pruneopts = "UT"
-  revision = "839c75faf7f98a33d445d181f3018b5c3409a45e"
-  version = "v1.4.2"
+  revision = "6699a89a232f3db797f2e280639854bbc4b89725"
+  version = "v1.7.0"
 
 [[projects]]
   branch = "master"
@@ -15,11 +15,11 @@
   name = "github.com/bitrise-io/bitrise"
   packages = ["configs"]
   pruneopts = "UT"
-  revision = "d31f2341de3448dee4db528f4170a648af615ac5"
+  revision = "edc91649c85c1e4f801dccf5a489ebf42903a2a5"
 
 [[projects]]
   branch = "master"
-  digest = "1:5e4f167418977858782db1d8820e8c2ccd368c8857e0806bcbd07d0bc09e1e38"
+  digest = "1:a6c4b93cbf1598f39f75f8eb10aad73caf515d130c945da2fb9eb96743b23dc7"
   name = "github.com/bitrise-io/go-steputils"
   packages = [
     "cache",
@@ -27,17 +27,16 @@
     "tools",
   ]
   pruneopts = "UT"
-  revision = "f540824d77dfd382ce84fd0ee0a9da2fba1cce0a"
+  revision = "03ae3a6ded35c5e8aed0058ec270e3494d242d17"
 
 [[projects]]
   branch = "master"
-  digest = "1:4993a67a1b558da96bee5669e2b6ec3c71544702ca574bcb844f0fbf24e5e669"
+  digest = "1:f93d75bb042fd71de998d5538d0bab89129adfc6ddfa0ca99f8775cba072067f"
   name = "github.com/bitrise-io/go-utils"
   packages = [
     "colorstring",
     "command",
     "command/rubycommand",
-    "errorutil",
     "fileutil",
     "log",
     "parseutil",
@@ -47,11 +46,11 @@
     "stringutil",
   ]
   pruneopts = "UT"
-  revision = "ad86bf775472ce1934affb9d3cb7d5ea3dffd16f"
+  revision = "859032e9adf02532a86a362ae5d1cfbc9292fcaf"
 
 [[projects]]
   branch = "master"
-  digest = "1:d085019686702e34666b79ce9de932a698ce4db4f4b283ee41d73719ef01f6d1"
+  digest = "1:342b98f72ffdc9ae0ca9d0f9652bc1489b8725581b4556291145d65b64c4ac10"
   name = "github.com/bitrise-io/go-xcode"
   packages = [
     "models",
@@ -63,7 +62,7 @@
     "xcpretty",
   ]
   pruneopts = "UT"
-  revision = "19cbfe6430acc193d779847a13be0b8585d866c1"
+  revision = "81c1cd57e28a647e2b6e323791b62e620b333cd9"
 
 [[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
@@ -74,12 +73,12 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:88e0b0baeb9072f0a4afbcf12dda615fc8be001d1802357538591155998da21b"
+  digest = "1:95732e0c27df672b3fdf5cdd8edd18cba5fc07263ef7cd25eaaad4afc4730313"
   name = "github.com/hashicorp/go-version"
   packages = ["."]
   pruneopts = "UT"
-  revision = "ac23dc3fea5d1a983c43f6a0f6e2c13f0195d8bd"
-  version = "v1.2.0"
+  revision = "59da58cfd357de719a4d16dac30481391a56c002"
+  version = "v1.2.1"
 
 [[projects]]
   branch = "master"
@@ -88,14 +87,6 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "95032a82bc518f77982ea72343cc1ade730072f0"
-
-[[projects]]
-  digest = "1:31e761d97c76151dde79e9d28964a812c46efc5baee4085b86f68f0c654450de"
-  name = "github.com/konsorten/go-windows-terminal-sequences"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "f55edac94c9bbba5d6182a4be46d86a2c9b5b50e"
-  version = "v1.0.2"
 
 [[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
@@ -115,25 +106,35 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:bbe51412d9915d64ffaa96b51d409e070665efc5194fcf145c4a27d4133107a4"
+  digest = "1:c9d0c7346c55bc13efdb3dbf13938e909d22a7a7bf115af69a79e25553513bd0"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "UT"
-  revision = "34f69633bfdcf9db92f698f8487115767eebef81"
+  revision = "eec23a3978adcfd26c29f4153eaa3e3d9b2cc53a"
 
 [[projects]]
   branch = "master"
-  digest = "1:66da9400d3f58a196e86efa1b0c8ea0b1aae330a6ec234b26ad27ba42f74f019"
+  digest = "1:cecb49462ee181607e39a440426510d0c12869ccb23c693aef89cf70044782fe"
   name = "golang.org/x/sys"
   packages = [
+    "internal/unsafeheader",
+    "plan9",
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "543471e840be449c53d44b32c7adf1261ad67e37"
+  revision = "16f7687f5001b816ff9f6b586071238941e88a9d"
 
 [[projects]]
-  digest = "1:1093f2eb4b344996604f7d8b29a16c5b22ab9e1b25652140d3fede39f640d5cd"
+  branch = "master"
+  digest = "1:aff3723b8ec6c06bb52b62cf492783ae041e137534714289acb6625c031d1b24"
+  name = "golang.org/x/term"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "2321bbc49cbf8303ea9834c419750e793e31be73"
+
+[[projects]]
+  digest = "1:666e3df74f0c4788cc92426b18e33d93b7b62a3d4e8253f7c4b2226132a0f8de"
   name = "golang.org/x/text"
   packages = [
     "internal/gen",
@@ -144,24 +145,24 @@
     "unicode/norm",
   ]
   pruneopts = "UT"
-  revision = "342b2e1fbaa52c93f31447ad2c6abc048c63e475"
-  version = "v0.3.2"
+  revision = "22f1617af38ed4cd65b3b96e02bab267e560155c"
+  version = "v0.3.4"
 
 [[projects]]
   branch = "v3"
-  digest = "1:229cb0f6192914f518cc1241ede6d6f1f458b31debfa18bf3a5c9e4f7b01e24b"
+  digest = "1:ed966e5dd7c12ee9c9f90d5e7437bcaec11986e993e91285525d01095c8f1406"
   name = "gopkg.in/yaml.v3"
   packages = ["."]
   pruneopts = "UT"
-  revision = "eeeca48fe7764f320e4870d231902bf9c1be2c08"
+  revision = "2e78108cf5f8ddf04f6c7f6ee3ee5d26bcf3996f"
 
 [[projects]]
   branch = "master"
-  digest = "1:c10265d5a71326618d37e97169eddb3582f78e8ac7dcf87403b4cf619efd519a"
+  digest = "1:812d0f78132bbf7731c247b2a3ea54710ecc8fd251a9e4898be9793f25dbdb1a"
   name = "howett.net/plist"
   packages = ["."]
   pruneopts = "UT"
-  revision = "591f970eefbbeb04d7b37f334a0c4c3256e32876"
+  revision = "1454fab16a0642638feb0ae98c41f79eccb2a20a"
 
 [solve-meta]
   analyzer-name = "dep"
