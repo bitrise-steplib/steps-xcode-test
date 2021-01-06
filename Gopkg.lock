@@ -19,7 +19,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:5e4f167418977858782db1d8820e8c2ccd368c8857e0806bcbd07d0bc09e1e38"
+  digest = "1:a6c4b93cbf1598f39f75f8eb10aad73caf515d130c945da2fb9eb96743b23dc7"
   name = "github.com/bitrise-io/go-steputils"
   packages = [
     "cache",
@@ -27,11 +27,11 @@
     "tools",
   ]
   pruneopts = "UT"
-  revision = "f540824d77dfd382ce84fd0ee0a9da2fba1cce0a"
+  revision = "03ae3a6ded35c5e8aed0058ec270e3494d242d17"
 
 [[projects]]
   branch = "master"
-  digest = "1:4993a67a1b558da96bee5669e2b6ec3c71544702ca574bcb844f0fbf24e5e669"
+  digest = "1:f93d75bb042fd71de998d5538d0bab89129adfc6ddfa0ca99f8775cba072067f"
   name = "github.com/bitrise-io/go-utils"
   packages = [
     "colorstring",
@@ -47,11 +47,11 @@
     "stringutil",
   ]
   pruneopts = "UT"
-  revision = "ad86bf775472ce1934affb9d3cb7d5ea3dffd16f"
+  revision = "859032e9adf02532a86a362ae5d1cfbc9292fcaf"
 
 [[projects]]
   branch = "master"
-  digest = "1:d085019686702e34666b79ce9de932a698ce4db4f4b283ee41d73719ef01f6d1"
+  digest = "1:342b98f72ffdc9ae0ca9d0f9652bc1489b8725581b4556291145d65b64c4ac10"
   name = "github.com/bitrise-io/go-xcode"
   packages = [
     "models",
@@ -63,7 +63,7 @@
     "xcpretty",
   ]
   pruneopts = "UT"
-  revision = "19cbfe6430acc193d779847a13be0b8585d866c1"
+  revision = "81c1cd57e28a647e2b6e323791b62e620b333cd9"
 
 [[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
