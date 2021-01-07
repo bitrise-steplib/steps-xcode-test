@@ -42,16 +42,6 @@ workflows:
     - _test
     - check_exported_artifacts
 
-  xcode_8_ci: 
-    before_run:
-    - audit-this-step
-    steps:
-    - go-list:
-    - go-test:
-    after_run:
-    - ci-xcode-8_headless_mode
-    - ci-xcode-8
-
   ci-objc_headless_mode:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
@@ -114,21 +104,6 @@ workflows:
     - _test
     - check_exported_artifacts
 
-  ci-xcode-8_headless_mode:
-    envs:
-    - SAMPLE_APP_URL: https://github.com/bitrise-io/ios-xcode-8.0.git
-    - SAMPLE_APP_BRANCH: master
-    - OUTPUT_TOOL: xcodebuild
-    - BITRISE_PROJECT_PATH: ios-xcode-8.0/ios-xcode-8.0.xcodeproj
-    - BITRISE_SCHEME: ios-xcode-8.0
-    - SIMULATOR_DEVICE: iPhone 6 Plus
-    - SIMULATOR_OS_VERSION: latest
-    - SIMULATOR_PLATFORM: iOS Simulator
-    - HEADLESS_MODE: "yes"
-    - RETRY_ON_FAIL: "no"
-    after_run:
-    - _test
-
   tvos_headless_mode:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-tvos-swift.git
@@ -174,21 +149,6 @@ workflows:
     after_run:
     - _test
     - check_exported_artifacts
-
-  ci-xcode-8:
-    envs:
-    - SAMPLE_APP_URL: https://github.com/bitrise-io/ios-xcode-8.0.git
-    - SAMPLE_APP_BRANCH: master
-    - OUTPUT_TOOL: xcodebuild
-    - BITRISE_PROJECT_PATH: ios-xcode-8.0/ios-xcode-8.0.xcodeproj
-    - BITRISE_SCHEME: ios-xcode-8.0
-    - SIMULATOR_DEVICE: iPhone 6 Plus
-    - SIMULATOR_OS_VERSION: latest
-    - SIMULATOR_PLATFORM: iOS Simulator
-    - HEADLESS_MODE: "no"
-    - RETRY_ON_FAIL: "no"
-    after_run:
-    - _test
 
   tvos:
     envs:
@@ -341,8 +301,8 @@ workflows:
     - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-swiftpm.git
     - SAMPLE_APP_BRANCH: master
     - OUTPUT_TOOL: xcodebuild
-    - BITRISE_PROJECT_PATH: sample-swiftpm.xcodeproj
-    - BITRISE_SCHEME: "sample swiftpm"
+    - BITRISE_PROJECT_PATH: sample-swiftpm2/sample-swiftpm2.xcodeproj/
+    - BITRISE_SCHEME: "sample-swiftpm2"
     - SIMULATOR_DEVICE: iPhone 8 Plus
     - SIMULATOR_PLATFORM: iOS Simulator
     - HEADLESS_MODE: "no"

@@ -48,6 +48,8 @@ const (
 	appAccessibilityIsNotLoaded              = `UI Testing Failure - App accessibility isn't loaded`
 	testRunnerFailedToInitializeForUITesting = `Test runner failed to initialize for UI testing`
 	timedOutRegisteringForTestingEvent       = `Timed out registering for testing event accessibility notifications`
+
+	xcodeBuild = "xcodebuild"
 )
 
 var automaticRetryReasonPatterns = []string{
@@ -484,6 +486,16 @@ If you have the Deploy to Bitrise.io step (after this step),
 that will attach the file to your build as an artifact!`, logPath)))
 }
 
+func handleXcprettyInstallError(err error) (string, error) {
+	if isXcprettyInstallationCheckError(err) {
+		return "", err
+	}
+
+	log.Warnf("%s", err)
+	log.Printf("Switching to xcodebuild for output tool")
+	return xcodeBuild, nil
+}
+
 func fail(format string, v ...interface{}) {
 	log.Errorf(format, v...)
 	os.Exit(1)
@@ -550,9 +562,10 @@ func main() {
 	outputTool := configs.OutputTool
 	xcprettyVersion, err := InstallXcpretty()
 	if err != nil {
-		log.Warnf("%s", err)
-		log.Printf("Switching to xcodebuild for output tool")
-		outputTool = "xcodebuild"
+		outputTool, err = handleXcprettyInstallError(err)
+		if err != nil {
+			fail("An error occured during installing xcpretty: %s", err)
+		}
 	} else {
 		log.Printf("- xcprettyVersion: %s", xcprettyVersion.String())
 		fmt.Println()
@@ -683,7 +696,7 @@ func main() {
 	// Run test
 	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, outputTool, configs.XcprettyTestOptions, true, configs.ShouldRetryTestOnFail, swiftPackagesPath)
 
-	logPth, err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil), outputTool != "xcodebuild")
+	logPth, err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil), outputTool != xcodeBuild)
 
 	if err != nil {
 		log.Warnf("Failed to save the Raw Output, error: %s", err)
@@ -723,7 +736,7 @@ func main() {
 		log.Warnf("Failed to export: BITRISE_XCRESULT_PATH, error: %s", err)
 	}
 
-	if testErr != nil || outputTool == "xcodebuild" {
+	if testErr != nil || outputTool == xcodeBuild {
 		printLastLinesOfRawXcodebuildLog(rawXcodebuildOutput, logPth, testErr == nil)
 	}
 
