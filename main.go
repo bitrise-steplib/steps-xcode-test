@@ -19,11 +19,13 @@ import (
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-utils/colorstring"
 	"github.com/bitrise-io/go-utils/command"
+	"github.com/bitrise-io/go-utils/errorutil"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/stringutil"
+	"github.com/bitrise-io/go-utils/ziputil"
 	simulator "github.com/bitrise-io/go-xcode/simulator"
 	"github.com/bitrise-io/go-xcode/utility"
 	cache "github.com/bitrise-io/go-xcode/xcodecache"
@@ -99,10 +101,14 @@ type Configs struct {
 	XcprettyTestOptions string `env:"xcpretty_test_options"`
 
 	// Debug
-	Verbose      bool `env:"verbose,opt[yes,no]"`
-	HeadlessMode bool `env:"headless_mode,opt[yes,no]"`
+	Verbose                     bool `env:"verbose,opt[yes,no]"`
+	CollectSimulatorDiagnostics bool `env:"collect_simulator_diagnostics,opt[yes,no]"`
+	HeadlessMode                bool `env:"headless_mode,opt[yes,no]"`
 
 	CacheLevel string `env:"cache_level,opt[none,swift_packages]"`
+
+	// Other environment variables
+	DeployDir string `env:"BITRISE_DEPLOY_DIR"`
 }
 
 func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
@@ -646,6 +652,19 @@ func main() {
 		buildTestParams.CleanBuild = configs.IsCleanBuild
 	}
 
+	if configs.CollectSimulatorDiagnostics {
+		simulatorVerboseCommand := command.NewWithStandardOuts("xcrun", "simctl", "logverbose", sim.ID, "enable")
+		log.Infof("$ %s", simulatorVerboseCommand.PrintableCommandArgs())
+		if err := simulatorVerboseCommand.Run(); err != nil {
+			if errorutil.IsExitStatusError(err) {
+				log.Warnf("Failed to enable simulator device verbose log: %v", err)
+			} else {
+				log.Warnf("Failed to run command: %v", err)
+			}
+		}
+		fmt.Println()
+	}
+
 	//
 	// If headless mode disabled - Start simulator
 	if sim.Status == "Shutdown" && !configs.HeadlessMode {
@@ -738,6 +757,34 @@ func main() {
 
 	if testErr != nil || outputTool == xcodeBuild {
 		printLastLinesOfRawXcodebuildLog(rawXcodebuildOutput, logPth, testErr == nil)
+	}
+
+	if configs.CollectSimulatorDiagnostics {
+		timestamp, err := time.Now().MarshalText()
+		if err != nil {
+			fail("Failed to marshal timestamp: %v", err)
+		}
+		diagnosticsName := fmt.Sprintf("simctl_diagnose_%s.zip", strings.ReplaceAll(string(timestamp), ":", "-"))
+		diagnosticsOutDir, err := ioutil.TempDir("", diagnosticsName)
+		if err != nil {
+			fail("Could not create temporary directory: %s", err)
+		}
+
+		simulatorDiagnosticsCommand := command.NewWithStandardOuts("xcrun", "simctl", "diagnose", "-b", "--no-archive", fmt.Sprintf("--output=%s", diagnosticsOutDir))
+		simulatorDiagnosticsCommand.SetStdin(bytes.NewReader([]byte("\n")))
+		fmt.Println()
+		log.Infof("$ %s", simulatorDiagnosticsCommand.PrintableCommandArgs())
+		if err := simulatorDiagnosticsCommand.Run(); err != nil {
+			log.Warnf("Failed to collect simulator diagnostics: %s", err)
+		}
+
+		if configs.DeployDir != "" {
+			if err := ziputil.ZipDir(diagnosticsOutDir, filepath.Join(configs.DeployDir, diagnosticsName), true); err != nil {
+				log.Warnf("Failed to compress simulator diagnostics result: %v", err)
+			}
+		} else {
+			log.Warnf("No deploy directory specified, will not export simulator diagnostics")
+		}
 	}
 
 	if testErr != nil {

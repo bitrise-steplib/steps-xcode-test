@@ -296,6 +296,13 @@ inputs:
       value_options:
       - "none"
       - "swift_packages"
+  - collect_simulator_diagnostics: "no"
+    opts:
+      category: Debug
+      title: Collect iOS Simulator diagnostics
+      value_options:
+      - "yes"
+      - "no"
 outputs:
 - BITRISE_XCODE_TEST_RESULT:
   opts:
