@@ -242,6 +242,7 @@ workflows:
                 echo "Xcode results not found in $BITRISE_XCRESULT_PATH"
                 exit 1
             fi
+            zip -rTy $BITRISE_DEPLOY_DIR/Test.xcresult$(gdate +%Y%m%d%H%M%S).zip $BITRISE_XCRESULT_PATH > /dev/null
 
             # Check and REMOVE test-info.json
             if [ $(find ${BITRISE_TEST_DEPLOY_DIR} -type f -delete -print -regex "${BITRISE_TEST_DEPLOY_DIR}/.*/${BITRISE_SCHEME}/test-info\.json" | grep -q .) ]; then
