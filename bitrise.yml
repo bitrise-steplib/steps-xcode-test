@@ -224,6 +224,7 @@ workflows:
         - export_uitest_artifacts: "true"
         - verbose: "yes"
         - collect_simulator_diagnostics: "yes"
+        - clean_simulator: "yes"
         - headless_mode: $HEADLESS_MODE
     - script:
         title: Output test

@@ -19,13 +19,11 @@ import (
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-utils/colorstring"
 	"github.com/bitrise-io/go-utils/command"
-	"github.com/bitrise-io/go-utils/errorutil"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/stringutil"
-	"github.com/bitrise-io/go-utils/ziputil"
 	simulator "github.com/bitrise-io/go-xcode/simulator"
 	"github.com/bitrise-io/go-xcode/utility"
 	cache "github.com/bitrise-io/go-xcode/xcodecache"
@@ -51,7 +49,8 @@ const (
 	testRunnerFailedToInitializeForUITesting = `Test runner failed to initialize for UI testing`
 	timedOutRegisteringForTestingEvent       = `Timed out registering for testing event accessibility notifications`
 
-	xcodeBuild = "xcodebuild"
+	xcodeBuild             = "xcodebuild"
+	simulatorShutdownState = "Shutdown"
 )
 
 var automaticRetryReasonPatterns = []string{
@@ -102,6 +101,7 @@ type Configs struct {
 
 	// Debug
 	Verbose                     bool `env:"verbose,opt[yes,no]"`
+	CleanSimulator              bool `env:"clean_simulator,opt[yes,no]"`
 	CollectSimulatorDiagnostics bool `env:"collect_simulator_diagnostics,opt[yes,no]"`
 	HeadlessMode                bool `env:"headless_mode,opt[yes,no]"`
 
@@ -652,36 +652,35 @@ func main() {
 		buildTestParams.CleanBuild = configs.IsCleanBuild
 	}
 
-	if configs.CollectSimulatorDiagnostics {
-		bootSimulatorCommand := command.NewWithStandardOuts("xcrun", "simctl", "boot", sim.ID)
-		log.Infof("$ %s", bootSimulatorCommand.PrintableCommandArgs())
-		exitCode, err := bootSimulatorCommand.RunAndReturnExitCode()
-		if err != nil {
-			if errorutil.IsExitStatusError(err) {
-				if exitCode == 149 { // Simulator already booted
-					//
-				}
-				log.Warnf("Failed to start Simulator: %v", err)
-			} else {
-				log.Errorf("Failed to run command: %v", err)
+	if xcodeMajorVersion >= 10 && configs.CleanSimulator {
+		log.Infof("Erasing Simulator contents and data")
+		if sim.Status != simulatorShutdownState {
+			if err := simulatorShutdown(sim.ID); err != nil {
+				fail("%v", err)
 			}
+		}
+		if err := simulatorErase(sim.ID); err != nil {
+			fail("%v", err)
+		}
+	}
+
+	if xcodeMajorVersion >= 10 && configs.CollectSimulatorDiagnostics {
+		log.Infof("Enabling Simulator verbose log for better diagnostics")
+		// Boot the simulator now, so verbose logging can be enabled and it is kept booted after running tests,
+		// this helps to collect more detailed debug info
+		if err := simulatorBoot(sim.ID); err != nil {
+			fail("%v", err)
+		}
+		if err := simulatorEnableVerboseLog(sim.ID); err != nil {
+			fail("%v", err)
 		}
 
-		simulatorVerboseCommand := command.NewWithStandardOuts("xcrun", "simctl", "logverbose", sim.ID, "enable")
-		log.Infof("$ %s", simulatorVerboseCommand.PrintableCommandArgs())
-		if err := simulatorVerboseCommand.Run(); err != nil {
-			if errorutil.IsExitStatusError(err) {
-				log.Warnf("Failed to enable simulator device verbose log: %v", err)
-			} else {
-				log.Warnf("Failed to run command: %v", err)
-			}
-		}
 		fmt.Println()
 	}
 
 	//
 	// If headless mode disabled - Start simulator
-	if sim.Status == "Shutdown" && !configs.HeadlessMode {
+	if sim.Status == simulatorShutdownState && !configs.HeadlessMode {
 		log.Infof("Booting simulator (%s)...", sim.ID)
 
 		if err := simulator.BootSimulator(sim, xcodebuildVersion); err != nil {
@@ -730,9 +729,30 @@ func main() {
 	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, outputTool, configs.XcprettyTestOptions, true, configs.ShouldRetryTestOnFail, swiftPackagesPath)
 
 	logPth, err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil), outputTool != xcodeBuild)
-
 	if err != nil {
 		log.Warnf("Failed to save the Raw Output, error: %s", err)
+	}
+
+	fmt.Println()
+	log.Infof("Collecting Simulator diagnostics")
+	if xcodeMajorVersion >= 10 && configs.CollectSimulatorDiagnostics {
+		if configs.DeployDir != "" {
+			diagnosticsPath, err := simulatorCollectDiagnostics(configs.DeployDir)
+			if err != nil {
+				log.Warnf("%v", err)
+			} else {
+				log.Donef("Simulator diagnistics are available as an artifact (%s)", diagnosticsPath)
+			}
+		} else {
+			log.Warnf("No deploy directory specified, will not export Simulator diagnostics")
+		}
+
+		// Shut down Simulator if it was not booted initially
+		if sim.Status == simulatorShutdownState {
+			if err := simulatorShutdown(sim.ID); err != nil {
+				log.Warnf("%v", err)
+			}
+		}
 	}
 
 	// exporting xcresult only if test result dir is present
@@ -771,34 +791,6 @@ func main() {
 
 	if testErr != nil || outputTool == xcodeBuild {
 		printLastLinesOfRawXcodebuildLog(rawXcodebuildOutput, logPth, testErr == nil)
-	}
-
-	if configs.CollectSimulatorDiagnostics {
-		timestamp, err := time.Now().MarshalText()
-		if err != nil {
-			fail("Failed to marshal timestamp: %v", err)
-		}
-		diagnosticsName := fmt.Sprintf("simctl_diagnose_%s.zip", strings.ReplaceAll(string(timestamp), ":", "-"))
-		diagnosticsOutDir, err := ioutil.TempDir("", diagnosticsName)
-		if err != nil {
-			fail("Could not create temporary directory: %s", err)
-		}
-
-		simulatorDiagnosticsCommand := command.NewWithStandardOuts("xcrun", "simctl", "diagnose", "-b", "--no-archive", fmt.Sprintf("--output=%s", diagnosticsOutDir))
-		simulatorDiagnosticsCommand.SetStdin(bytes.NewReader([]byte("\n")))
-		fmt.Println()
-		log.Infof("$ %s", simulatorDiagnosticsCommand.PrintableCommandArgs())
-		if err := simulatorDiagnosticsCommand.Run(); err != nil {
-			log.Warnf("Failed to collect simulator diagnostics: %s", err)
-		}
-
-		if configs.DeployDir != "" {
-			if err := ziputil.ZipDir(diagnosticsOutDir, filepath.Join(configs.DeployDir, diagnosticsName), true); err != nil {
-				log.Warnf("Failed to compress simulator diagnostics result: %v", err)
-			}
-		} else {
-			log.Warnf("No deploy directory specified, will not export simulator diagnostics")
-		}
 	}
 
 	if testErr != nil {

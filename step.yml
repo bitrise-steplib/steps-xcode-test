@@ -299,7 +299,14 @@ inputs:
   - collect_simulator_diagnostics: "no"
     opts:
       category: Debug
-      title: Collect iOS Simulator diagnostics
+      title: Collect Simulator diagnostics
+      value_options:
+      - "yes"
+      - "no"
+  - clean_simulator: "no"
+    opts:
+      category: Debug
+      title: Erase Simulator contents and data before running tests
       value_options:
       - "yes"
       - "no"
