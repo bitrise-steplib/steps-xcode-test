@@ -653,6 +653,20 @@ func main() {
 	}
 
 	if configs.CollectSimulatorDiagnostics {
+		bootSimulatorCommand := command.NewWithStandardOuts("xcrun", "simctl", "boot", sim.ID)
+		log.Infof("$ %s", bootSimulatorCommand.PrintableCommandArgs())
+		exitCode, err := bootSimulatorCommand.RunAndReturnExitCode()
+		if err != nil {
+			if errorutil.IsExitStatusError(err) {
+				if exitCode == 149 { // Simulator already booted
+					//
+				}
+				log.Warnf("Failed to start Simulator: %v", err)
+			} else {
+				log.Errorf("Failed to run command: %v", err)
+			}
+		}
+
 		simulatorVerboseCommand := command.NewWithStandardOuts("xcrun", "simctl", "logverbose", sim.ID, "enable")
 		log.Infof("$ %s", simulatorVerboseCommand.PrintableCommandArgs())
 		if err := simulatorVerboseCommand.Run(); err != nil {
