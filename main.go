@@ -100,10 +100,10 @@ type Configs struct {
 	XcprettyTestOptions string `env:"xcpretty_test_options"`
 
 	// Debug
-	Verbose                     bool `env:"verbose,opt[yes,no]"`
-	CleanSimulator              bool `env:"clean_simulator,opt[yes,no]"`
-	CollectSimulatorDiagnostics bool `env:"collect_simulator_diagnostics,opt[yes,no]"`
-	HeadlessMode                bool `env:"headless_mode,opt[yes,no]"`
+	Verbose                     bool   `env:"verbose,opt[yes,no]"`
+	CleanSimulator              bool   `env:"clean_simulator,opt[yes,no]"`
+	CollectSimulatorDiagnostics string `env:"collect_simulator_diagnostics,opt[always,on_failure,never]"`
+	HeadlessMode                bool   `env:"headless_mode,opt[yes,no]"`
 
 	CacheLevel string `env:"cache_level,opt[none,swift_packages]"`
 
@@ -516,6 +516,10 @@ func main() {
 	if err := stepconf.Parse(&configs); err != nil {
 		fail("Issue with input: %s", err)
 	}
+	simulatorDebug := parseExportCondition(configs.CollectSimulatorDiagnostics)
+	if simulatorDebug == invalid {
+		fail("Internal error, unexpected value (%s) for collect_simulator_diagnostics", configs.CollectSimulatorDiagnostics)
+	}
 
 	stepconf.Print(configs)
 	fmt.Println()
@@ -562,6 +566,11 @@ func main() {
 		// The test result bundle (xcresult) structure changed in Xcode 11:
 		// it does not contains TestSummaries.plist nor Attachments directly.
 		log.Warnf("Export UITest Artifacts (export_uitest_artifacts) turned on, but Xcode version >= 11. The test result bundle structure changed in Xcode 11 it does not contain TestSummaries.plist and Attachments directly, nothing to export.")
+	}
+
+	if simulatorDebug != never && xcodeMajorVersion < 10 {
+		log.Warnf("Collecting Simulator diagnostics is available with Xcode version 10 or newer")
+		simulatorDebug = never
 	}
 
 	// Detect xcpretty version
@@ -664,7 +673,7 @@ func main() {
 		}
 	}
 
-	if xcodeMajorVersion >= 10 && configs.CollectSimulatorDiagnostics {
+	if simulatorDebug != never {
 		log.Infof("Enabling Simulator verbose log for better diagnostics")
 		// Boot the simulator now, so verbose logging can be enabled and it is kept booted after running tests,
 		// this helps to collect more detailed debug info
@@ -733,9 +742,10 @@ func main() {
 		log.Warnf("Failed to save the Raw Output, error: %s", err)
 	}
 
-	fmt.Println()
-	log.Infof("Collecting Simulator diagnostics")
-	if xcodeMajorVersion >= 10 && configs.CollectSimulatorDiagnostics {
+	if simulatorDebug == always ||
+		(simulatorDebug == onFailure && testErr != nil) {
+		fmt.Println()
+		log.Infof("Collecting Simulator diagnostics")
 		if configs.DeployDir != "" {
 			diagnosticsPath, err := simulatorCollectDiagnostics(configs.DeployDir)
 			if err != nil {

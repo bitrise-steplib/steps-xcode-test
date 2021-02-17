@@ -296,13 +296,14 @@ inputs:
       value_options:
       - "none"
       - "swift_packages"
-  - collect_simulator_diagnostics: "no"
+  - collect_simulator_diagnostics: "never"
     opts:
       category: Debug
       title: Collect Simulator diagnostics
       value_options:
-      - "yes"
-      - "no"
+      - "always"
+      - "on_failure"
+      - "never"
   - clean_simulator: "no"
     opts:
       category: Debug

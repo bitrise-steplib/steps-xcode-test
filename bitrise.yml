@@ -223,7 +223,8 @@ workflows:
         - xcodebuild_test_options: -verbose
         - export_uitest_artifacts: "true"
         - verbose: "yes"
-        - collect_simulator_diagnostics: "yes"
+        - export_results: "on_failure"
+        - collect_simulator_diagnostics: "on_failure"
         - clean_simulator: "yes"
         - headless_mode: $HEADLESS_MODE
     - script:
