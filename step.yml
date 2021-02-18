@@ -304,13 +304,6 @@ inputs:
       - "always"
       - "on_failure"
       - "never"
-  - clean_simulator: "no"
-    opts:
-      category: Debug
-      title: Erase Simulator contents and data before running tests
-      value_options:
-      - "yes"
-      - "no"
 outputs:
 - BITRISE_XCODE_TEST_RESULT:
   opts:
