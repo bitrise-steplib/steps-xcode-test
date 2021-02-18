@@ -101,7 +101,6 @@ type Configs struct {
 
 	// Debug
 	Verbose                     bool   `env:"verbose,opt[yes,no]"`
-	CleanSimulator              bool   `env:"clean_simulator,opt[yes,no]"`
 	CollectSimulatorDiagnostics string `env:"collect_simulator_diagnostics,opt[always,on_failure,never]"`
 	HeadlessMode                bool   `env:"headless_mode,opt[yes,no]"`
 
@@ -659,18 +658,6 @@ func main() {
 
 	if configs.IsSingleBuild {
 		buildTestParams.CleanBuild = configs.IsCleanBuild
-	}
-
-	if xcodeMajorVersion >= 10 && configs.CleanSimulator {
-		log.Infof("Erasing Simulator contents and data")
-		if sim.Status != simulatorShutdownState {
-			if err := simulatorShutdown(sim.ID); err != nil {
-				fail("%v", err)
-			}
-		}
-		if err := simulatorErase(sim.ID); err != nil {
-			fail("%v", err)
-		}
 	}
 
 	if simulatorDebug != never {

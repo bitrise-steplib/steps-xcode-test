@@ -53,23 +53,6 @@ func simulatorShutdown(id string) error {
 	return nil
 }
 
-// Simulator needs to be shut down to erase
-func simulatorErase(id string) error {
-	bootSimulatorCommand := command.NewWithStandardOuts("xcrun", "simctl", "erase", id)
-
-	log.Donef("$ %s", bootSimulatorCommand.PrintableCommandArgs())
-	exitCode, err := bootSimulatorCommand.RunAndReturnExitCode()
-	if err != nil {
-		if errorutil.IsExitStatusError(err) {
-			log.Warnf("Failed to erase Simulator, command exited with code %d", exitCode)
-			return nil
-		}
-		return fmt.Errorf("failed to erase Simulator, command execution failed: %v", err)
-	}
-
-	return nil
-}
-
 // Simulator needs to be booted to enable verbose log
 func simulatorEnableVerboseLog(id string) error {
 	simulatorVerboseCommand := command.NewWithStandardOuts("xcrun", "simctl", "logverbose", id, "enable")
