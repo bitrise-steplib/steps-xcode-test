@@ -501,6 +501,15 @@ func fail(format string, v ...interface{}) {
 	os.Exit(1)
 }
 
+func retry(attempts int, sleep time.Duration, f func() error) {
+	attempts--;
+	if err := f(); err != nil && attempts > 0 {
+		time.Sleep(sleep)
+		retry(attempts, 2*sleep, f)
+	}
+}
+
+
 //--------------------
 // Main
 //--------------------
@@ -579,30 +588,37 @@ func main() {
 	)
 
 	platform := strings.TrimSuffix(configs.SimulatorPlatform, " Simulator")
-	if configs.SimulatorOsVersion == "latest" {
-		var simulatorDevice = configs.SimulatorDevice
-		if simulatorDevice == "iPad" {
-			log.Warnf("Given device (%s) is deprecated, using (iPad 2)...", simulatorDevice)
-			simulatorDevice = "iPad Air (3rd generation)"
-		}
+	// 3 attemps to gather device information since xcrun simctl list can fail to show the complete device list
+	retry(3, time.Second*3, func() error {
+		if configs.SimulatorOsVersion == "latest" {
+			var simulatorDevice = configs.SimulatorDevice
+			if simulatorDevice == "iPad" {
+				log.Warnf("Given device (%s) is deprecated, using (iPad 2)...", simulatorDevice)
+				simulatorDevice = "iPad Air (3rd generation)"
+			}
 
-		sim, osVersion, errGetSimulator = simulator.GetLatestSimulatorInfoAndVersion(platform, simulatorDevice)
-	} else {
-		normalizedOsVersion := configs.SimulatorOsVersion
-		osVersionSplit := strings.Split(normalizedOsVersion, ".")
-		if len(osVersionSplit) > 2 {
-			normalizedOsVersion = strings.Join(osVersionSplit[0:2], ".")
-		}
-		platformAndVersion := fmt.Sprintf("%s %s", platform, normalizedOsVersion)
+			sim, osVersion, errGetSimulator = simulator.GetLatestSimulatorInfoAndVersion(platform, simulatorDevice)
+		} else {
+			normalizedOsVersion := configs.SimulatorOsVersion
+			osVersionSplit := strings.Split(normalizedOsVersion, ".")
+			if len(osVersionSplit) > 2 {
+				normalizedOsVersion = strings.Join(osVersionSplit[0:2], ".")
+			}
+			osVersion = fmt.Sprintf("%s %s", platform, normalizedOsVersion)
 
-		sim, errGetSimulator = simulator.GetSimulatorInfo(platformAndVersion, configs.SimulatorDevice)
-	}
+			sim, errGetSimulator = simulator.GetSimulatorInfo(osVersion, configs.SimulatorDevice)
+		}
+		if errGetSimulator != nil {
+			log.Warnf("attempt to get simulator udid failed with error: %s", errGetSimulator)
+		}
+		return errGetSimulator
+	})
 
 	if errGetSimulator != nil {
 		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
 			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 		}
-		fail("failed to get simulator udid, error: %s", errGetSimulator)
+		fail("failed to get simulator udid after 3 attempts")
 	}
 
 	log.Infof("Simulator infos")
