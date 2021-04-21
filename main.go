@@ -568,7 +568,7 @@ func main() {
 	}
 
 	if simulatorDebug != never && xcodeMajorVersion < 10 {
-		log.Warnf("Collecting Simulator diagnostics is available with Xcode version 10 or newer")
+		log.Warnf("Collecting Simulator diagnostics is not available below Xcode version 10, current Xcode version: %s", xcodeMajorVersion)
 		simulatorDebug = never
 	}
 
