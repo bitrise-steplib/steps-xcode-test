@@ -49,7 +49,8 @@ const (
 	testRunnerFailedToInitializeForUITesting = `Test runner failed to initialize for UI testing`
 	timedOutRegisteringForTestingEvent       = `Timed out registering for testing event accessibility notifications`
 
-	xcodeBuild = "xcodebuild"
+	xcodeBuild             = "xcodebuild"
+	simulatorShutdownState = "Shutdown"
 )
 
 var automaticRetryReasonPatterns = []string{
@@ -99,10 +100,14 @@ type Configs struct {
 	XcprettyTestOptions string `env:"xcpretty_test_options"`
 
 	// Debug
-	Verbose      bool `env:"verbose,opt[yes,no]"`
-	HeadlessMode bool `env:"headless_mode,opt[yes,no]"`
+	Verbose                     bool   `env:"verbose,opt[yes,no]"`
+	CollectSimulatorDiagnostics string `env:"collect_simulator_diagnostics,opt[always,on_failure,never]"`
+	HeadlessMode                bool   `env:"headless_mode,opt[yes,no]"`
 
 	CacheLevel string `env:"cache_level,opt[none,swift_packages]"`
+
+	// Other environment variables
+	DeployDir string `env:"BITRISE_DEPLOY_DIR"`
 }
 
 func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
@@ -510,6 +515,10 @@ func main() {
 	if err := stepconf.Parse(&configs); err != nil {
 		fail("Issue with input: %s", err)
 	}
+	simulatorDebug := parseExportCondition(configs.CollectSimulatorDiagnostics)
+	if simulatorDebug == invalid {
+		fail("Internal error, unexpected value (%s) for collect_simulator_diagnostics", configs.CollectSimulatorDiagnostics)
+	}
 
 	stepconf.Print(configs)
 	fmt.Println()
@@ -556,6 +565,11 @@ func main() {
 		// The test result bundle (xcresult) structure changed in Xcode 11:
 		// it does not contains TestSummaries.plist nor Attachments directly.
 		log.Warnf("Export UITest Artifacts (export_uitest_artifacts) turned on, but Xcode version >= 11. The test result bundle structure changed in Xcode 11 it does not contain TestSummaries.plist and Attachments directly, nothing to export.")
+	}
+
+	if simulatorDebug != never && xcodeMajorVersion < 10 {
+		log.Warnf("Collecting Simulator diagnostics is not available below Xcode version 10, current Xcode version: %s", xcodeMajorVersion)
+		simulatorDebug = never
 	}
 
 	// Detect xcpretty version
@@ -646,9 +660,23 @@ func main() {
 		buildTestParams.CleanBuild = configs.IsCleanBuild
 	}
 
+	if simulatorDebug != never {
+		log.Infof("Enabling Simulator verbose log for better diagnostics")
+		// Boot the simulator now, so verbose logging can be enabled and it is kept booted after running tests,
+		// this helps to collect more detailed debug info
+		if err := simulatorBoot(sim.ID); err != nil {
+			fail("%v", err)
+		}
+		if err := simulatorEnableVerboseLog(sim.ID); err != nil {
+			fail("%v", err)
+		}
+
+		fmt.Println()
+	}
+
 	//
 	// If headless mode disabled - Start simulator
-	if sim.Status == "Shutdown" && !configs.HeadlessMode {
+	if sim.Status == simulatorShutdownState && !configs.HeadlessMode {
 		log.Infof("Booting simulator (%s)...", sim.ID)
 
 		if err := simulator.BootSimulator(sim, xcodebuildVersion); err != nil {
@@ -697,9 +725,31 @@ func main() {
 	rawXcodebuildOutput, exitCode, testErr := runTest(buildTestParams, outputTool, configs.XcprettyTestOptions, true, configs.ShouldRetryTestOnFail, swiftPackagesPath)
 
 	logPth, err := saveRawOutputToLogFile(rawXcodebuildOutput, (testErr == nil), outputTool != xcodeBuild)
-
 	if err != nil {
 		log.Warnf("Failed to save the Raw Output, error: %s", err)
+	}
+
+	if simulatorDebug == always ||
+		(simulatorDebug == onFailure && testErr != nil) {
+		fmt.Println()
+		log.Infof("Collecting Simulator diagnostics")
+		if configs.DeployDir != "" {
+			diagnosticsPath, err := simulatorCollectDiagnostics(configs.DeployDir)
+			if err != nil {
+				log.Warnf("%v", err)
+			} else {
+				log.Donef("Simulator diagnistics are available as an artifact (%s)", diagnosticsPath)
+			}
+		} else {
+			log.Warnf("No deploy directory specified, will not export Simulator diagnostics")
+		}
+
+		// Shut down Simulator if it was not booted initially
+		if sim.Status == simulatorShutdownState {
+			if err := simulatorShutdown(sim.ID); err != nil {
+				log.Warnf("%v", err)
+			}
+		}
 	}
 
 	// exporting xcresult only if test result dir is present

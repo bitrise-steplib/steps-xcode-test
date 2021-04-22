@@ -296,6 +296,14 @@ inputs:
       value_options:
       - "none"
       - "swift_packages"
+  - collect_simulator_diagnostics: "never"
+    opts:
+      category: Debug
+      title: Collect Simulator diagnostics
+      value_options:
+      - "always"
+      - "on_failure"
+      - "never"
 outputs:
 - BITRISE_XCODE_TEST_RESULT:
   opts:

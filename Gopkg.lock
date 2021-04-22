@@ -31,7 +31,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f93d75bb042fd71de998d5538d0bab89129adfc6ddfa0ca99f8775cba072067f"
+  digest = "1:8bd1093c3747f58fb5802dcce84f4ef789ef0f4b92abe6e1e43fddd98f162c34"
   name = "github.com/bitrise-io/go-utils"
   packages = [
     "colorstring",
@@ -45,6 +45,7 @@
     "pointers",
     "progress",
     "stringutil",
+    "ziputil",
   ]
   pruneopts = "UT"
   revision = "859032e9adf02532a86a362ae5d1cfbc9292fcaf"
@@ -74,12 +75,12 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:88e0b0baeb9072f0a4afbcf12dda615fc8be001d1802357538591155998da21b"
+  digest = "1:95732e0c27df672b3fdf5cdd8edd18cba5fc07263ef7cd25eaaad4afc4730313"
   name = "github.com/hashicorp/go-version"
   packages = ["."]
   pruneopts = "UT"
-  revision = "ac23dc3fea5d1a983c43f6a0f6e2c13f0195d8bd"
-  version = "v1.2.0"
+  revision = "59da58cfd357de719a4d16dac30481391a56c002"
+  version = "v1.2.1"
 
 [[projects]]
   branch = "master"
@@ -133,7 +134,7 @@
   revision = "543471e840be449c53d44b32c7adf1261ad67e37"
 
 [[projects]]
-  digest = "1:1093f2eb4b344996604f7d8b29a16c5b22ab9e1b25652140d3fede39f640d5cd"
+  digest = "1:666e3df74f0c4788cc92426b18e33d93b7b62a3d4e8253f7c4b2226132a0f8de"
   name = "golang.org/x/text"
   packages = [
     "internal/gen",
@@ -144,8 +145,8 @@
     "unicode/norm",
   ]
   pruneopts = "UT"
-  revision = "342b2e1fbaa52c93f31447ad2c6abc048c63e475"
-  version = "v0.3.2"
+  revision = "75a595aef632b07c6eeaaa805adb6f0f66e4130e"
+  version = "v0.3.5"
 
 [[projects]]
   branch = "v3"
@@ -171,11 +172,13 @@
     "github.com/bitrise-io/go-steputils/stepconf",
     "github.com/bitrise-io/go-utils/colorstring",
     "github.com/bitrise-io/go-utils/command",
+    "github.com/bitrise-io/go-utils/errorutil",
     "github.com/bitrise-io/go-utils/fileutil",
     "github.com/bitrise-io/go-utils/log",
     "github.com/bitrise-io/go-utils/pathutil",
     "github.com/bitrise-io/go-utils/progress",
     "github.com/bitrise-io/go-utils/stringutil",
+    "github.com/bitrise-io/go-utils/ziputil",
     "github.com/bitrise-io/go-xcode/plistutil",
     "github.com/bitrise-io/go-xcode/simulator",
     "github.com/bitrise-io/go-xcode/utility",
