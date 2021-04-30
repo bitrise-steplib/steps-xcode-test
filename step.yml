@@ -116,7 +116,7 @@ inputs:
     opts:
       title: Export UITest Artifacts
       description: |-
-        If enabled, the attachments of the UITest will be exported into the BITRISE_DEPLOY_DIR, as a compressed ZIP file.
+        If enabled, the attachments of the UITest will be exported into the `BITRISE_DEPLOY_DIR`, as a compressed ZIP file.
         Attachments include screenshots taken during the UI test, and other artifacts.
 
         __NOTE:__ works only with Xcode version < 11.
