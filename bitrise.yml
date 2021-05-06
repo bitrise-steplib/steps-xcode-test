@@ -314,68 +314,6 @@ workflows:
             fi
 
             echo "Exported xcpretty html report found: $BITRISE_DEPLOY_DIR/xcode-test-results-ios-simple-objc.html"
-
-  ci-swiftpm:
-    envs:
-    - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-swiftpm.git
-    - SAMPLE_APP_BRANCH: master
-    - OUTPUT_TOOL: xcodebuild
-    - BITRISE_PROJECT_PATH: sample-swiftpm2/sample-swiftpm2.xcodeproj/
-    - BITRISE_SCHEME: "sample-swiftpm2"
-    - SIMULATOR_DEVICE: iPhone 8 Plus
-    - SIMULATOR_PLATFORM: iOS Simulator
-    - HEADLESS_MODE: "no"
-    - RETRY_ON_FAIL: "no"
-    steps:
-    - cache-pull: {}
-    - script:
-        inputs:
-        - content: |-
-            #!/bin/env bash
-            set -e
-            set -v
-            rm -rf ./_tmp
-    - change-workdir:
-        title: Switch working dir to test / _tmp dir
-        run_if: true
-        inputs:
-        - path: ./_tmp
-        - is_create_path: true
-    - script:
-        inputs:
-        - content: |-
-            #!/bin/env bash
-            echo BITRISE_SOURCE_DIR: ${BITRISE_SOURCE_DIR}
-            echo ORIG_BITRISE_SOURCE_DIR: ${ORIG_BITRISE_SOURCE_DIR}
-            echo working directory: $(pwd)
-    - script:
-        inputs:
-        - content: |-
-            #!/bin/env bash
-            set -e
-            set -v
-            git clone -b $SAMPLE_APP_BRANCH --single-branch $SAMPLE_APP_URL .
-    - certificate-and-profile-installer: {}
-    - path::./:
-        inputs:
-        - output_tool: $OUTPUT_TOOL
-        - is_clean_build: "no"
-        - should_retry_test_on_fail: $RETRY_ON_FAIL
-        - generate_code_coverage_files: "no"
-        - simulator_device: $SIMULATOR_DEVICE
-        - simulator_os_version: latest
-        - simulator_platform: $SIMULATOR_PLATFORM
-        - should_build_before_test: "no"
-        - xcodebuild_test_options: -verbose
-        - export_uitest_artifacts: "true"
-        - verbose: "yes"
-        - headless_mode: $HEADLESS_MODE
-        - cache_level: "swift_packages"
-    - change-workdir:
-        title: Switch back to work dir at the start.
-        inputs:
-        - path: ${ORIG_BITRISE_SOURCE_DIR}
-    - cache-push: {}
             
   # ----------------------------------------------------------------
   # --- workflows to Share this step into a Step Library
