@@ -23,6 +23,7 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/progress"
+	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/stringutil"
 	simulator "github.com/bitrise-io/go-xcode/simulator"
 	"github.com/bitrise-io/go-xcode/utility"
@@ -506,19 +507,9 @@ func fail(format string, v ...interface{}) {
 	os.Exit(1)
 }
 
-func retry(attempts int, sleep time.Duration, f func() error) {
-	attempts--;
-	if err := f(); err != nil && attempts > 0 {
-		time.Sleep(sleep)
-		retry(attempts, 2*sleep, f)
-	}
-}
-
-
 //--------------------
 // Main
 //--------------------
-
 func main() {
 	var configs Configs
 	if err := stepconf.Parse(&configs); err != nil {
@@ -596,14 +587,14 @@ func main() {
 
 	// Simulator infos
 	var (
-		sim             simulator.InfoModel
-		osVersion       string
-		errGetSimulator error
+		sim       simulator.InfoModel
+		osVersion string
 	)
 
 	platform := strings.TrimSuffix(configs.SimulatorPlatform, " Simulator")
-	// 3 attemps to gather device information since xcrun simctl list can fail to show the complete device list
-	retry(3, time.Second*3, func() error {
+	// Retry gathering device information since xcrun simctl list can fail to show the complete device list
+	if err = retry.Times(3).Wait(10 * time.Second).Try(func(attempt uint) error {
+		var errGetSimulator error
 		if configs.SimulatorOsVersion == "latest" {
 			var simulatorDevice = configs.SimulatorDevice
 			if simulatorDevice == "iPad" {
@@ -622,17 +613,18 @@ func main() {
 
 			sim, errGetSimulator = simulator.GetSimulatorInfo(osVersion, configs.SimulatorDevice)
 		}
-		if errGetSimulator != nil {
-			log.Warnf("attempt to get simulator udid failed with error: %s", errGetSimulator)
-		}
-		return errGetSimulator
-	})
 
-	if errGetSimulator != nil {
+		if errGetSimulator != nil {
+			log.Warnf("attempt %d to get simulator udid failed with error: %s", attempt, errGetSimulator)
+		}
+
+		return errGetSimulator
+	}); err != nil {
 		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
 			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 		}
-		fail("failed to get simulator udid after 3 attempts")
+
+		fail("failed to look up Simulator UDID: %s", err)
 	}
 
 	log.Infof("Simulator infos")
