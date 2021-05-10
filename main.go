@@ -507,9 +507,6 @@ func fail(format string, v ...interface{}) {
 	os.Exit(1)
 }
 
-//--------------------
-// Main
-//--------------------
 func main() {
 	var configs Configs
 	if err := stepconf.Parse(&configs); err != nil {
@@ -624,7 +621,7 @@ func main() {
 			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 		}
 
-		fail("failed to look up Simulator UDID: %s", err)
+		fail("Simulator UDID lookup failed: %s", err)
 	}
 
 	log.Infof("Simulator infos")
