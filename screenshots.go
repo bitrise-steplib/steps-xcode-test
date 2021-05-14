@@ -8,7 +8,7 @@ import (
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
-	"github.com/bitrise-steplib/steps-xcode-test/pretty"
+	"github.com/bitrise-io/go-utils/pretty"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodeutil/testsummaries"
 )
 
