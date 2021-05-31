@@ -1,4 +1,4 @@
-format_version: 8
+format_version: 11
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
@@ -6,273 +6,62 @@ app:
   - ORIG_BITRISE_SOURCE_DIR: $BITRISE_SOURCE_DIR
 
 workflows:
-  ci:
-    before_run:
-    - audit-this-step
+  check:
     steps:
-    - go-list: {}
-    - golint: {}
-    - errcheck: {}
-    - go-test: {}
-    after_run:
-    - test
+    - git::https://github.com/bitrise-steplib/steps-check.git: {}
 
-  test:
-    after_run:
-    # headless tests first, as otherwise running emulator is reused
-    - ci-objc_headless_mode
-    - _script_wrapper_for_headless_failing_ui_test
-    - ci-objc_headless_mode_xcpretty
-    - ci-parallel_headless_mode
-    - tvos_headless_mode
-
-  debug:
+  sample:
     envs:
-    # Remote or local URL
-    - SAMPLE_APP_URL: $SAMPLE_APP_URL
-    - SAMPLE_APP_BRANCH: $SAMPLE_APP_BRANCH # main
-    - BITRISE_PROJECT_PATH: $BITRISE_PROJECT_PATH
-    - BITRISE_SCHEME: $BITRISE_SCHEME
-    - SIMULATOR_DEVICE: $SIMULATOR_DEVICE # iPhone 8 Plus
-    - SIMULATOR_OS_VERSION: $SIMULATOR_OS_VERSION # latest
-    - SIMULATOR_PLATFORM: $SIMULATOR_PLATFORM # iOS Simulator
-    - OUTPUT_TOOL: xcpretty
-    - HEADLESS_MODE: "yes"
-    - RETRY_ON_FAIL: "yes"
-    after_run:
-    - _test
-    - check_exported_artifacts
-
-  manual_test-retry_after_fail:
-    envs:
-    - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
-    - SAMPLE_APP_BRANCH: failing-ui-test
-    - OUTPUT_TOOL: xcpretty
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
-    - SIMULATOR_DEVICE: iPhone 8 Plus
-    - SIMULATOR_PLATFORM: iOS Simulator
-    - HEADLESS_MODE: "yes"
-    - RETRY_ON_FAIL: "yes"
-    after_run:
-    - _test
-    - check_exported_artifacts
-
-  ci-objc_headless_mode:
-    envs:
-    - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
-    - SAMPLE_APP_BRANCH: master
-    - OUTPUT_TOOL: xcodebuild
-    - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
-    - BITRISE_SCHEME: ios-simple-objc
-    - SIMULATOR_DEVICE: iPhone 8 Plus
-    - SIMULATOR_OS_VERSION: "latest"
-    - SIMULATOR_PLATFORM: iOS Simulator
-    - HEADLESS_MODE: "yes"
-    - RETRY_ON_FAIL: "no"
-    after_run:
-    - _test
-    - check_exported_artifacts
-
-  ci-objc_headless_mode_xcpretty:
-    envs:
-    - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
-    - SAMPLE_APP_BRANCH: master
-    - OUTPUT_TOOL: xcpretty
-    - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
-    - BITRISE_SCHEME: ios-simple-objc
-    - SIMULATOR_DEVICE: iPhone 8 Plus
-    - SIMULATOR_OS_VERSION: "latest"
-    - SIMULATOR_PLATFORM: iOS Simulator
-    - HEADLESS_MODE: "yes"
-    - RETRY_ON_FAIL: "no"
-    after_run:
-    - _test
-    - check_exported_artifacts
-    - check_xcpretty_html_report
-
-  _script_wrapper_for_headless_failing_ui_test:
-    steps:
-    - script:
-        title: Start a failing workflow, wrapped in a script.
-        inputs:
-        - content: |-
-            #!/bin/env bash
-            bitrise run ci-objc_headless_mode_failing_ui_test
-            if [ $? -ne 1 ] ; then
-              echo "Workflow was excepted to fail, exit code not 1."
-              exit 1
-            fi
-
-  ci-objc_headless_mode_failing_ui_test:
-    envs:
-    - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
-    - SAMPLE_APP_BRANCH: failing-ui-test
-    - OUTPUT_TOOL: xcodebuild
-    - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
-    - BITRISE_SCHEME: ios-simple-objc
-    - SIMULATOR_DEVICE: iPhone 8 Plus
-    - SIMULATOR_OS_VERSION: "latest"
-    - SIMULATOR_PLATFORM: iOS Simulator
-    - HEADLESS_MODE: "yes"
-    - RETRY_ON_FAIL: "no"
-    after_run:
-    - _test
-    - check_exported_artifacts
-
-  tvos_headless_mode:
-    envs:
-    - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-tvos-swift.git
-    - SAMPLE_APP_BRANCH: master
-    - OUTPUT_TOOL: xcodebuild
-    - BITRISE_PROJECT_PATH: NPO Live.xcworkspace
-    - BITRISE_SCHEME: NPO Live
-    - SIMULATOR_DEVICE: Apple TV
-    - SIMULATOR_OS_VERSION: "latest"
-    - SIMULATOR_PLATFORM: tvOS Simulator
-    - HEADLESS_MODE: "yes"
-    - RETRY_ON_FAIL: "no"
-    after_run:
-    - _test
-
-  ci-parallel_headless_mode:
-    envs:
-    - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - SAMPLE_APP_BRANCH: master
-    - OUTPUT_TOOL: xcodebuild
-    - BITRISE_PROJECT_PATH: BullsEye.xcodeproj
-    - BITRISE_SCHEME: BullsEye
-    - SIMULATOR_DEVICE: iPhone 8 Plus
-    - SIMULATOR_OS_VERSION: "latest"
-    - SIMULATOR_PLATFORM: iOS Simulator
-    - HEADLESS_MODE: "yes"
-    - RETRY_ON_FAIL: "no"
-    after_run:
-    - _test
-
-  _test:
-    steps:
-    - script:
-        inputs:
-        - content: |-
-            #!/bin/env bash
-            set -e
-            set -v
-            rm -rf ./_tmp
-    - change-workdir:
-        title: Switch working dir to test / _tmp dir
-        run_if: true
-        inputs:
-        - path: ./_tmp
-        - is_create_path: true
-    - script:
-        inputs:
-        - content: |-
-            #!/bin/env bash
-            echo BITRISE_SOURCE_DIR: ${BITRISE_SOURCE_DIR}
-            echo ORIG_BITRISE_SOURCE_DIR: ${ORIG_BITRISE_SOURCE_DIR}
-            echo working directory: $(pwd)
-    - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git@master:
-        inputs:
-          - repository_url: $SAMPLE_APP_URL
-          - clone_into_dir: .
-          - branch: $SAMPLE_APP_BRANCH
-    - certificate-and-profile-installer: {}
-    - path::./:
-        inputs:
-        - output_tool: $OUTPUT_TOOL
-        - is_clean_build: "yes"
-        - should_retry_test_on_fail: $RETRY_ON_FAIL
-        - generate_code_coverage_files: "no"
-        - simulator_device: $SIMULATOR_DEVICE
-        - simulator_os_version: $SIMULATOR_OS_VERSION
-        - simulator_platform: $SIMULATOR_PLATFORM
-        - should_build_before_test: "yes"
-        - xcodebuild_test_options: -verbose
-        - export_uitest_artifacts: "true"
-        - verbose: "yes"
-        - collect_simulator_diagnostics: "never"
-        - headless_mode: $HEADLESS_MODE
-    - script:
-        title: Output test
-        is_always_run: true
-        inputs:
-        - content: |-
-            echo "BITRISE_XCODE_TEST_RESULT: ${BITRISE_XCODE_TEST_RESULT}"
-            if [ ! -f "$BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH" ] ; then
-              echo "No BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH file generated!"
-              exit 1
-            fi
-
-            if [ ! -d $BITRISE_XCRESULT_PATH ]; then
-                echo "Xcode results not found in $BITRISE_XCRESULT_PATH"
-                exit 1
-            fi
-            zip -rTy $BITRISE_DEPLOY_DIR/Test.xcresult$(gdate +%Y%m%d%H%M%S).zip $BITRISE_XCRESULT_PATH > /dev/null
-
-            # Check and REMOVE test-info.json
-            if [ $(find ${BITRISE_TEST_DEPLOY_DIR} -type f -delete -print -regex "${BITRISE_TEST_DEPLOY_DIR}/.*/${BITRISE_SCHEME}/test-info\.json" | grep -q .) ]; then
-               echo "${BITRISE_TEST_DEPLOY_DIR} does not contain test-info.json."
-               exit 1
-            fi
-
-            echo "BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH: ${BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH}"
-            echo "BITRISE_XCODE_TEST_ATTACHMENTS_PATH: ${BITRISE_XCODE_TEST_ATTACHMENTS_PATH}"
-            echo "BITRISE_XCRESULT_PATH: $BITRISE_XCRESULT_PATH"
-            echo "BITRISE_TEST_DEPLOY_DIR: $BITRISE_TEST_DEPLOY_DIR"
-    - change-workdir:
-        title: Switch back to work dir at the start.
-        inputs:
-        - path: ${ORIG_BITRISE_SOURCE_DIR}
-
-  check_exported_artifacts:
-    steps:
-    - script:
-        title: Exported attachment test
-        is_always_run: true
-        inputs:
-        - content: |-
-            #!/bin/env bash
-            set -e
-            version=`xcodebuild -version`
-            regex="Xcode ([0-9]*)."
-            if [[ $version =~ $regex ]]; then
-              if [[ ${BASH_REMATCH[1]} -ge 11 ]]; then
-                exit 0
-              fi
-            fi
-
-            if [ ! -f $BITRISE_DEPLOY_DIR/ios-simple-objc-xc-test-Attachments.zip ]; then
-                echo "Exported artifacts - ios-simple-objc-xc-test-Attachments.zip - not found in $BITRISE_DEPLOY_DIR"
-                exit 1
-            fi
-
-            echo "Exported attachments found: $BITRISE_DEPLOY_DIR/ios-simple-objc-xc-test-Attachments.zip"
-
-  check_xcpretty_html_report:
-    steps:
-    - script:
-        title: Check xcpretty html report
-        is_always_run: true
-        inputs:
-        - content: |-
-            #!/bin/env bash
-            set -e
-
-            if [ ! -f $BITRISE_DEPLOY_DIR/xcode-test-results-ios-simple-objc.html ]; then
-                echo "Exported xcpretty html report - xcode-test-results-ios-simple-objc.html - not found in $BITRISE_DEPLOY_DIR"
-                exit 1
-            fi
-
-            echo "Exported xcpretty html report found: $BITRISE_DEPLOY_DIR/xcode-test-results-ios-simple-objc.html"
-            
-  # ----------------------------------------------------------------
-  # --- workflows to Share this step into a Step Library
-  audit-this-step:
     steps:
     - script:
         inputs:
         - content: |-
             #!/bin/env bash
             set -ex
-            stepman audit --step-yml ./step.yml
+            rm -rf ./_tmp
+    - change-workdir:
+        title: Switch working dir to test / _tmp dir
+        inputs:
+        - path: ./_tmp
+        - is_create_path: true
+    - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git@master:
+        inputs:
+          - repository_url: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git # Remote or local URL
+          - branch: master
+          - clone_into_dir: .
+    - path::./:
+        inputs:
+        - xcodebuild_test_options: -verbose
+        - export_uitest_artifacts: "true"
+        - verbose: "yes"
+
+  sample_retry_after_test_fail:
+    envs:
+    - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
+    - BITRISE_SCHEME: ios-simple-objc
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -ex
+            rm -rf ./_tmp
+    - change-workdir:
+        title: Switch working dir to test / _tmp dir
+        inputs:
+        - path: ./_tmp
+        - is_create_path: true
+    - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git@master:
+        inputs:
+          - repository_url: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
+          - branch: failing-ui-test
+          - clone_into_dir: .
+    - path::./:
+        inputs:
+        - should_retry_test_on_fail: "yes"
+        - xcodebuild_test_options: -verbose
+        - export_uitest_artifacts: "true"
+        - verbose: "yes"
+
