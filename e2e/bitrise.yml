@@ -6,7 +6,7 @@ app:
   - ORIG_BITRISE_SOURCE_DIR: $BITRISE_SOURCE_DIR
 
 workflows:
-  test_objc_headless_mode:
+  test_objc:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
     - SAMPLE_APP_BRANCH: master
@@ -16,13 +16,12 @@ workflows:
     - SIMULATOR_DEVICE: iPhone 8 Plus
     - SIMULATOR_OS_VERSION: "latest"
     - SIMULATOR_PLATFORM: iOS Simulator
-    - HEADLESS_MODE: "yes"
     after_run:
     - _run
     - _check_outputs
     - _check_exported_artifacts
 
-  test_objc_headless_mode_xcpretty:
+  test_objc_xcpretty:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
     - SAMPLE_APP_BRANCH: master
@@ -32,27 +31,26 @@ workflows:
     - SIMULATOR_DEVICE: iPhone 8 Plus
     - SIMULATOR_OS_VERSION: "latest"
     - SIMULATOR_PLATFORM: iOS Simulator
-    - HEADLESS_MODE: "yes"
     after_run:
     - _run
     - _check_outputs
     - _check_exported_artifacts
     - _check_xcpretty_html_report
 
-  test_headless_failing_ui_test:
+  test_failing_ui_test:
     steps:
     - script:
         title: Start a failing workflow, wrapped in a script.
         inputs:
         - content: |-
             #!/bin/env bash
-            bitrise run utility_objc_headless_mode_failing_ui_test
+            bitrise run utility_objc_failing_ui_test
             if [ $? -ne 1 ] ; then
               echo "Workflow was excepted to fail, exit code not 1."
               exit 1
             fi
 
-  utility_objc_headless_mode_failing_ui_test:
+  utility_objc_failing_ui_test:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
     - SAMPLE_APP_BRANCH: failing-ui-test
@@ -62,13 +60,12 @@ workflows:
     - SIMULATOR_DEVICE: iPhone 8 Plus
     - SIMULATOR_OS_VERSION: "latest"
     - SIMULATOR_PLATFORM: iOS Simulator
-    - HEADLESS_MODE: "yes"
     after_run:
     - _run
     - _check_outputs
     - _check_exported_artifacts
 
-  test_tvos_headless_mode:
+  test_tvos:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-tvos-swift.git
     - SAMPLE_APP_BRANCH: master
@@ -78,12 +75,11 @@ workflows:
     - SIMULATOR_DEVICE: Apple TV
     - SIMULATOR_OS_VERSION: "latest"
     - SIMULATOR_PLATFORM: tvOS Simulator
-    - HEADLESS_MODE: "yes"
     after_run:
     - _run
     - _check_outputs
 
-  test_parallel_headless_mode:
+  test_parallel:
     envs:
     - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
     - SAMPLE_APP_BRANCH: master
@@ -93,7 +89,6 @@ workflows:
     - SIMULATOR_DEVICE: iPhone 8 Plus
     - SIMULATOR_OS_VERSION: "latest"
     - SIMULATOR_PLATFORM: iOS Simulator
-    - HEADLESS_MODE: "yes"
     after_run:
     - _run
     - _check_outputs
@@ -128,7 +123,6 @@ workflows:
         - xcodebuild_test_options: -verbose
         - export_uitest_artifacts: "true"
         - verbose: "yes"
-        - headless_mode: $HEADLESS_MODE
     - change-workdir:
         title: Switch back to work dir at the start.
         inputs:
