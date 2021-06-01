@@ -44,7 +44,8 @@ workflows:
         inputs:
         - content: |-
             #!/bin/env bash
-            bitrise run utility_objc_failing_ui_test
+            set -ex
+            bitrise run --config=./e2e/bitrise.yml utility_objc_failing_ui_test
             if [ $? -ne 1 ] ; then
               echo "Workflow was excepted to fail, exit code not 1."
               exit 1
