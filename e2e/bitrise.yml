@@ -1,0 +1,190 @@
+format_version: 11
+default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
+
+app:
+  envs:
+  - XCODE_OUTPUT_TOOL: xcodebuild
+
+workflows:
+  test_objc:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
+    - TEST_APP_BRANCH: master
+    - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
+    - BITRISE_SCHEME: ios-simple-objc
+    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
+    - XCODE_SIMULATOR_OS_VERSION: "latest"
+    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    after_run:
+    - _run
+    - _check_outputs
+    - _check_exported_artifacts
+
+  test_objc_xcpretty:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
+    - TEST_APP_BRANCH: master
+    - XCODE_OUTPUT_TOOL: xcpretty
+    - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
+    - BITRISE_SCHEME: ios-simple-objc
+    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
+    - XCODE_SIMULATOR_OS_VERSION: "latest"
+    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    after_run:
+    - _run
+    - _check_outputs
+    - _check_exported_artifacts
+    - _check_xcpretty_html_report
+
+  test_failing_ui_test:
+    steps:
+    - script:
+        title: Start a failing workflow, wrapped in a script.
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -x # Do not set -e as bitrise command is excepted to fail
+            bitrise run --config=./e2e/bitrise.yml utility_objc_failing_ui_test
+            if [ $? -ne 1 ] ; then
+              echo "Workflow was excepted to fail, exit code not 1."
+              exit 1
+            fi
+
+  utility_objc_failing_ui_test:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
+    - TEST_APP_BRANCH: failing-ui-test
+    - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
+    - BITRISE_SCHEME: ios-simple-objc
+    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
+    - XCODE_SIMULATOR_OS_VERSION: "latest"
+    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    after_run:
+    - _run
+    - _check_outputs
+    - _check_exported_artifacts
+
+  test_tvos:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-tvos-swift.git
+    - TEST_APP_BRANCH: master
+    - BITRISE_PROJECT_PATH: NPO Live.xcworkspace
+    - BITRISE_SCHEME: NPO Live
+    - XCODE_SIMULATOR_DEVICE: Apple TV
+    - XCODE_SIMULATOR_OS_VERSION: "latest"
+    - XCODE_SIMULATOR_PLATFORM: tvOS Simulator
+    after_run:
+    - _run
+    - _check_outputs
+
+  test_parallel:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
+    - TEST_APP_BRANCH: master
+    - BITRISE_PROJECT_PATH: BullsEye.xcodeproj
+    - BITRISE_SCHEME: BullsEye
+    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
+    - XCODE_SIMULATOR_OS_VERSION: "latest"
+    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    after_run:
+    - _run
+    - _check_outputs
+
+  _run:
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -ex
+            rm -rf ./_tmp
+    - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git:
+        inputs:
+          - repository_url: $TEST_APP_URL
+          - clone_into_dir: ./_tmp
+          - branch: $TEST_APP_BRANCH
+    - certificate-and-profile-installer: {}
+    - path::./:
+        inputs:
+        - project_path: ./_tmp/$BITRISE_PROJECT_PATH
+        - scheme: $BITRISE_SCHEME
+        - output_tool: $XCODE_OUTPUT_TOOL
+        - simulator_device: $XCODE_SIMULATOR_DEVICE
+        - simulator_os_version: $XCODE_SIMULATOR_OS_VERSION
+        - simulator_platform: $XCODE_SIMULATOR_PLATFORM
+        - is_clean_build: "yes"
+        - should_build_before_test: "yes"
+        - xcodebuild_test_options: -verbose
+        - export_uitest_artifacts: "true"
+        - verbose: "yes"
+
+  _check_outputs:
+    steps:
+      - script:
+          title: Output test
+          is_always_run: true
+          inputs:
+          - content: |-
+              echo "BITRISE_XCODE_TEST_RESULT: ${BITRISE_XCODE_TEST_RESULT}"
+              if [ ! -f "$BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH" ] ; then
+                echo "No BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH file generated!"
+                exit 1
+              fi
+
+              if [ ! -d $BITRISE_XCRESULT_PATH ]; then
+                  echo "Xcode results not found in $BITRISE_XCRESULT_PATH"
+                  exit 1
+              fi
+              zip -rTy $BITRISE_DEPLOY_DIR/Test.xcresult$(gdate +%Y%m%d%H%M%S).zip $BITRISE_XCRESULT_PATH > /dev/null
+
+              # Check and REMOVE test-info.json
+              if [ $(find ${BITRISE_TEST_DEPLOY_DIR} -type f -delete -print -regex "${BITRISE_TEST_DEPLOY_DIR}/.*/${BITRISE_SCHEME}/test-info\.json" | grep -q .) ]; then
+                echo "${BITRISE_TEST_DEPLOY_DIR} does not contain test-info.json."
+                exit 1
+              fi
+
+              echo "BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH: ${BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH}"
+              echo "BITRISE_XCODE_TEST_ATTACHMENTS_PATH: ${BITRISE_XCODE_TEST_ATTACHMENTS_PATH}"
+              echo "BITRISE_XCRESULT_PATH: $BITRISE_XCRESULT_PATH"
+              echo "BITRISE_TEST_DEPLOY_DIR: $BITRISE_TEST_DEPLOY_DIR"
+
+  _check_exported_artifacts:
+    steps:
+    - script:
+        title: Exported attachment test
+        is_always_run: true
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+            version=`xcodebuild -version`
+            regex="Xcode ([0-9]*)."
+            if [[ $version =~ $regex ]]; then
+              if [[ ${BASH_REMATCH[1]} -ge 11 ]]; then
+                exit 0
+              fi
+            fi
+
+            if [ ! -f $BITRISE_DEPLOY_DIR/ios-simple-objc-xc-test-Attachments.zip ]; then
+                echo "Exported artifacts - ios-simple-objc-xc-test-Attachments.zip - not found in $BITRISE_DEPLOY_DIR"
+                exit 1
+            fi
+
+            echo "Exported attachments found: $BITRISE_DEPLOY_DIR/ios-simple-objc-xc-test-Attachments.zip"
+
+  _check_xcpretty_html_report:
+    steps:
+    - script:
+        title: Check xcpretty html report
+        is_always_run: true
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+
+            if [ ! -f $BITRISE_DEPLOY_DIR/xcode-test-results-ios-simple-objc.html ]; then
+                echo "Exported xcpretty html report - xcode-test-results-ios-simple-objc.html - not found in $BITRISE_DEPLOY_DIR"
+                exit 1
+            fi
+
+            echo "Exported xcpretty html report found: $BITRISE_DEPLOY_DIR/xcode-test-results-ios-simple-objc.html"
