@@ -179,13 +179,6 @@ inputs:
       value_options:
         - "yes"
         - "no"
-  - workdir: $BITRISE_SOURCE_DIR
-    opts:
-      category: Debug
-      title: "Working directory"
-      description: |-
-        Working directory of the step.
-        You can leave it empty to leave the working directory unchanged.
   - is_clean_build: "no"
     opts:
       category: Debug

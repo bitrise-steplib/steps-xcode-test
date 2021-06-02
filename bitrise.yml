@@ -36,4 +36,4 @@ workflows:
         - xcodebuild_test_options: -verbose
         - export_uitest_artifacts: "true"
         - verbose: "yes"
-        - workdir: ./_tmp
+
