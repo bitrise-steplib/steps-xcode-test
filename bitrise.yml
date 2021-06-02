@@ -12,6 +12,8 @@ workflows:
 
   sample:
     envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git # Remote or local URL
+    - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
     steps:
@@ -21,10 +23,10 @@ workflows:
             #!/bin/env bash
             set -ex
             rm -rf ./_tmp
-    - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git@master:
+    - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git:
         inputs:
-          - repository_url: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git # Remote or local URL
-          - branch: master
+          - repository_url: $TEST_APP_URL
+          - branch: $TEST_APP_BRANCH
           - clone_into_dir: ./_tmp
     - path::./:
         inputs:
