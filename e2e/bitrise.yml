@@ -44,7 +44,7 @@ workflows:
         inputs:
         - content: |-
             #!/bin/env bash
-            set -ex
+            set -x # Do not set -e as bitrise command is excepted to fail
             bitrise run --config=./e2e/bitrise.yml utility_objc_failing_ui_test
             if [ $? -ne 1 ] ; then
               echo "Workflow was excepted to fail, exit code not 1."
