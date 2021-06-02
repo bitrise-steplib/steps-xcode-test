@@ -21,47 +21,17 @@ workflows:
             #!/bin/env bash
             set -ex
             rm -rf ./_tmp
-    - change-workdir:
-        title: Switch working dir to test / _tmp dir
-        inputs:
-        - path: ./_tmp
-        - is_create_path: true
     - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git@master:
         inputs:
           - repository_url: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git # Remote or local URL
           - branch: master
-          - clone_into_dir: .
+          - clone_into_dir: ./_tmp
     - path::./:
         inputs:
+        # Inputs with non-default value or using environemnt variables
+        - project_path: ./_tmp/$BITRISE_PROJECT_PATH
+        - scheme: $BITRISE_SCHEME
         - xcodebuild_test_options: -verbose
         - export_uitest_artifacts: "true"
         - verbose: "yes"
-
-  sample_retry_after_test_fail:
-    envs:
-    - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
-    - BITRISE_SCHEME: ios-simple-objc
-    steps:
-    - script:
-        inputs:
-        - content: |-
-            #!/bin/env bash
-            set -ex
-            rm -rf ./_tmp
-    - change-workdir:
-        title: Switch working dir to test / _tmp dir
-        inputs:
-        - path: ./_tmp
-        - is_create_path: true
-    - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git@master:
-        inputs:
-          - repository_url: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
-          - branch: failing-ui-test
-          - clone_into_dir: .
-    - path::./:
-        inputs:
-        - should_retry_test_on_fail: "yes"
-        - xcodebuild_test_options: -verbose
-        - export_uitest_artifacts: "true"
-        - verbose: "yes"
-
+        - workdir: ./_tmp

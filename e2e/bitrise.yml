@@ -3,19 +3,19 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
   envs:
+  - XCODE_OUTPUT_TOOL: xcodebuild
   - ORIG_BITRISE_SOURCE_DIR: $BITRISE_SOURCE_DIR
 
 workflows:
   test_objc:
     envs:
-    - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
-    - SAMPLE_APP_BRANCH: master
-    - OUTPUT_TOOL: xcodebuild
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
+    - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
-    - SIMULATOR_DEVICE: iPhone 8 Plus
-    - SIMULATOR_OS_VERSION: "latest"
-    - SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
+    - XCODE_SIMULATOR_OS_VERSION: "latest"
+    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
     after_run:
     - _run
     - _check_outputs
@@ -23,14 +23,14 @@ workflows:
 
   test_objc_xcpretty:
     envs:
-    - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
-    - SAMPLE_APP_BRANCH: master
-    - OUTPUT_TOOL: xcpretty
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
+    - TEST_APP_BRANCH: master
+    - XCODE_OUTPUT_TOOL: xcpretty
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
-    - SIMULATOR_DEVICE: iPhone 8 Plus
-    - SIMULATOR_OS_VERSION: "latest"
-    - SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
+    - XCODE_SIMULATOR_OS_VERSION: "latest"
+    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
     after_run:
     - _run
     - _check_outputs
@@ -53,14 +53,13 @@ workflows:
 
   utility_objc_failing_ui_test:
     envs:
-    - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
-    - SAMPLE_APP_BRANCH: failing-ui-test
-    - OUTPUT_TOOL: xcodebuild
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
+    - TEST_APP_BRANCH: failing-ui-test
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
-    - SIMULATOR_DEVICE: iPhone 8 Plus
-    - SIMULATOR_OS_VERSION: "latest"
-    - SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
+    - XCODE_SIMULATOR_OS_VERSION: "latest"
+    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
     after_run:
     - _run
     - _check_outputs
@@ -68,28 +67,26 @@ workflows:
 
   test_tvos:
     envs:
-    - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-apps-tvos-swift.git
-    - SAMPLE_APP_BRANCH: master
-    - OUTPUT_TOOL: xcodebuild
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-tvos-swift.git
+    - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: NPO Live.xcworkspace
     - BITRISE_SCHEME: NPO Live
-    - SIMULATOR_DEVICE: Apple TV
-    - SIMULATOR_OS_VERSION: "latest"
-    - SIMULATOR_PLATFORM: tvOS Simulator
+    - XCODE_SIMULATOR_DEVICE: Apple TV
+    - XCODE_SIMULATOR_OS_VERSION: "latest"
+    - XCODE_SIMULATOR_PLATFORM: tvOS Simulator
     after_run:
     - _run
     - _check_outputs
 
   test_parallel:
     envs:
-    - SAMPLE_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - SAMPLE_APP_BRANCH: master
-    - OUTPUT_TOOL: xcodebuild
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
+    - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcodeproj
     - BITRISE_SCHEME: BullsEye
-    - SIMULATOR_DEVICE: iPhone 8 Plus
-    - SIMULATOR_OS_VERSION: "latest"
-    - SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
+    - XCODE_SIMULATOR_OS_VERSION: "latest"
+    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
     after_run:
     - _run
     - _check_outputs
@@ -102,23 +99,20 @@ workflows:
             #!/bin/env bash
             set -ex
             rm -rf ./_tmp
-    - change-workdir:
-        title: Switch working dir to test / _tmp dir
+    - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git:
         inputs:
-        - path: ./_tmp
-        - is_create_path: true
-    - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git@master:
-        inputs:
-          - repository_url: $SAMPLE_APP_URL
-          - clone_into_dir: .
-          - branch: $SAMPLE_APP_BRANCH
+          - repository_url: $TEST_APP_URL
+          - clone_into_dir: ./_tmp
+          - branch: $TEST_APP_BRANCH
     - certificate-and-profile-installer: {}
     - path::./:
         inputs:
-        - output_tool: $OUTPUT_TOOL
-        - simulator_device: $SIMULATOR_DEVICE
-        - simulator_os_version: $SIMULATOR_OS_VERSION
-        - simulator_platform: $SIMULATOR_PLATFORM
+        - project_path: ./_tmp/$BITRISE_PROJECT_PATH
+        - scheme: $BITRISE_SCHEME
+        - output_tool: $XCODE_OUTPUT_TOOL
+        - simulator_device: $XCODE_SIMULATOR_DEVICE
+        - simulator_os_version: $XCODE_SIMULATOR_OS_VERSION
+        - simulator_platform: $XCODE_SIMULATOR_PLATFORM
         - is_clean_build: "yes"
         - should_build_before_test: "yes"
         - xcodebuild_test_options: -verbose
