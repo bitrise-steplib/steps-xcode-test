@@ -4,7 +4,6 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 app:
   envs:
   - XCODE_OUTPUT_TOOL: xcodebuild
-  - ORIG_BITRISE_SOURCE_DIR: $BITRISE_SOURCE_DIR
 
 workflows:
   test_objc:
@@ -118,10 +117,6 @@ workflows:
         - xcodebuild_test_options: -verbose
         - export_uitest_artifacts: "true"
         - verbose: "yes"
-    - change-workdir:
-        title: Switch back to work dir at the start.
-        inputs:
-        - path: ${ORIG_BITRISE_SOURCE_DIR}
 
   _check_outputs:
     steps:
