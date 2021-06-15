@@ -502,19 +502,21 @@ func handleXcprettyInstallError(err error) (string, error) {
 	return xcodeBuild, nil
 }
 
-func fail(format string, v ...interface{}) {
-	log.Errorf(format, v...)
-	os.Exit(1)
+func main() {
+	if err := run(); err != nil {
+		log.Errorf("Step run failed: %s", err.Error())
+		os.Exit(1)
+	}
 }
 
-func main() {
+func run() error {
 	var configs Configs
 	if err := stepconf.Parse(&configs); err != nil {
-		fail("Issue with input: %s", err)
+		return fmt.Errorf("issue with input: %s", err)
 	}
 	simulatorDebug := parseExportCondition(configs.CollectSimulatorDiagnostics)
 	if simulatorDebug == invalid {
-		fail("Internal error, unexpected value (%s) for collect_simulator_diagnostics", configs.CollectSimulatorDiagnostics)
+		return fmt.Errorf("internal error, unexpected value (%s) for collect_simulator_diagnostics", configs.CollectSimulatorDiagnostics)
 	}
 
 	stepconf.Print(configs)
@@ -523,7 +525,7 @@ func main() {
 
 	absProjectPath, err := pathutil.AbsPath(configs.ProjectPath)
 	if err != nil {
-		fail("Failed to get absolute project path, error: %s", err)
+		return fmt.Errorf("failed to get absolute project path, error: %s", err)
 	}
 
 	// Project-or-Workspace flag
@@ -537,7 +539,7 @@ func main() {
 			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 			fmt.Println()
 		}
-		fail("Invalid project file (%s), extension should be (.xcodeproj/.xcworkspace)", absProjectPath)
+		return fmt.Errorf("invalid project file (%s), extension should be (.xcodeproj/.xcworkspace)", absProjectPath)
 	}
 
 	log.Printf("* action: %s", action)
@@ -545,7 +547,7 @@ func main() {
 	// Detect Xcode major version
 	xcodebuildVersion, err := utility.GetXcodeVersion()
 	if err != nil {
-		fail("Failed to determine xcode version, error: %s", err)
+		return fmt.Errorf("failed to determine xcode version, error: %s", err)
 	}
 	log.Printf("- xcodebuildVersion: %s (%s)", xcodebuildVersion.Version, xcodebuildVersion.BuildVersion)
 
@@ -555,7 +557,7 @@ func main() {
 
 	xcodeMajorVersion := xcodebuildVersion.MajorVersion
 	if xcodeMajorVersion < minSupportedXcodeMajorVersion {
-		fail("Invalid xcode major version (%d), should not be less then min supported: %d", xcodeMajorVersion, minSupportedXcodeMajorVersion)
+		return fmt.Errorf("invalid xcode major version (%d), should not be less then min supported: %d", xcodeMajorVersion, minSupportedXcodeMajorVersion)
 	}
 
 	if configs.ExportUITestArtifacts && xcodeMajorVersion >= 11 {
@@ -575,7 +577,7 @@ func main() {
 	if err != nil {
 		outputTool, err = handleXcprettyInstallError(err)
 		if err != nil {
-			fail("An error occured during installing xcpretty: %s", err)
+			return fmt.Errorf("an error occured during installing xcpretty: %s", err)
 		}
 	} else {
 		log.Printf("- xcprettyVersion: %s", xcprettyVersion.String())
@@ -621,7 +623,7 @@ func main() {
 			log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 		}
 
-		fail("Simulator UDID lookup failed: %s", err)
+		return fmt.Errorf("simulator UDID lookup failed: %s", err)
 	}
 
 	log.Infof("Simulator infos")
@@ -638,7 +640,7 @@ func main() {
 	{
 		tempDir, err := ioutil.TempDir("", "XCUITestOutput")
 		if err != nil {
-			fail("Could not create test output temporary directory.")
+			return fmt.Errorf("could not create test output temporary directory: %s", err)
 		}
 		// Leaving the output dir in place after exiting
 		testOutputDir = path.Join(tempDir, "Test.xcresult")
@@ -670,10 +672,10 @@ func main() {
 		// Boot the simulator now, so verbose logging can be enabled and it is kept booted after running tests,
 		// this helps to collect more detailed debug info
 		if err := simulatorBoot(sim.ID); err != nil {
-			fail("%v", err)
+			return fmt.Errorf("%v", err)
 		}
 		if err := simulatorEnableVerboseLog(sim.ID); err != nil {
-			fail("%v", err)
+			return fmt.Errorf("%v", err)
 		}
 
 		fmt.Println()
@@ -688,7 +690,7 @@ func main() {
 			if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
 				log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 			}
-			fail("failed to boot simulator, error: ", err)
+			return fmt.Errorf("failed to boot simulator, error: %s", err)
 		}
 
 		progress.NewDefaultWrapper("Waiting for simulator boot").WrapAction(func() {
@@ -721,7 +723,7 @@ func main() {
 		var err error
 		swiftPackagesPath, err = cache.SwiftPackagesPath(absProjectPath)
 		if err != nil {
-			fail("Failed to get Swift Packages path, error: %s", err)
+			return fmt.Errorf("failed to get Swift Packages path, error: %s", err)
 		}
 	}
 
@@ -818,4 +820,6 @@ func main() {
 	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "succeeded"); err != nil {
 		log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 	}
+
+	return nil
 }
