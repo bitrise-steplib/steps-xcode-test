@@ -101,7 +101,7 @@ func getSummariesAndAttachmentPath(testOutputDir string) (testSummariesPath stri
 	return testSummariesPath, attachementDir, nil
 }
 
-func printLastLinesOfRawXcodebuildLog(rawXcodebuildOutput string, isRunSuccess bool) {
+func printLastLinesOfXcodebuildTestLog(rawXcodebuildOutput string, isRunSuccess bool) {
 	const lastLines = "\nLast lines of the build log:"
 	if !isRunSuccess {
 		log.Errorf(lastLines)
@@ -117,7 +117,7 @@ func printLastLinesOfRawXcodebuildLog(rawXcodebuildOutput string, isRunSuccess b
 
 	log.Infof(colorstring.Magenta(`
 The log file is stored in $BITRISE_DEPLOY_DIR, and its full path
-is available in the $BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH environment variable.
+is available in the $BITRISE_XCODEBUILD_TEST_LOG_PATH environment variable.
 
 If you have the Deploy to Bitrise.io step (after this step),
 that will attach the file to your build as an artifact!`))

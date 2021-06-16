@@ -287,8 +287,8 @@ type Result struct {
 	SimulatorDiagnosticsPath string
 }
 
-// Installdependencies ...
-func (s Step) Installdependencies(xcpretty bool) error {
+// InstallDeps ...
+func (s Step) InstallDeps(xcpretty bool) error {
 	if !xcpretty {
 		return nil
 	}
@@ -400,7 +400,7 @@ func (s Step) Run(cfg Config) (Result, error) {
 	result.XcodebuildTestLog = testLog
 
 	if testErr != nil || cfg.OutputTool == xcodeBuildTool {
-		printLastLinesOfRawXcodebuildLog(testLog, testErr == nil)
+		printLastLinesOfXcodebuildTestLog(testLog, testErr == nil)
 	}
 
 	if cfg.SimulatorDebug == always || (cfg.SimulatorDebug == onFailure && testErr != nil) {
@@ -500,8 +500,8 @@ func (s Step) Export(opts ExportOpts) error {
 			return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s), error: %s", pth, deployPth, err)
 		}
 
-		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH", deployPth); err != nil {
-			log.Warnf("Failed to export: BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH, error: %s", err)
+		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODEBUILD_BUILD_LOG_PATH", deployPth); err != nil {
+			log.Warnf("Failed to export: BITRISE_XCODEBUILD_BUILD_LOG_PATH, error: %s", err)
 		}
 	}
 
@@ -517,8 +517,8 @@ func (s Step) Export(opts ExportOpts) error {
 			return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s), error: %s", pth, deployPth, err)
 		}
 
-		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH", deployPth); err != nil {
-			log.Warnf("Failed to export: BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH, error: %s", err)
+		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODEBUILD_TEST_LOG_PATH", deployPth); err != nil {
+			log.Warnf("Failed to export: BITRISE_XCODEBUILD_TEST_LOG_PATH, error: %s", err)
 		}
 	}
 
@@ -562,7 +562,7 @@ func run() error {
 		return err
 	}
 
-	if err := step.Installdependencies(config.OutputTool == xcprettyTool); err != nil {
+	if err := step.InstallDeps(config.OutputTool == xcprettyTool); err != nil {
 		config.OutputTool = xcodeBuildTool
 	}
 

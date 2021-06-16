@@ -304,14 +304,6 @@ outputs:
     value_options:
     - succeeded
     - failed
-- BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH:
-  opts:
-    title: The full, raw test output file path
-    description: |-
-      This is the path of the raw test results log file.
-
-      If the compilation fails this log will contain the compilation output,
-      if the tests can be started it'll only include the test output.
 - BITRISE_XCRESULT_PATH:
   opts:
     title: The path of the generated `.xcresult`
@@ -322,3 +314,14 @@ outputs:
     title: The full, test attachments zip path
     description: |-
       This is the path of the test attachments zip.
+- BITRISE_XCODEBUILD_BUILD_LOG_PATH:
+  opts:
+    title: xcodebuild build command log file path
+    description: |-
+      If `single_build` is set to false, the step runs `xcodebuild build` before the test,  
+      and exports the raw xcodebuild log.
+- BITRISE_XCODEBUILD_TEST_LOG_PATH:
+  opts:
+    title: xcodebuild test command log file path
+    description: |-
+      The step exports the `xcodebuild test` command output log.
