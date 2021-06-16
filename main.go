@@ -555,7 +555,7 @@ func (s Step) Export(opts ExportOpts) error {
 
 		outputPath := filepath.Join(opts.DeployDir, diagnosticsName)
 		if err := ziputil.ZipDir(opts.SimulatorDiagnosticsPath, outputPath, true); err != nil {
-			return fmt.Errorf("Failed to compress simulator diagnostics result: %v", err)
+			return fmt.Errorf("failed to compress simulator diagnostics result: %v", err)
 		}
 	}
 
@@ -590,10 +590,10 @@ func run() error {
 		config.OutputTool = xcodeBuildTool
 	}
 
-	res, stepRunErr := step.Run(config)
+	res, runErr := step.Run(config)
 
 	opts := ExportOpts{
-		TestFailed: stepRunErr != nil,
+		TestFailed: runErr != nil,
 
 		Scheme:        config.Scheme,
 		DeployDir:     config.DeployDir,
@@ -605,10 +605,13 @@ func run() error {
 		SimulatorDiagnosticsPath: res.SimulatorDiagnosticsPath,
 		ExportUITestArtifacts:    config.ExportUITestArtifacts,
 	}
-	if err := step.Export(opts); err != nil {
-		return err
+	exportErr := step.Export(opts)
+
+	if runErr != nil {
+		return runErr
 	}
-	return nil
+
+	return exportErr
 }
 
 func main() {
