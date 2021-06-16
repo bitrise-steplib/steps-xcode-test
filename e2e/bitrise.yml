@@ -113,7 +113,6 @@ workflows:
         - simulator_os_version: $XCODE_SIMULATOR_OS_VERSION
         - simulator_platform: $XCODE_SIMULATOR_PLATFORM
         - is_clean_build: "yes"
-        - should_build_before_test: "yes"
         - xcodebuild_test_options: -verbose
         - export_uitest_artifacts: "true"
         - verbose: "yes"

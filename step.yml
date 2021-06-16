@@ -55,16 +55,13 @@ inputs:
     opts:
       title: "Project (or Workspace) path"
       description: |-
-        A `.xcodeproj` or `.xcworkspace` path, relative to
-        the Working directory (if specified).
+        A `.xcodeproj` or `.xcworkspace` path.
       is_required: true
   - scheme: $BITRISE_SCHEME
     opts:
       title: "Scheme name"
       description: |-
         The Scheme to use.
-
-        **IMPORTANT**: The Scheme has to be marked as __shared__ in Xcode!
       is_required: true
   - simulator_device: iPhone 8 Plus
     opts:
