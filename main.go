@@ -63,8 +63,10 @@ var automaticRetryReasonPatterns = []string{
 
 var xcodeCommandEnvs = []string{"NSUnbufferedIO=YES"}
 
+// Step ...
 type Step struct{}
 
+// NewStep ...
 func NewStep() Step {
 	return Step{}
 }
@@ -105,6 +107,7 @@ type Input struct {
 	CacheLevel string `env:"cache_level,opt[none,swift_packages]"`
 }
 
+// Config ...
 type Config struct {
 	ProjectPath string
 	Scheme      string
@@ -275,6 +278,7 @@ func (s Step) ProcessConfig() (Config, error) {
 	}, nil
 }
 
+// Result ...
 type Result struct {
 	TestOutputDir            string
 	XcodebuildBuildLog       string
@@ -282,6 +286,7 @@ type Result struct {
 	SimulatorDiagnosticsPath string
 }
 
+// Installdependencies ...
 func (s Step) Installdependencies(xcpretty bool) error {
 	if !xcpretty {
 		return nil
@@ -300,6 +305,7 @@ func (s Step) Installdependencies(xcpretty bool) error {
 	return nil
 }
 
+// Run ...
 func (s Step) Run(cfg Config) (Result, error) {
 	log.SetEnableDebugLog(cfg.Verbose)
 
@@ -461,6 +467,7 @@ func (s Step) Run(cfg Config) (Result, error) {
 	return result, nil
 }
 
+// ExportOpts ...
 type ExportOpts struct {
 	TestFailed bool
 
