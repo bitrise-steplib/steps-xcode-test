@@ -56,3 +56,13 @@ func InstallXcpretty() (*version.Version, error) {
 	}
 	return xcprettyVersion, nil
 }
+
+func handleXcprettyInstallError(err error) (string, error) {
+	if isXcprettyInstallationCheckError(err) {
+		return "", err
+	}
+
+	log.Warnf("%s", err)
+	log.Printf("Switching to xcodebuild for output tool")
+	return xcodeBuild, nil
+}
