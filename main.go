@@ -198,10 +198,8 @@ func (s Step) ProcessConfig() (Config, error) {
 	}
 
 	// validate simulator related inputs
-	var (
-		sim       simulator.InfoModel
-		osVersion string
-	)
+	var sim simulator.InfoModel
+	var osVersion string
 
 	platform := strings.TrimSuffix(input.SimulatorPlatform, " Simulator")
 	// Retry gathering device information since xcrun simctl list can fail to show the complete device list
@@ -232,10 +230,6 @@ func (s Step) ProcessConfig() (Config, error) {
 
 		return errGetSimulator
 	}); err != nil {
-		// if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
-		// 	log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
-		// }
-
 		return Config{}, fmt.Errorf("simulator UDID lookup failed: %s", err)
 	}
 
@@ -375,9 +369,7 @@ func (s Step) Run(cfg Config) (Result, error) {
 	if err != nil {
 		return result, fmt.Errorf("could not create test output temporary directory: %s", err)
 	}
-	// Leaving the output dir in place after exiting
 	testOutputDir := path.Join(tempDir, "Test.xcresult")
-	result.TestOutputDir = testOutputDir
 
 	testParams := models.XcodeBuildTestParamsModel{
 		BuildParams:          buildParams,
@@ -397,6 +389,7 @@ func (s Step) Run(cfg Config) (Result, error) {
 	}
 
 	testLog, exitCode, testErr := runTest(testParams, cfg.OutputTool, cfg.XcprettyOptions, true, cfg.ShouldRetryTestOnFail, swiftPackagesPath)
+	result.TestOutputDir = testOutputDir
 	result.XcodebuildTestLog = testLog
 
 	if testErr != nil || cfg.OutputTool == xcodeBuildTool {
