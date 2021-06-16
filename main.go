@@ -24,11 +24,13 @@ import (
 	"github.com/bitrise-steplib/steps-xcode-test/models"
 )
 
-// On performance limited OS X hosts (ex: VMs) the iPhone/iOS Simulator might time out
-//  while booting. So far it seems that a simple retry solves these issues.
-
 const (
 	minSupportedXcodeMajorVersion = 6
+)
+
+// On performance limited OS X hosts (ex: VMs) the iPhone/iOS Simulator might time out
+//  while booting. So far it seems that a simple retry solves these issues.
+const (
 	// This boot timeout can happen when running Unit Tests with Xcode Command Line `xcodebuild`.
 	timeOutMessageIPhoneSimulator = "iPhoneSimulator: Timed out waiting"
 	// This boot timeout can happen when running Xcode (7+) UI tests with Xcode Command Line `xcodebuild`.
@@ -40,13 +42,6 @@ const (
 	appAccessibilityIsNotLoaded              = `UI Testing Failure - App accessibility isn't loaded`
 	testRunnerFailedToInitializeForUITesting = `Test runner failed to initialize for UI testing`
 	timedOutRegisteringForTestingEvent       = `Timed out registering for testing event accessibility notifications`
-
-	simulatorShutdownState = "Shutdown"
-)
-
-const (
-	xcodeBuildTool = "xcodebuild"
-	xcprettyTool   = "xcpretty"
 )
 
 var automaticRetryReasonPatterns = []string{
@@ -60,6 +55,13 @@ var automaticRetryReasonPatterns = []string{
 	testRunnerFailedToInitializeForUITesting,
 	timedOutRegisteringForTestingEvent,
 }
+
+const simulatorShutdownState = "Shutdown"
+
+const (
+	xcodeBuildTool = "xcodebuild"
+	xcprettyTool   = "xcpretty"
+)
 
 var xcodeCommandEnvs = []string{"NSUnbufferedIO=YES"}
 
@@ -208,8 +210,7 @@ func (s Step) ProcessConfig() (Config, error) {
 		if input.SimulatorOsVersion == "latest" {
 			var simulatorDevice = input.SimulatorDevice
 			if simulatorDevice == "iPad" {
-				// TODO: missleading log
-				log.Warnf("Given device (%s) is deprecated, using (iPad 2)...", simulatorDevice)
+				log.Warnf("Given device (%s) is deprecated, using iPad Air (3rd generation)...", simulatorDevice)
 				simulatorDevice = "iPad Air (3rd generation)"
 			}
 
@@ -366,19 +367,6 @@ func (s Step) Run(cfg Config) (Result, error) {
 			log.Warnf("xcode build log:\n%s", buildLog)
 			log.Errorf("xcode build failed with error: %s", err)
 			return result, err
-
-			// TODO: move output export
-			// if _, err := saveRawOutputToLogFile(rawXcodebuildOutput, false, false); err != nil {
-			// 	log.Warnf("Failed to save the Raw Output, err: %s", err)
-			// }
-
-			// log.Warnf("xcode build exit code: %d", exitCode)
-			// log.Warnf("xcode build log:\n%s", rawXcodebuildOutput)
-			// log.Errorf("xcode build failed with error: %s", buildErr)
-			// if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
-			// 	log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
-			// }
-			// os.Exit(1)
 		}
 	}
 
@@ -410,9 +398,6 @@ func (s Step) Run(cfg Config) (Result, error) {
 
 	testLog, exitCode, testErr := runTest(testParams, cfg.OutputTool, cfg.XcprettyOptions, true, cfg.ShouldRetryTestOnFail, swiftPackagesPath)
 	result.XcodebuildTestLog = testLog
-	if testErr != nil {
-		return result, err
-	}
 
 	if testErr != nil || cfg.OutputTool == xcodeBuildTool {
 		printLastLinesOfRawXcodebuildLog(testLog, testErr == nil)
@@ -439,18 +424,9 @@ func (s Step) Run(cfg Config) (Result, error) {
 	}
 
 	if testErr != nil {
-		if cfg.OutputTool == xcodeBuildTool {
-			printLastLinesOfRawXcodebuildLog(testLog, testErr == nil)
-		}
-
 		fmt.Println()
 		log.Warnf("Xcode Test command exit code: %d", exitCode)
 		log.Errorf("Xcode Test command failed, error: %s", testErr)
-
-		// if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
-		// 	log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
-		// }
-		// os.Exit(1)
 		return result, testErr
 	}
 
