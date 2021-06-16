@@ -135,7 +135,7 @@ func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (stri
 
 	log.Infof("Building the project...")
 
-	if outputTool == "xcpretty" {
+	if outputTool == xcprettyTool {
 		return runPrettyXcodeBuildCmd(false, []string{}, xcodebuildArgs)
 	}
 	return runXcodeBuildCmd(xcodebuildArgs...)
@@ -262,7 +262,7 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 	var rawOutput string
 	var err error
 	var exit int
-	if outputTool == "xcpretty" {
+	if outputTool == xcprettyTool {
 		rawOutput, exit, err = runPrettyXcodeBuildCmd(true, xcprettyArgs, xcodebuildArgs)
 	} else {
 		rawOutput, exit, err = runXcodeBuildCmd(xcodebuildArgs...)

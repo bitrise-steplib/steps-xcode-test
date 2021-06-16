@@ -9,7 +9,6 @@ import (
 	"regexp"
 
 	"github.com/bitrise-io/go-utils/colorstring"
-	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
@@ -26,7 +25,7 @@ func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
 	return r.MatchString(outputToSearchIn)
 }
 
-func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess, didLogToStdout bool) (string, error) {
+func saveRawOutputToLogFile(rawXcodebuildOutput string) (string, error) {
 	tmpDir, err := pathutil.NormalizedOSTempDirPath("xcodebuild-output")
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp dir, error: %s", err)
@@ -37,22 +36,6 @@ func saveRawOutputToLogFile(rawXcodebuildOutput string, isRunSuccess, didLogToSt
 		return "", fmt.Errorf("failed to write xcodebuild output to file, error: %s", err)
 	}
 
-	if !isRunSuccess || !didLogToStdout {
-		deployDir := os.Getenv("BITRISE_DEPLOY_DIR")
-		if deployDir == "" {
-			return "", errors.New("no BITRISE_DEPLOY_DIR found")
-		}
-		deployPth := filepath.Join(deployDir, logFileName)
-
-		if err := command.CopyFile(logPth, deployPth); err != nil {
-			return "", fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s), error: %s", logPth, deployPth, err)
-		}
-		logPth = deployPth
-	}
-
-	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH", logPth); err != nil {
-		log.Warnf("Failed to export: BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH, error: %s", err)
-	}
 	return logPth, nil
 }
 

@@ -4,15 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/errorutil"
 	"github.com/bitrise-io/go-utils/log"
-	"github.com/bitrise-io/go-utils/ziputil"
 )
 
 func simulatorBoot(id string) error {
@@ -70,22 +67,24 @@ func simulatorEnableVerboseLog(id string) error {
 	return nil
 }
 
-func simulatorCollectDiagnostics(outputDir string) (string, error) {
+func simulatorDiagnosticsName() (string, error) {
 	timestamp, err := time.Now().MarshalText()
 	if err != nil {
 		return "", fmt.Errorf("failed to collect Simulator diagnostics, failed to marshal timestamp: %v", err)
 	}
 
-	diagnosticsName := fmt.Sprintf("simctl_diagnose_%s.zip", strings.ReplaceAll(string(timestamp), ":", "-"))
+	return fmt.Sprintf("simctl_diagnose_%s.zip", strings.ReplaceAll(string(timestamp), ":", "-")), nil
+}
+
+func simulatorCollectDiagnostics() (string, error) {
+	diagnosticsName, err := simulatorDiagnosticsName()
+	if err != nil {
+		return "", err
+	}
 	diagnosticsOutDir, err := ioutil.TempDir("", diagnosticsName)
 	if err != nil {
 		return "", fmt.Errorf("failed to collect Simulator diagnostics, could not create temporary directory: %v", err)
 	}
-	defer func() {
-		if err := os.RemoveAll(diagnosticsOutDir); err != nil {
-			log.Warnf("failed to remove temporary directory: %v", err)
-		}
-	}()
 
 	simulatorDiagnosticsCommand := command.NewWithStandardOuts("xcrun", "simctl", "diagnose", "-b", "--no-archive", fmt.Sprintf("--output=%s", diagnosticsOutDir))
 	simulatorDiagnosticsCommand.SetStdin(bytes.NewReader([]byte("\n")))
@@ -99,10 +98,5 @@ func simulatorCollectDiagnostics(outputDir string) (string, error) {
 		return "", fmt.Errorf("failed to collect Simulator diagnostics, command execution failed: %v", err)
 	}
 
-	outputPath := filepath.Join(outputDir, diagnosticsName)
-	if err := ziputil.ZipDir(diagnosticsOutDir, outputPath, true); err != nil {
-		return "", fmt.Errorf("Failed to compress simulator diagnostics result: %v", err)
-	}
-
-	return outputPath, nil
+	return diagnosticsOutDir, nil
 }

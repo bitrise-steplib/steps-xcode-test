@@ -11,10 +11,12 @@ import (
 
 	bitriseConfigs "github.com/bitrise-io/bitrise/configs"
 	"github.com/bitrise-io/go-steputils/stepconf"
+	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/retry"
+	"github.com/bitrise-io/go-utils/ziputil"
 	simulator "github.com/bitrise-io/go-xcode/simulator"
 	"github.com/bitrise-io/go-xcode/utility"
 	cache "github.com/bitrise-io/go-xcode/xcodecache"
@@ -39,8 +41,12 @@ const (
 	testRunnerFailedToInitializeForUITesting = `Test runner failed to initialize for UI testing`
 	timedOutRegisteringForTestingEvent       = `Timed out registering for testing event accessibility notifications`
 
-	xcodeBuild             = "xcodebuild"
 	simulatorShutdownState = "Shutdown"
+)
+
+const (
+	xcodeBuildTool = "xcodebuild"
+	xcprettyTool   = "xcpretty"
 )
 
 var automaticRetryReasonPatterns = []string{
@@ -270,25 +276,32 @@ func (s Step) ProcessConfig() (Config, error) {
 }
 
 type Result struct {
-	TestOutputDir      string
-	XcodebuildBuildLog string
-	XcodebuildTestLog  string
+	TestOutputDir            string
+	XcodebuildBuildLog       string
+	XcodebuildTestLog        string
+	SimulatorDiagnosticsPath string
 }
 
-func (s Step) Run(cfg Config) (Result, error) {
-	log.SetEnableDebugLog(cfg.Verbose)
+func (s Step) Installdependencies(xcpretty bool) error {
+	if !xcpretty {
+		return nil
+	}
 
-	// Ensure xcpretty installed
 	xcprettyVersion, err := InstallXcpretty()
 	if err != nil {
-		cfg.OutputTool, err = handleXcprettyInstallError(err)
+		_, err = handleXcprettyInstallError(err)
 		if err != nil {
-			return Result{}, fmt.Errorf("an error occured during installing xcpretty: %s", err)
+			return fmt.Errorf("an error occured during installing xcpretty: %s", err)
 		}
 	} else {
 		log.Printf("- xcprettyVersion: %s", xcprettyVersion.String())
 		fmt.Println()
 	}
+	return nil
+}
+
+func (s Step) Run(cfg Config) (Result, error) {
+	log.SetEnableDebugLog(cfg.Verbose)
 
 	// Boot simulator
 	if cfg.SimulatorDebug != never {
@@ -340,13 +353,13 @@ func (s Step) Run(cfg Config) (Result, error) {
 	}
 
 	if !cfg.IsSingleBuild {
-		buildLog, exitCode, buildErr := runBuild(buildParams, cfg.OutputTool)
+		buildLog, exitCode, err := runBuild(buildParams, cfg.OutputTool)
 		result.XcodebuildBuildLog = buildLog
-		if buildErr != nil {
+		if err != nil {
 			log.Warnf("xcode build exit code: %d", exitCode)
 			log.Warnf("xcode build log:\n%s", buildLog)
-			log.Errorf("xcode build failed with error: %s", buildErr)
-			return result, buildErr
+			log.Errorf("xcode build failed with error: %s", err)
+			return result, err
 
 			// TODO: move output export
 			// if _, err := saveRawOutputToLogFile(rawXcodebuildOutput, false, false); err != nil {
@@ -372,7 +385,7 @@ func (s Step) Run(cfg Config) (Result, error) {
 	testOutputDir := path.Join(tempDir, "Test.xcresult")
 	result.TestOutputDir = testOutputDir
 
-	buildTestParams := models.XcodeBuildTestParamsModel{
+	testParams := models.XcodeBuildTestParamsModel{
 		BuildParams:          buildParams,
 		TestOutputDir:        testOutputDir,
 		BuildBeforeTest:      cfg.BuildBeforeTesting,
@@ -389,17 +402,28 @@ func (s Step) Run(cfg Config) (Result, error) {
 		}
 	}
 
-	testLog, exitCode, testErr := runTest(buildTestParams, cfg.OutputTool, cfg.XcprettyOptions, true, cfg.ShouldRetryTestOnFail, swiftPackagesPath)
+	testLog, exitCode, testErr := runTest(testParams, cfg.OutputTool, cfg.XcprettyOptions, true, cfg.ShouldRetryTestOnFail, swiftPackagesPath)
 	result.XcodebuildTestLog = testLog
 	if testErr != nil {
 		return result, err
 	}
 
-	if testErr != nil || cfg.OutputTool == xcodeBuild {
+	if testErr != nil || cfg.OutputTool == xcodeBuildTool {
 		printLastLinesOfRawXcodebuildLog(testLog, testErr == nil)
 	}
 
 	if cfg.SimulatorDebug == always || (cfg.SimulatorDebug == onFailure && testErr != nil) {
+		fmt.Println()
+		log.Infof("Collecting Simulator diagnostics")
+
+		diagnosticsPath, err := simulatorCollectDiagnostics()
+		if err != nil {
+			log.Warnf("%v", err)
+		} else {
+			log.Donef("Simulator diagnistics are available as an artifact (%s)", diagnosticsPath)
+			result.SimulatorDiagnosticsPath = diagnosticsPath
+		}
+
 		// Shut down Simulator if it was not booted initially
 		if !cfg.IsSimulatorBooted {
 			if err := simulatorShutdown(cfg.SimulatorID); err != nil {
@@ -409,6 +433,10 @@ func (s Step) Run(cfg Config) (Result, error) {
 	}
 
 	if testErr != nil {
+		if cfg.OutputTool == xcodeBuildTool {
+			printLastLinesOfRawXcodebuildLog(testLog, testErr == nil)
+		}
+
 		fmt.Println()
 		log.Warnf("Xcode Test command exit code: %d", exitCode)
 		log.Errorf("Xcode Test command failed, error: %s", testErr)
@@ -443,8 +471,8 @@ type ExportOpts struct {
 	XcodebuildBuildLog string
 	XcodebuildTestLog  string
 
-	CollectSimulatorDiagnoscitcs bool
-	ExportUITestArtifacts        bool
+	SimulatorDiagnosticsPath string
+	ExportUITestArtifacts    bool
 }
 
 // Export ...
@@ -463,7 +491,7 @@ func (s Step) Export(opts ExportOpts) error {
 		log.Warnf("Failed to export: BITRISE_XCRESULT_PATH, error: %s", err)
 	}
 
-	// exporting xcresult only if test result dir is present
+	// export xcresult for the testing addon
 	if addonResultPath := os.Getenv(bitriseConfigs.BitrisePerStepTestResultDirEnvKey); len(addonResultPath) > 0 {
 		fmt.Println()
 		log.Infof("Exporting test results")
@@ -477,35 +505,54 @@ func (s Step) Export(opts ExportOpts) error {
 		}
 	}
 
+	// export xcodebuild build log
 	if opts.XcodebuildBuildLog != "" {
-		if _, err := saveRawOutputToLogFile(opts.XcodebuildBuildLog, false, false); err != nil {
+		pth, err := saveRawOutputToLogFile(opts.XcodebuildBuildLog)
+		if err != nil {
 			log.Warnf("Failed to save the Raw Output, err: %s", err)
 		}
 
+		deployPth := filepath.Join(opts.DeployDir, "xcodebuild_build.log")
+		if err := command.CopyFile(pth, deployPth); err != nil {
+			return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s), error: %s", pth, deployPth, err)
+		}
+
+		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH", deployPth); err != nil {
+			log.Warnf("Failed to export: BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH, error: %s", err)
+		}
 	}
 
+	// export xcodebuild test log
 	if opts.XcodebuildTestLog != "" {
-		_, err := saveRawOutputToLogFile(opts.XcodebuildTestLog, false, false)
+		pth, err := saveRawOutputToLogFile(opts.XcodebuildTestLog)
 		if err != nil {
 			log.Warnf("Failed to save the Raw Output, error: %s", err)
 		}
-	}
 
-	if opts.CollectSimulatorDiagnoscitcs {
-		fmt.Println()
-		log.Infof("Collecting Simulator diagnostics")
-		if opts.DeployDir != "" {
-			diagnosticsPath, err := simulatorCollectDiagnostics(opts.DeployDir)
-			if err != nil {
-				log.Warnf("%v", err)
-			} else {
-				log.Donef("Simulator diagnistics are available as an artifact (%s)", diagnosticsPath)
-			}
-		} else {
-			log.Warnf("No deploy directory specified, will not export Simulator diagnostics")
+		deployPth := filepath.Join(opts.DeployDir, "xcodebuild_test.log")
+		if err := command.CopyFile(pth, deployPth); err != nil {
+			return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s), error: %s", pth, deployPth, err)
+		}
+
+		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH", deployPth); err != nil {
+			log.Warnf("Failed to export: BITRISE_XCODE_RAW_TEST_RESULT_TEXT_PATH, error: %s", err)
 		}
 	}
 
+	// export simulator diagnostics log
+	if opts.SimulatorDiagnosticsPath != "" {
+		diagnosticsName, err := simulatorDiagnosticsName()
+		if err != nil {
+			return err
+		}
+
+		outputPath := filepath.Join(opts.DeployDir, diagnosticsName)
+		if err := ziputil.ZipDir(opts.SimulatorDiagnosticsPath, outputPath, true); err != nil {
+			return fmt.Errorf("Failed to compress simulator diagnostics result: %v", err)
+		}
+	}
+
+	// export UITest artifacts
 	if opts.ExportUITestArtifacts {
 		// The test result bundle (xcresult) structure changed in Xcode 11:
 		// it does not contains TestSummaries.plist nor Attachments directly.
@@ -521,6 +568,7 @@ func (s Step) Export(opts ExportOpts) error {
 			log.Warnf("Failed to export UI test artifacts, error: %s", err)
 		}
 	}
+
 	return nil
 }
 
@@ -531,19 +579,24 @@ func run() error {
 		return err
 	}
 
+	if err := step.Installdependencies(config.OutputTool == xcprettyTool); err != nil {
+		config.OutputTool = xcodeBuildTool
+	}
+
 	res, stepRunErr := step.Run(config)
 
-	// TODO: differentiate xcodebuild test error from other errors
-	collectSimulatorDiagnostics := config.SimulatorDebug == always || (config.SimulatorDebug == onFailure && stepRunErr != nil)
 	opts := ExportOpts{
-		TestFailed:                   stepRunErr != nil,
-		Scheme:                       config.Scheme,
-		DeployDir:                    config.DeployDir,
-		TestResultDir:                res.TestOutputDir,
-		XcodebuildBuildLog:           res.XcodebuildBuildLog,
-		XcodebuildTestLog:            res.XcodebuildTestLog,
-		CollectSimulatorDiagnoscitcs: collectSimulatorDiagnostics,
-		ExportUITestArtifacts:        config.ExportUITestArtifacts,
+		TestFailed: stepRunErr != nil,
+
+		Scheme:        config.Scheme,
+		DeployDir:     config.DeployDir,
+		TestResultDir: res.TestOutputDir,
+
+		XcodebuildBuildLog: res.XcodebuildBuildLog,
+		XcodebuildTestLog:  res.XcodebuildTestLog,
+
+		SimulatorDiagnosticsPath: res.SimulatorDiagnosticsPath,
+		ExportUITestArtifacts:    config.ExportUITestArtifacts,
 	}
 	if err := step.Export(opts); err != nil {
 		return err
