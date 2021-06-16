@@ -75,56 +75,58 @@ type Input struct {
 	SimulatorOsVersion string `env:"simulator_os_version,required"`
 
 	// Test Run Configs
-	OutputTool    string `env:"output_tool,opt[xcpretty,xcodebuild]"`
-	IsCleanBuild  bool   `env:"is_clean_build,opt[yes,no]"`
-	IsSingleBuild bool   `env:"single_build,opt[true,false]"`
+	OutputTool            string `env:"output_tool,opt[xcpretty,xcodebuild]"`
+	IsCleanBuild          bool   `env:"is_clean_build,opt[yes,no]"`
+	IsSingleBuild         bool   `env:"single_build,opt[true,false]"`
+	ShouldBuildBeforeTest bool   `env:"should_build_before_test,opt[yes,no]"`
 
-	ShouldBuildBeforeTest bool `env:"should_build_before_test,opt[yes,no]"`
-	ShouldRetryTestOnFail bool `env:"should_retry_test_on_fail,opt[yes,no]"`
-
-	GenerateCodeCoverageFiles bool `env:"generate_code_coverage_files,opt[yes,no]"`
-	ExportUITestArtifacts     bool `env:"export_uitest_artifacts,opt[true,false]"`
-
+	ShouldRetryTestOnFail     bool `env:"should_retry_test_on_fail,opt[yes,no]"`
 	DisableIndexWhileBuilding bool `env:"disable_index_while_building,opt[yes,no]"`
+	GenerateCodeCoverageFiles bool `env:"generate_code_coverage_files,opt[yes,no]"`
+	HeadlessMode              bool `env:"headless_mode,opt[yes,no]"`
 
-	// Not required parameters
 	TestOptions         string `env:"xcodebuild_test_options"`
 	XcprettyTestOptions string `env:"xcpretty_test_options"`
 
 	// Debug
 	Verbose                     bool   `env:"verbose,opt[yes,no]"`
 	CollectSimulatorDiagnostics string `env:"collect_simulator_diagnostics,opt[always,on_failure,never]"`
-	HeadlessMode                bool   `env:"headless_mode,opt[yes,no]"`
+
+	// Output export
+	DeployDir             string `env:"BITRISE_DEPLOY_DIR"`
+	ExportUITestArtifacts bool   `env:"export_uitest_artifacts,opt[true,false]"`
 
 	CacheLevel string `env:"cache_level,opt[none,swift_packages]"`
-
-	// Other environment variables
-	DeployDir string `env:"BITRISE_DEPLOY_DIR"`
 }
 
 type Config struct {
-	Verbose                   bool
-	ProjectPath               string
-	Scheme                    string
-	XcodeMajorVersion         int
-	OutputTool                string
-	IsSingleBuild             bool
-	BuildBeforeTesting        bool
-	IsCleanBuild              bool
-	DisableIndexWhileBuilding bool
-	XcodebuildTestoptions     string
-	XcprettyOptions           string
-	GenerateCodeCoverageFiles bool
-	ShouldRetryTestOnFail     bool
+	ProjectPath string
+	Scheme      string
 
-	HeadlessMode      bool
-	SimulatorDebug    exportCondition
+	XcodeMajorVersion int
 	SimulatorID       string
 	IsSimulatorBooted bool
 
-	CacheLevel            string
+	OutputTool         string
+	IsCleanBuild       bool
+	IsSingleBuild      bool
+	BuildBeforeTesting bool
+
+	ShouldRetryTestOnFail     bool
+	DisableIndexWhileBuilding bool
+	GenerateCodeCoverageFiles bool
+	HeadlessMode              bool
+
+	XcodebuildTestoptions string
+	XcprettyOptions       string
+
+	Verbose        bool
+	SimulatorDebug exportCondition
+
 	DeployDir             string
 	ExportUITestArtifacts bool
+
+	CacheLevel string
 }
 
 // ProcessConfig ...
@@ -137,7 +139,7 @@ func (s Step) ProcessConfig() (Config, error) {
 	stepconf.Print(input)
 	fmt.Println()
 
-	// validate Xcode major version
+	// validate Xcode version
 	xcodebuildVersion, err := utility.GetXcodeVersion()
 	if err != nil {
 		return Config{}, fmt.Errorf("failed to determine xcode version, error: %s", err)
@@ -150,15 +152,19 @@ func (s Step) ProcessConfig() (Config, error) {
 	}
 
 	// validate headless mode
+	headlessMode := input.HeadlessMode
 	if xcodeMajorVersion < 9 && input.HeadlessMode {
 		log.Warnf("Headless mode is enabled but it's only available with Xcode 9.x or newer.")
+		headlessMode = false
 	}
 
 	// validate export UITest artifacts
+	exportUITestArtifacts := input.ExportUITestArtifacts
 	if input.ExportUITestArtifacts && xcodeMajorVersion >= 11 {
 		// The test result bundle (xcresult) structure changed in Xcode 11:
 		// it does not contains TestSummaries.plist nor Attachments directly.
 		log.Warnf("Export UITest Artifacts (export_uitest_artifacts) turned on, but Xcode version >= 11. The test result bundle structure changed in Xcode 11 it does not contain TestSummaries.plist and Attachments directly, nothing to export.")
+		exportUITestArtifacts = false
 	}
 
 	// validate simulator diagnosis mode
@@ -180,7 +186,7 @@ func (s Step) ProcessConfig() (Config, error) {
 		return Config{}, fmt.Errorf("invalid project file (%s), extension should be (.xcodeproj/.xcworkspace)", projectPath)
 	}
 
-	// Find simulator id
+	// validate simulator related inputs
 	var (
 		sim       simulator.InfoModel
 		osVersion string
@@ -233,28 +239,33 @@ func (s Step) ProcessConfig() (Config, error) {
 	fmt.Println()
 
 	return Config{
-		Verbose:                   input.Verbose,
-		ProjectPath:               projectPath,
-		Scheme:                    input.Scheme,
-		XcodeMajorVersion:         int(xcodeMajorVersion),
-		OutputTool:                input.OutputTool,
-		IsSingleBuild:             input.IsSingleBuild,
-		BuildBeforeTesting:        input.ShouldBuildBeforeTest,
-		IsCleanBuild:              input.IsCleanBuild,
-		DisableIndexWhileBuilding: input.DisableIndexWhileBuilding,
-		XcodebuildTestoptions:     input.TestOptions,
-		GenerateCodeCoverageFiles: input.GenerateCodeCoverageFiles,
-		XcprettyOptions:           input.XcprettyTestOptions,
-		ShouldRetryTestOnFail:     input.ShouldRetryTestOnFail,
+		ProjectPath: projectPath,
+		Scheme:      input.Scheme,
 
-		HeadlessMode:      input.HeadlessMode,
-		SimulatorDebug:    simulatorDebug,
+		XcodeMajorVersion: int(xcodeMajorVersion),
 		SimulatorID:       sim.ID,
 		IsSimulatorBooted: sim.Status != simulatorShutdownState,
 
-		CacheLevel:            input.CacheLevel,
+		OutputTool:         input.OutputTool,
+		IsCleanBuild:       input.IsCleanBuild,
+		IsSingleBuild:      input.IsSingleBuild,
+		BuildBeforeTesting: input.ShouldBuildBeforeTest,
+
+		ShouldRetryTestOnFail:     input.ShouldRetryTestOnFail,
+		DisableIndexWhileBuilding: input.DisableIndexWhileBuilding,
+		GenerateCodeCoverageFiles: input.GenerateCodeCoverageFiles,
+		HeadlessMode:              headlessMode,
+
+		XcodebuildTestoptions: input.TestOptions,
+		XcprettyOptions:       input.XcprettyTestOptions,
+
+		Verbose:        input.Verbose,
+		SimulatorDebug: simulatorDebug,
+
 		DeployDir:             input.DeployDir,
-		ExportUITestArtifacts: input.ExportUITestArtifacts,
+		ExportUITestArtifacts: exportUITestArtifacts,
+
+		CacheLevel: input.CacheLevel,
 	}, nil
 }
 
