@@ -57,7 +57,7 @@ workflows:
     - TEST_APP_BRANCH: failing-ui-test
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
-    - XCODE_SIMULATOR_DEVICE: iPod touch (7th generation)
+    - XCODE_SIMULATOR_DEVICE: iPhone 8
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
     - XCODE_OUTPUT_TOOL: xcodebuild
