@@ -13,6 +13,7 @@ workflows:
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "no"
+    - EXPECT_TEST_FAILURE: "false"
     after_run:
     - _run
     - _check_outputs
@@ -29,6 +30,7 @@ workflows:
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
     - XCODE_OUTPUT_TOOL: xcpretty
     - RETRY_ON_FAILURE: "no"
+    - EXPECT_TEST_FAILURE: "false"
     after_run:
     - _run
     - _check_outputs
@@ -60,25 +62,11 @@ workflows:
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "yes"
+    - EXPECT_TEST_FAILURE: "true"
     after_run:
     - _run
     - _check_outputs
     - _check_exported_artifacts
-
-  test_tvos:
-    envs:
-    - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-tvos-swift.git
-    - TEST_APP_BRANCH: master
-    - BITRISE_PROJECT_PATH: NPO Live.xcworkspace
-    - BITRISE_SCHEME: NPO Live
-    - XCODE_SIMULATOR_DEVICE: Apple TV
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: tvOS Simulator
-    - XCODE_OUTPUT_TOOL: xcodebuild
-    - RETRY_ON_FAILURE: "no"
-    after_run:
-    - _run
-    - _check_outputs
 
   test_parallel:
     envs:
@@ -91,6 +79,7 @@ workflows:
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "no"
+    - EXPECT_TEST_FAILURE: "false"
     after_run:
     - _run
     - _check_outputs
@@ -114,6 +103,7 @@ workflows:
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "no"
+    - EXPECT_TEST_FAILURE: "false"
     after_run:
     - _run
     - _check_outputs
@@ -148,33 +138,45 @@ workflows:
 
   _check_outputs:
     steps:
-      - script:
-          title: Output test
-          is_always_run: true
-          inputs:
-          - content: |-
-              echo "BITRISE_XCODE_TEST_RESULT: ${BITRISE_XCODE_TEST_RESULT}"
-              if [ ! -f "$BITRISE_XCODEBUILD_TEST_LOG_PATH" ] ; then
-                echo "No BITRISE_XCODEBUILD_TEST_LOG_PATH file generated!"
+    - script:
+        title: Output test
+        is_always_run: true
+        inputs:
+        - content: |-
+            #!/bin/env bash
+
+            echo "BITRISE_XCODE_TEST_RESULT: $BITRISE_XCODE_TEST_RESULT"
+            if [[ $EXPECT_TEST_FAILURE == "true" ]] ; then
+              if [[ "$BITRISE_XCODE_TEST_RESULT" != "failed" ]] ; then
+                echo "Invalid BITRISE_XCODE_TEST_RESULT value ($BITRISE_XCODE_TEST_RESULT), should be: failed"
                 exit 1
               fi
-
-              if [ ! -d $BITRISE_XCRESULT_PATH ]; then
-                  echo "Xcode results not found in $BITRISE_XCRESULT_PATH"
-                  exit 1
-              fi
-              zip -rTy $BITRISE_DEPLOY_DIR/Test.xcresult$(gdate +%Y%m%d%H%M%S).zip $BITRISE_XCRESULT_PATH > /dev/null
-
-              # Check and REMOVE test-info.json
-              if [ $(find ${BITRISE_TEST_DEPLOY_DIR} -type f -delete -print -regex "${BITRISE_TEST_DEPLOY_DIR}/.*/${BITRISE_SCHEME}/test-info\.json" | grep -q .) ]; then
-                echo "${BITRISE_TEST_DEPLOY_DIR} does not contain test-info.json."
+            else
+              if [[ "$BITRISE_XCODE_TEST_RESULT" != "succeeded" ]] ; then
+                echo "Invalid BITRISE_XCODE_TEST_RESULT value ($BITRISE_XCODE_TEST_RESULT), should be: succeeded"
                 exit 1
               fi
+            fi
 
-              echo "BITRISE_XCODEBUILD_TEST_LOG_PATH: ${BITRISE_XCODEBUILD_TEST_LOG_PATH}"
-              echo "BITRISE_XCODE_TEST_ATTACHMENTS_PATH: ${BITRISE_XCODE_TEST_ATTACHMENTS_PATH}"
-              echo "BITRISE_XCRESULT_PATH: $BITRISE_XCRESULT_PATH"
-              echo "BITRISE_TEST_DEPLOY_DIR: $BITRISE_TEST_DEPLOY_DIR"
+            echo "BITRISE_XCRESULT_PATH: $BITRISE_XCRESULT_PATH"
+            if [ ! -d $BITRISE_XCRESULT_PATH ]; then
+                echo "BITRISE_XCRESULT_PATH is not a directory"
+                exit 1
+            fi
+          
+            zip -rTy $BITRISE_DEPLOY_DIR/Test.xcresult$(gdate +%Y%m%d%H%M%S).zip $BITRISE_XCRESULT_PATH > /dev/null
+
+            # Check and REMOVE test-info.json
+            if [ $(find ${BITRISE_TEST_DEPLOY_DIR} -type f -delete -print -regex "${BITRISE_TEST_DEPLOY_DIR}/.*/${BITRISE_SCHEME}/test-info\.json" | grep -q .) ]; then
+              echo "${BITRISE_TEST_DEPLOY_DIR} does not contain test-info.json."
+              exit 1
+            fi
+
+            echo "BITRISE_XCODEBUILD_TEST_LOG_PATH: $BITRISE_XCODEBUILD_TEST_LOG_PATH"
+            if [[ ! -f $BITRISE_XCODEBUILD_TEST_LOG_PATH ]] ; then
+              echo "BITRISE_XCODEBUILD_TEST_LOG_PATH not exposed"
+              exit 1
+            fi
 
   _check_exported_artifacts:
     steps:
