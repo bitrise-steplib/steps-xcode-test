@@ -74,12 +74,38 @@ workflows:
     - TEST_APP_BRANCH: STEP-1054-test-plan
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - XCODE_SIMULATOR_DEVICE: iPad Air (4th generation)
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+
+            version=`xcodebuild -version`
+            regex="Xcode ([0-9]*)."
+            if [[ ! $version =~ $regex ]]; then
+              echo "Failed to determine Xcode major version"
+              exit 1
+            fi
+
+            device="iPad Air (4th generation)"
+            if [[ ${BASH_REMATCH[1]} -eq 10 ]]; then
+              device="iPad Air (3rd generation)"
+            elif [[ ${BASH_REMATCH[1]} -eq 11 ]]; then
+              device="iPad Air (3rd generation)"
+            elif [[ ${BASH_REMATCH[1]} -eq 12 ]]; then
+              device="iPad Air (4th generation)"
+            elif [[ ${BASH_REMATCH[1]} -eq 13 ]]; then
+              device="iPad Air (4th generation)"
+            fi
+
+            echo "Xcode version based iPad device: $device"
+            envman add --key XCODE_SIMULATOR_DEVICE --value "$device"
     after_run:
     - _run
     - _check_outputs
