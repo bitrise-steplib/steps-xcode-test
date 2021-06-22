@@ -69,6 +69,42 @@ workflows:
     - _check_exported_artifacts
 
   test_parallel:
+    before_run:
+    - _expose_xcode_version
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+
+            if [[ ${XCODE_MAJOR_VERSION} -lt 11 ]]; then
+              This test case requires Xcode > 10, skipping...
+              exit 0
+            fi
+
+            envman add --key XCODE_MAJOR_VERSION_GREATER_THAN_10 --value "true"
+
+            device="iPad Air (4th generation)"
+            if [[ ${XCODE_MAJOR_VERSION} -eq 10 ]]; then
+              device="iPad Air (3rd generation)"
+            elif [[ ${XCODE_MAJOR_VERSION} -eq 11 ]]; then
+              device="iPad Air (3rd generation)"
+            elif [[ ${XCODE_MAJOR_VERSION} -eq 12 ]]; then
+              device="iPad Air (4th generation)"
+            elif [[ ${XCODE_MAJOR_VERSION} -eq 13 ]]; then
+              device="iPad Air (4th generation)"
+            fi
+
+            echo "Xcode version based iPad device: $device"
+            envman add --key XCODE_SIMULATOR_DEVICE --value "$device"
+    - bitrise-run:
+        run_if: '{{enveq "XCODE_MAJOR_VERSION_GREATER_THAN_10" "true"}}'
+        inputs:
+        - workflow_id: utility_test_parallel
+        - bitrise_config_path: ./e2e/bitrise.yml
+
+  utility_test_parallel:
     envs:
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
     - TEST_APP_BRANCH: STEP-1054-test-plan
@@ -79,41 +115,16 @@ workflows:
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
-    steps:
-    - script:
-        inputs:
-        - content: |-
-            #!/bin/env bash
-            set -e
-
-            version=`xcodebuild -version`
-            regex="Xcode ([0-9]*)."
-            if [[ ! $version =~ $regex ]]; then
-              echo "Failed to determine Xcode major version"
-              exit 1
-            fi
-
-            device="iPad Air (4th generation)"
-            if [[ ${BASH_REMATCH[1]} -eq 10 ]]; then
-              device="iPad Air (3rd generation)"
-            elif [[ ${BASH_REMATCH[1]} -eq 11 ]]; then
-              device="iPad Air (3rd generation)"
-            elif [[ ${BASH_REMATCH[1]} -eq 12 ]]; then
-              device="iPad Air (4th generation)"
-            elif [[ ${BASH_REMATCH[1]} -eq 13 ]]; then
-              device="iPad Air (4th generation)"
-            fi
-
-            echo "Xcode version based iPad device: $device"
-            envman add --key XCODE_SIMULATOR_DEVICE --value "$device"
     after_run:
     - _run
     - _check_outputs
 
   test_simulator_os_version:
+    before_run:
+    - _expose_xcode_version
     steps:
     - bitrise-run:
-        run_if: '{{enveq "BITRISEIO_STACK_ID" "osx-xcode-13.0.x"}}'
+        run_if: '{{enveq "XCODE_MAJOR_VERSION" "13"}}'
         inputs:
         - workflow_id: utility_test_simulator_os_version
         - bitrise_config_path: ./e2e/bitrise.yml
@@ -161,6 +172,32 @@ workflows:
         - export_uitest_artifacts: "true"
         - verbose: "yes"
         - should_retry_test_on_fail: $RETRY_ON_FAILURE
+
+  _expose_xcode_version:
+    steps:
+    - script:
+        title: Expose Xcode major version
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+
+            if [[ ! -z "$XCODE_MAJOR_VERSION" ]]; then
+              echo "Xcode major version already exposed: $XCODE_MAJOR_VERSION"
+              exit 0
+            fi
+
+            version=`xcodebuild -version`
+            regex="Xcode ([0-9]*)."
+            if [[ ! $version =~ $regex ]]; then
+              echo "Failed to determine Xcode major version"
+              exit 1
+            fi
+
+            xcode_major_version=${BASH_REMATCH[1]}
+            echo "Xcode major version: $xcode_major_version"
+            envman add --key XCODE_MAJOR_VERSION --value $xcode_major_version
+
 
   _check_outputs:
     steps:
