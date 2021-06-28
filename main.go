@@ -10,6 +10,7 @@ import (
 	"time"
 
 	bitriseConfigs "github.com/bitrise-io/bitrise/configs"
+	"github.com/bitrise-io/go-steputils/output"
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
@@ -275,7 +276,7 @@ func (s Step) ProcessConfig() (Config, error) {
 
 // Result ...
 type Result struct {
-	TestOutputDir            string
+	XcresultPath             string
 	XcodebuildBuildLog       string
 	XcodebuildTestLog        string
 	SimulatorDiagnosticsPath string
@@ -369,11 +370,11 @@ func (s Step) Run(cfg Config) (Result, error) {
 	if err != nil {
 		return result, fmt.Errorf("could not create test output temporary directory: %s", err)
 	}
-	testOutputDir := path.Join(tempDir, "Test.xcresult")
+	xcresultPath := path.Join(tempDir, "Test.xcresult")
 
 	testParams := models.XcodeBuildTestParamsModel{
 		BuildParams:          buildParams,
-		TestOutputDir:        testOutputDir,
+		TestOutputDir:        xcresultPath,
 		BuildBeforeTest:      cfg.BuildBeforeTesting,
 		AdditionalOptions:    cfg.XcodebuildTestoptions,
 		GenerateCodeCoverage: cfg.GenerateCodeCoverageFiles,
@@ -393,7 +394,7 @@ func (s Step) Run(cfg Config) (Result, error) {
 	}
 
 	testLog, exitCode, testErr := runTest(testParams, cfg.OutputTool, cfg.XcprettyOptions, true, cfg.ShouldRetryTestOnFail, swiftPackagesPath)
-	result.TestOutputDir = testOutputDir
+	result.XcresultPath = xcresultPath
 	result.XcodebuildTestLog = testLog
 
 	if testErr != nil || cfg.OutputTool == xcodeBuildTool {
@@ -444,9 +445,9 @@ func (s Step) Run(cfg Config) (Result, error) {
 type ExportOpts struct {
 	TestFailed bool
 
-	Scheme        string
-	DeployDir     string
-	TestResultDir string
+	Scheme       string
+	DeployDir    string
+	XcresultPath string
 
 	XcodebuildBuildLog string
 	XcodebuildTestLog  string
@@ -466,22 +467,25 @@ func (s Step) Export(opts ExportOpts) error {
 		log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 	}
 
-	// export xcresult bundle
-	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCRESULT_PATH", opts.TestResultDir); err != nil {
-		log.Warnf("Failed to export: BITRISE_XCRESULT_PATH, error: %s", err)
-	}
+	if opts.XcresultPath != "" {
+		// export xcresult bundle
+		xcresultPath := filepath.Join(opts.DeployDir, filepath.Base(opts.XcresultPath))
+		if err := output.ExportOutputFile(opts.XcresultPath, xcresultPath, "BITRISE_XCRESULT_PATH"); err != nil {
+			log.Warnf("Failed to export: BITRISE_XCRESULT_PATH, error: %s", err)
+		}
 
-	// export xcresult for the testing addon
-	if addonResultPath := os.Getenv(bitriseConfigs.BitrisePerStepTestResultDirEnvKey); len(addonResultPath) > 0 {
-		fmt.Println()
-		log.Infof("Exporting test results")
+		// export xcresult for the testing addon
+		if addonResultPath := os.Getenv(bitriseConfigs.BitrisePerStepTestResultDirEnvKey); len(addonResultPath) > 0 {
+			fmt.Println()
+			log.Infof("Exporting test results")
 
-		if err := copyAndSaveMetadata(addonCopy{
-			sourceTestOutputDir:   opts.TestResultDir,
-			targetAddonPath:       addonResultPath,
-			targetAddonBundleName: opts.Scheme,
-		}); err != nil {
-			log.Warnf("Failed to export test results, error: %s", err)
+			if err := copyAndSaveMetadata(addonCopy{
+				sourceTestOutputDir:   opts.XcresultPath,
+				targetAddonPath:       addonResultPath,
+				targetAddonBundleName: opts.Scheme,
+			}); err != nil {
+				log.Warnf("Failed to export test results, error: %s", err)
+			}
 		}
 	}
 
@@ -533,13 +537,13 @@ func (s Step) Export(opts ExportOpts) error {
 	}
 
 	// export UITest artifacts
-	if opts.ExportUITestArtifacts {
+	if opts.ExportUITestArtifacts && opts.XcresultPath != "" {
 		// The test result bundle (xcresult) structure changed in Xcode 11:
 		// it does not contains TestSummaries.plist nor Attachments directly.
 		fmt.Println()
 		log.Infof("Exporting attachments")
 
-		testSummariesPath, attachementDir, err := getSummariesAndAttachmentPath(opts.TestResultDir)
+		testSummariesPath, attachementDir, err := getSummariesAndAttachmentPath(opts.XcresultPath)
 		if err != nil {
 			log.Warnf("Failed to export UI test artifacts, error: %s", err)
 		}
@@ -568,9 +572,9 @@ func run() error {
 	opts := ExportOpts{
 		TestFailed: runErr != nil,
 
-		Scheme:        config.Scheme,
-		DeployDir:     config.DeployDir,
-		TestResultDir: res.TestOutputDir,
+		Scheme:       config.Scheme,
+		DeployDir:    config.DeployDir,
+		XcresultPath: res.XcresultPath,
 
 		XcodebuildBuildLog: res.XcodebuildBuildLog,
 		XcodebuildTestLog:  res.XcodebuildTestLog,

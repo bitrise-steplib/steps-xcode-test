@@ -5,6 +5,7 @@ github.com/bitrise-io/bitrise/configs
 ## explicit
 github.com/bitrise-io/go-steputils/cache
 github.com/bitrise-io/go-steputils/command/rubycommand
+github.com/bitrise-io/go-steputils/output
 github.com/bitrise-io/go-steputils/stepconf
 github.com/bitrise-io/go-steputils/tools
 # github.com/bitrise-io/go-utils v0.0.0-20210520073355-367fa34178f5
