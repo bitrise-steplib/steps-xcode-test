@@ -11,6 +11,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - HEADLESS_MODE: "no"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
@@ -28,6 +29,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - HEADLESS_MODE: "yes"
     - XCODE_OUTPUT_TOOL: xcpretty
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
@@ -60,6 +62,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - HEADLESS_MODE: "yes"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "yes"
     - EXPECT_TEST_FAILURE: "true"
@@ -112,6 +115,7 @@ workflows:
     - BITRISE_SCHEME: BullsEye
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - HEADLESS_MODE: "yes"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
@@ -138,6 +142,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 12
     - XCODE_SIMULATOR_OS_VERSION: "15.0"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - HEADLESS_MODE: "yes"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
@@ -172,6 +177,7 @@ workflows:
         - export_uitest_artifacts: "true"
         - verbose: "yes"
         - should_retry_test_on_fail: $RETRY_ON_FAILURE
+        - headless_mode: $HEADLESS_MODE
 
   _expose_xcode_version:
     steps:
