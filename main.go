@@ -469,9 +469,13 @@ func (s Step) Export(opts ExportOpts) error {
 
 	if opts.XcresultPath != "" {
 		// export xcresult bundle
-		xcresultPath := filepath.Join(opts.DeployDir, filepath.Base(opts.XcresultPath))
-		if err := output.ExportOutputFile(opts.XcresultPath, xcresultPath, "BITRISE_XCRESULT_PATH"); err != nil {
+		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCRESULT_PATH", opts.XcresultPath); err != nil {
 			log.Warnf("Failed to export: BITRISE_XCRESULT_PATH, error: %s", err)
+		}
+
+		xcresultZipPath := filepath.Join(opts.DeployDir, filepath.Base(opts.XcresultPath)+".zip")
+		if err := output.ZipAndExportOutput(opts.XcresultPath, xcresultZipPath, "BITRISE_XCRESULT_ZIP_PATH"); err != nil {
+			log.Warnf("Failed to export: BITRISE_XCRESULT_ZIP_PATH, error: %s", err)
 		}
 
 		// export xcresult for the testing addon

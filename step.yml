@@ -306,6 +306,11 @@ outputs:
     title: The path of the generated `.xcresult`
     description: |-
       The path of the generated `.xcresult`.
+- BITRISE_XCRESULT_ZIP_PATH:
+  opts:
+    title: The path of the zipped `.xcresult`
+    description: |-
+      The path of the zipped `.xcresult`.
 - BITRISE_XCODE_TEST_ATTACHMENTS_PATH:
   opts:
     title: The full, test attachments zip path

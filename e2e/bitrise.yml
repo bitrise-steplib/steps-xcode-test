@@ -254,11 +254,12 @@ workflows:
         inputs:
         - envs: 
         - files:
-        - dirs: 
+        - dirs: |-
+            BITRISE_XCRESULT_PATH
         - deploy_dir: $BITRISE_DEPLOY_DIR
         - deployed_files: |-
             BITRISE_XCODEBUILD_TEST_LOG_PATH
-            BITRISE_XCRESULT_PATH
+            BITRISE_XCRESULT_ZIP_PATH
         - deployed_dirs: 
     - git::https://github.com/bitrise-steplib/bitrise-step-check-step-outputs.git@main:
         run_if: '{{enveq "SIGNLE_BUILD" "false"}}'
