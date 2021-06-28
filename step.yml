@@ -63,6 +63,12 @@ inputs:
       description: |-
         The Scheme to use.
       is_required: true
+  - test_plan:
+    opts:
+      title: "Test Plan name to be used for testing"
+      summary: Specifies the name of the test plan associated with the scheme to use for testing.
+      descriptions: |-
+        Specifies the name of the test plan associated with the scheme to use for testing.
   - simulator_device: iPhone 8 Plus
     opts:
       title: "Device"

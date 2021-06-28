@@ -1,9 +1,5 @@
 package models
 
-//=======================================
-// Models
-//=======================================
-
 // XcodeBuildParamsModel ...
 type XcodeBuildParamsModel struct {
 	Action                    string
@@ -17,6 +13,7 @@ type XcodeBuildParamsModel struct {
 // XcodeBuildTestParamsModel ...
 type XcodeBuildTestParamsModel struct {
 	BuildParams XcodeBuildParamsModel
+	TestPlan    string
 
 	TestOutputDir        string
 	CleanBuild           bool
