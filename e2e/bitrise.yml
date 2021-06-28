@@ -11,7 +11,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SIGNLE_BUILD: "false"
+    - SINGLE_BUILD: "false"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
@@ -30,7 +30,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SIGNLE_BUILD: "true"
+    - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcpretty
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
@@ -64,7 +64,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SIGNLE_BUILD: "true"
+    - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "yes"
     - EXPECT_TEST_FAILURE: "true"
@@ -118,7 +118,7 @@ workflows:
     - BITRISE_SCHEME: BullsEye
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SIGNLE_BUILD: "true"
+    - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
@@ -147,7 +147,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 12
     - XCODE_SIMULATOR_OS_VERSION: "15.0"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SIGNLE_BUILD: "true"
+    - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
@@ -179,7 +179,7 @@ workflows:
         - simulator_device: $XCODE_SIMULATOR_DEVICE
         - simulator_os_version: $XCODE_SIMULATOR_OS_VERSION
         - simulator_platform: $XCODE_SIMULATOR_PLATFORM
-        - single_build: $SIGNLE_BUILD
+        - single_build: $SINGLE_BUILD
         - output_tool: $XCODE_OUTPUT_TOOL
         - is_clean_build: "yes"
         - xcodebuild_test_options: -verbose
@@ -262,7 +262,7 @@ workflows:
             BITRISE_XCRESULT_ZIP_PATH
         - deployed_dirs: 
     - git::https://github.com/bitrise-steplib/bitrise-step-check-step-outputs.git@main:
-        run_if: '{{enveq "SIGNLE_BUILD" "false"}}'
+        run_if: '{{enveq "SINGLE_BUILD" "false"}}'
         inputs:
         - envs: 
         - files:
