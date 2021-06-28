@@ -379,6 +379,10 @@ func (s Step) Run(cfg Config) (Result, error) {
 		GenerateCodeCoverage: cfg.GenerateCodeCoverageFiles,
 	}
 
+	if cfg.IsSingleBuild {
+		testParams.CleanBuild = cfg.IsCleanBuild
+	}
+
 	var swiftPackagesPath string
 	if cfg.XcodeMajorVersion >= 11 {
 		var err error
