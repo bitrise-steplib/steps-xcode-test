@@ -79,7 +79,7 @@ workflows:
             set -e
 
             if [[ ${XCODE_MAJOR_VERSION} -lt 11 ]]; then
-              This test case requires Xcode > 10, skipping...
+              echo "This test case requires Xcode > 10, skipping..."
               exit 0
             fi
 
