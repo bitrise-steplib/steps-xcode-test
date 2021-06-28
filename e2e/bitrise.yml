@@ -15,12 +15,11 @@ workflows:
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
-    - CACHE_LEVEL: "swift_packages"
+    - CACHE_LEVEL: "none"
     after_run:
     - _run
     - _check_outputs
     - _check_exported_artifacts
-    - _check_cache
 
   test_objc_xcpretty:
     envs:
@@ -123,10 +122,11 @@ workflows:
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
-    - CACHE_LEVEL: "none"
+    - CACHE_LEVEL: "swift_packages"
     after_run:
     - _run
     - _check_outputs
+    - _check_cache
 
   test_simulator_os_version:
     before_run:
