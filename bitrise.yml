@@ -36,7 +36,7 @@ workflows:
           - clone_into_dir: ./_tmp
     - path::./:
         inputs:
-        # Inputs with non-default value or using environemnt variables
+        # Inputs with non-default value or using environment variables
         - project_path: ./_tmp/$BITRISE_PROJECT_PATH
         - scheme: $BITRISE_SCHEME
         - xcodebuild_test_options: -verbose
