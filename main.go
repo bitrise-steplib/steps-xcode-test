@@ -407,12 +407,12 @@ func (s Step) Run(cfg Config) (Result, error) {
 			log.Donef("Simulator diagnistics are available as an artifact (%s)", diagnosticsPath)
 			result.SimulatorDiagnosticsPath = diagnosticsPath
 		}
+	}
 
-		// Shut down Simulator if it was not booted initially
-		if !cfg.IsSimulatorBooted {
-			if err := simulatorShutdown(cfg.SimulatorID); err != nil {
-				log.Warnf("%v", err)
-			}
+	// Shut down the simulator if it was started by the step for diagnostic logs.
+	if !cfg.IsSimulatorBooted && cfg.SimulatorDebug != never {
+		if err := simulatorShutdown(cfg.SimulatorID); err != nil {
+			log.Warnf("%v", err)
 		}
 	}
 
