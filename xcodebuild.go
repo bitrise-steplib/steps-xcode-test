@@ -19,7 +19,7 @@ import (
 	"github.com/kballard/go-shellquote"
 )
 
-func runXcodeBuildCmd(args ...string) (string, int, error) {
+func runXcodebuildCmd(args ...string) (string, int, error) {
 	// command
 	buildCmd := cmd.CreateXcodebuildCmd(args...)
 	// output buffer
@@ -51,7 +51,7 @@ func runXcodeBuildCmd(args ...string) (string, int, error) {
 	return outBuffer.String(), 0, nil
 }
 
-func runPrettyXcodeBuildCmd(useStdOut bool, xcprettyArgs []string, xcodebuildArgs []string) (string, int, error) {
+func runPrettyXcodebuildCmd(useStdOut bool, xcprettyArgs []string, xcodebuildArgs []string) (string, int, error) {
 	//
 	buildCmd := cmd.CreateXcodebuildCmd(xcodebuildArgs...)
 	prettyCmd := cmd.CreateXcprettyCmd(xcprettyArgs...)
@@ -136,50 +136,96 @@ func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (stri
 	log.Infof("Building the project...")
 
 	if outputTool == xcprettyTool {
-		return runPrettyXcodeBuildCmd(false, []string{}, xcodebuildArgs)
+		return runPrettyXcodebuildCmd(false, []string{}, xcodebuildArgs)
 	}
-	return runXcodeBuildCmd(xcodebuildArgs...)
+	return runXcodebuildCmd(xcodebuildArgs...)
 }
 
-func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcprettyOptions string, isAutomaticRetryOnReason, isRetryOnFail bool, swiftPackagesPath string) (string, int, error) {
-	handleTestError := func(fullOutputStr string, exitCode int, testError error) (string, int, error) {
-		if swiftPackagesPath != "" && isStringFoundInOutput(cache.SwiftPackagesStateInvalid, fullOutputStr) {
-			log.RWarnf("xcode-test", "swift-packages-cache-invalid", nil, "swift packages cache is in an invalid state")
-			if err := os.RemoveAll(swiftPackagesPath); err != nil {
-				log.Errorf("failed to remove Swift package caches, error: %s", err)
-				return fullOutputStr, exitCode, testError
-			}
+type testRunParams struct {
+	buildTestParams              models.XcodeBuildTestParamsModel
+	outputTool                   string
+	xcprettyOptions              string
+	retryOnTestRunnerError       bool
+	retryOnTestOrTestRunnerError bool
+	swiftPackagesPath            string
+}
+
+type testRunResult struct {
+	xcodebuildLog string
+	exitCode      int
+	err           error
+}
+
+func runTest(params testRunParams) (string, int, error) {
+	xcodebuildArgs, err := createXcodebuildTestArgs(params.buildTestParams)
+	if err != nil {
+		return "", 1, err
+	}
+
+	log.Infof("Running the tests...")
+
+	var rawOutput string
+	var exit int
+	var testErr error
+	if params.outputTool == xcprettyTool {
+		xcprettyArgs, err := createXCPrettyArgs(params.xcprettyOptions)
+		if err != nil {
+			return "", 1, err
 		}
 
-		//
-		// Automatic retry
-		for _, retryReasonPattern := range automaticRetryReasonPatterns {
-			if isStringFoundInOutput(retryReasonPattern, fullOutputStr) {
-				log.Warnf("Automatic retry reason found in log: %s", retryReasonPattern)
-				if isAutomaticRetryOnReason {
-					log.Printf("isAutomaticRetryOnReason=true - retrying...")
-					return runTest(buildTestParams, outputTool, xcprettyOptions, false, false, swiftPackagesPath)
+		rawOutput, exit, testErr = runPrettyXcodebuildCmd(true, xcprettyArgs, xcodebuildArgs)
+	} else {
+		rawOutput, exit, testErr = runXcodebuildCmd(xcodebuildArgs...)
+	}
+
+	fmt.Println("exit: ", exit)
+
+	if testErr != nil {
+		return handleTestRunError(params, testRunResult{xcodebuildLog: rawOutput, exitCode: exit, err: testErr})
+	}
+
+	return rawOutput, exit, nil
+}
+
+func createXCPrettyArgs(options string) ([]string, error) {
+	args := []string{}
+
+	if options != "" {
+		options, err := shellquote.Split(options)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse additional options (%s), error: %s", options, err)
+		}
+		// get and delete the xcpretty output file, if exists
+		xcprettyOutputFilePath := ""
+		isNextOptOutputPth := false
+		for _, aOpt := range options {
+			if isNextOptOutputPth {
+				xcprettyOutputFilePath = aOpt
+				break
+			}
+			if aOpt == "--output" {
+				isNextOptOutputPth = true
+				continue
+			}
+		}
+		if xcprettyOutputFilePath != "" {
+			if isExist, err := pathutil.IsPathExists(xcprettyOutputFilePath); err != nil {
+				log.Errorf("Failed to check xcpretty output file status (path: %s), error: %s", xcprettyOutputFilePath, err)
+			} else if isExist {
+				log.Warnf("=> Deleting existing xcpretty output: %s", xcprettyOutputFilePath)
+				if err := os.Remove(xcprettyOutputFilePath); err != nil {
+					log.Errorf("Failed to delete xcpretty output file (path: %s), error: %s", xcprettyOutputFilePath, err)
 				}
-				log.Errorf("isAutomaticRetryOnReason=false, no more retry, stopping the test!")
-				return fullOutputStr, exitCode, testError
 			}
 		}
-
 		//
-		// Retry on fail
-		if isRetryOnFail {
-			log.Warnf("Test run failed")
-			log.Printf("isRetryOnFail=true - retrying...")
-			return runTest(buildTestParams, outputTool, xcprettyOptions, false, false, swiftPackagesPath)
-		}
-
-		return fullOutputStr, exitCode, testError
+		args = append(args, options...)
 	}
 
-	// Clean output directory, otherwise after retry test run, xcodebuild fails with `error: Existing file at -resultBundlePath "..."`
-	if err := os.RemoveAll(buildTestParams.TestOutputDir); err != nil {
-		return "", 1, fmt.Errorf("failed to clean test output directory: %s, error: %s", buildTestParams.TestOutputDir, err)
-	}
+	return args, nil
+}
+
+func createXcodebuildTestArgs(buildTestParams models.XcodeBuildTestParamsModel) ([]string, error) {
 	buildParams := buildTestParams.BuildParams
 
 	xcodebuildArgs := []string{buildParams.Action, buildParams.ProjectPath, "-scheme", buildParams.Scheme}
@@ -222,58 +268,55 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 	if buildTestParams.AdditionalOptions != "" {
 		options, err := shellquote.Split(buildTestParams.AdditionalOptions)
 		if err != nil {
-			return "", 1, fmt.Errorf("failed to parse additional options (%s), error: %s", buildTestParams.AdditionalOptions, err)
+			return nil, fmt.Errorf("failed to parse additional options (%s), error: %s", buildTestParams.AdditionalOptions, err)
 		}
 		xcodebuildArgs = append(xcodebuildArgs, options...)
 	}
 
-	xcprettyArgs := []string{}
-	if xcprettyOptions != "" {
-		options, err := shellquote.Split(xcprettyOptions)
-		if err != nil {
-			return "", 1, fmt.Errorf("failed to parse additional options (%s), error: %s", xcprettyOptions, err)
+	return xcodebuildArgs, nil
+}
+
+func handleTestRunError(prevRunParams testRunParams, prevRunResult testRunResult) (string, int, error) {
+	if prevRunParams.swiftPackagesPath != "" && isStringFoundInOutput(cache.SwiftPackagesStateInvalid, prevRunResult.xcodebuildLog) {
+		log.RWarnf("xcode-test", "swift-packages-cache-invalid", nil, "swift packages cache is in an invalid state")
+		if err := os.RemoveAll(prevRunParams.swiftPackagesPath); err != nil {
+			log.Errorf("failed to remove Swift package caches, error: %s", err)
+			return prevRunResult.xcodebuildLog, prevRunResult.exitCode, prevRunResult.err
 		}
-		// get and delete the xcpretty output file, if exists
-		xcprettyOutputFilePath := ""
-		isNextOptOutputPth := false
-		for _, aOpt := range options {
-			if isNextOptOutputPth {
-				xcprettyOutputFilePath = aOpt
-				break
-			}
-			if aOpt == "--output" {
-				isNextOptOutputPth = true
-				continue
-			}
-		}
-		if xcprettyOutputFilePath != "" {
-			if isExist, err := pathutil.IsPathExists(xcprettyOutputFilePath); err != nil {
-				log.Errorf("Failed to check xcpretty output file status (path: %s), error: %s", xcprettyOutputFilePath, err)
-			} else if isExist {
-				log.Warnf("=> Deleting existing xcpretty output: %s", xcprettyOutputFilePath)
-				if err := os.Remove(xcprettyOutputFilePath); err != nil {
-					log.Errorf("Failed to delete xcpretty output file (path: %s), error: %s", xcprettyOutputFilePath, err)
-				}
-			}
-		}
-		//
-		xcprettyArgs = append(xcprettyArgs, options...)
 	}
 
-	log.Infof("Running the tests...")
+	for _, errorPattern := range testRunnerErrorPatterns {
+		if isStringFoundInOutput(errorPattern, prevRunResult.xcodebuildLog) {
+			log.Warnf("Automatic retry reason found in log: %s", errorPattern)
+			if prevRunParams.retryOnTestRunnerError {
+				log.Printf("retryOnTestRunnerError=true - retrying...")
 
-	var rawOutput string
-	var err error
-	var exit int
-	if outputTool == xcprettyTool {
-		rawOutput, exit, err = runPrettyXcodeBuildCmd(true, xcprettyArgs, xcodebuildArgs)
-	} else {
-		rawOutput, exit, err = runXcodeBuildCmd(xcodebuildArgs...)
+				prevRunParams.retryOnTestOrTestRunnerError = false
+				prevRunParams.retryOnTestRunnerError = false
+				return cleanOutputDirAndRerunTest(prevRunParams)
+			}
+
+			log.Errorf("retryOnTestRunnerError=false, no more retry, stopping the test!")
+			return prevRunResult.xcodebuildLog, prevRunResult.exitCode, prevRunResult.err
+		}
 	}
 
-	if err != nil {
-		return handleTestError(rawOutput, exit, err)
+	if prevRunParams.retryOnTestOrTestRunnerError {
+		log.Warnf("Test run failed")
+		log.Printf("retryOnTestOrTestRunnerError=true - retrying...")
+
+		prevRunParams.retryOnTestOrTestRunnerError = false
+		prevRunParams.retryOnTestRunnerError = false
+		return cleanOutputDirAndRerunTest(prevRunParams)
 	}
 
-	return rawOutput, exit, nil
+	return prevRunResult.xcodebuildLog, prevRunResult.exitCode, prevRunResult.err
+}
+
+func cleanOutputDirAndRerunTest(params testRunParams) (string, int, error) {
+	// Clean output directory, otherwise after retry test run, xcodebuild fails with `error: Existing file at -resultBundlePath "..."`
+	if err := os.RemoveAll(params.buildTestParams.TestOutputDir); err != nil {
+		return "", 1, fmt.Errorf("failed to clean test output directory: %s, error: %s", params.buildTestParams.TestOutputDir, err)
+	}
+	return runTest(params)
 }

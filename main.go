@@ -45,7 +45,7 @@ const (
 	timedOutRegisteringForTestingEvent       = `Timed out registering for testing event accessibility notifications`
 )
 
-var automaticRetryReasonPatterns = []string{
+var testRunnerErrorPatterns = []string{
 	timeOutMessageIPhoneSimulator,
 	timeOutMessageUITest,
 	earlyUnexpectedExit,
@@ -397,7 +397,15 @@ func (s Step) Run(cfg Config) (Result, error) {
 		}
 	}
 
-	testLog, exitCode, testErr := runTest(testParams, cfg.OutputTool, cfg.XcprettyOptions, true, cfg.ShouldRetryTestOnFail, swiftPackagesPath)
+	params := testRunParams{
+		buildTestParams:              testParams,
+		outputTool:                   cfg.OutputTool,
+		xcprettyOptions:              cfg.XcprettyOptions,
+		retryOnTestRunnerError:       true,
+		retryOnTestOrTestRunnerError: cfg.ShouldRetryTestOnFail,
+		swiftPackagesPath:            swiftPackagesPath,
+	}
+	testLog, exitCode, testErr := runTest(params)
 	result.XcresultPath = xcresultPath
 	result.XcodebuildTestLog = testLog
 
