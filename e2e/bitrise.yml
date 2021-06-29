@@ -276,7 +276,7 @@ workflows:
   _clear_outputs:
     steps:
     - script:
-        title: Check BITRISE_XCODE_TEST_RESULT
+        title: Clear step outputs
         is_always_run: true
         inputs:
         - content: |-
