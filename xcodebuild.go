@@ -237,7 +237,7 @@ func createXcodebuildTestArgs(params models.XcodeBuildTestParamsModel, xcodeMajo
 		xcodebuildArgs = append(xcodebuildArgs, "-retry-tests-on-failure")
 
 		// TODO(STEP-1054): Allow customization of `-test-iterations`.
-		xcodebuildArgs = append(xcodebuildArgs, "-test-iterations 2")
+		xcodebuildArgs = append(xcodebuildArgs, "-test-iterations", "2")
 	}
 
 	if params.AdditionalOptions != "" {
