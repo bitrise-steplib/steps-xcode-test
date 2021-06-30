@@ -12,12 +12,12 @@ type XcodeBuildParamsModel struct {
 
 // XcodeBuildTestParamsModel ...
 type XcodeBuildTestParamsModel struct {
-	BuildParams XcodeBuildParamsModel
-	TestPlan    string
-
+	BuildParams          XcodeBuildParamsModel
+	TestPlan             string
 	TestOutputDir        string
 	CleanBuild           bool
 	BuildBeforeTest      bool
 	GenerateCodeCoverage bool
+	RetryTestsOnFailure  bool
 	AdditionalOptions    string
 }

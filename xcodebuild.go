@@ -142,12 +142,12 @@ func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (stri
 }
 
 type testRunParams struct {
-	buildTestParams              models.XcodeBuildTestParamsModel
-	outputTool                   string
-	xcprettyOptions              string
-	retryOnTestRunnerError       bool
-	retryOnTestOrTestRunnerError bool
-	swiftPackagesPath            string
+	buildTestParams        models.XcodeBuildTestParamsModel
+	outputTool             string
+	xcprettyOptions        string
+	retryOnTestRunnerError bool
+	swiftPackagesPath      string
+	xcodeMajorVersion      int
 }
 
 type testRunResult struct {
@@ -156,39 +156,8 @@ type testRunResult struct {
 	err           error
 }
 
-func runTest(params testRunParams) (string, int, error) {
-	xcodebuildArgs, err := createXcodebuildTestArgs(params.buildTestParams)
-	if err != nil {
-		return "", 1, err
-	}
-
-	log.Infof("Running the tests...")
-
-	var rawOutput string
-	var exit int
-	var testErr error
-	if params.outputTool == xcprettyTool {
-		xcprettyArgs, err := createXCPrettyArgs(params.xcprettyOptions)
-		if err != nil {
-			return "", 1, err
-		}
-
-		rawOutput, exit, testErr = runPrettyXcodebuildCmd(true, xcprettyArgs, xcodebuildArgs)
-	} else {
-		rawOutput, exit, testErr = runXcodebuildCmd(xcodebuildArgs...)
-	}
-
-	fmt.Println("exit: ", exit)
-
-	if testErr != nil {
-		return handleTestRunError(params, testRunResult{xcodebuildLog: rawOutput, exitCode: exit, err: testErr})
-	}
-
-	return rawOutput, exit, nil
-}
-
 func createXCPrettyArgs(options string) ([]string, error) {
-	args := []string{}
+	var args []string
 
 	if options != "" {
 		options, err := shellquote.Split(options)
@@ -225,11 +194,11 @@ func createXCPrettyArgs(options string) ([]string, error) {
 	return args, nil
 }
 
-func createXcodebuildTestArgs(buildTestParams models.XcodeBuildTestParamsModel) ([]string, error) {
-	buildParams := buildTestParams.BuildParams
+func createXcodebuildTestArgs(params models.XcodeBuildTestParamsModel, xcodeMajorVersion int) ([]string, error) {
+	buildParams := params.BuildParams
 
 	xcodebuildArgs := []string{buildParams.Action, buildParams.ProjectPath, "-scheme", buildParams.Scheme}
-	if buildTestParams.CleanBuild {
+	if params.CleanBuild {
 		xcodebuildArgs = append(xcodebuildArgs, "clean")
 	}
 	// the 'build' argument is required *before* the 'test' arg, to prevent
@@ -243,7 +212,7 @@ func createXcodebuildTestArgs(buildTestParams models.XcodeBuildTestParamsModel) 
 	// have the possibility of opting out, because the explicit build arg
 	// leads the project to be compiled twice and increase the duration
 	// Related issue link: https://github.com/bitrise-steplib/steps-xcode-test/issues/55
-	if buildTestParams.BuildBeforeTest {
+	if params.BuildBeforeTest {
 		xcodebuildArgs = append(xcodebuildArgs, "build")
 	}
 
@@ -255,20 +224,26 @@ func createXcodebuildTestArgs(buildTestParams models.XcodeBuildTestParamsModel) 
 	}
 
 	xcodebuildArgs = append(xcodebuildArgs, "test", "-destination", buildParams.DeviceDestination)
-	if buildTestParams.TestPlan != "" {
-		xcodebuildArgs = append(xcodebuildArgs, "-testPlan", buildTestParams.TestPlan)
+	if params.TestPlan != "" {
+		xcodebuildArgs = append(xcodebuildArgs, "-testPlan", params.TestPlan)
 	}
-	xcodebuildArgs = append(xcodebuildArgs, "-resultBundlePath", buildTestParams.TestOutputDir)
+	xcodebuildArgs = append(xcodebuildArgs, "-resultBundlePath", params.TestOutputDir)
 
-	if buildTestParams.GenerateCodeCoverage {
-		xcodebuildArgs = append(xcodebuildArgs, "GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES")
-		xcodebuildArgs = append(xcodebuildArgs, "GCC_GENERATE_TEST_COVERAGE_FILES=YES")
+	if params.GenerateCodeCoverage {
+		xcodebuildArgs = append(xcodebuildArgs, "GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES", "GCC_GENERATE_TEST_COVERAGE_FILES=YES")
 	}
 
-	if buildTestParams.AdditionalOptions != "" {
-		options, err := shellquote.Split(buildTestParams.AdditionalOptions)
+	if xcodeMajorVersion >= 13 && params.RetryTestsOnFailure {
+		xcodebuildArgs = append(xcodebuildArgs, "-retry-tests-on-failure")
+
+		// TODO(STEP-1054): Allow customization of `-test-iterations`.
+		xcodebuildArgs = append(xcodebuildArgs, "-test-iterations 2")
+	}
+
+	if params.AdditionalOptions != "" {
+		options, err := shellquote.Split(params.AdditionalOptions)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse additional options (%s), error: %s", buildTestParams.AdditionalOptions, err)
+			return nil, fmt.Errorf("failed to parse additional options (%s), error: %s", params.AdditionalOptions, err)
 		}
 		xcodebuildArgs = append(xcodebuildArgs, options...)
 	}
@@ -291,7 +266,7 @@ func handleTestRunError(prevRunParams testRunParams, prevRunResult testRunResult
 			if prevRunParams.retryOnTestRunnerError {
 				log.Printf("retryOnTestRunnerError=true - retrying...")
 
-				prevRunParams.retryOnTestOrTestRunnerError = false
+				prevRunParams.buildTestParams.RetryTestsOnFailure = false
 				prevRunParams.retryOnTestRunnerError = false
 				return cleanOutputDirAndRerunTest(prevRunParams)
 			}
@@ -301,11 +276,11 @@ func handleTestRunError(prevRunParams testRunParams, prevRunResult testRunResult
 		}
 	}
 
-	if prevRunParams.retryOnTestOrTestRunnerError {
+	if prevRunParams.xcodeMajorVersion < 13 && prevRunParams.buildTestParams.RetryTestsOnFailure {
 		log.Warnf("Test run failed")
 		log.Printf("retryOnTestOrTestRunnerError=true - retrying...")
 
-		prevRunParams.retryOnTestOrTestRunnerError = false
+		prevRunParams.buildTestParams.RetryTestsOnFailure = false
 		prevRunParams.retryOnTestRunnerError = false
 		return cleanOutputDirAndRerunTest(prevRunParams)
 	}
@@ -319,4 +294,35 @@ func cleanOutputDirAndRerunTest(params testRunParams) (string, int, error) {
 		return "", 1, fmt.Errorf("failed to clean test output directory: %s, error: %s", params.buildTestParams.TestOutputDir, err)
 	}
 	return runTest(params)
+}
+
+func runTest(params testRunParams) (string, int, error) {
+	xcodebuildArgs, err := createXcodebuildTestArgs(params.buildTestParams, params.xcodeMajorVersion)
+	if err != nil {
+		return "", 1, err
+	}
+
+	log.Infof("Running the tests...")
+
+	var rawOutput string
+	var exit int
+	var testErr error
+	if params.outputTool == xcprettyTool {
+		xcprettyArgs, err := createXCPrettyArgs(params.xcprettyOptions)
+		if err != nil {
+			return "", 1, err
+		}
+
+		rawOutput, exit, testErr = runPrettyXcodebuildCmd(true, xcprettyArgs, xcodebuildArgs)
+	} else {
+		rawOutput, exit, testErr = runXcodebuildCmd(xcodebuildArgs...)
+	}
+
+	fmt.Println("exit: ", exit)
+
+	if testErr != nil {
+		return handleTestRunError(params, testRunResult{xcodebuildLog: rawOutput, exitCode: exit, err: testErr})
+	}
+
+	return rawOutput, exit, nil
 }

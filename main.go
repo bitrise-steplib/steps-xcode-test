@@ -380,8 +380,9 @@ func (s Step) Run(cfg Config) (Result, error) {
 		TestPlan:             cfg.TestPlan,
 		TestOutputDir:        xcresultPath,
 		BuildBeforeTest:      cfg.BuildBeforeTesting,
-		AdditionalOptions:    cfg.XcodebuildTestoptions,
 		GenerateCodeCoverage: cfg.GenerateCodeCoverageFiles,
+		RetryTestsOnFailure:  cfg.ShouldRetryTestOnFail,
+		AdditionalOptions:    cfg.XcodebuildTestoptions,
 	}
 
 	if cfg.IsSingleBuild {
@@ -398,12 +399,12 @@ func (s Step) Run(cfg Config) (Result, error) {
 	}
 
 	params := testRunParams{
-		buildTestParams:              testParams,
-		outputTool:                   cfg.OutputTool,
-		xcprettyOptions:              cfg.XcprettyOptions,
-		retryOnTestRunnerError:       true,
-		retryOnTestOrTestRunnerError: cfg.ShouldRetryTestOnFail,
-		swiftPackagesPath:            swiftPackagesPath,
+		buildTestParams:        testParams,
+		outputTool:             cfg.OutputTool,
+		xcprettyOptions:        cfg.XcprettyOptions,
+		retryOnTestRunnerError: true,
+		swiftPackagesPath:      swiftPackagesPath,
+		xcodeMajorVersion:      cfg.XcodeMajorVersion,
 	}
 	testLog, exitCode, testErr := runTest(params)
 	result.XcresultPath = xcresultPath
