@@ -79,6 +79,7 @@ type Input struct {
 	// Project Parameters
 	ProjectPath string `env:"project_path,required"`
 	Scheme      string `env:"scheme,required"`
+	TestPlan    string `env:"test_plan"`
 
 	// Simulator Configs
 	SimulatorPlatform  string `env:"simulator_platform,required"`
@@ -114,6 +115,7 @@ type Input struct {
 type Config struct {
 	ProjectPath string
 	Scheme      string
+	TestPlan    string
 
 	XcodeMajorVersion int
 	SimulatorID       string
@@ -246,6 +248,7 @@ func (s Step) ProcessConfig() (Config, error) {
 	return Config{
 		ProjectPath: projectPath,
 		Scheme:      input.Scheme,
+		TestPlan:    input.TestPlan,
 
 		XcodeMajorVersion: int(xcodeMajorVersion),
 		SimulatorID:       sim.ID,
@@ -374,6 +377,7 @@ func (s Step) Run(cfg Config) (Result, error) {
 
 	testParams := models.XcodeBuildTestParamsModel{
 		BuildParams:          buildParams,
+		TestPlan:             cfg.TestPlan,
 		TestOutputDir:        xcresultPath,
 		BuildBeforeTest:      cfg.BuildBeforeTesting,
 		AdditionalOptions:    cfg.XcodebuildTestoptions,

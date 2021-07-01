@@ -209,6 +209,9 @@ func runTest(buildTestParams models.XcodeBuildTestParamsModel, outputTool, xcpre
 	}
 
 	xcodebuildArgs = append(xcodebuildArgs, "test", "-destination", buildParams.DeviceDestination)
+	if buildTestParams.TestPlan != "" {
+		xcodebuildArgs = append(xcodebuildArgs, "-testPlan", buildTestParams.TestPlan)
+	}
 	xcodebuildArgs = append(xcodebuildArgs, "-resultBundlePath", buildTestParams.TestOutputDir)
 
 	if buildTestParams.GenerateCodeCoverage {

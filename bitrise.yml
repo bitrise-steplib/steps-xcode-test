@@ -18,10 +18,10 @@ workflows:
 
   sample:
     envs:
-    - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git # Remote or local URL
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
     - TEST_APP_BRANCH: master
-    - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
-    - BITRISE_SCHEME: ios-simple-objc
+    - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
+    - BITRISE_SCHEME: BullsEye
     steps:
     - script:
         inputs:
@@ -36,10 +36,12 @@ workflows:
           - clone_into_dir: ./_tmp
     - path::./:
         inputs:
-        # Inputs with non-default value or using environemnt variables
+        # Inputs with non-default value or using environment variables
         - project_path: ./_tmp/$BITRISE_PROJECT_PATH
         - scheme: $BITRISE_SCHEME
         - xcodebuild_test_options: -verbose
         - export_uitest_artifacts: "true"
         - verbose: "yes"
+        - test_plan: UITests
+
 

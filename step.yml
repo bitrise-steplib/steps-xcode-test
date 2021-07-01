@@ -63,6 +63,13 @@ inputs:
       description: |-
         The Scheme to use.
       is_required: true
+  - test_plan:
+    opts:
+      title: "Test Plan"
+      summary: Run tests in a specific Test Plan associated with the Scheme.
+      description: |-
+        Run tests in a specific Test Plan associated with the Scheme.  
+        Leave this input empty to run the default Test Plan or Test Targets associated with the Scheme.
   - simulator_device: iPhone 8 Plus
     opts:
       title: "Device"
