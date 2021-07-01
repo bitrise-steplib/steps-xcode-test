@@ -50,7 +50,7 @@ workflows:
         inputs:
         - content: |-
             #!/bin/env bash
-            set -x # Do not set -e as bitrise command is excepted to fail
+            set -x # Do not set -e as bitrise command is expected to fail
             bitrise run --config=./e2e/bitrise.yml utility_objc_failing_ui_test
             if [ $? -ne 1 ] ; then
               echo "Workflow was excepted to fail, exit code not 1."
@@ -174,29 +174,7 @@ workflows:
     - _check_outputs
     - _check_cache
 
-  test_test_repetition:
-    before_run:
-      - _expose_xcode_version
-    steps:
-      - script:
-          inputs:
-            - content: |-
-                #!/bin/env bash
-                set -e
-
-                if [[ ${XCODE_MAJOR_VERSION} -lt 13 ]]; then
-                  echo "This test case requires Xcode > 12, skipping..."
-                  exit 0
-                fi
-
-                envman add --key XCODE_MAJOR_VERSION_GREATER_THAN_12 --value "true"
-      - bitrise-run:
-          run_if: '{{enveq "XCODE_MAJOR_VERSION_GREATER_THAN_12" "true"}}'
-          inputs:
-            - workflow_id: utility_test_test_repetition
-            - bitrise_config_path: ./e2e/bitrise.yml
-
-  utility_test_test_repetition:
+  test_retry_on_failure:
     envs:
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
     - TEST_APP_BRANCH: master
@@ -216,6 +194,40 @@ workflows:
     - _run
     - _check_outputs
     - _check_cache
+
+  test_no_retry_on_failure:
+    steps:
+    - script:
+        title: Start a failing workflow, wrapped in a script.
+        inputs:
+          - content: |-
+              #!/bin/env bash
+              set -x # Do not set -e as bitrise command is expected to fail
+              bitrise run --config=./e2e/bitrise.yml utility_test_no_retry_on_failure
+              if [ $? -ne 1 ] ; then
+                echo "Workflow was excepted to fail, exit code not 1."
+                exit 1
+              fi
+
+  utility_test_no_retry_on_failure:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
+    - TEST_APP_BRANCH: master
+    - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
+    - BITRISE_SCHEME: BullsEye
+    - TEST_PLAN: "FlakyTests"
+    - XCODE_SIMULATOR_DEVICE: iPhone 12
+    - XCODE_SIMULATOR_OS_VERSION: "latest"
+    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - SINGLE_BUILD: "true"
+    - XCODE_OUTPUT_TOOL: xcodebuild
+    - TEST_RUNNER_FLAKY_TEST_NUMBER_OF_FAILURES: 1
+    - RETRY_ON_FAILURE: "no"
+    - EXPECT_TEST_FAILURE: "true"
+    - CACHE_LEVEL: "swift_packages"
+    after_run:
+    - _run
+    - _check_outputs
 
   test_simulator_os_version:
     before_run:
