@@ -254,7 +254,9 @@ inputs:
       category: Debug
       title: "Should retry test on failure?"
       description: |-
-        If `should_retry_test_on_fail: yes` step will retry the test if first attempt failed.
+        If you set this input to `yes`, the Step will rerun only the failed test case without having to rerun all the test cases. 
+        Please note that this feature is only available from Xcode 13 and above, earlier versions support rerunning ALL test cases instead of a specific failed one. 
+        You can use this new Xcode feature with the **Xcode Step for iOS** Step from Step version 2.7.x and above. 
       value_options:
         - "yes"
         - "no"
