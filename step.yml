@@ -255,8 +255,7 @@ inputs:
       title: "Should retry test on failure?"
       description: |-
         If you set this input to `yes`, the Step will rerun only the failed test case without having to rerun all the test cases. 
-        Please note that this feature is only available from Xcode 13 and above, earlier versions support rerunning ALL test cases instead of a specific failed one. 
-        You can use this new Xcode feature with the **Xcode Step for iOS** Step from Step version 2.7.x and above. 
+        Please note that this feature is only available from Xcode 13 and above, earlier versions support rerunning ALL test cases instead of a specific failed one.  
       value_options:
         - "yes"
         - "no"
