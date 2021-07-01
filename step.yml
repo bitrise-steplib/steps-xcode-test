@@ -65,10 +65,11 @@ inputs:
       is_required: true
   - test_plan:
     opts:
-      title: "Test Plan name to be used for testing"
-      summary: Specifies the name of the test plan associated with the scheme to use for testing.
-      descriptions: |-
-        Specifies the name of the test plan associated with the scheme to use for testing.
+      title: "Test Plan"
+      summary: Run tests in a specific Test Plan associated with the Scheme.
+      description: |-
+        Run tests in a specific Test Plan associated with the Scheme.  
+        Leave empty to run the default Test Plan or Test Targets associated with the Scheme.
   - simulator_device: iPhone 8 Plus
     opts:
       title: "Device"
