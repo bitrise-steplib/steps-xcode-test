@@ -161,7 +161,7 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "UnitTests"
-    - XCODE_SIMULATOR_DEVICE: iPhone 11
+    - XCODE_SIMULATOR_DEVICE: iPhone 12
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
     - SINGLE_BUILD: "true"
@@ -247,6 +247,7 @@ workflows:
         - verbose: "yes"
         - should_retry_test_on_fail: $RETRY_ON_FAILURE
         - cache_level: $CACHE_LEVEL
+        - collect_simulator_diagnostics: on_failure
 
   _expose_xcode_version:
     steps:
