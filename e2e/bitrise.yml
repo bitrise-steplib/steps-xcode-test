@@ -116,7 +116,7 @@ workflows:
   utility_test_parallel:
     envs:
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: master
+    - TEST_APP_BRANCH: STEP-1054-reorganise-tests
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: ""
@@ -157,11 +157,11 @@ workflows:
   utility_test_test_plan:
     envs:
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: master
+    - TEST_APP_BRANCH: STEP-1054-reorganise-tests
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "UnitTests"
-    - XCODE_SIMULATOR_DEVICE: iPhone 12
+    - XCODE_SIMULATOR_DEVICE: iPhone 11
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
     - SINGLE_BUILD: "true"
@@ -199,7 +199,7 @@ workflows:
   utility_test_simulator_os_version:
     envs:
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: master
+    - TEST_APP_BRANCH: STEP-1054-reorganise-tests
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: ""
