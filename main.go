@@ -399,12 +399,13 @@ func (s Step) Run(cfg Config) (Result, error) {
 	}
 
 	params := testRunParams{
-		buildTestParams:        testParams,
-		outputTool:             cfg.OutputTool,
-		xcprettyOptions:        cfg.XcprettyOptions,
-		retryOnTestRunnerError: true,
-		swiftPackagesPath:      swiftPackagesPath,
-		xcodeMajorVersion:      cfg.XcodeMajorVersion,
+		buildTestParams:                    testParams,
+		outputTool:                         cfg.OutputTool,
+		xcprettyOptions:                    cfg.XcprettyOptions,
+		retryOnTestRunnerError:             true,
+		retryOnSwiftPackageResolutionError: true,
+		swiftPackagesPath:                  swiftPackagesPath,
+		xcodeMajorVersion:                  cfg.XcodeMajorVersion,
 	}
 	testLog, exitCode, testErr := runTest(params)
 	result.XcresultPath = xcresultPath

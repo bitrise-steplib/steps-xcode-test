@@ -142,12 +142,13 @@ func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (stri
 }
 
 type testRunParams struct {
-	buildTestParams        models.XcodeBuildTestParamsModel
-	outputTool             string
-	xcprettyOptions        string
-	retryOnTestRunnerError bool
-	swiftPackagesPath      string
-	xcodeMajorVersion      int
+	buildTestParams                    models.XcodeBuildTestParamsModel
+	outputTool                         string
+	xcprettyOptions                    string
+	retryOnTestRunnerError             bool
+	retryOnSwiftPackageResolutionError bool
+	swiftPackagesPath                  string
+	xcodeMajorVersion                  int
 }
 
 type testRunResult struct {
@@ -252,12 +253,15 @@ func createXcodebuildTestArgs(params models.XcodeBuildTestParamsModel, xcodeMajo
 }
 
 func handleTestRunError(prevRunParams testRunParams, prevRunResult testRunResult) (string, int, error) {
-	if prevRunParams.swiftPackagesPath != "" && isStringFoundInOutput(cache.SwiftPackagesStateInvalid, prevRunResult.xcodebuildLog) {
+	if prevRunParams.retryOnSwiftPackageResolutionError && prevRunParams.swiftPackagesPath != "" && isStringFoundInOutput(cache.SwiftPackagesStateInvalid, prevRunResult.xcodebuildLog) {
 		log.RWarnf("xcode-test", "swift-packages-cache-invalid", nil, "swift packages cache is in an invalid state")
 		if err := os.RemoveAll(prevRunParams.swiftPackagesPath); err != nil {
 			log.Errorf("failed to remove Swift package caches, error: %s", err)
 			return prevRunResult.xcodebuildLog, prevRunResult.exitCode, prevRunResult.err
 		}
+
+		prevRunParams.retryOnSwiftPackageResolutionError = false
+		return cleanOutputDirAndRerunTest(prevRunParams)
 	}
 
 	for _, errorPattern := range testRunnerErrorPatterns {
