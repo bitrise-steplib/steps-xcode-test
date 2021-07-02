@@ -8,6 +8,7 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
+    - TEST_PLAN: ""
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
@@ -27,6 +28,7 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
+    - TEST_PLAN: ""
     - XCODE_SIMULATOR_DEVICE: iPhone 8
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
@@ -61,6 +63,7 @@ workflows:
     - TEST_APP_BRANCH: failing-ui-test
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
+    - TEST_PLAN: ""
     - XCODE_SIMULATOR_DEVICE: iPhone 8
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
@@ -116,6 +119,49 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
+    - TEST_PLAN: ""
+    - XCODE_SIMULATOR_OS_VERSION: "latest"
+    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - SINGLE_BUILD: "true"
+    - XCODE_OUTPUT_TOOL: xcodebuild
+    - RETRY_ON_FAILURE: "no"
+    - EXPECT_TEST_FAILURE: "false"
+    - CACHE_LEVEL: "swift_packages"
+    after_run:
+    - _run
+    - _check_outputs
+    - _check_cache
+
+  test_test_plan:
+    before_run:
+    - _expose_xcode_version
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+
+            if [[ ${XCODE_MAJOR_VERSION} -lt 11 ]]; then
+              echo "This test case requires Xcode > 10, skipping..."
+              exit 0
+            fi
+
+            envman add --key XCODE_MAJOR_VERSION_GREATER_THAN_10 --value "true"
+    - bitrise-run:
+        run_if: '{{enveq "XCODE_MAJOR_VERSION_GREATER_THAN_10" "true"}}'
+        inputs:
+        - workflow_id: utility_test_test_plan
+        - bitrise_config_path: ./e2e/bitrise.yml
+
+  utility_test_test_plan:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
+    - TEST_APP_BRANCH: master
+    - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
+    - BITRISE_SCHEME: BullsEye
+    - TEST_PLAN: "UnitTests"
+    - XCODE_SIMULATOR_DEVICE: iPhone 12
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
     - SINGLE_BUILD: "true"
@@ -156,6 +202,7 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
+    - TEST_PLAN: ""
     - XCODE_SIMULATOR_DEVICE: iPhone 12
     - XCODE_SIMULATOR_OS_VERSION: "15.0"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
@@ -188,6 +235,7 @@ workflows:
         inputs:
         - project_path: ./_tmp/$BITRISE_PROJECT_PATH
         - scheme: $BITRISE_SCHEME
+        - test_plan: $TEST_PLAN
         - simulator_device: $XCODE_SIMULATOR_DEVICE
         - simulator_os_version: $XCODE_SIMULATOR_OS_VERSION
         - simulator_platform: $XCODE_SIMULATOR_PLATFORM
@@ -199,6 +247,7 @@ workflows:
         - verbose: "yes"
         - should_retry_test_on_fail: $RETRY_ON_FAILURE
         - cache_level: $CACHE_LEVEL
+        - collect_simulator_diagnostics: on_failure
 
   _expose_xcode_version:
     steps:
@@ -228,7 +277,7 @@ workflows:
   _clear_outputs:
     steps:
     - script:
-        title: Check BITRISE_XCODE_TEST_RESULT
+        title: Clear step outputs
         is_always_run: true
         inputs:
         - content: |-
@@ -264,7 +313,7 @@ workflows:
     - git::https://github.com/bitrise-steplib/bitrise-step-check-step-outputs.git@main:
         is_always_run: true
         inputs:
-        - envs: 
+        - envs:
         - files:
         - dirs: |-
             BITRISE_XCRESULT_PATH
@@ -272,17 +321,17 @@ workflows:
         - deployed_files: |-
             BITRISE_XCODEBUILD_TEST_LOG_PATH
             BITRISE_XCRESULT_ZIP_PATH
-        - deployed_dirs: 
+        - deployed_dirs:
     - git::https://github.com/bitrise-steplib/bitrise-step-check-step-outputs.git@main:
         run_if: '{{enveq "SINGLE_BUILD" "false"}}'
         inputs:
-        - envs: 
+        - envs:
         - files:
         - dirs:
         - deploy_dir: $BITRISE_DEPLOY_DIR
         - deployed_files: |-
             BITRISE_XCODEBUILD_BUILD_LOG_PATH
-        - deployed_dirs: 
+        - deployed_dirs:
     - script:
         title: Check  testing addon support
         is_always_run: true

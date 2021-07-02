@@ -5,3 +5,4 @@ go/bin/
 go/pkg/
 .gows*
 .vscode/
+.idea
