@@ -156,13 +156,17 @@ func (s Step) ProcessConfig() (Config, error) {
 	// validate Xcode version
 	xcodebuildVersion, err := utility.GetXcodeVersion()
 	if err != nil {
-		return Config{}, fmt.Errorf("failed to determine xcode version, error: %s", err)
+		return Config{}, fmt.Errorf("failed to determine Xcode version, error: %s", err)
 	}
 	log.Printf("- xcodebuildVersion: %s (%s)", xcodebuildVersion.Version, xcodebuildVersion.BuildVersion)
 
 	xcodeMajorVersion := xcodebuildVersion.MajorVersion
 	if xcodeMajorVersion < minSupportedXcodeMajorVersion {
-		return Config{}, fmt.Errorf("invalid xcode major version (%d), should not be less then min supported: %d", xcodeMajorVersion, minSupportedXcodeMajorVersion)
+		return Config{}, fmt.Errorf("invalid Xcode major version (%d), should not be less then min supported: %d", xcodeMajorVersion, minSupportedXcodeMajorVersion)
+	}
+
+	if xcodeMajorVersion < 11 && input.TestPlan != "" {
+		return Config{}, fmt.Errorf("input Test Plan incompatible with Xcode %d, at least Xcode 11 required", xcodeMajorVersion)
 	}
 
 	// validate headless mode

@@ -175,6 +175,28 @@ workflows:
     - _check_cache
 
   test_retry_on_failure:
+    before_run:
+    - _expose_xcode_version
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+
+            if [[ ${XCODE_MAJOR_VERSION} -lt 11 ]]; then
+              echo "This test case requires Xcode > 10, skipping..."
+              exit 0
+            fi
+
+            envman add --key XCODE_MAJOR_VERSION_GREATER_THAN_10 --value "true"
+    - bitrise-run:
+        run_if: '{{enveq "XCODE_MAJOR_VERSION_GREATER_THAN_10" "true"}}'
+        inputs:
+        - workflow_id: utility_test_retry_on_failure
+        - bitrise_config_path: ./e2e/bitrise.yml
+
+  utility_test_retry_on_failure:
     envs:
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
     - TEST_APP_BRANCH: master
