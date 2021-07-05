@@ -174,7 +174,7 @@ workflows:
     - _check_outputs
     - _check_cache
 
-  test_retry_on_failure:
+  test_retry_succeeds:
     before_run:
     - _expose_xcode_version
     steps:
@@ -185,21 +185,50 @@ workflows:
             set -e
 
             if [[ ${XCODE_MAJOR_VERSION} -lt 11 ]]; then
-              echo "This test case requires Xcode > 10, skipping..."
+              echo "This test case requires Xcode >= 11, skipping..."
               exit 0
             fi
 
-            envman add --key XCODE_MAJOR_VERSION_GREATER_THAN_10 --value "true"
+            envman add --key XCODE_MAJOR_VERSION_AT_LEAST_11 --value "true"
+            # Number of retries is 2
+            envman add --key TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES --value 1
     - bitrise-run:
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_GREATER_THAN_10" "true"}}'
+        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_11" "true"}}'
+        inputs:
+        - workflow_id: utility_test_retry_on_failure
+        - bitrise_config_path: ./e2e/bitrise.yml
+
+  test_retry_fails:
+    before_run:
+    - _expose_xcode_version
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+
+            if [[ ${XCODE_MAJOR_VERSION} -lt 11 ]]; then
+              echo "This test case requires Xcode >= 11, skipping..."
+              exit 0
+            fi
+
+            envman add --key XCODE_MAJOR_VERSION_AT_LEAST_11 --value "true"
+            # Number of retries is 2
+            envman add --key TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES --value 3
+    - bitrise-run:
+        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_11" "true"}}'
         inputs:
         - workflow_id: utility_test_retry_on_failure
         - bitrise_config_path: ./e2e/bitrise.yml
 
   utility_test_retry_on_failure:
     envs:
-    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: master
+    - TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES: $TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES
+    # - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
+    - TEST_APP_URL: /Users/lpusok/Develop/samples/ios/sample-swift-project-with-parallel-ui-test
+    # - TEST_APP_BRANCH: master
+    - TEST_APP_BRANCH: STEP-1054-test-run-retry
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "FlakyTests"
@@ -208,10 +237,27 @@ workflows:
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
     - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
-    - TEST_RUNNER_FLAKY_TEST_NUMBER_OF_FAILURES: 1
     - RETRY_ON_FAILURE: "yes"
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: "swift_packages"
+    steps:
+    - git::https://github.com/bitrise-steplib/steps-lookup-xcode-simulator:
+        inputs:
+        - simulator_device: $XCODE_SIMULATOR_DEVICE
+        - simulator_os_version: $XCODE_SIMULATOR_OS_VERSION
+        - simulator_platform: $XCODE_SIMULATOR_PLATFORM
+    - script:
+        inputs:
+        - content: |-
+            set -ex
+            xcrun simctl shutdown $XCODE_SIMULATOR_UDID
+            # Reset UserDefaults to clean state
+            xcrun simctl erase $XCODE_SIMULATOR_UDID
+            # simctl boot fails if Simulator already booted, ignore
+            set -x
+            xcrun simctl boot $XCODE_SIMULATOR_UDID
+            set -ex
+            xcrun simctl spawn $XCODE_SIMULATOR_UDID defaults write io.bitrise.BullsEye flaky_test_number_of_failures $TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES
     after_run:
     - _run
     - _check_outputs
