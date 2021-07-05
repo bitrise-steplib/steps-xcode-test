@@ -232,14 +232,13 @@ workflows:
   utility_test_retry_on_failure:
     envs:
     - TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES: $TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES
-    # - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_URL: /Users/lpusok/Develop/samples/ios/sample-swift-project-with-parallel-ui-test
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
     # - TEST_APP_BRANCH: master
     - TEST_APP_BRANCH: STEP-1054-test-run-retry
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "FlakyTests"
-    - XCODE_SIMULATOR_DEVICE: iPhone 8
+    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
     - SINGLE_BUILD: "true"
