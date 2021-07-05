@@ -371,15 +371,15 @@ workflows:
               echo "Variable TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES is unset"
               exit 1
             fi
-            set -x
+            set +e
             xcrun simctl shutdown $XCODE_SIMULATOR_UDID
             # Reset UserDefaults to clean state
-            set -ex
+            set -e
             xcrun simctl erase $XCODE_SIMULATOR_UDID
             # simctl boot fails if Simulator already booted, ignore
-            set -x
+            set +e
             xcrun simctl boot $XCODE_SIMULATOR_UDID
-            set -ex
+            set -e
             xcrun simctl spawn $XCODE_SIMULATOR_UDID defaults write io.bitrise.BullsEye flaky_test_number_of_failures $TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES
 
   _run:
