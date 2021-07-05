@@ -43,6 +43,7 @@ const (
 	appAccessibilityIsNotLoaded              = `UI Testing Failure - App accessibility isn't loaded`
 	testRunnerFailedToInitializeForUITesting = `Test runner failed to initialize for UI testing`
 	timedOutRegisteringForTestingEvent       = `Timed out registering for testing event accessibility notifications`
+	testRunnerNeverBeganExecuting            = `Test runner never began executing tests after launching.`
 )
 
 var testRunnerErrorPatterns = []string{
@@ -55,6 +56,7 @@ var testRunnerErrorPatterns = []string{
 	appAccessibilityIsNotLoaded,
 	testRunnerFailedToInitializeForUITesting,
 	timedOutRegisteringForTestingEvent,
+	testRunnerNeverBeganExecuting,
 }
 
 const simulatorShutdownState = "Shutdown"
