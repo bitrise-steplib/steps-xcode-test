@@ -190,7 +190,7 @@ workflows:
             fi
 
             envman add --key XCODE_MAJOR_VERSION_AT_LEAST_11 --value "true"
-            # Number of retries is 2
+            # Number of retries is 1, excepted to succeed
             envman add --key TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES --value 1
     - bitrise-run:
         run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_11" "true"}}'
@@ -214,13 +214,20 @@ workflows:
             fi
 
             envman add --key XCODE_MAJOR_VERSION_AT_LEAST_11 --value "true"
-            # Number of retries is 2
-            envman add --key TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES --value 3
-    - bitrise-run:
+            # Number of retries is 1, excepted to fail
+            envman add --key TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES --value 2
+    - script:
+        title: Start a failing workflow, wrapped in a script.
         run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_11" "true"}}'
         inputs:
-        - workflow_id: utility_test_retry_on_failure
-        - bitrise_config_path: ./e2e/bitrise.yml
+          - content: |-
+              #!/bin/env bash
+              set -x # Do not set -e as bitrise command is expected to fail
+              bitrise run --config=./e2e/bitrise.yml utility_test_retry_on_failure
+              if [ $? -ne 1 ] ; then
+                echo "Workflow was excepted to fail, exit code not 1."
+                exit 1
+              fi
 
   utility_test_retry_on_failure:
     envs:
