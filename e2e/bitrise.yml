@@ -256,9 +256,10 @@ workflows:
     - script:
         inputs:
         - content: |-
-            set -ex
+            set -x
             xcrun simctl shutdown $XCODE_SIMULATOR_UDID
             # Reset UserDefaults to clean state
+            set -ex
             xcrun simctl erase $XCODE_SIMULATOR_UDID
             # simctl boot fails if Simulator already booted, ignore
             set -x
