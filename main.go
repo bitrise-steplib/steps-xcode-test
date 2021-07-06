@@ -94,7 +94,7 @@ type Input struct {
 	IsSingleBuild         bool   `env:"single_build,opt[true,false]"`
 	ShouldBuildBeforeTest bool   `env:"should_build_before_test,opt[yes,no]"`
 
-	ShouldRetryTestOnFail     bool `env:"should_retry_test_on_fail,opt[yes,no]"`
+	RetryTestsOnFailure       bool `env:"should_retry_test_on_fail,opt[yes,no]"`
 	DisableIndexWhileBuilding bool `env:"disable_index_while_building,opt[yes,no]"`
 	GenerateCodeCoverageFiles bool `env:"generate_code_coverage_files,opt[yes,no]"`
 	HeadlessMode              bool `env:"headless_mode,opt[yes,no]"`
@@ -128,7 +128,7 @@ type Config struct {
 	IsSingleBuild      bool
 	BuildBeforeTesting bool
 
-	ShouldRetryTestOnFail     bool
+	RetryTestsOnFailure       bool
 	DisableIndexWhileBuilding bool
 	GenerateCodeCoverageFiles bool
 	HeadlessMode              bool
@@ -265,7 +265,7 @@ func (s Step) ProcessConfig() (Config, error) {
 		IsSingleBuild:      input.IsSingleBuild,
 		BuildBeforeTesting: input.ShouldBuildBeforeTest,
 
-		ShouldRetryTestOnFail:     input.ShouldRetryTestOnFail,
+		RetryTestsOnFailure:       input.RetryTestsOnFailure,
 		DisableIndexWhileBuilding: input.DisableIndexWhileBuilding,
 		GenerateCodeCoverageFiles: input.GenerateCodeCoverageFiles,
 		HeadlessMode:              headlessMode,
@@ -387,7 +387,7 @@ func (s Step) Run(cfg Config) (Result, error) {
 		TestOutputDir:        xcresultPath,
 		BuildBeforeTest:      cfg.BuildBeforeTesting,
 		GenerateCodeCoverage: cfg.GenerateCodeCoverageFiles,
-		RetryTestsOnFailure:  cfg.ShouldRetryTestOnFail,
+		RetryTestsOnFailure:  cfg.RetryTestsOnFailure,
 		AdditionalOptions:    cfg.XcodebuildTestoptions,
 	}
 
