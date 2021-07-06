@@ -62,7 +62,7 @@ var testRunnerErrorPatterns = []string{
 const simulatorShutdownState = "Shutdown"
 
 const (
-	xcodeBuildTool = "xcodebuild"
+	xcodebuildTool = "xcodebuild"
 	xcprettyTool   = "xcpretty"
 )
 
@@ -417,7 +417,7 @@ func (s Step) Run(cfg Config) (Result, error) {
 	result.XcresultPath = xcresultPath
 	result.XcodebuildTestLog = testLog
 
-	if testErr != nil || cfg.OutputTool == xcodeBuildTool {
+	if testErr != nil || cfg.OutputTool == xcodebuildTool {
 		printLastLinesOfXcodebuildTestLog(testLog, testErr == nil)
 	}
 
@@ -588,7 +588,7 @@ func run() error {
 	}
 
 	if err := step.InstallDeps(config.OutputTool == xcprettyTool); err != nil {
-		config.OutputTool = xcodeBuildTool
+		config.OutputTool = xcodebuildTool
 	}
 
 	res, runErr := step.Run(config)

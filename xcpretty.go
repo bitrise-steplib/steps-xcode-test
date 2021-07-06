@@ -64,5 +64,5 @@ func handleXcprettyInstallError(err error) (string, error) {
 
 	log.Warnf("%s", err)
 	log.Printf("Switching to xcodebuild for output tool")
-	return xcodeBuildTool, nil
+	return xcodebuildTool, nil
 }
