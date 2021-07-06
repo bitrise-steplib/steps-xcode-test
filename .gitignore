@@ -6,3 +6,4 @@ go/pkg/
 .gows*
 .vscode/
 .idea
+.DS_Store
