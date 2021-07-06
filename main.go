@@ -133,7 +133,7 @@ type Config struct {
 	GenerateCodeCoverageFiles bool
 	HeadlessMode              bool
 
-	XcodebuildTestoptions string
+	XcodebuildTestOptions string
 	XcprettyOptions       string
 
 	Verbose        bool
@@ -270,7 +270,7 @@ func (s Step) ProcessConfig() (Config, error) {
 		GenerateCodeCoverageFiles: input.GenerateCodeCoverageFiles,
 		HeadlessMode:              headlessMode,
 
-		XcodebuildTestoptions: input.TestOptions,
+		XcodebuildTestOptions: input.TestOptions,
 		XcprettyOptions:       input.XcprettyTestOptions,
 
 		Verbose:        input.Verbose,
@@ -388,7 +388,7 @@ func (s Step) Run(cfg Config) (Result, error) {
 		BuildBeforeTest:      cfg.BuildBeforeTesting,
 		GenerateCodeCoverage: cfg.GenerateCodeCoverageFiles,
 		RetryTestsOnFailure:  cfg.RetryTestsOnFailure,
-		AdditionalOptions:    cfg.XcodebuildTestoptions,
+		AdditionalOptions:    cfg.XcodebuildTestOptions,
 	}
 
 	if cfg.IsSingleBuild {
