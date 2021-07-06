@@ -50,7 +50,7 @@ workflows:
         inputs:
         - content: |-
             #!/bin/env bash
-            set -x # Do not set -e as bitrise command is excepted to fail
+            set -x # Do not set -e as bitrise command is expected to fail
             bitrise run --config=./e2e/bitrise.yml utility_objc_failing_ui_test
             if [ $? -ne 1 ] ; then
               echo "Workflow was excepted to fail, exit code not 1."
@@ -141,15 +141,13 @@ workflows:
         - content: |-
             #!/bin/env bash
             set -e
-
             if [[ ${XCODE_MAJOR_VERSION} -lt 11 ]]; then
-              echo "This test case requires Xcode > 10, skipping..."
+              echo "This test case requires Xcode >= 11, skipping..."
               exit 0
             fi
-
-            envman add --key XCODE_MAJOR_VERSION_GREATER_THAN_10 --value "true"
+            envman add --key XCODE_MAJOR_VERSION_AT_LEAST_11 --value "true"
     - bitrise-run:
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_GREATER_THAN_10" "true"}}'
+        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_11" "true"}}'
         inputs:
         - workflow_id: utility_test_test_plan
         - bitrise_config_path: ./e2e/bitrise.yml
@@ -173,6 +171,143 @@ workflows:
     - _run
     - _check_outputs
     - _check_cache
+
+  test_retry_succeeds:
+    before_run:
+    - _expose_xcode_version
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+            if [[ ${XCODE_MAJOR_VERSION} -lt 11 ]]; then
+              echo "This test case requires Xcode >= 11, skipping..."
+              exit 0
+            fi
+            envman add --key XCODE_MAJOR_VERSION_AT_LEAST_11 --value "true"
+    - bitrise-run:
+        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_11" "true"}}'
+        inputs:
+        - workflow_id: utility_test_retry_succeeds
+        - bitrise_config_path: ./e2e/bitrise.yml
+
+  test_retry_fails:
+    before_run:
+    - _expose_xcode_version
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+            if [[ ${XCODE_MAJOR_VERSION} -lt 11 ]]; then
+              echo "This test case requires Xcode >= 11, skipping..."
+              exit 0
+            fi
+            envman add --key XCODE_MAJOR_VERSION_AT_LEAST_11 --value "true"
+    - script:
+        title: Start a failing workflow, wrapped in a script.
+        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_11" "true"}}'
+        inputs:
+          - content: |-
+              #!/bin/env bash
+              set -x # Do not set -e as bitrise command is expected to fail
+              bitrise run --config=./e2e/bitrise.yml utility_test_retry_fails
+              if [ $? -ne 1 ] ; then
+                echo "Workflow was excepted to fail, exit code not 1."
+                exit 1
+              fi
+
+  utility_test_retry_succeeds:
+    envs:
+    - TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES: 1
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
+    - TEST_APP_BRANCH: master
+    - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
+    - BITRISE_SCHEME: BullsEye
+    - TEST_PLAN: "FlakyTests"
+    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
+    - XCODE_SIMULATOR_OS_VERSION: "latest"
+    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - SINGLE_BUILD: "true"
+    - XCODE_OUTPUT_TOOL: xcodebuild
+    - RETRY_ON_FAILURE: "yes"
+    - EXPECT_TEST_FAILURE: "false"
+    - CACHE_LEVEL: "swift_packages"
+    after_run:
+    - _set_number_of_flaky_tests_in_test_app
+    - _run
+    - _check_outputs
+
+  utility_test_retry_fails:
+    envs:
+    - TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES: 2
+    - EXPECT_TEST_FAILURE: "true"
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
+    - TEST_APP_BRANCH: master
+    - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
+    - BITRISE_SCHEME: BullsEye
+    - TEST_PLAN: "FlakyTests"
+    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
+    - XCODE_SIMULATOR_OS_VERSION: "latest"
+    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - SINGLE_BUILD: "true"
+    - XCODE_OUTPUT_TOOL: xcodebuild
+    - RETRY_ON_FAILURE: "yes"
+    - CACHE_LEVEL: "swift_packages"
+    after_run:
+    - _set_number_of_flaky_tests_in_test_app
+    - _run
+    - _check_outputs
+
+  test_no_retry_on_failure:
+    before_run:
+    - _expose_xcode_version
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+            if [[ ${XCODE_MAJOR_VERSION} -lt 11 ]]; then
+              echo "This test case requires Xcode >= 11, skipping..."
+              exit 0
+            fi
+            envman add --key XCODE_MAJOR_VERSION_AT_LEAST_11 --value "true"
+    - script:
+        title: Start a failing workflow, wrapped in a script.
+        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_11" "true"}}'
+        inputs:
+          - content: |-
+              #!/bin/env bash
+              set -x # Do not set -e as bitrise command is expected to fail
+              bitrise run --config=./e2e/bitrise.yml utility_test_no_retry_on_failure
+              if [ $? -ne 1 ] ; then
+                echo "Workflow was excepted to fail, exit code not 1."
+                exit 1
+              fi
+
+  utility_test_no_retry_on_failure:
+    envs:
+    - TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES: 1
+    - EXPECT_TEST_FAILURE: "true"
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
+    - TEST_APP_BRANCH: master
+    - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
+    - BITRISE_SCHEME: BullsEye
+    - TEST_PLAN: "FlakyTests"
+    - XCODE_SIMULATOR_DEVICE: iPhone 12
+    - XCODE_SIMULATOR_OS_VERSION: "latest"
+    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - SINGLE_BUILD: "true"
+    - XCODE_OUTPUT_TOOL: xcodebuild
+    - RETRY_ON_FAILURE: "no"
+    - CACHE_LEVEL: "swift_packages"
+    after_run:
+    - _set_number_of_flaky_tests_in_test_app
+    - _run
+    - _check_outputs
 
   test_simulator_os_version:
     before_run:
@@ -215,6 +350,38 @@ workflows:
     - _run
     - _check_outputs
 
+  _set_number_of_flaky_tests_in_test_app:
+    envs:
+      - TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES: $TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES
+      - XCODE_SIMULATOR_DEVICE: $XCODE_SIMULATOR_DEVICE
+      - XCODE_SIMULATOR_OS_VERSION: $XCODE_SIMULATOR_OS_VERSION
+      - XCODE_SIMULATOR_PLATFORM: $XCODE_SIMULATOR_PLATFORM
+    steps:
+    - git::https://github.com/bitrise-steplib/steps-lookup-xcode-simulator:
+        inputs:
+        - simulator_device: $XCODE_SIMULATOR_DEVICE
+        - simulator_os_version: $XCODE_SIMULATOR_OS_VERSION
+        - simulator_platform: $XCODE_SIMULATOR_PLATFORM
+    - script:
+        title: Set number of flaky test failures on the Simulator for the app io.bitrise.BullsEye
+        inputs:
+        - content: |-
+            set -ex
+            if [[ -x $TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES ]]; then
+              echo "Variable TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES is unset"
+              exit 1
+            fi
+            set +e
+            xcrun simctl shutdown $XCODE_SIMULATOR_UDID
+            # Reset UserDefaults to clean state
+            set -e
+            xcrun simctl erase $XCODE_SIMULATOR_UDID
+            # simctl boot fails if Simulator already booted, ignore
+            set +e
+            xcrun simctl boot $XCODE_SIMULATOR_UDID
+            set -e
+            xcrun simctl spawn $XCODE_SIMULATOR_UDID defaults write io.bitrise.BullsEye flaky_test_number_of_failures $TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES
+
   _run:
     before_run:
     - _clear_outputs
@@ -231,6 +398,17 @@ workflows:
           - clone_into_dir: ./_tmp
           - branch: $TEST_APP_BRANCH
     - certificate-and-profile-installer: {}
+    - script:
+        title: Set 'collect_simulator_diagnostics' input
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -ex
+            COLLECT_SIM_DIAGNOSTICS="on_failure"
+            if [[ "$EXPECT_TEST_FAILURE" == "true" ]]; then
+              COLLECT_SIM_DIAGNOSTICS="never"
+            fi
+            envman add --key COLLECT_SIM_DIAGNOSTICS --value $COLLECT_SIM_DIAGNOSTICS
     - path::./:
         inputs:
         - project_path: ./_tmp/$BITRISE_PROJECT_PATH
@@ -247,7 +425,7 @@ workflows:
         - verbose: "yes"
         - should_retry_test_on_fail: $RETRY_ON_FAILURE
         - cache_level: $CACHE_LEVEL
-        - collect_simulator_diagnostics: on_failure
+        - collect_simulator_diagnostics: $COLLECT_SIM_DIAGNOSTICS
 
   _expose_xcode_version:
     steps:

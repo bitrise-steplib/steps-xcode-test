@@ -43,9 +43,10 @@ const (
 	appAccessibilityIsNotLoaded              = `UI Testing Failure - App accessibility isn't loaded`
 	testRunnerFailedToInitializeForUITesting = `Test runner failed to initialize for UI testing`
 	timedOutRegisteringForTestingEvent       = `Timed out registering for testing event accessibility notifications`
+	testRunnerNeverBeganExecuting            = `Test runner never began executing tests after launching.`
 )
 
-var automaticRetryReasonPatterns = []string{
+var testRunnerErrorPatterns = []string{
 	timeOutMessageIPhoneSimulator,
 	timeOutMessageUITest,
 	earlyUnexpectedExit,
@@ -55,6 +56,7 @@ var automaticRetryReasonPatterns = []string{
 	appAccessibilityIsNotLoaded,
 	testRunnerFailedToInitializeForUITesting,
 	timedOutRegisteringForTestingEvent,
+	testRunnerNeverBeganExecuting,
 }
 
 const simulatorShutdownState = "Shutdown"
@@ -156,13 +158,17 @@ func (s Step) ProcessConfig() (Config, error) {
 	// validate Xcode version
 	xcodebuildVersion, err := utility.GetXcodeVersion()
 	if err != nil {
-		return Config{}, fmt.Errorf("failed to determine xcode version, error: %s", err)
+		return Config{}, fmt.Errorf("failed to determine Xcode version, error: %s", err)
 	}
 	log.Printf("- xcodebuildVersion: %s (%s)", xcodebuildVersion.Version, xcodebuildVersion.BuildVersion)
 
 	xcodeMajorVersion := xcodebuildVersion.MajorVersion
 	if xcodeMajorVersion < minSupportedXcodeMajorVersion {
-		return Config{}, fmt.Errorf("invalid xcode major version (%d), should not be less then min supported: %d", xcodeMajorVersion, minSupportedXcodeMajorVersion)
+		return Config{}, fmt.Errorf("invalid Xcode major version (%d), should not be less then min supported: %d", xcodeMajorVersion, minSupportedXcodeMajorVersion)
+	}
+
+	if xcodeMajorVersion < 11 && input.TestPlan != "" {
+		return Config{}, fmt.Errorf("input Test Plan incompatible with Xcode %d, at least Xcode 11 required", xcodeMajorVersion)
 	}
 
 	// validate headless mode
@@ -380,8 +386,9 @@ func (s Step) Run(cfg Config) (Result, error) {
 		TestPlan:             cfg.TestPlan,
 		TestOutputDir:        xcresultPath,
 		BuildBeforeTest:      cfg.BuildBeforeTesting,
-		AdditionalOptions:    cfg.XcodebuildTestoptions,
 		GenerateCodeCoverage: cfg.GenerateCodeCoverageFiles,
+		RetryTestsOnFailure:  cfg.ShouldRetryTestOnFail,
+		AdditionalOptions:    cfg.XcodebuildTestoptions,
 	}
 
 	if cfg.IsSingleBuild {
@@ -397,7 +404,16 @@ func (s Step) Run(cfg Config) (Result, error) {
 		}
 	}
 
-	testLog, exitCode, testErr := runTest(testParams, cfg.OutputTool, cfg.XcprettyOptions, true, cfg.ShouldRetryTestOnFail, swiftPackagesPath)
+	params := testRunParams{
+		buildTestParams:                    testParams,
+		outputTool:                         cfg.OutputTool,
+		xcprettyOptions:                    cfg.XcprettyOptions,
+		retryOnTestRunnerError:             true,
+		retryOnSwiftPackageResolutionError: true,
+		swiftPackagesPath:                  swiftPackagesPath,
+		xcodeMajorVersion:                  cfg.XcodeMajorVersion,
+	}
+	testLog, exitCode, testErr := runTest(params)
 	result.XcresultPath = xcresultPath
 	result.XcodebuildTestLog = testLog
 
