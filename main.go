@@ -354,7 +354,7 @@ func (s Step) Run(cfg Config) (Result, error) {
 		projectFlag = "-workspace"
 	}
 
-	buildParams := models.XcodeBuildParamsModel{
+	buildParams := models.XcodebuildParams{
 		Action:                    projectFlag,
 		ProjectPath:               cfg.ProjectPath,
 		Scheme:                    cfg.Scheme,
@@ -381,7 +381,7 @@ func (s Step) Run(cfg Config) (Result, error) {
 	}
 	xcresultPath := path.Join(tempDir, "Test.xcresult")
 
-	testParams := models.XcodeBuildTestParamsModel{
+	testParams := models.XcodebuildTestParams{
 		BuildParams:          buildParams,
 		TestPlan:             cfg.TestPlan,
 		TestOutputDir:        xcresultPath,

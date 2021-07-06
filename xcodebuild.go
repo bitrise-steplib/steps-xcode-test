@@ -119,7 +119,7 @@ func runPrettyXcodebuildCmd(useStdOut bool, xcprettyArgs []string, xcodebuildArg
 	return buildOutBuffer.String(), 0, nil
 }
 
-func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (string, int, error) {
+func runBuild(buildParams models.XcodebuildParams, outputTool string) (string, int, error) {
 	xcodebuildArgs := []string{buildParams.Action, buildParams.ProjectPath, "-scheme", buildParams.Scheme}
 	if buildParams.CleanBuild {
 		xcodebuildArgs = append(xcodebuildArgs, "clean")
@@ -142,7 +142,7 @@ func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (stri
 }
 
 type testRunParams struct {
-	buildTestParams                    models.XcodeBuildTestParamsModel
+	buildTestParams                    models.XcodebuildTestParams
 	outputTool                         string
 	xcprettyOptions                    string
 	retryOnTestRunnerError             bool
@@ -195,7 +195,7 @@ func createXCPrettyArgs(options string) ([]string, error) {
 	return args, nil
 }
 
-func createXcodebuildTestArgs(params models.XcodeBuildTestParamsModel, xcodeMajorVersion int) ([]string, error) {
+func createXcodebuildTestArgs(params models.XcodebuildTestParams, xcodeMajorVersion int) ([]string, error) {
 	buildParams := params.BuildParams
 
 	xcodebuildArgs := []string{buildParams.Action, buildParams.ProjectPath, "-scheme", buildParams.Scheme}
