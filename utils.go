@@ -112,7 +112,7 @@ func printLastLinesOfXcodebuildTestLog(rawXcodebuildOutput string, isRunSuccess 
 	fmt.Println(stringutil.LastNLines(rawXcodebuildOutput, 20))
 
 	if !isRunSuccess {
-		log.Warnf("If you can't find the reason of the error in the log, please check the raw-xcodebuild-output.log.")
+		log.Warnf("If you can't find the reason of the error in the log, please check the xcodebuild_test.log.")
 	}
 
 	log.Infof(colorstring.Magenta(`
