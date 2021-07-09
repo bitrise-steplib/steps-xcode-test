@@ -161,6 +161,24 @@ inputs:
         - "yes"
         - "no"
       is_required: true
+  - test_repetition_mode: "none"
+    opts:
+      title: Test Repetition Mode
+      category: Test Repetition
+      summary: Determines how the tests will repeat.
+      description: |-
+        Determines how the tests will repeat.
+
+        Available options:
+        - `none`: Tests will never repeat.
+        - `until_failure`: Tests will repeat until failure or up to maximum repetitions.
+        - `retry_on_failure`: Only failed tests will repeat up to maximum repetitions.
+        - `up_until_maximum_repetitions`: Tests will repeat up until maximum repetitions.
+      value_options:
+        - "none"
+        - "until_failure"
+        - "retry_on_failure"
+        - "up_until_maximum_repetitions"
   - verbose: "no"
     opts:
       category: Debug
