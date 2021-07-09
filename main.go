@@ -88,6 +88,9 @@ type Input struct {
 	SimulatorDevice    string `env:"simulator_device,required"`
 	SimulatorOsVersion string `env:"simulator_os_version,required"`
 
+	// Test Repetition
+	TestRepetitionMode string `env:"test_repetition_mode,opt[none,until_failure,retry_on_failure,up_until_maximum_repetitions]"`
+
 	// Test Run Configs
 	OutputTool            string `env:"output_tool,opt[xcpretty,xcodebuild]"`
 	IsCleanBuild          bool   `env:"is_clean_build,opt[yes,no]"`
@@ -122,6 +125,8 @@ type Config struct {
 	XcodeMajorVersion int
 	SimulatorID       string
 	IsSimulatorBooted bool
+
+	TestRepetitionMode string
 
 	OutputTool         string
 	IsCleanBuild       bool
@@ -260,6 +265,8 @@ func (s Step) ProcessConfig() (Config, error) {
 		SimulatorID:       sim.ID,
 		IsSimulatorBooted: sim.Status != simulatorShutdownState,
 
+		TestRepetitionMode: input.TestRepetitionMode,
+
 		OutputTool:         input.OutputTool,
 		IsCleanBuild:       input.IsCleanBuild,
 		IsSingleBuild:      input.IsSingleBuild,
@@ -385,6 +392,7 @@ func (s Step) Run(cfg Config) (Result, error) {
 		BuildParams:          buildParams,
 		TestPlan:             cfg.TestPlan,
 		TestOutputDir:        xcresultPath,
+		TestRepetitionMode:   cfg.TestRepetitionMode,
 		BuildBeforeTest:      cfg.BuildBeforeTesting,
 		GenerateCodeCoverage: cfg.GenerateCodeCoverageFiles,
 		RetryTestsOnFailure:  cfg.RetryTestsOnFailure,

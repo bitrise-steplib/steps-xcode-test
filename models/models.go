@@ -15,6 +15,7 @@ type XcodebuildTestParams struct {
 	BuildParams          XcodebuildParams
 	TestPlan             string
 	TestOutputDir        string
+	TestRepetitionMode   string
 	CleanBuild           bool
 	BuildBeforeTest      bool
 	GenerateCodeCoverage bool
