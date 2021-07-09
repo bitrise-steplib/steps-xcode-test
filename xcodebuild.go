@@ -19,6 +19,13 @@ import (
 	"github.com/kballard/go-shellquote"
 )
 
+const (
+	none                      = "none"
+	untilFailure              = "until_failure"
+	retryOnFailure            = "retry_on_failure"
+	upUntilMaximumRepetitions = "up_until_maximum_repetitions"
+)
+
 func runXcodebuildCmd(args ...string) (string, int, error) {
 	// command
 	buildCmd := cmd.CreateXcodebuildCmd(args...)
@@ -234,11 +241,19 @@ func createXcodebuildTestArgs(params models.XcodebuildTestParams, xcodeMajorVers
 		xcodebuildArgs = append(xcodebuildArgs, "GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES", "GCC_GENERATE_TEST_COVERAGE_FILES=YES")
 	}
 
-	if xcodeMajorVersion >= 13 && params.RetryTestsOnFailure {
+	switch params.TestRepetitionMode {
+	case untilFailure:
+		xcodebuildArgs = append(xcodebuildArgs, "-run-tests-until-failure")
+	case retryOnFailure:
 		xcodebuildArgs = append(xcodebuildArgs, "-retry-tests-on-failure")
+	case upUntilMaximumRepetitions, none:
+		break
+	default:
+		panic("Invalid test repetition mode: " + params.TestRepetitionMode)
+	}
 
-		// TODO(STEP-1054): Allow customization of `-test-iterations`.
-		xcodebuildArgs = append(xcodebuildArgs, "-test-iterations", "2")
+	if xcodeMajorVersion >= 13 && params.RetryTestsOnFailure {
+		xcodebuildArgs = append(xcodebuildArgs, "-retry-tests-on-failure", "-test-iterations", "2")
 	}
 
 	if params.AdditionalOptions != "" {
