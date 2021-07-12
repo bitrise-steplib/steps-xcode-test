@@ -263,6 +263,10 @@ func (s Step) ProcessConfig() (Config, error) {
 		return Config{}, errors.New("Test Repetition Mode (test_repetition_mode) is not available below Xcode 13")
 	}
 
+	if input.TestRepetitionMode != none && input.MaximumTestRepetitions < 1 {
+		return Config{}, fmt.Errorf("invalid number of Maximum Test Repetitions (maximum_test_repetitions): %d, should be greater than 0", input.MaximumTestRepetitions)
+	}
+
 	if input.RetryTestsOnFailure && xcodeMajorVersion > 12 {
 		return Config{}, errors.New("Should retry test on failure? (should_retry_test_on_fail) is not available above Xcode 12; use test_repetition_mode=retry_on_failure instead")
 	}
