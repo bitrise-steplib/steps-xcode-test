@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -255,6 +256,14 @@ func (s Step) ProcessConfig() (Config, error) {
 
 	log.Printf("* device_destination: %s", deviceDestination)
 	fmt.Println()
+
+	if input.TestRepetitionMode != none && xcodeMajorVersion < 13 {
+		return Config{}, errors.New("test_repetition_mode is not supported below Xcode 13")
+	}
+
+	if input.RetryTestsOnFailure && xcodeMajorVersion > 12 {
+		return Config{}, errors.New("should_retry_test_on_fail is not supported above Xcode 12")
+	}
 
 	return Config{
 		ProjectPath: projectPath,

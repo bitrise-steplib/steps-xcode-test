@@ -248,11 +248,9 @@ func createXcodebuildTestArgs(params models.XcodebuildTestParams, xcodeMajorVers
 		xcodebuildArgs = append(xcodebuildArgs, "-retry-tests-on-failure")
 	case upUntilMaximumRepetitions, none:
 		break
-	default:
-		panic("Invalid test repetition mode: " + params.TestRepetitionMode)
 	}
 
-	if xcodeMajorVersion >= 13 && params.RetryTestsOnFailure {
+	if params.RetryTestsOnFailure {
 		xcodebuildArgs = append(xcodebuildArgs, "-retry-tests-on-failure", "-test-iterations", "2")
 	}
 
