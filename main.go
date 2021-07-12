@@ -90,7 +90,8 @@ type Input struct {
 	SimulatorOsVersion string `env:"simulator_os_version,required"`
 
 	// Test Repetition
-	TestRepetitionMode string `env:"test_repetition_mode,opt[none,until_failure,retry_on_failure,up_until_maximum_repetitions]"`
+	TestRepetitionMode     string `env:"test_repetition_mode,opt[none,until_failure,retry_on_failure,up_until_maximum_repetitions]"`
+	MaximumTestRepetitions int    `env:"maximum_test_repetitions,required"`
 
 	// Test Run Configs
 	OutputTool            string `env:"output_tool,opt[xcpretty,xcodebuild]"`
@@ -127,7 +128,8 @@ type Config struct {
 	SimulatorID       string
 	IsSimulatorBooted bool
 
-	TestRepetitionMode string
+	TestRepetitionMode     string
+	MaximumTestRepetitions int
 
 	OutputTool         string
 	IsCleanBuild       bool
