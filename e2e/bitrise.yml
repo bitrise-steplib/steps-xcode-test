@@ -195,7 +195,7 @@ workflows:
             set -x # Do not set -e as bitrise command is expected to fail
             bitrise run --config=./e2e/bitrise.yml utility_test_retry_on_failure_not_available_above_xcode_13
             if [ $? -ne 1 ] ; then
-              echo "Workflow was excepted to fail, exit code not 1."
+              echo "Workflow was expected to fail, exit code not 1."
               exit 1
             fi
 
@@ -214,7 +214,6 @@ workflows:
     - CACHE_LEVEL: "swift_packages"
     after_run:
     - _run
-    - _check_outputs
 
   test_repetition_mode_not_available_below_xcode_13:
     before_run:
@@ -239,7 +238,7 @@ workflows:
             set -x # Do not set -e as bitrise command is expected to fail
             bitrise run --config=./e2e/bitrise.yml utility_test_repetition_mode_not_available_below_xcode_13
             if [ $? -ne 1 ] ; then
-              echo "Workflow was excepted to fail, exit code not 1."
+              echo "Workflow was expected to fail, exit code not 1."
               exit 1
             fi
 
@@ -254,11 +253,11 @@ workflows:
       - XCODE_SIMULATOR_PLATFORM: iOS Simulator
       - SINGLE_BUILD: "true"
       - XCODE_OUTPUT_TOOL: xcodebuild
-      - RETRY_ON_FAILURE: "yes"
+      - RETRY_ON_FAILURE: "no"
+      - TEST_REPETITION_MODE: "retry_on_failure"
       - CACHE_LEVEL: "swift_packages"
     after_run:
     - _run
-    - _check_outputs
 
   test_retry_succeeds:
     before_run:
@@ -381,7 +380,7 @@ workflows:
               set -x # Do not set -e as bitrise command is expected to fail
               bitrise run --config=./e2e/bitrise.yml utility_test_no_retry_on_failure
               if [ $? -ne 1 ] ; then
-                echo "Workflow was excepted to fail, exit code not 1."
+                echo "Workflow was expected to fail, exit code not 1."
                 exit 1
               fi
 
@@ -511,6 +510,7 @@ workflows:
         - project_path: ./_tmp/$BITRISE_PROJECT_PATH
         - scheme: $BITRISE_SCHEME
         - test_plan: $TEST_PLAN
+        - test_repetition_mode: ${TEST_REPETITION_MODE-none}
         - simulator_device: $XCODE_SIMULATOR_DEVICE
         - simulator_os_version: $XCODE_SIMULATOR_OS_VERSION
         - simulator_platform: $XCODE_SIMULATOR_PLATFORM
