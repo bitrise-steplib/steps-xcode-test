@@ -404,14 +404,15 @@ func (s Step) Run(cfg Config) (Result, error) {
 	xcresultPath := path.Join(tempDir, "Test.xcresult")
 
 	testParams := models.XcodebuildTestParams{
-		BuildParams:          buildParams,
-		TestPlan:             cfg.TestPlan,
-		TestOutputDir:        xcresultPath,
-		TestRepetitionMode:   cfg.TestRepetitionMode,
-		BuildBeforeTest:      cfg.BuildBeforeTesting,
-		GenerateCodeCoverage: cfg.GenerateCodeCoverageFiles,
-		RetryTestsOnFailure:  cfg.RetryTestsOnFailure,
-		AdditionalOptions:    cfg.XcodebuildTestOptions,
+		BuildParams:            buildParams,
+		TestPlan:               cfg.TestPlan,
+		TestOutputDir:          xcresultPath,
+		TestRepetitionMode:     cfg.TestRepetitionMode,
+		MaximumTestRepetitions: cfg.MaximumTestRepetitions,
+		BuildBeforeTest:        cfg.BuildBeforeTesting,
+		GenerateCodeCoverage:   cfg.GenerateCodeCoverageFiles,
+		RetryTestsOnFailure:    cfg.RetryTestsOnFailure,
+		AdditionalOptions:      cfg.XcodebuildTestOptions,
 	}
 
 	if cfg.IsSingleBuild {
