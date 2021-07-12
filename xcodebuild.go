@@ -250,10 +250,6 @@ func createXcodebuildTestArgs(params models.XcodebuildTestParams, xcodeMajorVers
 		break
 	}
 
-	if params.RetryTestsOnFailure {
-		xcodebuildArgs = append(xcodebuildArgs, "-retry-tests-on-failure", "-test-iterations", "2")
-	}
-
 	if params.AdditionalOptions != "" {
 		options, err := shellquote.Split(params.AdditionalOptions)
 		if err != nil {
