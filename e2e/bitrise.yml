@@ -88,11 +88,11 @@ workflows:
             set -e
 
             if [[ ${XCODE_MAJOR_VERSION} -lt 11 ]]; then
-              echo "This test case requires Xcode > 10, skipping..."
+              echo "This test case requires Xcode >= 11, skipping..."
               exit 0
             fi
 
-            envman add --key XCODE_MAJOR_VERSION_GREATER_THAN_10 --value "true"
+            envman add --key XCODE_MAJOR_VERSION_AT_LEAST_11 --value "true"
 
             device="iPad Air (4th generation)"
             if [[ ${XCODE_MAJOR_VERSION} -eq 10 ]]; then
@@ -108,7 +108,7 @@ workflows:
             echo "Xcode version based iPad device: $device"
             envman add --key XCODE_SIMULATOR_DEVICE --value "$device"
     - bitrise-run:
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_GREATER_THAN_10" "true"}}'
+        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_11" "true"}}'
         inputs:
         - workflow_id: utility_test_parallel
         - bitrise_config_path: ./e2e/bitrise.yml
