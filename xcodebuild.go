@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -246,8 +247,10 @@ func createXcodebuildTestArgs(params models.XcodebuildTestParams, xcodeMajorVers
 		xcodebuildArgs = append(xcodebuildArgs, "-run-tests-until-failure")
 	case retryOnFailure:
 		xcodebuildArgs = append(xcodebuildArgs, "-retry-tests-on-failure")
-	case upUntilMaximumRepetitions, none:
-		break
+	}
+
+	if params.TestRepetitionMode != none {
+		xcodebuildArgs = append(xcodebuildArgs, "-test-iterations", strconv.Itoa(params.MaximumTestRepetitions))
 	}
 
 	if params.AdditionalOptions != "" {
