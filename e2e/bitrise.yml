@@ -170,7 +170,7 @@ workflows:
     - _check_outputs
     - _check_cache
 
-  test_retry_on_failure_not_available_above_xcode_13:
+  test_should_retry_test_on_fail_not_available_above_xcode_13:
     before_run:
     - _expose_xcode_version
     steps:
@@ -191,13 +191,13 @@ workflows:
         - content: |-
             #!/bin/env bash
             set -x # Do not set -e as bitrise command is expected to fail
-            bitrise run --config=./e2e/bitrise.yml utility_test_retry_on_failure_not_available_above_xcode_13
+            bitrise run --config=./e2e/bitrise.yml utility_test_should_retry_test_on_fail_not_available_above_xcode_13
             if [ $? -ne 1 ] ; then
               echo "Workflow was expected to fail, exit code not 1."
               exit 1
             fi
 
-  utility_test_retry_on_failure_not_available_above_xcode_13:
+  utility_test_should_retry_test_on_fail_not_available_above_xcode_13:
     envs:
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
     - TEST_APP_BRANCH: master
@@ -213,7 +213,7 @@ workflows:
     after_run:
     - _run
 
-  test_repetition_mode_not_available_below_xcode_13:
+  test_test_repetition_mode_not_available_below_xcode_13:
     before_run:
     - _expose_xcode_version
     steps:
@@ -234,13 +234,13 @@ workflows:
         - content: |-
             #!/bin/env bash
             set -x # Do not set -e as bitrise command is expected to fail
-            bitrise run --config=./e2e/bitrise.yml utility_test_repetition_mode_not_available_below_xcode_13
+            bitrise run --config=./e2e/bitrise.yml utility_test_test_repetition_mode_not_available_below_xcode_13
             if [ $? -ne 1 ] ; then
               echo "Workflow was expected to fail, exit code not 1."
               exit 1
             fi
 
-  utility_test_repetition_mode_not_available_below_xcode_13:
+  utility_test_test_repetition_mode_not_available_below_xcode_13:
     envs:
       - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
       - TEST_APP_BRANCH: master
@@ -257,7 +257,7 @@ workflows:
     after_run:
     - _run
 
-  test_retry_succeeds:
+  test_should_retry_test_on_fail_succeeds:
     before_run:
     - _expose_xcode_version
     steps:
@@ -277,10 +277,10 @@ workflows:
     - bitrise-run:
         run_if: '{{enveq "XCODE_MAJOR_VERSION_BETWEEN_11_AND_12" "true"}}'
         inputs:
-        - workflow_id: utility_test_retry_succeeds
+        - workflow_id: utility_test_should_retry_test_on_fail_succeeds
         - bitrise_config_path: ./e2e/bitrise.yml
 
-  utility_test_retry_succeeds:
+  utility_test_should_retry_test_on_fail_succeeds:
     envs:
     - TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES: 1
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
@@ -301,7 +301,7 @@ workflows:
     - _run
     - _check_outputs
 
-  test_retry_fails:
+  test_should_retry_test_on_fail_fails:
     before_run:
     - _expose_xcode_version
     steps:
@@ -325,13 +325,13 @@ workflows:
           - content: |-
               #!/bin/env bash
               set -x # Do not set -e as bitrise command is expected to fail
-              bitrise run --config=./e2e/bitrise.yml utility_test_retry_fails
+              bitrise run --config=./e2e/bitrise.yml utility_test_should_retry_test_on_fail_fails
               if [ $? -ne 1 ] ; then
                 echo "Workflow was expected to fail, exit code not 1."
                 exit 1
               fi
 
-  utility_test_retry_fails:
+  utility_test_should_retry_test_on_fail_fails:
     envs:
     - TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES: 2
     - EXPECT_TEST_FAILURE: "true"
@@ -352,7 +352,7 @@ workflows:
     - _run
     - _check_outputs
 
-  test_no_retry_on_failure:
+  test_should_retry_test_on_fail_off:
     before_run:
     - _expose_xcode_version
     steps:
@@ -376,13 +376,13 @@ workflows:
           - content: |-
               #!/bin/env bash
               set -x # Do not set -e as bitrise command is expected to fail
-              bitrise run --config=./e2e/bitrise.yml utility_test_no_retry_on_failure
+              bitrise run --config=./e2e/bitrise.yml utility_test_should_retry_test_on_fail_off
               if [ $? -ne 1 ] ; then
                 echo "Workflow was expected to fail, exit code not 1."
                 exit 1
               fi
 
-  utility_test_no_retry_on_failure:
+  utility_test_should_retry_test_on_fail_off:
     envs:
     - TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES: 1
     - EXPECT_TEST_FAILURE: "true"
