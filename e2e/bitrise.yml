@@ -95,9 +95,7 @@ workflows:
             envman add --key XCODE_MAJOR_VERSION_AT_LEAST_11 --value "true"
 
             device="iPad Air (4th generation)"
-            if [[ ${XCODE_MAJOR_VERSION} -eq 10 ]]; then
-              device="iPad Air (3rd generation)"
-            elif [[ ${XCODE_MAJOR_VERSION} -eq 11 ]]; then
+            if [[ ${XCODE_MAJOR_VERSION} -eq 11 ]]; then
               device="iPad Air (3rd generation)"
             elif [[ ${XCODE_MAJOR_VERSION} -eq 12 ]]; then
               device="iPad Air (4th generation)"
@@ -505,12 +503,19 @@ workflows:
               COLLECT_SIM_DIAGNOSTICS="never"
             fi
             envman add --key COLLECT_SIM_DIAGNOSTICS --value $COLLECT_SIM_DIAGNOSTICS
+    - script:
+        title: Set TEST_REPETITION_MODE to 'none' if not set
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -eo pipefail
+            export TEST_REPETITION_MODE=${TEST_REPETITION_MODE-none}
     - path::./:
         inputs:
         - project_path: ./_tmp/$BITRISE_PROJECT_PATH
         - scheme: $BITRISE_SCHEME
         - test_plan: $TEST_PLAN
-        - test_repetition_mode: ${TEST_REPETITION_MODE-none}
+        - test_repetition_mode: $TEST_REPETITION_MODE
         - simulator_device: $XCODE_SIMULATOR_DEVICE
         - simulator_os_version: $XCODE_SIMULATOR_OS_VERSION
         - simulator_platform: $XCODE_SIMULATOR_PLATFORM
