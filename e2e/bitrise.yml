@@ -282,12 +282,12 @@ workflows:
 
   utility_test_should_retry_test_on_fail_succeeds:
     envs:
-    - TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES: 1
+    - TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES: 1
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: master
+    - TEST_APP_BRANCH: STEP-1203-split-flaky-test-cases
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: "FlakyTests"
+    - TEST_PLAN: "EventuallySucceedingTests"
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
@@ -297,7 +297,7 @@ workflows:
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: "swift_packages"
     after_run:
-    - _set_number_of_flaky_tests_in_test_app
+    - _set_number_of_initial_test_failures_in_test_app
     - _run
     - _check_outputs
 
@@ -333,13 +333,13 @@ workflows:
 
   utility_test_should_retry_test_on_fail_fails:
     envs:
-    - TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES: 2
+    - TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES: 2
     - EXPECT_TEST_FAILURE: "true"
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: master
+    - TEST_APP_BRANCH: STEP-1203-split-flaky-test-cases
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: "FlakyTests"
+    - TEST_PLAN: "EventuallySucceedingTests"
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
@@ -348,7 +348,7 @@ workflows:
     - RETRY_ON_FAILURE: "yes"
     - CACHE_LEVEL: "swift_packages"
     after_run:
-    - _set_number_of_flaky_tests_in_test_app
+    - _set_number_of_initial_test_failures_in_test_app
     - _run
     - _check_outputs
 
@@ -384,13 +384,13 @@ workflows:
 
   utility_test_should_retry_test_on_fail_off:
     envs:
-    - TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES: 1
+    - TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES: 1
     - EXPECT_TEST_FAILURE: "true"
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: master
+    - TEST_APP_BRANCH: STEP-1203-split-flaky-test-cases
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: "FlakyTests"
+    - TEST_PLAN: "EventuallySucceedingTests"
     - XCODE_SIMULATOR_DEVICE: iPhone 12
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
@@ -399,7 +399,7 @@ workflows:
     - RETRY_ON_FAILURE: "no"
     - CACHE_LEVEL: "swift_packages"
     after_run:
-    - _set_number_of_flaky_tests_in_test_app
+    - _set_number_of_initial_test_failures_in_test_app
     - _run
     - _check_outputs
 
@@ -425,12 +425,12 @@ workflows:
 
   utility_test_test_repetition_mode_retry_on_failure_2_iterations_succeeds:
     envs:
-    - TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES: 1
+    - TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES: 1
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: master
+    - TEST_APP_BRANCH: STEP-1203-split-flaky-test-cases
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: "FlakyTests"
+    - TEST_PLAN: "EventuallySucceedingTests"
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
@@ -442,7 +442,7 @@ workflows:
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: "swift_packages"
     after_run:
-    - _set_number_of_flaky_tests_in_test_app
+    - _set_number_of_initial_test_failures_in_test_app
     - _run
     - _check_outputs
 
@@ -475,12 +475,12 @@ workflows:
 
   utility_test_test_repetition_mode_retry_on_failure_2_iterations_fails:
     envs:
-    - TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES: 2
+    - TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES: 2
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: master
+    - TEST_APP_BRANCH: STEP-1203-split-flaky-test-cases
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: "FlakyTests"
+    - TEST_PLAN: "EventuallySucceedingTests"
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
@@ -492,7 +492,7 @@ workflows:
     - EXPECT_TEST_FAILURE: "true"
     - CACHE_LEVEL: "swift_packages"
     after_run:
-    - _set_number_of_flaky_tests_in_test_app
+    - _set_number_of_initial_test_failures_in_test_app
     - _run
     - _check_outputs
 
@@ -518,12 +518,12 @@ workflows:
 
   utility_test_test_repetition_mode_retry_on_failure_3_iterations_succeeds:
     envs:
-    - TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES: 2
+    - TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES: 2
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: master
+    - TEST_APP_BRANCH: STEP-1203-split-flaky-test-cases
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: "FlakyTests"
+    - TEST_PLAN: "EventuallySucceedingTests"
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
@@ -535,7 +535,7 @@ workflows:
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: "swift_packages"
     after_run:
-    - _set_number_of_flaky_tests_in_test_app
+    - _set_number_of_initial_test_failures_in_test_app
     - _run
     - _check_outputs
 
@@ -580,9 +580,9 @@ workflows:
     - _run
     - _check_outputs
 
-  _set_number_of_flaky_tests_in_test_app:
+  _set_number_of_initial_test_failures_in_test_app:
     envs:
-      - TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES: $TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES
+      - TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES: $TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES
       - XCODE_SIMULATOR_DEVICE: $XCODE_SIMULATOR_DEVICE
       - XCODE_SIMULATOR_OS_VERSION: $XCODE_SIMULATOR_OS_VERSION
       - XCODE_SIMULATOR_PLATFORM: $XCODE_SIMULATOR_PLATFORM
@@ -597,8 +597,8 @@ workflows:
         inputs:
         - content: |-
             set -ex
-            if [[ -x $TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES ]]; then
-              echo "Variable TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES is unset"
+            if [[ -x $TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES ]]; then
+              echo "Variable TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES is unset"
               exit 1
             fi
             set +e
@@ -610,7 +610,7 @@ workflows:
             set +e
             xcrun simctl boot $XCODE_SIMULATOR_UDID
             set -e
-            xcrun simctl spawn $XCODE_SIMULATOR_UDID defaults write io.bitrise.BullsEye flaky_test_number_of_failures $TEST_APP_FLAKY_TEST_NUMBER_OF_FAILURES
+            xcrun simctl spawn $XCODE_SIMULATOR_UDID defaults write io.bitrise.BullsEye eventually_succeeding_test_number_of_failures $TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES
 
   _run:
     before_run:
