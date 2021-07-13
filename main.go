@@ -280,7 +280,8 @@ func (s Step) ProcessConfig() (Config, error) {
 		SimulatorID:       sim.ID,
 		IsSimulatorBooted: sim.Status != simulatorShutdownState,
 
-		TestRepetitionMode: input.TestRepetitionMode,
+		TestRepetitionMode:     input.TestRepetitionMode,
+		MaximumTestRepetitions: input.MaximumTestRepetitions,
 
 		OutputTool:         input.OutputTool,
 		IsCleanBuild:       input.IsCleanBuild,
