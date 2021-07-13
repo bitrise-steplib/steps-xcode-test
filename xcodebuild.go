@@ -21,10 +21,9 @@ import (
 )
 
 const (
-	none                      = "none"
-	untilFailure              = "until_failure"
-	retryOnFailure            = "retry_on_failure"
-	upUntilMaximumRepetitions = "up_until_maximum_repetitions"
+	none           = "none"
+	untilFailure   = "until_failure"
+	retryOnFailure = "retry_on_failure"
 )
 
 func runXcodebuildCmd(args ...string) (string, int, error) {
