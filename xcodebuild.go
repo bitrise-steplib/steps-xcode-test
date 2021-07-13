@@ -19,6 +19,13 @@ import (
 	"github.com/kballard/go-shellquote"
 )
 
+const (
+	none                      = "none"
+	untilFailure              = "until_failure"
+	retryOnFailure            = "retry_on_failure"
+	upUntilMaximumRepetitions = "up_until_maximum_repetitions"
+)
+
 func runXcodebuildCmd(args ...string) (string, int, error) {
 	// command
 	buildCmd := cmd.CreateXcodebuildCmd(args...)
@@ -119,7 +126,7 @@ func runPrettyXcodebuildCmd(useStdOut bool, xcprettyArgs []string, xcodebuildArg
 	return buildOutBuffer.String(), 0, nil
 }
 
-func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (string, int, error) {
+func runBuild(buildParams models.XcodebuildParams, outputTool string) (string, int, error) {
 	xcodebuildArgs := []string{buildParams.Action, buildParams.ProjectPath, "-scheme", buildParams.Scheme}
 	if buildParams.CleanBuild {
 		xcodebuildArgs = append(xcodebuildArgs, "clean")
@@ -142,7 +149,7 @@ func runBuild(buildParams models.XcodeBuildParamsModel, outputTool string) (stri
 }
 
 type testRunParams struct {
-	buildTestParams                    models.XcodeBuildTestParamsModel
+	buildTestParams                    models.XcodebuildTestParams
 	outputTool                         string
 	xcprettyOptions                    string
 	retryOnTestRunnerError             bool
@@ -195,7 +202,7 @@ func createXCPrettyArgs(options string) ([]string, error) {
 	return args, nil
 }
 
-func createXcodebuildTestArgs(params models.XcodeBuildTestParamsModel, xcodeMajorVersion int) ([]string, error) {
+func createXcodebuildTestArgs(params models.XcodebuildTestParams, xcodeMajorVersion int) ([]string, error) {
 	buildParams := params.BuildParams
 
 	xcodebuildArgs := []string{buildParams.Action, buildParams.ProjectPath, "-scheme", buildParams.Scheme}
@@ -234,11 +241,13 @@ func createXcodebuildTestArgs(params models.XcodeBuildTestParamsModel, xcodeMajo
 		xcodebuildArgs = append(xcodebuildArgs, "GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES", "GCC_GENERATE_TEST_COVERAGE_FILES=YES")
 	}
 
-	if xcodeMajorVersion >= 13 && params.RetryTestsOnFailure {
+	switch params.TestRepetitionMode {
+	case untilFailure:
+		xcodebuildArgs = append(xcodebuildArgs, "-run-tests-until-failure")
+	case retryOnFailure:
 		xcodebuildArgs = append(xcodebuildArgs, "-retry-tests-on-failure")
-
-		// TODO(STEP-1054): Allow customization of `-test-iterations`.
-		xcodebuildArgs = append(xcodebuildArgs, "-test-iterations", "2")
+	case upUntilMaximumRepetitions, none:
+		break
 	}
 
 	if params.AdditionalOptions != "" {
@@ -282,7 +291,7 @@ func handleTestRunError(prevRunParams testRunParams, prevRunResult testRunResult
 
 	if prevRunParams.xcodeMajorVersion < 13 && prevRunParams.buildTestParams.RetryTestsOnFailure {
 		log.Warnf("Test run failed")
-		log.Printf("retryOnTestOrTestRunnerError=true - retrying...")
+		log.Printf("retryTestsOnFailure=true - retrying...")
 
 		prevRunParams.buildTestParams.RetryTestsOnFailure = false
 		prevRunParams.retryOnTestRunnerError = false

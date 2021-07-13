@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -62,7 +63,7 @@ var testRunnerErrorPatterns = []string{
 const simulatorShutdownState = "Shutdown"
 
 const (
-	xcodeBuildTool = "xcodebuild"
+	xcodebuildTool = "xcodebuild"
 	xcprettyTool   = "xcpretty"
 )
 
@@ -88,13 +89,16 @@ type Input struct {
 	SimulatorDevice    string `env:"simulator_device,required"`
 	SimulatorOsVersion string `env:"simulator_os_version,required"`
 
+	// Test Repetition
+	TestRepetitionMode string `env:"test_repetition_mode,opt[none,until_failure,retry_on_failure,up_until_maximum_repetitions]"`
+
 	// Test Run Configs
 	OutputTool            string `env:"output_tool,opt[xcpretty,xcodebuild]"`
 	IsCleanBuild          bool   `env:"is_clean_build,opt[yes,no]"`
 	IsSingleBuild         bool   `env:"single_build,opt[true,false]"`
 	ShouldBuildBeforeTest bool   `env:"should_build_before_test,opt[yes,no]"`
 
-	ShouldRetryTestOnFail     bool `env:"should_retry_test_on_fail,opt[yes,no]"`
+	RetryTestsOnFailure       bool `env:"should_retry_test_on_fail,opt[yes,no]"`
 	DisableIndexWhileBuilding bool `env:"disable_index_while_building,opt[yes,no]"`
 	GenerateCodeCoverageFiles bool `env:"generate_code_coverage_files,opt[yes,no]"`
 	HeadlessMode              bool `env:"headless_mode,opt[yes,no]"`
@@ -123,17 +127,19 @@ type Config struct {
 	SimulatorID       string
 	IsSimulatorBooted bool
 
+	TestRepetitionMode string
+
 	OutputTool         string
 	IsCleanBuild       bool
 	IsSingleBuild      bool
 	BuildBeforeTesting bool
 
-	ShouldRetryTestOnFail     bool
+	RetryTestsOnFailure       bool
 	DisableIndexWhileBuilding bool
 	GenerateCodeCoverageFiles bool
 	HeadlessMode              bool
 
-	XcodebuildTestoptions string
+	XcodebuildTestOptions string
 	XcprettyOptions       string
 
 	Verbose        bool
@@ -251,6 +257,14 @@ func (s Step) ProcessConfig() (Config, error) {
 	log.Printf("* device_destination: %s", deviceDestination)
 	fmt.Println()
 
+	if input.TestRepetitionMode != none && xcodeMajorVersion < 13 {
+		return Config{}, errors.New("Test Repetition Mode (test_repetition_mode) is not available below Xcode 13")
+	}
+
+	if input.RetryTestsOnFailure && xcodeMajorVersion > 12 {
+		return Config{}, errors.New("Should retry test on failure? (should_retry_test_on_fail) is not available above Xcode 12; use test_repetition_mode=retry_on_failure instead")
+	}
+
 	return Config{
 		ProjectPath: projectPath,
 		Scheme:      input.Scheme,
@@ -260,17 +274,19 @@ func (s Step) ProcessConfig() (Config, error) {
 		SimulatorID:       sim.ID,
 		IsSimulatorBooted: sim.Status != simulatorShutdownState,
 
+		TestRepetitionMode: input.TestRepetitionMode,
+
 		OutputTool:         input.OutputTool,
 		IsCleanBuild:       input.IsCleanBuild,
 		IsSingleBuild:      input.IsSingleBuild,
 		BuildBeforeTesting: input.ShouldBuildBeforeTest,
 
-		ShouldRetryTestOnFail:     input.ShouldRetryTestOnFail,
+		RetryTestsOnFailure:       input.RetryTestsOnFailure,
 		DisableIndexWhileBuilding: input.DisableIndexWhileBuilding,
 		GenerateCodeCoverageFiles: input.GenerateCodeCoverageFiles,
 		HeadlessMode:              headlessMode,
 
-		XcodebuildTestoptions: input.TestOptions,
+		XcodebuildTestOptions: input.TestOptions,
 		XcprettyOptions:       input.XcprettyTestOptions,
 
 		Verbose:        input.Verbose,
@@ -354,7 +370,7 @@ func (s Step) Run(cfg Config) (Result, error) {
 		projectFlag = "-workspace"
 	}
 
-	buildParams := models.XcodeBuildParamsModel{
+	buildParams := models.XcodebuildParams{
 		Action:                    projectFlag,
 		ProjectPath:               cfg.ProjectPath,
 		Scheme:                    cfg.Scheme,
@@ -381,14 +397,15 @@ func (s Step) Run(cfg Config) (Result, error) {
 	}
 	xcresultPath := path.Join(tempDir, "Test.xcresult")
 
-	testParams := models.XcodeBuildTestParamsModel{
+	testParams := models.XcodebuildTestParams{
 		BuildParams:          buildParams,
 		TestPlan:             cfg.TestPlan,
 		TestOutputDir:        xcresultPath,
+		TestRepetitionMode:   cfg.TestRepetitionMode,
 		BuildBeforeTest:      cfg.BuildBeforeTesting,
 		GenerateCodeCoverage: cfg.GenerateCodeCoverageFiles,
-		RetryTestsOnFailure:  cfg.ShouldRetryTestOnFail,
-		AdditionalOptions:    cfg.XcodebuildTestoptions,
+		RetryTestsOnFailure:  cfg.RetryTestsOnFailure,
+		AdditionalOptions:    cfg.XcodebuildTestOptions,
 	}
 
 	if cfg.IsSingleBuild {
@@ -417,7 +434,7 @@ func (s Step) Run(cfg Config) (Result, error) {
 	result.XcresultPath = xcresultPath
 	result.XcodebuildTestLog = testLog
 
-	if testErr != nil || cfg.OutputTool == xcodeBuildTool {
+	if testErr != nil || cfg.OutputTool == xcodebuildTool {
 		printLastLinesOfXcodebuildTestLog(testLog, testErr == nil)
 	}
 
@@ -588,7 +605,7 @@ func run() error {
 	}
 
 	if err := step.InstallDeps(config.OutputTool == xcprettyTool); err != nil {
-		config.OutputTool = xcodeBuildTool
+		config.OutputTool = xcodebuildTool
 	}
 
 	res, runErr := step.Run(config)

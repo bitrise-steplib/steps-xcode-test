@@ -88,16 +88,14 @@ workflows:
             set -e
 
             if [[ ${XCODE_MAJOR_VERSION} -lt 11 ]]; then
-              echo "This test case requires Xcode > 10, skipping..."
+              echo "This test case requires Xcode >= 11, skipping..."
               exit 0
             fi
 
-            envman add --key XCODE_MAJOR_VERSION_GREATER_THAN_10 --value "true"
+            envman add --key XCODE_MAJOR_VERSION_AT_LEAST_11 --value "true"
 
             device="iPad Air (4th generation)"
-            if [[ ${XCODE_MAJOR_VERSION} -eq 10 ]]; then
-              device="iPad Air (3rd generation)"
-            elif [[ ${XCODE_MAJOR_VERSION} -eq 11 ]]; then
+            if [[ ${XCODE_MAJOR_VERSION} -eq 11 ]]; then
               device="iPad Air (3rd generation)"
             elif [[ ${XCODE_MAJOR_VERSION} -eq 12 ]]; then
               device="iPad Air (4th generation)"
@@ -108,7 +106,7 @@ workflows:
             echo "Xcode version based iPad device: $device"
             envman add --key XCODE_SIMULATOR_DEVICE --value "$device"
     - bitrise-run:
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_GREATER_THAN_10" "true"}}'
+        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_11" "true"}}'
         inputs:
         - workflow_id: utility_test_parallel
         - bitrise_config_path: ./e2e/bitrise.yml
@@ -172,6 +170,93 @@ workflows:
     - _check_outputs
     - _check_cache
 
+  test_retry_on_failure_not_available_above_xcode_13:
+    before_run:
+    - _expose_xcode_version
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+            if [[ ${XCODE_MAJOR_VERSION} -lt 13 ]]; then
+              echo "This test case requires Xcode >= 13, skipping..."
+              exit 0
+            fi
+            envman add --key XCODE_MAJOR_VERSION_AT_LEAST_13 --value "true"
+    - script:
+        title: Start a failing workflow, wrapped in a script.
+        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true"}}'
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -x # Do not set -e as bitrise command is expected to fail
+            bitrise run --config=./e2e/bitrise.yml utility_test_retry_on_failure_not_available_above_xcode_13
+            if [ $? -ne 1 ] ; then
+              echo "Workflow was expected to fail, exit code not 1."
+              exit 1
+            fi
+
+  utility_test_retry_on_failure_not_available_above_xcode_13:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
+    - TEST_APP_BRANCH: master
+    - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
+    - BITRISE_SCHEME: BullsEye
+    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
+    - XCODE_SIMULATOR_OS_VERSION: "latest"
+    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - SINGLE_BUILD: "true"
+    - XCODE_OUTPUT_TOOL: xcodebuild
+    - RETRY_ON_FAILURE: "yes"
+    - CACHE_LEVEL: "swift_packages"
+    after_run:
+    - _run
+
+  test_repetition_mode_not_available_below_xcode_13:
+    before_run:
+    - _expose_xcode_version
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+            if [[ ${XCODE_MAJOR_VERSION} -gt 12 ]]; then
+              echo "This test case requires Xcode <= 12, skipping..."
+              exit 0
+            fi
+            envman add --key XCODE_MAJOR_VERSION_AT_MOST_12 --value "true"
+    - script:
+        title: Start a failing workflow, wrapped in a script.
+        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_MOST_12" "true"}}'
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -x # Do not set -e as bitrise command is expected to fail
+            bitrise run --config=./e2e/bitrise.yml utility_test_repetition_mode_not_available_below_xcode_13
+            if [ $? -ne 1 ] ; then
+              echo "Workflow was expected to fail, exit code not 1."
+              exit 1
+            fi
+
+  utility_test_repetition_mode_not_available_below_xcode_13:
+    envs:
+      - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
+      - TEST_APP_BRANCH: master
+      - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
+      - BITRISE_SCHEME: BullsEye
+      - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
+      - XCODE_SIMULATOR_OS_VERSION: "latest"
+      - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+      - SINGLE_BUILD: "true"
+      - XCODE_OUTPUT_TOOL: xcodebuild
+      - RETRY_ON_FAILURE: "no"
+      - TEST_REPETITION_MODE: "retry_on_failure"
+      - CACHE_LEVEL: "swift_packages"
+    after_run:
+    - _run
+
   test_retry_succeeds:
     before_run:
     - _expose_xcode_version
@@ -184,40 +269,16 @@ workflows:
             if [[ ${XCODE_MAJOR_VERSION} -lt 11 ]]; then
               echo "This test case requires Xcode >= 11, skipping..."
               exit 0
+            elif [[ $XCODE_MAJOR_VERSION -gt 12 ]]; then
+              echo "This test case requires Xcode <= 12, skipping..."
+              exit 0
             fi
-            envman add --key XCODE_MAJOR_VERSION_AT_LEAST_11 --value "true"
+            envman add --key XCODE_MAJOR_VERSION_BETWEEN_11_AND_12 --value "true"
     - bitrise-run:
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_11" "true"}}'
+        run_if: '{{enveq "XCODE_MAJOR_VERSION_BETWEEN_11_AND_12" "true"}}'
         inputs:
         - workflow_id: utility_test_retry_succeeds
         - bitrise_config_path: ./e2e/bitrise.yml
-
-  test_retry_fails:
-    before_run:
-    - _expose_xcode_version
-    steps:
-    - script:
-        inputs:
-        - content: |-
-            #!/bin/env bash
-            set -e
-            if [[ ${XCODE_MAJOR_VERSION} -lt 11 ]]; then
-              echo "This test case requires Xcode >= 11, skipping..."
-              exit 0
-            fi
-            envman add --key XCODE_MAJOR_VERSION_AT_LEAST_11 --value "true"
-    - script:
-        title: Start a failing workflow, wrapped in a script.
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_11" "true"}}'
-        inputs:
-          - content: |-
-              #!/bin/env bash
-              set -x # Do not set -e as bitrise command is expected to fail
-              bitrise run --config=./e2e/bitrise.yml utility_test_retry_fails
-              if [ $? -ne 1 ] ; then
-                echo "Workflow was excepted to fail, exit code not 1."
-                exit 1
-              fi
 
   utility_test_retry_succeeds:
     envs:
@@ -239,6 +300,36 @@ workflows:
     - _set_number_of_flaky_tests_in_test_app
     - _run
     - _check_outputs
+
+  test_retry_fails:
+    before_run:
+    - _expose_xcode_version
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+            if [[ ${XCODE_MAJOR_VERSION} -lt 11 ]]; then
+              echo "This test case requires Xcode >= 11, skipping..."
+              exit 0
+            elif [[ $XCODE_MAJOR_VERSION -gt 12 ]]; then
+              echo "This test case requires Xcode <= 12, skipping..."
+              exit 0
+            fi
+            envman add --key XCODE_MAJOR_VERSION_BETWEEN_11_AND_12 --value "true"
+    - script:
+        title: Start a failing workflow, wrapped in a script.
+        run_if: '{{enveq "XCODE_MAJOR_VERSION_BETWEEN_11_AND_12" "true"}}'
+        inputs:
+          - content: |-
+              #!/bin/env bash
+              set -x # Do not set -e as bitrise command is expected to fail
+              bitrise run --config=./e2e/bitrise.yml utility_test_retry_fails
+              if [ $? -ne 1 ] ; then
+                echo "Workflow was expected to fail, exit code not 1."
+                exit 1
+              fi
 
   utility_test_retry_fails:
     envs:
@@ -273,18 +364,21 @@ workflows:
             if [[ ${XCODE_MAJOR_VERSION} -lt 11 ]]; then
               echo "This test case requires Xcode >= 11, skipping..."
               exit 0
+            elif [[ $XCODE_MAJOR_VERSION -gt 12 ]]; then
+              echo "This test case requires Xcode <= 12, skipping..."
+              exit 0
             fi
-            envman add --key XCODE_MAJOR_VERSION_AT_LEAST_11 --value "true"
+            envman add --key XCODE_MAJOR_VERSION_BETWEEN_11_AND_12 --value "true"
     - script:
         title: Start a failing workflow, wrapped in a script.
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_11" "true"}}'
+        run_if: '{{enveq "XCODE_MAJOR_VERSION_BETWEEN_11_AND_12" "true"}}'
         inputs:
           - content: |-
               #!/bin/env bash
               set -x # Do not set -e as bitrise command is expected to fail
               bitrise run --config=./e2e/bitrise.yml utility_test_no_retry_on_failure
               if [ $? -ne 1 ] ; then
-                echo "Workflow was excepted to fail, exit code not 1."
+                echo "Workflow was expected to fail, exit code not 1."
                 exit 1
               fi
 
@@ -409,11 +503,19 @@ workflows:
               COLLECT_SIM_DIAGNOSTICS="never"
             fi
             envman add --key COLLECT_SIM_DIAGNOSTICS --value $COLLECT_SIM_DIAGNOSTICS
+    - script:
+        title: Set TEST_REPETITION_MODE to 'none' if not set
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -eo pipefail
+            envman add --key TEST_REPETITION_MODE --value ${TEST_REPETITION_MODE-none}
     - path::./:
         inputs:
         - project_path: ./_tmp/$BITRISE_PROJECT_PATH
         - scheme: $BITRISE_SCHEME
         - test_plan: $TEST_PLAN
+        - test_repetition_mode: $TEST_REPETITION_MODE
         - simulator_device: $XCODE_SIMULATOR_DEVICE
         - simulator_os_version: $XCODE_SIMULATOR_OS_VERSION
         - simulator_platform: $XCODE_SIMULATOR_PLATFORM

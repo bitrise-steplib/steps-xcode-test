@@ -1,7 +1,7 @@
 package models
 
-// XcodeBuildParamsModel ...
-type XcodeBuildParamsModel struct {
+// XcodebuildParams ...
+type XcodebuildParams struct {
 	Action                    string
 	ProjectPath               string
 	Scheme                    string
@@ -10,11 +10,12 @@ type XcodeBuildParamsModel struct {
 	DisableIndexWhileBuilding bool
 }
 
-// XcodeBuildTestParamsModel ...
-type XcodeBuildTestParamsModel struct {
-	BuildParams          XcodeBuildParamsModel
+// XcodebuildTestParams ...
+type XcodebuildTestParams struct {
+	BuildParams          XcodebuildParams
 	TestPlan             string
 	TestOutputDir        string
+	TestRepetitionMode   string
 	CleanBuild           bool
 	BuildBeforeTest      bool
 	GenerateCodeCoverage bool

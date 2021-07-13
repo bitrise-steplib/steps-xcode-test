@@ -460,7 +460,7 @@ func Test_GivenXcprettyDetermineVersionError_WhenTheErrorIsHandled_ThenExpectThe
 	outputTool, err := handleXcprettyInstallError(givenError)
 
 	// Then
-	assert.Equal(t, xcodeBuildTool, outputTool)
+	assert.Equal(t, xcodebuildTool, outputTool)
 	assert.NoError(t, err)
 }
 
