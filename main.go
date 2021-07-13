@@ -258,11 +258,11 @@ func (s Step) ProcessConfig() (Config, error) {
 	fmt.Println()
 
 	if input.TestRepetitionMode != none && xcodeMajorVersion < 13 {
-		return Config{}, errors.New("test_repetition_mode is not supported below Xcode 13")
+		return Config{}, errors.New("Test Repetition Mode (test_repetition_mode) is not available below Xcode 13")
 	}
 
 	if input.RetryTestsOnFailure && xcodeMajorVersion > 12 {
-		return Config{}, errors.New("should_retry_test_on_fail is not supported above Xcode 12; use test_repetition_mode=retry_on_failure instead")
+		return Config{}, errors.New("Should retry test on failure? (should_retry_test_on_fail) is not available above Xcode 12; use test_repetition_mode=retry_on_failure instead")
 	}
 
 	return Config{
