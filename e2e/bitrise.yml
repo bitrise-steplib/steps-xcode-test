@@ -509,7 +509,7 @@ workflows:
         - content: |-
             #!/bin/env bash
             set -eo pipefail
-            export TEST_REPETITION_MODE=${TEST_REPETITION_MODE-none}
+            envman add --key TEST_REPETITION_MODE --value ${TEST_REPETITION_MODE-none}
     - path::./:
         inputs:
         - project_path: ./_tmp/$BITRISE_PROJECT_PATH
