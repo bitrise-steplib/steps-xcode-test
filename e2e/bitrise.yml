@@ -284,7 +284,7 @@ workflows:
     envs:
     - TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES: 1
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: STEP-1203-split-flaky-test-cases
+    - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallySucceedingTests"
@@ -336,7 +336,7 @@ workflows:
     - TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES: 2
     - EXPECT_TEST_FAILURE: "true"
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: STEP-1203-split-flaky-test-cases
+    - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallySucceedingTests"
@@ -387,7 +387,7 @@ workflows:
     - TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES: 1
     - EXPECT_TEST_FAILURE: "true"
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: STEP-1203-split-flaky-test-cases
+    - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallySucceedingTests"
@@ -427,7 +427,7 @@ workflows:
     envs:
     - TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES: 1
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: STEP-1203-split-flaky-test-cases
+    - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallySucceedingTests"
@@ -477,7 +477,7 @@ workflows:
     envs:
     - TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES: 2
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: STEP-1203-split-flaky-test-cases
+    - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallySucceedingTests"
@@ -520,7 +520,7 @@ workflows:
     envs:
     - TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES: 2
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: STEP-1203-split-flaky-test-cases
+    - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallySucceedingTests"
@@ -563,7 +563,7 @@ workflows:
     envs:
     - TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES: 2
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: STEP-1203-split-flaky-test-cases
+    - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallyFailingTests"
@@ -613,7 +613,7 @@ workflows:
     envs:
     - TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES: 1
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: STEP-1203-split-flaky-test-cases
+    - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallyFailingTests"
@@ -656,7 +656,7 @@ workflows:
     envs:
     - TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES: 3
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: STEP-1203-split-flaky-test-cases
+    - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallyFailingTests"
@@ -699,7 +699,7 @@ workflows:
     envs:
     - TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES: 2
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: STEP-1203-split-flaky-test-cases
+    - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallyFailingTests"
@@ -749,7 +749,7 @@ workflows:
     envs:
     - TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES: 1
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: STEP-1203-split-flaky-test-cases
+    - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallyFailingTests"
@@ -792,7 +792,7 @@ workflows:
     envs:
     - TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES: 3
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: STEP-1203-split-flaky-test-cases
+    - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallyFailingTests"
