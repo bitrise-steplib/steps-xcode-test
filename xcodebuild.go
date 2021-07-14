@@ -252,6 +252,10 @@ func createXcodebuildTestArgs(params models.XcodebuildTestParams, xcodeMajorVers
 		xcodebuildArgs = append(xcodebuildArgs, "-test-iterations", strconv.Itoa(params.MaximumTestRepetitions))
 	}
 
+	if params.RelaunchTestsForEachRepetition {
+		xcodebuildArgs = append(xcodebuildArgs, "-test-repetition-relaunch-enabled", "YES")
+	}
+
 	if params.AdditionalOptions != "" {
 		options, err := shellquote.Split(params.AdditionalOptions)
 		if err != nil {
