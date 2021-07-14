@@ -12,14 +12,15 @@ type XcodebuildParams struct {
 
 // XcodebuildTestParams ...
 type XcodebuildTestParams struct {
-	BuildParams            XcodebuildParams
-	TestPlan               string
-	TestOutputDir          string
-	TestRepetitionMode     string
-	MaximumTestRepetitions int
-	CleanBuild             bool
-	BuildBeforeTest        bool
-	GenerateCodeCoverage   bool
-	RetryTestsOnFailure    bool
-	AdditionalOptions      string
+	BuildParams                    XcodebuildParams
+	TestPlan                       string
+	TestOutputDir                  string
+	TestRepetitionMode             string
+	MaximumTestRepetitions         int
+	RelaunchTestsForEachRepetition bool
+	CleanBuild                     bool
+	BuildBeforeTest                bool
+	GenerateCodeCoverage           bool
+	RetryTestsOnFailure            bool
+	AdditionalOptions              string
 }
