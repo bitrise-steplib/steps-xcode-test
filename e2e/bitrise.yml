@@ -242,18 +242,18 @@ workflows:
 
   utility_test_test_repetition_mode_not_available_below_xcode_13:
     envs:
-      - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-      - TEST_APP_BRANCH: master
-      - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
-      - BITRISE_SCHEME: BullsEye
-      - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
-      - XCODE_SIMULATOR_OS_VERSION: "latest"
-      - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-      - SINGLE_BUILD: "true"
-      - XCODE_OUTPUT_TOOL: xcodebuild
-      - RETRY_ON_FAILURE: "no"
-      - TEST_REPETITION_MODE: "retry_on_failure"
-      - CACHE_LEVEL: "swift_packages"
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
+    - TEST_APP_BRANCH: master
+    - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
+    - BITRISE_SCHEME: BullsEye
+    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
+    - XCODE_SIMULATOR_OS_VERSION: "latest"
+    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - SINGLE_BUILD: "true"
+    - XCODE_OUTPUT_TOOL: xcodebuild
+    - RETRY_ON_FAILURE: "no"
+    - TEST_REPETITION_MODE: "retry_on_failure"
+    - CACHE_LEVEL: "swift_packages"
     after_run:
     - _run
 
@@ -322,14 +322,14 @@ workflows:
         title: Start a failing workflow, wrapped in a script.
         run_if: '{{enveq "XCODE_MAJOR_VERSION_BETWEEN_11_AND_12" "true"}}'
         inputs:
-          - content: |-
-              #!/bin/env bash
-              set -x # Do not set -e as bitrise command is expected to fail
-              bitrise run --config=./e2e/bitrise.yml utility_test_should_retry_test_on_fail_fails
-              if [ $? -ne 1 ] ; then
-                echo "Workflow was expected to fail, exit code not 1."
-                exit 1
-              fi
+        - content: |-
+            #!/bin/env bash
+            set -x # Do not set -e as bitrise command is expected to fail
+            bitrise run --config=./e2e/bitrise.yml utility_test_should_retry_test_on_fail_fails
+            if [ $? -ne 1 ] ; then
+              echo "Workflow was expected to fail, exit code not 1."
+              exit 1
+            fi
 
   utility_test_should_retry_test_on_fail_fails:
     envs:
@@ -373,14 +373,14 @@ workflows:
         title: Start a failing workflow, wrapped in a script.
         run_if: '{{enveq "XCODE_MAJOR_VERSION_BETWEEN_11_AND_12" "true"}}'
         inputs:
-          - content: |-
-              #!/bin/env bash
-              set -x # Do not set -e as bitrise command is expected to fail
-              bitrise run --config=./e2e/bitrise.yml utility_test_should_retry_test_on_fail_off
-              if [ $? -ne 1 ] ; then
-                echo "Workflow was expected to fail, exit code not 1."
-                exit 1
-              fi
+        - content: |-
+            #!/bin/env bash
+            set -x # Do not set -e as bitrise command is expected to fail
+            bitrise run --config=./e2e/bitrise.yml utility_test_should_retry_test_on_fail_off
+            if [ $? -ne 1 ] ; then
+              echo "Workflow was expected to fail, exit code not 1."
+              exit 1
+            fi
 
   utility_test_should_retry_test_on_fail_off:
     envs:
@@ -675,6 +675,142 @@ workflows:
     - _run
     - _check_outputs
 
+  test_test_repetition_mode_up_until_maximum_repetitions_2_iterations_succeeds:
+    before_run:
+    - _expose_xcode_version
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+            if [[ ${XCODE_MAJOR_VERSION} -lt 13 ]]; then
+              echo "This test case requires Xcode >= 13, skipping..."
+              exit 0
+            fi
+            envman add --key XCODE_MAJOR_VERSION_AT_LEAST_13 --value "true"
+    - bitrise-run:
+        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true"}}'
+        inputs:
+        - workflow_id: utility_test_test_repetition_mode_up_until_maximum_repetitions_2_iterations_succeeds
+        - bitrise_config_path: ./e2e/bitrise.yml
+
+  utility_test_test_repetition_mode_up_until_maximum_repetitions_2_iterations_succeeds:
+    envs:
+    - TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES: 2
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
+    - TEST_APP_BRANCH: STEP-1203-split-flaky-test-cases
+    - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
+    - BITRISE_SCHEME: BullsEye
+    - TEST_PLAN: "EventuallyFailingTests"
+    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
+    - XCODE_SIMULATOR_OS_VERSION: "latest"
+    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - SINGLE_BUILD: "true"
+    - XCODE_OUTPUT_TOOL: xcodebuild
+    - TEST_REPETITION_MODE: "up_until_maximum_repetitions"
+    - MAXIMUM_TEST_REPETITIONS: 2
+    - RETRY_ON_FAILURE: "no"
+    - EXPECT_TEST_FAILURE: "false"
+    - CACHE_LEVEL: "swift_packages"
+    after_run:
+    - _set_number_of_initial_test_successes_in_test_app
+    - _run
+    - _check_outputs
+
+  test_test_repetition_mode_up_until_maximum_repetitions_2_iterations_fails:
+    before_run:
+    - _expose_xcode_version
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+            if [[ ${XCODE_MAJOR_VERSION} -lt 13 ]]; then
+              echo "This test case requires Xcode >= 13, skipping..."
+              exit 0
+            fi
+            envman add --key XCODE_MAJOR_VERSION_AT_LEAST_13 --value "true"
+    - script:
+        title: Start a failing workflow, wrapped in a script.
+        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true"}}'
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -x # Do not set -e as bitrise command is expected to fail
+            bitrise run --config=./e2e/bitrise.yml utility_test_test_repetition_mode_up_until_maximum_repetitions_2_iterations_fails
+            if [ $? -ne 1 ] ; then
+              echo "Workflow was expected to fail, exit code not 1."
+              exit 1
+            fi
+
+  utility_test_test_repetition_mode_up_until_maximum_repetitions_2_iterations_fails:
+    envs:
+    - TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES: 1
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
+    - TEST_APP_BRANCH: STEP-1203-split-flaky-test-cases
+    - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
+    - BITRISE_SCHEME: BullsEye
+    - TEST_PLAN: "EventuallyFailingTests"
+    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
+    - XCODE_SIMULATOR_OS_VERSION: "latest"
+    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - SINGLE_BUILD: "true"
+    - XCODE_OUTPUT_TOOL: xcodebuild
+    - TEST_REPETITION_MODE: "up_until_maximum_repetitions"
+    - MAXIMUM_TEST_REPETITIONS: 2
+    - RETRY_ON_FAILURE: "no"
+    - EXPECT_TEST_FAILURE: "true"
+    - CACHE_LEVEL: "swift_packages"
+    after_run:
+    - _set_number_of_initial_test_successes_in_test_app
+    - _run
+    - _check_outputs
+
+  test_test_repetition_mode_up_until_maximum_repetitions_3_iterations_succeeds:
+    before_run:
+    - _expose_xcode_version
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+            if [[ ${XCODE_MAJOR_VERSION} -lt 13 ]]; then
+              echo "This test case requires Xcode >= 13, skipping..."
+              exit 0
+            fi
+            envman add --key XCODE_MAJOR_VERSION_AT_LEAST_13 --value "true"
+    - bitrise-run:
+        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true"}}'
+        inputs:
+        - workflow_id: utility_test_test_repetition_mode_up_until_maximum_repetitions_3_iterations_succeeds
+        - bitrise_config_path: ./e2e/bitrise.yml
+
+  utility_test_test_repetition_mode_up_until_maximum_repetitions_3_iterations_succeeds:
+    envs:
+    - TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES: 3
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
+    - TEST_APP_BRANCH: STEP-1203-split-flaky-test-cases
+    - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
+    - BITRISE_SCHEME: BullsEye
+    - TEST_PLAN: "EventuallyFailingTests"
+    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
+    - XCODE_SIMULATOR_OS_VERSION: "latest"
+    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - SINGLE_BUILD: "true"
+    - XCODE_OUTPUT_TOOL: xcodebuild
+    - TEST_REPETITION_MODE: "up_until_maximum_repetitions"
+    - MAXIMUM_TEST_REPETITIONS: 3
+    - RETRY_ON_FAILURE: "no"
+    - EXPECT_TEST_FAILURE: "false"
+    - CACHE_LEVEL: "swift_packages"
+    after_run:
+    - _set_number_of_initial_test_successes_in_test_app
+    - _run
+    - _check_outputs
+
   test_simulator_os_version:
     before_run:
     - _expose_xcode_version
@@ -718,10 +854,10 @@ workflows:
 
   _set_number_of_initial_test_failures_in_test_app:
     envs:
-      - TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES: $TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES
-      - XCODE_SIMULATOR_DEVICE: $XCODE_SIMULATOR_DEVICE
-      - XCODE_SIMULATOR_OS_VERSION: $XCODE_SIMULATOR_OS_VERSION
-      - XCODE_SIMULATOR_PLATFORM: $XCODE_SIMULATOR_PLATFORM
+    - TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES: $TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES
+    - XCODE_SIMULATOR_DEVICE: $XCODE_SIMULATOR_DEVICE
+    - XCODE_SIMULATOR_OS_VERSION: $XCODE_SIMULATOR_OS_VERSION
+    - XCODE_SIMULATOR_PLATFORM: $XCODE_SIMULATOR_PLATFORM
     steps:
     - git::https://github.com/bitrise-steplib/steps-lookup-xcode-simulator:
         inputs:
@@ -750,10 +886,10 @@ workflows:
 
   _set_number_of_initial_test_successes_in_test_app:
     envs:
-      - TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES: $TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES
-      - XCODE_SIMULATOR_DEVICE: $XCODE_SIMULATOR_DEVICE
-      - XCODE_SIMULATOR_OS_VERSION: $XCODE_SIMULATOR_OS_VERSION
-      - XCODE_SIMULATOR_PLATFORM: $XCODE_SIMULATOR_PLATFORM
+    - TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES: $TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES
+    - XCODE_SIMULATOR_DEVICE: $XCODE_SIMULATOR_DEVICE
+    - XCODE_SIMULATOR_OS_VERSION: $XCODE_SIMULATOR_OS_VERSION
+    - XCODE_SIMULATOR_PLATFORM: $XCODE_SIMULATOR_PLATFORM
     steps:
     - git::https://github.com/bitrise-steplib/steps-lookup-xcode-simulator:
         inputs:
@@ -792,10 +928,10 @@ workflows:
             rm -rf ./_tmp
     - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git:
         inputs:
-          - repository_url: $TEST_APP_URL
-          - clone_into_dir: ./_tmp
-          - branch: $TEST_APP_BRANCH
-    - certificate-and-profile-installer: {}
+        - repository_url: $TEST_APP_URL
+        - clone_into_dir: ./_tmp
+        - branch: $TEST_APP_BRANCH
+    - certificate-and-profile-installer: { }
     - script:
         title: Set 'collect_simulator_diagnostics' input
         inputs:
@@ -817,10 +953,10 @@ workflows:
     - script:
         title: Set MAXIMUM_TEST_REPETITIONS to 3 if not set
         inputs:
-          - content: |-
-              #!/bin/env bash
-              set -eo pipefail
-              envman add --key MAXIMUM_TEST_REPETITIONS --value ${MAXIMUM_TEST_REPETITIONS-3}
+        - content: |-
+            #!/bin/env bash
+            set -eo pipefail
+            envman add --key MAXIMUM_TEST_REPETITIONS --value ${MAXIMUM_TEST_REPETITIONS-3}
     - path::./:
         inputs:
         - project_path: ./_tmp/$BITRISE_PROJECT_PATH
