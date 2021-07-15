@@ -179,6 +179,16 @@ inputs:
         - "until_failure"
         - "retry_on_failure"
         - "up_until_maximum_repetitions"
+  - maximum_test_repetitions: 3
+    opts:
+      title: Maximum Test Repetitions
+      category: Test Repetition
+      summary: The maximum number of times a test will repeat based on Test Repetition Mode.
+      description: |-
+        The maximum number of times a test will repeat based on Test Repetition Mode.
+        
+        Should be more than 1 if Test Repetition Mode (`test_repetition_mode`) is other than `none`.
+      is_required: true
   - verbose: "no"
     opts:
       category: Debug

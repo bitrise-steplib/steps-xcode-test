@@ -90,7 +90,8 @@ type Input struct {
 	SimulatorOsVersion string `env:"simulator_os_version,required"`
 
 	// Test Repetition
-	TestRepetitionMode string `env:"test_repetition_mode,opt[none,until_failure,retry_on_failure,up_until_maximum_repetitions]"`
+	TestRepetitionMode     string `env:"test_repetition_mode,opt[none,until_failure,retry_on_failure,up_until_maximum_repetitions]"`
+	MaximumTestRepetitions int    `env:"maximum_test_repetitions,required"`
 
 	// Test Run Configs
 	OutputTool            string `env:"output_tool,opt[xcpretty,xcodebuild]"`
@@ -127,7 +128,8 @@ type Config struct {
 	SimulatorID       string
 	IsSimulatorBooted bool
 
-	TestRepetitionMode string
+	TestRepetitionMode     string
+	MaximumTestRepetitions int
 
 	OutputTool         string
 	IsCleanBuild       bool
@@ -261,6 +263,10 @@ func (s Step) ProcessConfig() (Config, error) {
 		return Config{}, errors.New("Test Repetition Mode (test_repetition_mode) is not available below Xcode 13")
 	}
 
+	if input.TestRepetitionMode != none && input.MaximumTestRepetitions < 2 {
+		return Config{}, fmt.Errorf("invalid number of Maximum Test Repetitions (maximum_test_repetitions): %d, should be more than 1", input.MaximumTestRepetitions)
+	}
+
 	if input.RetryTestsOnFailure && xcodeMajorVersion > 12 {
 		return Config{}, errors.New("Should retry test on failure? (should_retry_test_on_fail) is not available above Xcode 12; use test_repetition_mode=retry_on_failure instead")
 	}
@@ -274,7 +280,8 @@ func (s Step) ProcessConfig() (Config, error) {
 		SimulatorID:       sim.ID,
 		IsSimulatorBooted: sim.Status != simulatorShutdownState,
 
-		TestRepetitionMode: input.TestRepetitionMode,
+		TestRepetitionMode:     input.TestRepetitionMode,
+		MaximumTestRepetitions: input.MaximumTestRepetitions,
 
 		OutputTool:         input.OutputTool,
 		IsCleanBuild:       input.IsCleanBuild,
@@ -398,14 +405,15 @@ func (s Step) Run(cfg Config) (Result, error) {
 	xcresultPath := path.Join(tempDir, "Test.xcresult")
 
 	testParams := models.XcodebuildTestParams{
-		BuildParams:          buildParams,
-		TestPlan:             cfg.TestPlan,
-		TestOutputDir:        xcresultPath,
-		TestRepetitionMode:   cfg.TestRepetitionMode,
-		BuildBeforeTest:      cfg.BuildBeforeTesting,
-		GenerateCodeCoverage: cfg.GenerateCodeCoverageFiles,
-		RetryTestsOnFailure:  cfg.RetryTestsOnFailure,
-		AdditionalOptions:    cfg.XcodebuildTestOptions,
+		BuildParams:            buildParams,
+		TestPlan:               cfg.TestPlan,
+		TestOutputDir:          xcresultPath,
+		TestRepetitionMode:     cfg.TestRepetitionMode,
+		MaximumTestRepetitions: cfg.MaximumTestRepetitions,
+		BuildBeforeTest:        cfg.BuildBeforeTesting,
+		GenerateCodeCoverage:   cfg.GenerateCodeCoverageFiles,
+		RetryTestsOnFailure:    cfg.RetryTestsOnFailure,
+		AdditionalOptions:      cfg.XcodebuildTestOptions,
 	}
 
 	if cfg.IsSingleBuild {
