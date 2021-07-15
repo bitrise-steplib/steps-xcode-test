@@ -632,7 +632,7 @@ workflows:
     - _run
     - _check_outputs
 
-  test_test_repetition_mode_until_failure_3_iterations_succeeds:
+  test_test_repetition_mode_until_failure_3_iterations_fails:
     before_run:
     - _expose_xcode_version
     steps:
@@ -646,15 +646,22 @@ workflows:
               exit 0
             fi
             envman add --key XCODE_MAJOR_VERSION_AT_LEAST_13 --value "true"
-    - bitrise-run:
+    - script:
+        title: Start a failing workflow, wrapped in a script.
         run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true"}}'
         inputs:
-        - workflow_id: utility_test_test_repetition_mode_until_failure_3_iterations_succeeds
-        - bitrise_config_path: ./e2e/bitrise.yml
+        - content: |-
+            #!/bin/env bash
+            set -x # Do not set -e as bitrise command is expected to fail
+            bitrise run --config=./e2e/bitrise.yml utility_test_test_repetition_mode_until_failure_3_iterations_fails
+            if [ $? -ne 1 ] ; then
+              echo "Workflow was expected to fail, exit code not 1."
+              exit 1
+            fi
 
-  utility_test_test_repetition_mode_until_failure_3_iterations_succeeds:
+  utility_test_test_repetition_mode_until_failure_3_iterations_fails:
     envs:
-    - TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES: 3
+    - TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES: 2
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
@@ -768,7 +775,7 @@ workflows:
     - _run
     - _check_outputs
 
-  test_test_repetition_mode_up_until_maximum_repetitions_3_iterations_succeeds:
+  test_test_repetition_mode_up_until_maximum_repetitions_3_iterations_fails:
     before_run:
     - _expose_xcode_version
     steps:
@@ -782,15 +789,22 @@ workflows:
               exit 0
             fi
             envman add --key XCODE_MAJOR_VERSION_AT_LEAST_13 --value "true"
-    - bitrise-run:
+    - script:
+        title: Start a failing workflow, wrapped in a script.
         run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true"}}'
         inputs:
-        - workflow_id: utility_test_test_repetition_mode_up_until_maximum_repetitions_3_iterations_succeeds
-        - bitrise_config_path: ./e2e/bitrise.yml
+        - content: |-
+            #!/bin/env bash
+            set -x # Do not set -e as bitrise command is expected to fail
+            bitrise run --config=./e2e/bitrise.yml utility_test_test_repetition_mode_up_until_maximum_repetitions_3_iterations_fails
+            if [ $? -ne 1 ] ; then
+              echo "Workflow was expected to fail, exit code not 1."
+              exit 1
+            fi
 
-  utility_test_test_repetition_mode_up_until_maximum_repetitions_3_iterations_succeeds:
+  utility_test_test_repetition_mode_up_until_maximum_repetitions_3_iterations_fails:
     envs:
-    - TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES: 3
+    - TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES: 2
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
