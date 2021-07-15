@@ -163,7 +163,7 @@ inputs:
       is_required: true
   - test_repetition_mode: "none"
     opts:
-      title: Test Repetition Mode (Available from Xcode 13)
+      title: Test Repetition Mode (Available in Xcode 13+)
       category: Test Repetition
       summary: Determines how the tests will repeat.
       description: |-
@@ -181,7 +181,7 @@ inputs:
         - "up_until_maximum_repetitions"
   - maximum_test_repetitions: 3
     opts:
-      title: Maximum Test Repetitions (Available from Xcode 13)
+      title: Maximum Test Repetitions (Available in Xcode 13+)
       category: Test Repetition
       summary: The maximum number of times a test will repeat based on Test Repetition Mode.
       description: |-
@@ -191,7 +191,7 @@ inputs:
       is_required: true
   - relaunch_tests_for_each_repetition: "no"
     opts:
-      title: Relaunch Tests for Each Repetition (Available from Xcode 13)
+      title: Relaunch Tests for Each Repetition (Available in Xcode 13+)
       summary: If enabled, tests will launch in a new process for each repetition.
       description: |-
         If enabled, tests will launch in a new process for each repetition.
