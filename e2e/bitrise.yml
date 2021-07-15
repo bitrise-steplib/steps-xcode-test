@@ -870,6 +870,50 @@ workflows:
     - _run
     - _check_outputs
 
+  test_relaunch_tests_for_each_repetition_succeeds:
+    before_run:
+    - _expose_xcode_version
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+            if [[ ${XCODE_MAJOR_VERSION} -lt 13 ]]; then
+              echo "This test case requires Xcode >= 13, skipping..."
+              exit 0
+            fi
+            envman add --key XCODE_MAJOR_VERSION_AT_LEAST_13 --value "true"
+    - bitrise-run:
+        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true"}}'
+        inputs:
+        - workflow_id: utility_test_relaunch_tests_for_each_repetition_succeeds
+        - bitrise_config_path: ./e2e/bitrise.yml
+
+  utility_test_relaunch_tests_for_each_repetition_succeeds:
+    envs:
+    - TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES: 1
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
+    - TEST_APP_BRANCH: STEP-1205-eventually-failing-in-memory-tests
+    - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
+    - BITRISE_SCHEME: BullsEye
+    - TEST_PLAN: "EventuallyFailingInMemoryTests"
+    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
+    - XCODE_SIMULATOR_OS_VERSION: "latest"
+    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - SINGLE_BUILD: "true"
+    - XCODE_OUTPUT_TOOL: xcodebuild
+    - TEST_REPETITION_MODE: "up_until_maximum_repetitions"
+    - MAXIMUM_TEST_REPETITIONS: 2
+    - RELAUNCH_TESTS_FOR_EACH_REPETITION: "yes"
+    - RETRY_ON_FAILURE: "no"
+    - EXPECT_TEST_FAILURE: "false"
+    - CACHE_LEVEL: "swift_packages"
+    after_run:
+    - _set_number_of_initial_test_successes_in_test_app
+    - _run
+    - _check_outputs
+
   test_simulator_os_version:
     before_run:
     - _expose_xcode_version
