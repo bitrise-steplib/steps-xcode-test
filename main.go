@@ -269,8 +269,8 @@ func (s Step) ProcessConfig() (Config, error) {
 		return Config{}, fmt.Errorf("invalid number of Maximum Test Repetitions (maximum_test_repetitions): %d, should be more than 1", input.MaximumTestRepetitions)
 	}
 
-	if input.RelaunchTestsForEachRepetition && xcodeMajorVersion < 13 {
-		return Config{}, errors.New("Relaunch Tests for Each Repetition (relaunch_tests_for_each_repetition) is not available below Xcode 13")
+	if input.RelaunchTestsForEachRepetition && input.TestRepetitionMode == none {
+		return Config{}, errors.New("Relaunch Tests for Each Repetition (relaunch_tests_for_each_repetition) cannot be used if Test Repetition Mode (test_repetition_mode) is 'none'")
 	}
 
 	if input.RetryTestsOnFailure && xcodeMajorVersion > 12 {
