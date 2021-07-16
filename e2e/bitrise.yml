@@ -894,7 +894,7 @@ workflows:
     envs:
     - TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES: 1
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: STEP-1205-eventually-failing-in-memory-tests
+    - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallyFailingInMemoryTests"
