@@ -5,7 +5,7 @@ description: |-
   This Steps runs all those Xcode tests that are included in your project. 
   The Step will work out of the box if your project has test targets and your Workflow has the **Deploy to Bitrise.io** Step which exports the test results and (code coverage files if needed) to the Test Reports page. 
   This Step does not need any code signing files since the Step deploys only the test results to [bitrise.io](https://www.bitrise.io).
-  
+
   ### Configuring the Step
   If you click into the Step, there are some required input fields whose input must be set in accordance with the Xcode configuration of the project.  
   The **Scheme name** input field must be marked as Shared in Xcode. 
@@ -148,7 +148,7 @@ inputs:
         Could make the build faster by adding `COMPILER_INDEX_STORE_ENABLE=NO` flag to the `xcodebuild` command which will disable the indexing during the build.
 
         Indexing is needed for
-        
+
         * Autocomplete
         * Ability to quickly jump to definition
         * Get class and method help by alt clicking.
@@ -163,7 +163,7 @@ inputs:
       is_required: true
   - test_repetition_mode: "none"
     opts:
-      title: Test Repetition Mode
+      title: Test Repetition Mode (Available in Xcode 13+)
       category: Test Repetition
       summary: Determines how the tests will repeat.
       description: |-
@@ -181,14 +181,25 @@ inputs:
         - "up_until_maximum_repetitions"
   - maximum_test_repetitions: 3
     opts:
-      title: Maximum Test Repetitions
+      title: Maximum Test Repetitions (Available in Xcode 13+)
       category: Test Repetition
       summary: The maximum number of times a test will repeat based on Test Repetition Mode.
       description: |-
         The maximum number of times a test will repeat based on Test Repetition Mode.
         
-        Should be more than 1 if Test Repetition Mode (`test_repetition_mode`) is other than `none`.
+        Should be more than 1 if the Test Repetition Mode (`test_repetition_mode`) is other than `none`.
       is_required: true
+  - relaunch_tests_for_each_repetition: "no"
+    opts:
+      title: Relaunch Tests for Each Repetition (Available in Xcode 13+)
+      summary: If enabled, tests will launch in a new process for each repetition.
+      description: |-
+        If enabled, tests will launch in a new process for each repetition.
+
+        By default, tests launch in the same process for each repetition.
+      value_options:
+      - "yes"
+      - "no"
   - verbose: "no"
     opts:
       category: Debug
@@ -261,10 +272,10 @@ inputs:
       category: Debug
       title: "Run xcodebuild test only"
       description: |-
-        If `single_build` is set to false, the step runs `xcodebuild OPTIONS build OPTIONS` before the test 
-        to generate the project derived data. After that comes `xcodebuild OPTIONS build test OPTIONS`. This command's log is presented in the step's log.
+        If `single_build` is set to false, the Step runs `xcodebuild OPTIONS build OPTIONS` before the test
+        to generate the project derived data. This is followed by `xcodebuild OPTIONS build test OPTIONS`. This command's log is presented in the Step's log.
 
-        If `single_build` is set to true, then the step calls only `xcodebuild OPTIONS build test OPTIONS`.
+        If `single_build` is set to true, then the Step calls only `xcodebuild OPTIONS build test OPTIONS`.
       value_options:
       - "true"
       - "false"
@@ -289,8 +300,8 @@ inputs:
       category: Debug
       title: "Should retry test on failure?"
       description: |-
-       If you set this input to `yes`, the Step will rerun your tests. With Xcode 13 and above, only your failed test cases will be rerun. With older Xcode versions, all test cases will be rerun. 
-        Please note that this feature is only available from Xcode 13 and above, earlier versions support rerunning ALL test cases instead of a specific failed one.  
+       If you set this input to `yes`, the Step will rerun your tests. With Xcode 13 and above, only your failed test cases will be rerun. With older Xcode versions, all test cases will be rerun.
+        Please note that this feature is only available from Xcode 13 and above, earlier versions support rerunning ALL test cases instead of a specific failed one.
       value_options:
         - "yes"
         - "no"
