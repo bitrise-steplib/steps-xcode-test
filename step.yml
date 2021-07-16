@@ -69,6 +69,7 @@ inputs:
       summary: Run tests in a specific Test Plan associated with the Scheme.
       description: |-
         Run tests in a specific Test Plan associated with the Scheme.
+
         Leave this input empty to run the default Test Plan or Test Targets associated with the Scheme.
   - simulator_device: iPhone 8 Plus
     opts:
@@ -192,6 +193,7 @@ inputs:
   - relaunch_tests_for_each_repetition: "no"
     opts:
       title: Relaunch Tests for Each Repetition (Available in Xcode 13+)
+      category: Test Repetition
       summary: If enabled, tests will launch in a new process for each repetition.
       description: |-
         If enabled, tests will launch in a new process for each repetition.
