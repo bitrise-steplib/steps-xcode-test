@@ -295,7 +295,7 @@ func handleTestRunError(prevRunParams testRunParams, prevRunResult testRunResult
 		}
 	}
 
-	if prevRunParams.xcodeMajorVersion < 13 && prevRunParams.buildTestParams.RetryTestsOnFailure {
+	if prevRunParams.buildTestParams.RetryTestsOnFailure {
 		log.Warnf("Test run failed")
 		log.Printf("retryTestsOnFailure=true - retrying...")
 
