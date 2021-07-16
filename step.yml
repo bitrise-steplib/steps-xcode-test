@@ -187,7 +187,7 @@ inputs:
       description: |-
         The maximum number of times a test will repeat based on Test Repetition Mode.
         
-        Should be more than 1 if Test Repetition Mode (`test_repetition_mode`) is other than `none`.
+        Should be more than 1 if the Test Repetition Mode (`test_repetition_mode`) is other than `none`.
       is_required: true
   - relaunch_tests_for_each_repetition: "no"
     opts:
@@ -272,10 +272,10 @@ inputs:
       category: Debug
       title: "Run xcodebuild test only"
       description: |-
-        If `single_build` is set to false, the step runs `xcodebuild OPTIONS build OPTIONS` before the test
-        to generate the project derived data. After that comes `xcodebuild OPTIONS build test OPTIONS`. This command's log is presented in the step's log.
+        If `single_build` is set to false, the Step runs `xcodebuild OPTIONS build OPTIONS` before the test
+        to generate the project derived data. This is followed by `xcodebuild OPTIONS build test OPTIONS`. This command's log is presented in the Step's log.
 
-        If `single_build` is set to true, then the step calls only `xcodebuild OPTIONS build test OPTIONS`.
+        If `single_build` is set to true, then the Step calls only `xcodebuild OPTIONS build test OPTIONS`.
       value_options:
       - "true"
       - "false"
