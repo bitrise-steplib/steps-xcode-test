@@ -68,7 +68,7 @@ inputs:
       title: "Test Plan"
       summary: Run tests in a specific Test Plan associated with the Scheme.
       description: |-
-        Run tests in a specific Test Plan associated with the Scheme.  
+        Run tests in a specific Test Plan associated with the Scheme.
         Leave this input empty to run the default Test Plan or Test Targets associated with the Scheme.
   - simulator_device: iPhone 8 Plus
     opts:
@@ -186,7 +186,7 @@ inputs:
       summary: The maximum number of times a test will repeat based on Test Repetition Mode.
       description: |-
         The maximum number of times a test will repeat based on Test Repetition Mode.
-        
+
         Should be more than 1 if the Test Repetition Mode (`test_repetition_mode`) is other than `none`.
       is_required: true
   - relaunch_tests_for_each_repetition: "no"
@@ -298,10 +298,12 @@ inputs:
   - should_retry_test_on_fail: "no"
     opts:
       category: Debug
-      title: "Should retry test on failure?"
+      title: "Should retry tests on failure? (Not available in Xcode 13+)"
+      summary: If you set this input to `yes`, the Step will rerun your tests in case of failure.
       description: |-
-       If you set this input to `yes`, the Step will rerun your tests. With Xcode 13 and above, only your failed test cases will be rerun. With older Xcode versions, all test cases will be rerun.
-        Please note that this feature is only available from Xcode 13 and above, earlier versions support rerunning ALL test cases instead of a specific failed one.
+        If you set this input to `yes`, the Step will rerun your tests once in case of failure. Note that this will rerun ALL of your tests and just the ones that failed.
+
+        This input is not available if you are using Xcode 13+. In that case, we recommend using the `retry_on_failure` Test Repetition Mode (test_repetition_mode).
       value_options:
         - "yes"
         - "no"
