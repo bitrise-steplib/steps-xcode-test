@@ -274,7 +274,7 @@ func (s Step) ProcessConfig() (Config, error) {
 	}
 
 	if input.RetryTestsOnFailure && xcodeMajorVersion > 12 {
-		return Config{}, errors.New("Should retry test on failure? (should_retry_test_on_fail) is not available above Xcode 12; use test_repetition_mode=retry_on_failure instead")
+		return Config{}, errors.New("Should retry tests on failure? (should_retry_test_on_fail) is not available above Xcode 12; use test_repetition_mode=retry_on_failure instead")
 	}
 
 	return Config{

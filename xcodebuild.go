@@ -283,21 +283,21 @@ func handleTestRunError(prevRunParams testRunParams, prevRunResult testRunResult
 		if isStringFoundInOutput(errorPattern, prevRunResult.xcodebuildLog) {
 			log.Warnf("Automatic retry reason found in log: %s", errorPattern)
 			if prevRunParams.retryOnTestRunnerError {
-				log.Printf("retryOnTestRunnerError=true - retrying...")
+				log.Printf("Automatic retry is enabled - retrying...")
 
 				prevRunParams.buildTestParams.RetryTestsOnFailure = false
 				prevRunParams.retryOnTestRunnerError = false
 				return cleanOutputDirAndRerunTest(prevRunParams)
 			}
 
-			log.Errorf("retryOnTestRunnerError=false, no more retry, stopping the test!")
+			log.Errorf("Automatic retry is disabled, no more retry, stopping the test!")
 			return prevRunResult.xcodebuildLog, prevRunResult.exitCode, prevRunResult.err
 		}
 	}
 
-	if prevRunParams.xcodeMajorVersion < 13 && prevRunParams.buildTestParams.RetryTestsOnFailure {
+	if prevRunParams.buildTestParams.RetryTestsOnFailure {
 		log.Warnf("Test run failed")
-		log.Printf("retryTestsOnFailure=true - retrying...")
+		log.Printf("'Should retry tests on failure?' (should_retry_test_on_fail) is enabled - retrying...")
 
 		prevRunParams.buildTestParams.RetryTestsOnFailure = false
 		prevRunParams.retryOnTestRunnerError = false
