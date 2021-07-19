@@ -301,9 +301,9 @@ inputs:
     opts:
       category: Debug
       title: "Should retry tests on failure? (Not available in Xcode 13+)"
-      summary: If you set this input to `yes`, the Step will rerun your tests in case of failure.
+      summary: If you set this input to `yes`, the Step will rerun your failed tests.
       description: |-
-        If you set this input to `yes`, the Step will rerun your tests once in case of failure. Note that this will rerun ALL of your tests and just the ones that failed.
+        If you set this input to `yes`, the Step will rerun ALL your tests once in the case of failed test/s. Note that ALL your tests will be rerun, not just the ones that failed.
 
         This input is not available if you are using Xcode 13+. In that case, we recommend using the `retry_on_failure` Test Repetition Mode (test_repetition_mode).
       value_options:
