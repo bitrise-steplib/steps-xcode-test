@@ -344,6 +344,11 @@ func (s Step) InstallDeps(xcpretty bool) error {
 func (s Step) Run(cfg Config) (Result, error) {
 	log.SetEnableDebugLog(cfg.Verbose)
 
+	err := resetLaunchServices()
+	if err != nil {
+		log.Warnf("Failed to apply simulator boot workaround, error: %s", err)
+	}
+
 	// Boot simulator
 	if cfg.SimulatorDebug != never {
 		log.Infof("Enabling Simulator verbose log for better diagnostics")

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -99,4 +100,38 @@ func simulatorCollectDiagnostics() (string, error) {
 	}
 
 	return diagnosticsOutDir, nil
+}
+
+// Reset launch services database to avoid Big Sur's sporadic failure to find the Simulator App
+// The following error is printed when this happens: "kLSNoExecutableErr: The executable is missing"
+// Details:
+// - https://stackoverflow.com/questions/2182040/the-application-cannot-be-opened-because-its-executable-is-missing/16546673#16546673
+// - https://ss64.com/osx/lsregister.html
+func resetLaunchServices() error {
+	cmd := command.New("sw_vers", "-productVersion")
+	macOSVersion, err := cmd.RunAndReturnTrimmedCombinedOutput()
+	if err != nil {
+		return err
+	}
+
+	if strings.HasPrefix(macOSVersion, "11.") { // It's Big Sur
+		cmd := command.New("xcode-select", "--print-path")
+		xcodeDevDirPath, err := cmd.RunAndReturnTrimmedCombinedOutput()
+		if err != nil {
+			return err
+		}
+
+		simulatorAppPath := filepath.Join(xcodeDevDirPath, "Applications", "Simulator.app")
+
+		cmdString := "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
+		cmd = command.New(cmdString, "-f", simulatorAppPath)
+
+		log.Infof("Applying launch services reset workaround before booting simulator")
+		_, err = cmd.RunAndReturnTrimmedCombinedOutput()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
