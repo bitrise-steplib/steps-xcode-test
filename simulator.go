@@ -126,7 +126,7 @@ func resetLaunchServices() error {
 		cmdString := "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
 		cmd = command.New(cmdString, "-f", simulatorAppPath)
 
-		log.Debugf(cmdString)
+		log.Infof("Applying launch services reset workaround before booting simulator")
 		_, err = cmd.RunAndReturnTrimmedCombinedOutput()
 		if err != nil {
 			return err
