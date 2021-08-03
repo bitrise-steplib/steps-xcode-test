@@ -356,7 +356,7 @@ func TestIsStringFoundInOutput_failedToBackgroundTestRunner(t *testing.T) {
 			`aa Error Domain=IDETestOperationsObserverErrorDomain Code=12 "Failed to background test runner. aa`,
 			sampleUITestFailedToBackgroundTestRunner,
 		} {
-			testfailedToBackgroundTestRunner(t, anOutStr, true)
+			testFailedToBackgroundTestRunner(t, anOutStr, true)
 		}
 	}
 
@@ -368,7 +368,46 @@ func TestIsStringFoundInOutput_failedToBackgroundTestRunner(t *testing.T) {
 			"Failure attempting to launch <XCUIApplicationImpl:",
 			sampleOKBuildLog,
 		} {
-			testFailureAttemptingToLaunch(t, anOutStr, false)
+			testFailedToBackgroundTestRunner(t, anOutStr, false)
+		}
+	}
+}
+
+func TestIsStringFoundInOutput_failedToOpenTestRunner(t *testing.T) {
+	// load sample logs
+	sampleUITestFailedToBackgroundTestRunner, err := loadFileContent("./_samples/xcodebuild-failed-to-open-test-runner.txt")
+	if err != nil {
+		t.Fatalf("Failed to load error sample log : %s", err)
+	}
+	sampleOKBuildLog, err := loadFileContent("./_samples/xcodebuild-ok.txt")
+	if err != nil {
+		t.Fatalf("Failed to load xcodebuild-ok.txt : %s", err)
+	}
+
+	t.Log("Should find")
+	{
+		for _, anOutStr := range []string{
+			`Error Domain=FBSOpenApplicationServiceErrorDomain Code=1 "The request to open "io.bitrise.ios-simple-objcUITests.xctrunner" failed." UserInfo={BSErrorCodeDescription=RequestDenied, NSLocalizedDescription=The request to open "io.bitrise.ios-simple-objcUITests.xctrunner" failed., NSUnderlyingError=0x7fb8160bea40 {Error Domain=SBWorkspaceTransaction Code=1 "Launch failed" UserInfo={SBTransaction=SBSuspendedWorkspaceTransaction, NSLocalizedFailureReason=Launch failed}}, FBSOpenApplicationRequestID=0xf30, NSLocalizedFailureReason=The request was denied by service delegate (SBMainWorkspace).`,
+			`2016-09-26 01:14:08.896 xcodebuild[1299:5953] Error Domain=FBSOpenApplicationServiceErrorDomain Code=1 "The request to open "io.bitrise.ios-simple-objcUITests.xctrunner" failed." UserInfo={BSErrorCodeDescription=RequestDenied, NSLocalizedDescription=The request to open "io.bitrise.ios-simple-objcUITests.xctrunner" failed., NSUnderlyingError=0x7fb8160bea40 {Error Domain=SBWorkspaceTransaction Code=1 "Launch failed" UserInfo={SBTransaction=SBSuspendedWorkspaceTransaction, NSLocalizedFailureReason=Launch failed}}, FBSOpenApplicationRequestID=0xf30, NSLocalizedFailureReason=The request was denied by service delegate (SBMainWorkspace). If you believe this error represents a bug, please attach the result bundle at`,
+			`aaError Domain=FBSOpenApplicationServiceErrorDomain Code=1 "The request to open "io.bitrise.ios-simple-objcUITests.xctrunner" failed." UserInfo={BSErrorCodeDescription=RequestDenied, NSLocalizedDescription=The request to open "io.bitrise.ios-simple-objcUITests.xctrunner" failed., NSUnderlyingError=0x7fb8160bea40 {Error Domain=SBWorkspaceTransaction Code=1 "Launch failed" UserInfo={SBTransaction=SBSuspendedWorkspaceTransaction, NSLocalizedFailureReason=Launch failed}}, FBSOpenApplicationRequestID=0xf30, NSLocalizedFailureReason=The request was denied by service delegate (SBMainWorkspace).aa`,
+			`aa Error Domain=FBSOpenApplicationServiceErrorDomain Code=1 "The request to open "io.bitrise.ios-simple-objcUITests.xctrunner" failed." UserInfo={BSErrorCodeDescription=RequestDenied, NSLocalizedDescription=The request to open "io.bitrise.ios-simple-objcUITests.xctrunner" failed., NSUnderlyingError=0x7fb8160bea40 {Error Domain=SBWorkspaceTransaction Code=1 "Launch failed" UserInfo={SBTransaction=SBSuspendedWorkspaceTransaction, NSLocalizedFailureReason=Launch failed}}, FBSOpenApplicationRequestID=0xf30, NSLocalizedFailureReason=The request was denied by service delegate (SBMainWorkspace). aa`,
+			sampleUITestFailedToBackgroundTestRunner,
+		} {
+			testFailedToOpenTestRunner(t, anOutStr, true)
+		}
+	}
+
+	t.Log("Should NOT find")
+	{
+		for _, anOutStr := range []string{
+			"",
+			"Assertion Failure:",
+			"Failure attempting to launch <XCUIApplicationImpl:",
+			`Error Domain=FBSOpenApplicationServiceErrorDomain Code=1 "The request to open "io.bitrise.ios-simple-objcUITests.xctrunner" failed."`,
+			`Error Domain=FBSOpenApplicationServiceErrorDomain Code=1 The request was denied by service delegate (SBMainWorkspace).`,
+			sampleOKBuildLog,
+		} {
+			testFailedToOpenTestRunner(t, anOutStr, false)
 		}
 	}
 }
@@ -498,8 +537,12 @@ func testFailureAttemptingToLaunch(t *testing.T, outputToSearchIn string, isShou
 	testIsFoundWith(t, failureAttemptingToLaunch, outputToSearchIn, isShouldFind)
 }
 
-func testfailedToBackgroundTestRunner(t *testing.T, outputToSearchIn string, isShouldFind bool) {
+func testFailedToBackgroundTestRunner(t *testing.T, outputToSearchIn string, isShouldFind bool) {
 	testIsFoundWith(t, failedToBackgroundTestRunner, outputToSearchIn, isShouldFind)
+}
+
+func testFailedToOpenTestRunner(t *testing.T, outputToSearchIn string, isShouldFind bool) {
+	testIsFoundWith(t, failedToOpenTestRunner, outputToSearchIn, isShouldFind)
 }
 
 func loadFileContent(filePth string) (string, error) {
