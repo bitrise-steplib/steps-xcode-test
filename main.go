@@ -45,6 +45,7 @@ const (
 	testRunnerFailedToInitializeForUITesting = `Test runner failed to initialize for UI testing`
 	timedOutRegisteringForTestingEvent       = `Timed out registering for testing event accessibility notifications`
 	testRunnerNeverBeganExecuting            = `Test runner never began executing tests after launching.`
+	failedToOpenTestRunner                   = `Error Domain=FBSOpenApplicationServiceErrorDomain Code=1 "The request to open`
 )
 
 var testRunnerErrorPatterns = []string{
@@ -58,6 +59,7 @@ var testRunnerErrorPatterns = []string{
 	testRunnerFailedToInitializeForUITesting,
 	timedOutRegisteringForTestingEvent,
 	testRunnerNeverBeganExecuting,
+	failedToOpenTestRunner,
 }
 
 const simulatorShutdownState = "Shutdown"
