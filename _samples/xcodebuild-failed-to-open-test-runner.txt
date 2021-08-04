@@ -1,0 +1,59 @@
+Test Suite 'All tests' started at 2021-08-02 00:16:15.877
+Test Suite 'ios-simple-objcTests.xctest' started at 2021-08-02 00:16:15.878
+Test Suite 'ios_simple_objcTests' started at 2021-08-02 00:16:15.879
+Test Case '-[ios_simple_objcTests testExample]' started.
+Test Case '-[ios_simple_objcTests testExample]' passed (0.002 seconds).
+Test Case '-[ios_simple_objcTests testPerformanceExample]' started.
+/Users/vagrant/go/src/github.com/bitrise-steplib/steps-xcode-test/_tmp/ios-simple-objc/ios-simple-objcTests/ios_simple_objcTests.m:35: Test Case '-[ios_simple_objcTests testPerformanceExample]' measured [Time, seconds] average: 0.000, relative standard deviation: 87.920%, values: [0.000054, 0.000042, 0.000015, 0.000010, 0.000009, 0.000009, 0.000009, 0.000009, 0.000009, 0.000009], performanceMetricID:com.apple.XCTPerformanceMetric_WallClockTime, baselineName: "", baselineAverage: , polarity: unspecified, maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.100, maxStandardDeviation: 0.100
+Test Case '-[ios_simple_objcTests testPerformanceExample]' passed (0.679 seconds).
+Test Suite 'ios_simple_objcTests' passed at 2021-08-02 00:16:16.563.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.682 (0.683) seconds
+Test Suite 'ios-simple-objcTests.xctest' passed at 2021-08-02 00:16:16.564.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.682 (0.685) seconds
+Test Suite 'All tests' passed at 2021-08-02 00:16:16.648.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.682 (0.771) seconds
+2021-08-02 00:16:19.857 xcodebuild[4918:35305]  iOSSimulator: 57BC2CEE-A775-41E5-BA56-FF4F1EDB49B4: Failed to launch app with identifier: io.bitrise.ios-simple-objcUITests.xctrunner and options: {
+    "activate_suspended" = 1;
+    arguments =     (
+    );
+    environment =     {
+        "CA_ASSERT_MAIN_THREAD_TRANSACTIONS" = 0;
+        "CA_DEBUG_TRANSACTIONS" = 0;
+        "DYLD_FRAMEWORK_PATH" = "/Users/vagrant/Library/Developer/Xcode/DerivedData/ios-simple-objc-dwumqkstewvanpheusqpdnqoyqng/Build/Products/Debug-iphonesimulator";
+        "DYLD_INSERT_LIBRARIES" = "/Applications/Xcode-12.5.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS.simruntime/Contents/Resources/RuntimeRoot/usr/lib/libMainThreadChecker.dylib";
+        "DYLD_LIBRARY_PATH" = "/Users/vagrant/Library/Developer/Xcode/DerivedData/ios-simple-objc-dwumqkstewvanpheusqpdnqoyqng/Build/Products/Debug-iphonesimulator";
+        "MTC_CRASH_ON_REPORT" = 1;
+        NSUnbufferedIO = YES;
+        "OS_ACTIVITY_DT_MODE" = YES;
+        "RUN_DESTINATION_DEVICE_NAME" = "iPhone 8 Plus";
+        "RUN_DESTINATION_DEVICE_PLATFORM_IDENTIFIER" = "com.apple.platform.iphonesimulator";
+        "RUN_DESTINATION_DEVICE_UDID" = "57BC2CEE-A775-41E5-BA56-FF4F1EDB49B4";
+        "SQLITE_ENABLE_THREAD_ASSERTIONS" = 1;
+        XCTestBundlePath = "/Users/vagrant/Library/Developer/Xcode/DerivedData/ios-simple-objc-dwumqkstewvanpheusqpdnqoyqng/Build/Products/Debug-iphonesimulator/ios-simple-objcUITests-Runner.app/PlugIns/ios-simple-objcUITests.xctest";
+        XCTestConfigurationFilePath = "";
+        XCTestSessionIdentifier = "C000DD37-9FF0-4B31-B2F8-966AD71F0B72";
+        "__XCODE_BUILT_PRODUCTS_DIR_PATHS" = "/Users/vagrant/Library/Developer/Xcode/DerivedData/ios-simple-objc-dwumqkstewvanpheusqpdnqoyqng/Build/Products/Debug-iphonesimulator";
+        "__XPC_DYLD_FRAMEWORK_PATH" = "/Users/vagrant/Library/Developer/Xcode/DerivedData/ios-simple-objc-dwumqkstewvanpheusqpdnqoyqng/Build/Products/Debug-iphonesimulator";
+        "__XPC_DYLD_LIBRARY_PATH" = "/Users/vagrant/Library/Developer/Xcode/DerivedData/ios-simple-objc-dwumqkstewvanpheusqpdnqoyqng/Build/Products/Debug-iphonesimulator";
+    };
+    stderr = "/dev/ttys000";
+    stdout = "/dev/ttys000";
+    "terminate_running_process" = 1;
+    "wait_for_debugger" = 0;
+} (error = Error Domain=FBSOpenApplicationServiceErrorDomain Code=1 "The request to open "io.bitrise.ios-simple-objcUITests.xctrunner" failed." UserInfo={BSErrorCodeDescription=RequestDenied, NSLocalizedDescription=The request to open "io.bitrise.ios-simple-objcUITests.xctrunner" failed., NSUnderlyingError=0x7fb8160bea40 {Error Domain=SBWorkspaceTransaction Code=1 "Launch failed" UserInfo={SBTransaction=SBSuspendedWorkspaceTransaction, NSLocalizedFailureReason=Launch failed}}, FBSOpenApplicationRequestID=0xf30, NSLocalizedFailureReason=The request was denied by service delegate (SBMainWorkspace).})
+
+
+*** If you believe this error represents a bug, please attach the result bundle at /var/folders/6q/wgy6jtp12w5gzgm9lzcglpqw0000gn/T/XCUITestOutput892686442/Test.xcresult
+
+2021-08-02 00:16:35.067 xcodebuild[4918:35240] [MT] IDETestOperationsObserverDebug: 35.592 elapsed -- Testing started completed.
+2021-08-02 00:16:35.067 xcodebuild[4918:35240] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2021-08-02 00:16:35.067 xcodebuild[4918:35240] [MT] IDETestOperationsObserverDebug: 35.592 sec, +35.592 sec -- end
+
+Test session results, code coverage, and logs:
+	/var/folders/6q/wgy6jtp12w5gzgm9lzcglpqw0000gn/T/XCUITestOutput892686442/Test.xcresult
+
+Testing failed:
+	ios-simple-objcUITests:
+		ios-simple-objcUITests-Runner encountered an error (Failed to install or launch the test runner. If you believe this error represents a bug, please attach the result bundle at /var/folders/6q/wgy6jtp12w5gzgm9lzcglpqw0000gn/T/XCUITestOutput892686442/Test.xcresult. (Underlying Error: The request to open "io.bitrise.ios-simple-objcUITests.xctrunner" failed. The request was denied by service delegate (SBMainWorkspace). (Underlying Error: The operation couldn’t be completed. Launch failed)))
+
+** TEST FAILED **
