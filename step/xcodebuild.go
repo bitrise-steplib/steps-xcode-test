@@ -1,4 +1,4 @@
-package main
+package step
 
 import (
 	"bytes"
@@ -142,7 +142,7 @@ func runBuild(buildParams models.XcodebuildParams, outputTool string) (string, i
 
 	log.Infof("Building the project...")
 
-	if outputTool == xcprettyTool {
+	if outputTool == XcprettyTool {
 		return runPrettyXcodebuildCmd(false, []string{}, xcodebuildArgs)
 	}
 	return runXcodebuildCmd(xcodebuildArgs...)
@@ -326,7 +326,7 @@ func runTest(params testRunParams) (string, int, error) {
 	var rawOutput string
 	var exit int
 	var testErr error
-	if params.outputTool == xcprettyTool {
+	if params.outputTool == XcprettyTool {
 		xcprettyArgs, err := createXCPrettyArgs(params.xcprettyOptions)
 		if err != nil {
 			return "", 1, err

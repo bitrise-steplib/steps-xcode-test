@@ -1,44 +1,9 @@
-package main
+package step
 
 import (
-	"errors"
 	"io/ioutil"
 	"testing"
-
-	shellquote "github.com/kballard/go-shellquote"
-	"github.com/stretchr/testify/assert"
 )
-
-func TestParseCommandLineOptions(t *testing.T) {
-	t.Log("Parse complicated command")
-	{
-		expectedWords := []string{"/bin/sh", "-c", `echo "my complicated command" | tee log | cat > log2`}
-		words, err := shellquote.Split("/bin/sh -c 'echo \"my complicated command\" | tee log | cat > log2'")
-		if err != nil {
-			t.Fatalf("Expected (no error), actual(%v)", err)
-		}
-		if len(words) != len(expectedWords) {
-			t.Fatalf("Expected (%d), actual(%d)", len(expectedWords), len(words))
-		}
-
-		for i := 0; i < len(expectedWords); i++ {
-			exceptedWord := expectedWords[i]
-			word := words[i]
-
-			if word != exceptedWord {
-				t.Fatalf("Expected (%s), actual(%s)", exceptedWord, word)
-			}
-		}
-	}
-
-	t.Log("Parse invalid command")
-	{
-		_, err := shellquote.Split("/bin/sh -c 'echo")
-		if err == nil {
-			t.Fatalf("Expected (error), actual(%v)", err)
-		}
-	}
-}
 
 func Test_isStringFoundInOutput(t *testing.T) {
 	t.Log("Should NOT find")
@@ -103,11 +68,11 @@ func TestIsStringFoundInOutput_timedOutRegisteringForTestingEvent(t *testing.T) 
 	{
 
 	}
-	sampleTestRunnerLog, err := loadFileContent("./_samples/xcodebuild-timed-out-registering-for-testing-event.txt")
+	sampleTestRunnerLog, err := loadFileContent("../_samples/xcodebuild-timed-out-registering-for-testing-event.txt")
 	if err != nil {
 		t.Fatalf("Failed to load error sample log : %s", err)
 	}
-	sampleOKBuildLog, err := loadFileContent("./_samples/xcodebuild-ok.txt")
+	sampleOKBuildLog, err := loadFileContent("../_samples/xcodebuild-ok.txt")
 	if err != nil {
 		t.Fatalf("Failed to load xcodebuild-ok.txt : %s", err)
 	}
@@ -144,11 +109,11 @@ func TestIsStringFoundInOutput_testRunnerFailedToInitializeForUITesting(t *testi
 	{
 
 	}
-	sampleTestRunnerLog, err := loadFileContent("./_samples/xcodebuild-test-runner-failed-to-initialize-for-ui-testing.txt")
+	sampleTestRunnerLog, err := loadFileContent("../_samples/xcodebuild-test-runner-failed-to-initialize-for-ui-testing.txt")
 	if err != nil {
 		t.Fatalf("Failed to load error sample log : %s", err)
 	}
-	sampleOKBuildLog, err := loadFileContent("./_samples/xcodebuild-ok.txt")
+	sampleOKBuildLog, err := loadFileContent("../_samples/xcodebuild-ok.txt")
 	if err != nil {
 		t.Fatalf("Failed to load xcodebuild-ok.txt : %s", err)
 	}
@@ -185,11 +150,11 @@ func TestIsStringFoundInOutput_timeOutMessageIPhoneSimulator(t *testing.T) {
 	{
 
 	}
-	sampleIPhoneSimulatorLog, err := loadFileContent("./_samples/xcodebuild-iPhoneSimulator-timeout.txt")
+	sampleIPhoneSimulatorLog, err := loadFileContent("../_samples/xcodebuild-iPhoneSimulator-timeout.txt")
 	if err != nil {
 		t.Fatalf("Failed to load error sample log : %s", err)
 	}
-	sampleOKBuildLog, err := loadFileContent("./_samples/xcodebuild-ok.txt")
+	sampleOKBuildLog, err := loadFileContent("../_samples/xcodebuild-ok.txt")
 	if err != nil {
 		t.Fatalf("Failed to load xcodebuild-ok.txt : %s", err)
 	}
@@ -222,11 +187,11 @@ func TestIsStringFoundInOutput_timeOutMessageIPhoneSimulator(t *testing.T) {
 
 func TestIsStringFoundInOutput_timeOutMessageUITest(t *testing.T) {
 	// load sample logs
-	sampleUITestTimeoutLog, err := loadFileContent("./_samples/xcodebuild-UITest-timeout.txt")
+	sampleUITestTimeoutLog, err := loadFileContent("../_samples/xcodebuild-UITest-timeout.txt")
 	if err != nil {
 		t.Fatalf("Failed to load error sample log : %s", err)
 	}
-	sampleOKBuildLog, err := loadFileContent("./_samples/xcodebuild-ok.txt")
+	sampleOKBuildLog, err := loadFileContent("../_samples/xcodebuild-ok.txt")
 	if err != nil {
 		t.Fatalf("Failed to load xcodebuild-ok.txt : %s", err)
 	}
@@ -259,15 +224,15 @@ func TestIsStringFoundInOutput_timeOutMessageUITest(t *testing.T) {
 
 func TestIsStringFoundInOutput_earlyUnexpectedExit(t *testing.T) {
 	// load sample logs
-	sampleUITestEarlyUnexpectedExit1, err := loadFileContent("./_samples/xcodebuild-early-unexpected-exit_1.txt")
+	sampleUITestEarlyUnexpectedExit1, err := loadFileContent("../_samples/xcodebuild-early-unexpected-exit_1.txt")
 	if err != nil {
 		t.Fatalf("Failed to load error sample log : %s", err)
 	}
-	sampleUITestEarlyUnexpectedExit2, err := loadFileContent("./_samples/xcodebuild-early-unexpected-exit_2.txt")
+	sampleUITestEarlyUnexpectedExit2, err := loadFileContent("../_samples/xcodebuild-early-unexpected-exit_2.txt")
 	if err != nil {
 		t.Fatalf("Failed to load error sample log : %s", err)
 	}
-	sampleOKBuildLog, err := loadFileContent("./_samples/xcodebuild-ok.txt")
+	sampleOKBuildLog, err := loadFileContent("../_samples/xcodebuild-ok.txt")
 	if err != nil {
 		t.Fatalf("Failed to load xcodebuild-ok.txt : %s", err)
 	}
@@ -301,11 +266,11 @@ func TestIsStringFoundInOutput_earlyUnexpectedExit(t *testing.T) {
 
 func TestIsStringFoundInOutput_failureAttemptingToLaunch(t *testing.T) {
 	// load sample logs
-	sampleUITestFailureAttemptingToLaunch, err := loadFileContent("./_samples/xcodebuild-failure-attempting-tolaunch.txt")
+	sampleUITestFailureAttemptingToLaunch, err := loadFileContent("../_samples/xcodebuild-failure-attempting-tolaunch.txt")
 	if err != nil {
 		t.Fatalf("Failed to load error sample log : %s", err)
 	}
-	sampleOKBuildLog, err := loadFileContent("./_samples/xcodebuild-ok.txt")
+	sampleOKBuildLog, err := loadFileContent("../_samples/xcodebuild-ok.txt")
 	if err != nil {
 		t.Fatalf("Failed to load xcodebuild-ok.txt : %s", err)
 	}
@@ -338,11 +303,11 @@ func TestIsStringFoundInOutput_failureAttemptingToLaunch(t *testing.T) {
 
 func TestIsStringFoundInOutput_failedToBackgroundTestRunner(t *testing.T) {
 	// load sample logs
-	sampleUITestFailedToBackgroundTestRunner, err := loadFileContent("./_samples/xcodebuild-failed-to-background-test-runner.txt")
+	sampleUITestFailedToBackgroundTestRunner, err := loadFileContent("../_samples/xcodebuild-failed-to-background-test-runner.txt")
 	if err != nil {
 		t.Fatalf("Failed to load error sample log : %s", err)
 	}
-	sampleOKBuildLog, err := loadFileContent("./_samples/xcodebuild-ok.txt")
+	sampleOKBuildLog, err := loadFileContent("../_samples/xcodebuild-ok.txt")
 	if err != nil {
 		t.Fatalf("Failed to load xcodebuild-ok.txt : %s", err)
 	}
@@ -375,11 +340,11 @@ func TestIsStringFoundInOutput_failedToBackgroundTestRunner(t *testing.T) {
 
 func TestIsStringFoundInOutput_failedToOpenTestRunner(t *testing.T) {
 	// load sample logs
-	sampleUITestFailedToBackgroundTestRunner, err := loadFileContent("./_samples/xcodebuild-failed-to-open-test-runner.txt")
+	sampleUITestFailedToBackgroundTestRunner, err := loadFileContent("../_samples/xcodebuild-failed-to-open-test-runner.txt")
 	if err != nil {
 		t.Fatalf("Failed to load error sample log : %s", err)
 	}
-	sampleOKBuildLog, err := loadFileContent("./_samples/xcodebuild-ok.txt")
+	sampleOKBuildLog, err := loadFileContent("../_samples/xcodebuild-ok.txt")
 	if err != nil {
 		t.Fatalf("Failed to load xcodebuild-ok.txt : %s", err)
 	}
@@ -414,7 +379,7 @@ func TestIsStringFoundInOutput_failedToOpenTestRunner(t *testing.T) {
 
 func TestIsStringFoundInOutput_appStateIsStillNotRunning(t *testing.T) {
 	// load sample logs
-	sampleOKBuildLog, err := loadFileContent("./_samples/xcodebuild-ok.txt")
+	sampleOKBuildLog, err := loadFileContent("../_samples/xcodebuild-ok.txt")
 	if err != nil {
 		t.Fatalf("Failed to load xcodebuild-ok.txt : %s", err)
 	}
@@ -446,7 +411,7 @@ func TestIsStringFoundInOutput_appStateIsStillNotRunning(t *testing.T) {
 
 func TestIsStringFoundInOutput_appAccessibilityIsNotLoaded(t *testing.T) {
 	// load sample logs
-	sampleOKBuildLog, err := loadFileContent("./_samples/xcodebuild-ok.txt")
+	sampleOKBuildLog, err := loadFileContent("../_samples/xcodebuild-ok.txt")
 	if err != nil {
 		t.Fatalf("Failed to load xcodebuild-ok.txt : %s", err)
 	}
@@ -478,33 +443,6 @@ func TestIsStringFoundInOutput_appAccessibilityIsNotLoaded(t *testing.T) {
 		}
 	}
 }
-
-func Test_GivenXcprettyInstallationCheckError_WhenTheErrorIsHandled_ThenExpectAnEmptyOutputToolAndErrorToBeReturned(t *testing.T) {
-	// Given
-	givenError := newXcprettyInstallationCheckError("an error occurred")
-
-	// When
-	outputTool, err := handleXcprettyInstallError(givenError)
-
-	// Then
-	assert.Equal(t, "", outputTool)
-	assert.Equal(t, givenError, err)
-}
-
-func Test_GivenXcprettyDetermineVersionError_WhenTheErrorIsHandled_ThenExpectTheXcodeBuildOutputToolToBeReturned(t *testing.T) {
-	// Given
-	givenError := errors.New("determineVersionError")
-
-	// When
-	outputTool, err := handleXcprettyInstallError(givenError)
-
-	// Then
-	assert.Equal(t, xcodebuildTool, outputTool)
-	assert.NoError(t, err)
-}
-
-//
-// TESTING UTILITY FUNCS
 
 func testIsFoundWith(t *testing.T, searchPattern, outputToSearchIn string, isShouldFind bool) {
 	if isFound := isStringFoundInOutput(searchPattern, outputToSearchIn); isFound != isShouldFind {

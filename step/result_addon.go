@@ -1,4 +1,4 @@
-package main
+package step
 
 import (
 	"encoding/json"
@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/bitrise-io/go-utils/command"
+	"github.com/bitrise-io/go-utils/env"
 	"github.com/bitrise-io/go-utils/log"
 )
 
@@ -37,7 +38,9 @@ func copyDirectory(sourceBundle string, targetDir string) error {
 
 	// the leading `/` means to copy not the content but the whole dir
 	// -a means a better recursive, with symlinks handling and everything
-	cmd := command.New("cp", "-a", sourceBundle, targetDir+"/")
+	cmd := command.NewFactory(env.NewRepository()).Create("cp", []string{"-a", sourceBundle, targetDir + "/"}, nil)
+	//cmd := command.New("cp", "-a", sourceBundle, targetDir+"/")
+	// TODO: migrate log
 	log.Donef("$ %s", cmd.PrintableCommandArgs())
 	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
 		return fmt.Errorf("copy failed, error: %s, output: %s", err, out)

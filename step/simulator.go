@@ -1,12 +1,15 @@
-package main
+package step
 
 import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/bitrise-io/go-utils/env"
 
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/errorutil"
@@ -14,10 +17,14 @@ import (
 )
 
 func simulatorBoot(id string) error {
-	bootSimulatorCommand := command.NewWithStandardOuts("xcrun", "simctl", "boot", id)
+	f := command.NewFactory(env.NewRepository())
+	cmd := f.Create("xcrun", []string{"simctl", "boot", id}, &command.Opts{
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+	})
 
-	log.Donef("$ %s", bootSimulatorCommand.PrintableCommandArgs())
-	exitCode, err := bootSimulatorCommand.RunAndReturnExitCode()
+	log.Donef("$ %s", cmd.PrintableCommandArgs())
+	exitCode, err := cmd.RunAndReturnExitCode()
 	if err != nil {
 		if errorutil.IsExitStatusError(err) {
 			if exitCode == 149 { // Simulator already booted
@@ -33,10 +40,14 @@ func simulatorBoot(id string) error {
 }
 
 func simulatorShutdown(id string) error {
-	bootSimulatorCommand := command.NewWithStandardOuts("xcrun", "simctl", "shutdown", id)
+	f := command.NewFactory(env.NewRepository())
+	cmd := f.Create("xcrun", []string{"simctl", "shutdown", id}, &command.Opts{
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+	})
 
-	log.Donef("$ %s", bootSimulatorCommand.PrintableCommandArgs())
-	exitCode, err := bootSimulatorCommand.RunAndReturnExitCode()
+	log.Donef("$ %s", cmd.PrintableCommandArgs())
+	exitCode, err := cmd.RunAndReturnExitCode()
 	if err != nil {
 		if errorutil.IsExitStatusError(err) {
 			if exitCode == 149 { // Simulator already shut down
@@ -53,10 +64,14 @@ func simulatorShutdown(id string) error {
 
 // Simulator needs to be booted to enable verbose log
 func simulatorEnableVerboseLog(id string) error {
-	simulatorVerboseCommand := command.NewWithStandardOuts("xcrun", "simctl", "logverbose", id, "enable")
+	f := command.NewFactory(env.NewRepository())
+	cmd := f.Create("xcrun", []string{"simctl", "logverbose", id, "enable"}, &command.Opts{
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+	})
 
-	log.Donef("$ %s", simulatorVerboseCommand.PrintableCommandArgs())
-	if err := simulatorVerboseCommand.Run(); err != nil {
+	log.Donef("$ %s", cmd.PrintableCommandArgs())
+	if err := cmd.Run(); err != nil {
 		if errorutil.IsExitStatusError(err) {
 			log.Warnf("Failed to enable Simulator verbose logging, command exited with code %d", err)
 			return nil
@@ -87,11 +102,15 @@ func simulatorCollectDiagnostics() (string, error) {
 		return "", fmt.Errorf("failed to collect Simulator diagnostics, could not create temporary directory: %v", err)
 	}
 
-	simulatorDiagnosticsCommand := command.NewWithStandardOuts("xcrun", "simctl", "diagnose", "-b", "--no-archive", fmt.Sprintf("--output=%s", diagnosticsOutDir))
-	simulatorDiagnosticsCommand.SetStdin(bytes.NewReader([]byte("\n")))
+	f := command.NewFactory(env.NewRepository())
+	cmd := f.Create("xcrun", []string{"simctl", "diagnose", "-b", "--no-archive", fmt.Sprintf("--output=%s", diagnosticsOutDir)}, &command.Opts{
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+		Stdin:  bytes.NewReader([]byte("\n")),
+	})
 
-	log.Donef("$ %s", simulatorDiagnosticsCommand.PrintableCommandArgs())
-	if err := simulatorDiagnosticsCommand.Run(); err != nil {
+	log.Donef("$ %s", cmd.PrintableCommandArgs())
+	if err := cmd.Run(); err != nil {
 		if errorutil.IsExitStatusError(err) {
 			return "", fmt.Errorf("failed to collect Simulator diagnostics: %v", err)
 
@@ -108,14 +127,16 @@ func simulatorCollectDiagnostics() (string, error) {
 // - https://stackoverflow.com/questions/2182040/the-application-cannot-be-opened-because-its-executable-is-missing/16546673#16546673
 // - https://ss64.com/osx/lsregister.html
 func resetLaunchServices() error {
-	cmd := command.New("sw_vers", "-productVersion")
+	f := command.NewFactory(env.NewRepository())
+	cmd := f.Create("sw_vers", []string{"-productVersion"}, nil)
+
 	macOSVersion, err := cmd.RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
 		return err
 	}
 
 	if strings.HasPrefix(macOSVersion, "11.") { // It's Big Sur
-		cmd := command.New("xcode-select", "--print-path")
+		cmd := f.Create("xcode-select", []string{"--print-path"}, nil)
 		xcodeDevDirPath, err := cmd.RunAndReturnTrimmedCombinedOutput()
 		if err != nil {
 			return err
@@ -124,7 +145,7 @@ func resetLaunchServices() error {
 		simulatorAppPath := filepath.Join(xcodeDevDirPath, "Applications", "Simulator.app")
 
 		cmdString := "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
-		cmd = command.New(cmdString, "-f", simulatorAppPath)
+		cmd = f.Create(cmdString, []string{"-f", simulatorAppPath}, nil)
 
 		log.Infof("Applying launch services reset workaround before booting simulator")
 		_, err = cmd.RunAndReturnTrimmedCombinedOutput()

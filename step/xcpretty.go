@@ -1,4 +1,4 @@
-package main
+package step
 
 import (
 	"fmt"
@@ -64,5 +64,5 @@ func handleXcprettyInstallError(err error) (string, error) {
 
 	log.Warnf("%s", err)
 	log.Printf("Switching to xcodebuild for output tool")
-	return xcodebuildTool, nil
+	return XcodebuildTool, nil
 }

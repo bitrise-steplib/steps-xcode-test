@@ -1,17 +1,18 @@
-# github.com/bitrise-io/bitrise v0.0.0-20210519130014-380842fb41c1
+# github.com/bitrise-io/bitrise v0.0.0-20210830100501-97b6f7d7905b
 ## explicit
 github.com/bitrise-io/bitrise/configs
-# github.com/bitrise-io/go-steputils v0.0.0-20210527075147-910ce7a105a1
+# github.com/bitrise-io/go-steputils v0.0.0-20210830102622-d4542245e920
 ## explicit
 github.com/bitrise-io/go-steputils/cache
 github.com/bitrise-io/go-steputils/command/rubycommand
 github.com/bitrise-io/go-steputils/output
 github.com/bitrise-io/go-steputils/stepconf
 github.com/bitrise-io/go-steputils/tools
-# github.com/bitrise-io/go-utils v0.0.0-20210520073355-367fa34178f5
+# github.com/bitrise-io/go-utils v0.0.0-20210830075908-d621a78334fb
 ## explicit
 github.com/bitrise-io/go-utils/colorstring
 github.com/bitrise-io/go-utils/command
+github.com/bitrise-io/go-utils/env
 github.com/bitrise-io/go-utils/errorutil
 github.com/bitrise-io/go-utils/fileutil
 github.com/bitrise-io/go-utils/log
@@ -23,7 +24,7 @@ github.com/bitrise-io/go-utils/progress
 github.com/bitrise-io/go-utils/retry
 github.com/bitrise-io/go-utils/stringutil
 github.com/bitrise-io/go-utils/ziputil
-# github.com/bitrise-io/go-xcode v0.0.0-20210521101355-fb6a1eb6e05b
+# github.com/bitrise-io/go-xcode v0.0.0-20210830125207-64be9b301f0a
 ## explicit
 github.com/bitrise-io/go-xcode/models
 github.com/bitrise-io/go-xcode/plistutil
@@ -38,7 +39,6 @@ github.com/davecgh/go-spew/spew
 ## explicit
 github.com/hashicorp/go-cleanhttp
 # github.com/hashicorp/go-retryablehttp v0.7.0
-## explicit
 github.com/hashicorp/go-retryablehttp
 # github.com/hashicorp/go-version v1.3.0
 ## explicit
@@ -53,15 +53,14 @@ github.com/sirupsen/logrus
 # github.com/stretchr/testify v1.7.0
 ## explicit
 github.com/stretchr/testify/assert
-# golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
+# golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/sys v0.0.0-20210531080801-fdfd190a6549
-## explicit
+# golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.0.0-20210503060354-a79de5458b56
+# golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b
 golang.org/x/term
 # golang.org/x/text v0.3.6
 golang.org/x/text/transform
