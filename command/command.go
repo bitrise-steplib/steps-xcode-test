@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -46,31 +45,6 @@ func CreateBufferedWriter(buff *bytes.Buffer, writers ...io.Writer) io.Writer {
 		return io.MultiWriter(allWriters...)
 	}
 	return io.Writer(buff)
-}
-
-// ExportEnvironmentWithEnvman ...
-func ExportEnvironmentWithEnvman(keyStr, valueStr string) error {
-	envman := exec.Command("envman", "add", "--key", keyStr)
-	envman.Stdin = strings.NewReader(valueStr)
-	envman.Stdout = os.Stdout
-	envman.Stderr = os.Stderr
-	return envman.Run()
-}
-
-// GetXcprettyVersion ...
-func GetXcprettyVersion() (string, error) {
-	cmd := exec.Command("xcpretty", "-version")
-	outBytes, err := cmd.CombinedOutput()
-	outStr := string(outBytes)
-	if strings.HasSuffix(outStr, "\n") {
-		outStr = strings.TrimSuffix(outStr, "\n")
-	}
-
-	if err != nil {
-		return "", fmt.Errorf("xcpretty -version failed, err: %s, details: %s", err, outStr)
-	}
-
-	return outStr, nil
 }
 
 // CreateXcodebuildCmd ...

@@ -14,6 +14,7 @@ import (
 	"github.com/bitrise-io/go-steputils/output"
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-utils/command"
+	"github.com/bitrise-io/go-utils/env"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/progress"
@@ -22,7 +23,6 @@ import (
 	"github.com/bitrise-io/go-xcode/simulator"
 	"github.com/bitrise-io/go-xcode/utility"
 	cache "github.com/bitrise-io/go-xcode/xcodecache"
-	cmd "github.com/bitrise-steplib/steps-xcode-test/command"
 	"github.com/bitrise-steplib/steps-xcode-test/models"
 )
 
@@ -163,7 +163,6 @@ type Config struct {
 	XcodebuildTestOptions string
 	XcprettyOptions       string
 
-	Verbose        bool
 	SimulatorDebug exportCondition
 
 	DeployDir             string
@@ -174,12 +173,18 @@ type Config struct {
 
 // XcodeTestRunner ...
 type XcodeTestRunner struct {
-	inputParser stepconf.InputParser
+	inputParser   stepconf.InputParser
+	logger        log.Logger
+	envRepository env.Repository
 }
 
 // NewXcodeTestRunner ...
-func NewXcodeTestRunner() XcodeTestRunner {
-	return XcodeTestRunner{}
+func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, envRepository env.Repository) XcodeTestRunner {
+	return XcodeTestRunner{
+		inputParser:   inputParser,
+		logger:        logger,
+		envRepository: envRepository,
+	}
 }
 
 // ProcessConfig ...
@@ -191,14 +196,16 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 	}
 
 	stepconf.Print(input)
-	fmt.Println()
+	s.logger.Println()
+
+	s.logger.EnableDebugLog(input.Verbose)
 
 	// validate Xcode version
 	xcodebuildVersion, err := utility.GetXcodeVersion()
 	if err != nil {
 		return Config{}, fmt.Errorf("failed to determine Xcode version, error: %s", err)
 	}
-	log.Printf("- xcodebuildVersion: %s (%s)", xcodebuildVersion.Version, xcodebuildVersion.BuildVersion)
+	s.logger.Printf("- xcodebuildVersion: %s (%s)", xcodebuildVersion.Version, xcodebuildVersion.BuildVersion)
 
 	xcodeMajorVersion := xcodebuildVersion.MajorVersion
 	if xcodeMajorVersion < minSupportedXcodeMajorVersion {
@@ -212,7 +219,7 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 	// validate headless mode
 	headlessMode := input.HeadlessMode
 	if xcodeMajorVersion < 9 && input.HeadlessMode {
-		log.Warnf("Headless mode is enabled but it's only available with Xcode 9.x or newer.")
+		s.logger.Warnf("Headless mode is enabled but it's only available with Xcode 9.x or newer.")
 		headlessMode = false
 	}
 
@@ -221,7 +228,7 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 	if input.ExportUITestArtifacts && xcodeMajorVersion >= 11 {
 		// The test result bundle (xcresult) structure changed in Xcode 11:
 		// it does not contains TestSummaries.plist nor Attachments directly.
-		log.Warnf("Export UITest Artifacts (export_uitest_artifacts) turned on, but Xcode version >= 11. The test result bundle structure changed in Xcode 11 it does not contain TestSummaries.plist and Attachments directly, nothing to export.")
+		s.logger.Warnf("Export UITest Artifacts (export_uitest_artifacts) turned on, but Xcode version >= 11. The test result bundle structure changed in Xcode 11 it does not contain TestSummaries.plist and Attachments directly, nothing to export.")
 		exportUITestArtifacts = false
 	}
 
@@ -231,7 +238,7 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 		return Config{}, fmt.Errorf("internal error, unexpected value (%s) for collect_simulator_diagnostics", input.CollectSimulatorDiagnostics)
 	}
 	if simulatorDebug != never && xcodeMajorVersion < 10 {
-		log.Warnf("Collecting Simulator diagnostics is not available below Xcode version 10, current Xcode version: %s", xcodeMajorVersion)
+		s.logger.Warnf("Collecting Simulator diagnostics is not available below Xcode version 10, current Xcode version: %s", xcodeMajorVersion)
 		simulatorDebug = never
 	}
 
@@ -255,7 +262,7 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 		if input.SimulatorOsVersion == "latest" {
 			var simulatorDevice = input.SimulatorDevice
 			if simulatorDevice == "iPad" {
-				log.Warnf("Given device (%s) is deprecated, using iPad Air (3rd generation)...", simulatorDevice)
+				s.logger.Warnf("Given device (%s) is deprecated, using iPad Air (3rd generation)...", simulatorDevice)
 				simulatorDevice = "iPad Air (3rd generation)"
 			}
 
@@ -272,7 +279,7 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 		}
 
 		if errGetSimulator != nil {
-			log.Warnf("attempt %d to get simulator udid failed with error: %s", attempt, errGetSimulator)
+			s.logger.Warnf("attempt %d to get simulator udid failed with error: %s", attempt, errGetSimulator)
 		}
 
 		return errGetSimulator
@@ -280,14 +287,14 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 		return Config{}, fmt.Errorf("simulator UDID lookup failed: %s", err)
 	}
 
-	log.Infof("Simulator infos")
-	log.Printf("* simulator_name: %s, version: %s, UDID: %s, status: %s", sim.Name, osVersion, sim.ID, sim.Status)
+	s.logger.Infof("Simulator infos")
+	s.logger.Printf("* simulator_name: %s, version: %s, UDID: %s, status: %s", sim.Name, osVersion, sim.ID, sim.Status)
 
 	// Device Destination
 	deviceDestination := fmt.Sprintf("id=%s", sim.ID)
 
-	log.Printf("* device_destination: %s", deviceDestination)
-	fmt.Println()
+	s.logger.Printf("* device_destination: %s", deviceDestination)
+	s.logger.Println()
 
 	if input.TestRepetitionMode != none && xcodeMajorVersion < 13 {
 		return Config{}, errors.New("Test Repetition Mode (test_repetition_mode) is not available below Xcode 13")
@@ -331,7 +338,6 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 		XcodebuildTestOptions: input.TestOptions,
 		XcprettyOptions:       input.XcprettyTestOptions,
 
-		Verbose:        input.Verbose,
 		SimulatorDebug: simulatorDebug,
 
 		DeployDir:             input.DeployDir,
@@ -362,24 +368,22 @@ func (s XcodeTestRunner) InstallDeps(xcpretty bool) error {
 			return fmt.Errorf("an error occured during installing xcpretty: %s", err)
 		}
 	} else {
-		log.Printf("- xcprettyVersion: %s", xcprettyVersion.String())
-		fmt.Println()
+		s.logger.Printf("- xcprettyVersion: %s", xcprettyVersion.String())
+		s.logger.Println()
 	}
 	return nil
 }
 
 // Run ...
 func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
-	log.SetEnableDebugLog(cfg.Verbose)
-
 	err := resetLaunchServices()
 	if err != nil {
-		log.Warnf("Failed to apply simulator boot workaround, error: %s", err)
+		s.logger.Warnf("Failed to apply simulator boot workaround, error: %s", err)
 	}
 
 	// Boot simulator
 	if cfg.SimulatorDebug != never {
-		log.Infof("Enabling Simulator verbose log for better diagnostics")
+		s.logger.Infof("Enabling Simulator verbose log for better diagnostics")
 		// Boot the simulator now, so verbose logging can be enabled and it is kept booted after running tests,
 		// this helps to collect more detailed debug info
 		if err := simulatorBoot(cfg.SimulatorID); err != nil {
@@ -389,16 +393,13 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 			return Result{}, fmt.Errorf("%v", err)
 		}
 
-		fmt.Println()
+		s.logger.Println()
 	}
 
 	if !cfg.IsSimulatorBooted && !cfg.HeadlessMode {
-		log.Infof("Booting simulator (%s)...", cfg.SimulatorID)
+		s.logger.Infof("Booting simulator (%s)...", cfg.SimulatorID)
 
 		if err := simulator.BootSimulator(cfg.SimulatorID, cfg.XcodeMajorVersion); err != nil {
-			if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", "failed"); err != nil {
-				log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
-			}
 			return Result{}, fmt.Errorf("failed to boot simulator, error: %s", err)
 		}
 
@@ -406,7 +407,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 			time.Sleep(60 * time.Second)
 		})
 
-		fmt.Println()
+		s.logger.Println()
 	}
 
 	// Run build
@@ -430,9 +431,9 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 		buildLog, exitCode, err := runBuild(buildParams, cfg.OutputTool)
 		result.XcodebuildBuildLog = buildLog
 		if err != nil {
-			log.Warnf("xcode build exit code: %d", exitCode)
-			log.Warnf("xcode build log:\n%s", buildLog)
-			log.Errorf("xcode build failed with error: %s", err)
+			s.logger.Warnf("xcode build exit code: %d", exitCode)
+			s.logger.Warnf("xcode build log:\n%s", buildLog)
+			s.logger.Errorf("xcode build failed with error: %s", err)
 			return result, err
 		}
 	}
@@ -488,14 +489,14 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 	}
 
 	if cfg.SimulatorDebug == always || (cfg.SimulatorDebug == onFailure && testErr != nil) {
-		fmt.Println()
-		log.Infof("Collecting Simulator diagnostics")
+		s.logger.Println()
+		s.logger.Infof("Collecting Simulator diagnostics")
 
 		diagnosticsPath, err := simulatorCollectDiagnostics()
 		if err != nil {
-			log.Warnf("%v", err)
+			s.logger.Warnf("%v", err)
 		} else {
-			log.Donef("Simulator diagnistics are available as an artifact (%s)", diagnosticsPath)
+			s.logger.Donef("Simulator diagnostics are available as an artifact (%s)", diagnosticsPath)
 			result.SimulatorDiagnosticsPath = diagnosticsPath
 		}
 	}
@@ -503,26 +504,26 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 	// Shut down the simulator if it was started by the step for diagnostic logs.
 	if !cfg.IsSimulatorBooted && cfg.SimulatorDebug != never {
 		if err := simulatorShutdown(cfg.SimulatorID); err != nil {
-			log.Warnf("%v", err)
+			s.logger.Warnf("%v", err)
 		}
 	}
 
 	if testErr != nil {
-		fmt.Println()
-		log.Warnf("Xcode Test command exit code: %d", exitCode)
-		log.Errorf("Xcode Test command failed, error: %s", testErr)
+		s.logger.Println()
+		s.logger.Warnf("Xcode Test command exit code: %d", exitCode)
+		s.logger.Errorf("Xcode Test command failed, error: %s", testErr)
 		return result, testErr
 	}
 
 	// Cache swift PM
 	if cfg.XcodeMajorVersion >= 11 && cfg.CacheLevel == "swift_packages" {
 		if err := cache.CollectSwiftPackages(cfg.ProjectPath); err != nil {
-			log.Warnf("Failed to mark swift packages for caching, error: %s", err)
+			s.logger.Warnf("Failed to mark swift packages for caching, error: %s", err)
 		}
 	}
 
-	fmt.Println()
-	log.Infof("Xcode Test command succeeded.")
+	s.logger.Println()
+	s.logger.Infof("Xcode Test command succeeded.")
 
 	return result, nil
 }
@@ -549,32 +550,32 @@ func (s XcodeTestRunner) Export(opts ExportOpts) error {
 	if opts.TestFailed {
 		status = "failed"
 	}
-	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_RESULT", status); err != nil {
-		log.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
+	if err := s.envRepository.Set("BITRISE_XCODE_TEST_RESULT", status); err != nil {
+		s.logger.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
 	}
 
 	if opts.XcresultPath != "" {
 		// export xcresult bundle
-		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCRESULT_PATH", opts.XcresultPath); err != nil {
-			log.Warnf("Failed to export: BITRISE_XCRESULT_PATH, error: %s", err)
+		if err := s.envRepository.Set("BITRISE_XCRESULT_PATH", opts.XcresultPath); err != nil {
+			s.logger.Warnf("Failed to export: BITRISE_XCRESULT_PATH, error: %s", err)
 		}
 
 		xcresultZipPath := filepath.Join(opts.DeployDir, filepath.Base(opts.XcresultPath)+".zip")
 		if err := output.ZipAndExportOutput(opts.XcresultPath, xcresultZipPath, "BITRISE_XCRESULT_ZIP_PATH"); err != nil {
-			log.Warnf("Failed to export: BITRISE_XCRESULT_ZIP_PATH, error: %s", err)
+			s.logger.Warnf("Failed to export: BITRISE_XCRESULT_ZIP_PATH, error: %s", err)
 		}
 
 		// export xcresult for the testing addon
 		if addonResultPath := os.Getenv(configs.BitrisePerStepTestResultDirEnvKey); len(addonResultPath) > 0 {
-			fmt.Println()
-			log.Infof("Exporting test results")
+			s.logger.Println()
+			s.logger.Infof("Exporting test results")
 
 			if err := copyAndSaveMetadata(addonCopy{
 				sourceTestOutputDir:   opts.XcresultPath,
 				targetAddonPath:       addonResultPath,
 				targetAddonBundleName: opts.Scheme,
 			}); err != nil {
-				log.Warnf("Failed to export test results, error: %s", err)
+				s.logger.Warnf("Failed to export test results, error: %s", err)
 			}
 		}
 	}
@@ -583,7 +584,7 @@ func (s XcodeTestRunner) Export(opts ExportOpts) error {
 	if opts.XcodebuildBuildLog != "" {
 		pth, err := saveRawOutputToLogFile(opts.XcodebuildBuildLog)
 		if err != nil {
-			log.Warnf("Failed to save the Raw Output, err: %s", err)
+			s.logger.Warnf("Failed to save the Raw Output, err: %s", err)
 		}
 
 		deployPth := filepath.Join(opts.DeployDir, "xcodebuild_build.log")
@@ -591,8 +592,8 @@ func (s XcodeTestRunner) Export(opts ExportOpts) error {
 			return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s), error: %s", pth, deployPth, err)
 		}
 
-		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODEBUILD_BUILD_LOG_PATH", deployPth); err != nil {
-			log.Warnf("Failed to export: BITRISE_XCODEBUILD_BUILD_LOG_PATH, error: %s", err)
+		if err := s.envRepository.Set("BITRISE_XCODEBUILD_BUILD_LOG_PATH", deployPth); err != nil {
+			s.logger.Warnf("Failed to export: BITRISE_XCODEBUILD_BUILD_LOG_PATH, error: %s", err)
 		}
 	}
 
@@ -600,7 +601,7 @@ func (s XcodeTestRunner) Export(opts ExportOpts) error {
 	if opts.XcodebuildTestLog != "" {
 		pth, err := saveRawOutputToLogFile(opts.XcodebuildTestLog)
 		if err != nil {
-			log.Warnf("Failed to save the Raw Output, error: %s", err)
+			s.logger.Warnf("Failed to save the Raw Output, error: %s", err)
 		}
 
 		deployPth := filepath.Join(opts.DeployDir, "xcodebuild_test.log")
@@ -608,8 +609,8 @@ func (s XcodeTestRunner) Export(opts ExportOpts) error {
 			return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s), error: %s", pth, deployPth, err)
 		}
 
-		if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODEBUILD_TEST_LOG_PATH", deployPth); err != nil {
-			log.Warnf("Failed to export: BITRISE_XCODEBUILD_TEST_LOG_PATH, error: %s", err)
+		if err := s.envRepository.Set("BITRISE_XCODEBUILD_TEST_LOG_PATH", deployPth); err != nil {
+			s.logger.Warnf("Failed to export: BITRISE_XCODEBUILD_TEST_LOG_PATH, error: %s", err)
 		}
 	}
 
@@ -630,17 +631,24 @@ func (s XcodeTestRunner) Export(opts ExportOpts) error {
 	if opts.ExportUITestArtifacts && opts.XcresultPath != "" {
 		// The test result bundle (xcresult) structure changed in Xcode 11:
 		// it does not contains TestSummaries.plist nor Attachments directly.
-		fmt.Println()
-		log.Infof("Exporting attachments")
+		s.logger.Println()
+		s.logger.Infof("Exporting attachments")
 
 		testSummariesPath, attachementDir, err := getSummariesAndAttachmentPath(opts.XcresultPath)
 		if err != nil {
-			log.Warnf("Failed to export UI test artifacts, error: %s", err)
+			s.logger.Warnf("Failed to export UI test artifacts, error: %s", err)
 		}
 
-		if err := saveAttachments(opts.Scheme, testSummariesPath, attachementDir); err != nil {
-			log.Warnf("Failed to export UI test artifacts, error: %s", err)
+		zipedTestsDerivedDataPath, err := saveAttachments(opts.Scheme, testSummariesPath, attachementDir)
+		if err != nil {
+			s.logger.Warnf("Failed to export UI test artifacts, error: %s", err)
 		}
+
+		if err := s.envRepository.Set("BITRISE_XCODE_TEST_ATTACHMENTS_PATH", zipedTestsDerivedDataPath); err != nil {
+			log.Warnf("Failed to export: BITRISE_XCODE_TEST_ATTACHMENTS_PATH, error: %s", err)
+		}
+
+		log.Donef("The zipped attachments are available in: %s", zipedTestsDerivedDataPath)
 	}
 
 	return nil

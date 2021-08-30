@@ -10,7 +10,7 @@ import (
 	"github.com/bitrise-io/go-xcode/plistutil"
 )
 
-// ScreenshotsType descdribes the screenshot atttachment's type
+// ScreenshotsType describes the screenshot attachment's type
 type ScreenshotsType string
 
 // const ...
@@ -28,7 +28,7 @@ type FailureSummary struct {
 	IsPerformanceFailure bool
 }
 
-// Screenshot describes a screenshot attached to a Activity
+// Screenshot describes a screenshot attached to an Activity
 type Screenshot struct {
 	FileName    string
 	TimeCreated time.Time

@@ -39,36 +39,31 @@ func saveRawOutputToLogFile(rawXcodebuildOutput string) (string, error) {
 	return logPth, nil
 }
 
-func saveAttachments(scheme, testSummariesPath, attachementDir string) error {
+func saveAttachments(scheme, testSummariesPath, attachementDir string) (string, error) {
 	if exist, err := pathutil.IsDirExists(attachementDir); err != nil {
-		return err
+		return "", err
 	} else if !exist {
-		return fmt.Errorf("no test attachments found at: %s", attachementDir)
+		return "", fmt.Errorf("no test attachments found at: %s", attachementDir)
 	}
 
 	if found, err := UpdateScreenshotNames(testSummariesPath, attachementDir); err != nil {
 		log.Warnf("Failed to update screenshot names, error: %s", err)
 	} else if !found {
-		return nil
+		return "", nil
 	}
 
 	// deploy zipped attachments
 	deployDir := os.Getenv("BITRISE_DEPLOY_DIR")
 	if deployDir == "" {
-		return errors.New("no BITRISE_DEPLOY_DIR found")
+		return "", errors.New("no BITRISE_DEPLOY_DIR found")
 	}
 
 	zipedTestsDerivedDataPath := filepath.Join(deployDir, fmt.Sprintf("%s-xc-test-Attachments.zip", scheme))
 	if err := cmd.Zip(filepath.Dir(attachementDir), filepath.Base(attachementDir), zipedTestsDerivedDataPath); err != nil {
-		return err
+		return "", err
 	}
 
-	if err := cmd.ExportEnvironmentWithEnvman("BITRISE_XCODE_TEST_ATTACHMENTS_PATH", zipedTestsDerivedDataPath); err != nil {
-		log.Warnf("Failed to export: BITRISE_XCODE_TEST_ATTACHMENTS_PATH, error: %s", err)
-	}
-
-	log.Donef("The zipped attachments are available in: %s", zipedTestsDerivedDataPath)
-	return nil
+	return zipedTestsDerivedDataPath, nil
 }
 
 func getSummariesAndAttachmentPath(testOutputDir string) (testSummariesPath string, attachmentDir string, err error) {
