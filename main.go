@@ -7,6 +7,7 @@ import (
 	"github.com/bitrise-io/go-steputils/stepenv"
 	"github.com/bitrise-io/go-utils/env"
 	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-steplib/steps-xcode-test/cache"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/simulator"
 	"github.com/bitrise-steplib/steps-xcode-test/step"
@@ -23,12 +24,13 @@ func run() int {
 	xcprettyInstaller := xcpretty.NewInstaller()
 	xcodebuilder := xcodebuild.New()
 	sim := simulator.New()
+	c := cache.NewCache()
 	testAddonExporter := testaddon.NewExporter()
 	testArtifactExporter := testartifact.NewExporter()
 	stepenvRepository := stepenv.NewRepository(envRepository)
 	outputExporter := output.NewExporter(stepenvRepository, logger, testAddonExporter, testArtifactExporter)
 
-	xcodeTestRunner := step.NewXcodeTestRunner(inputParser, logger, xcprettyInstaller, xcodebuilder, sim, outputExporter)
+	xcodeTestRunner := step.NewXcodeTestRunner(inputParser, logger, xcprettyInstaller, xcodebuilder, sim, c, outputExporter)
 
 	config, err := xcodeTestRunner.ProcessConfig()
 	if err != nil {

@@ -14,7 +14,7 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/retry"
-	cache "github.com/bitrise-io/go-xcode/xcodecache"
+	"github.com/bitrise-steplib/steps-xcode-test/cache"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/simulator"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
@@ -145,17 +145,19 @@ type XcodeTestRunner struct {
 	xcprettyInstaller xcpretty.Installer
 	xcodebuild        xcodebuild.Xcodebuild
 	simulator         simulator.Simulator
+	cache             cache.Cache
 	outputExporter    output.Exporter
 }
 
 // NewXcodeTestRunner ...
-func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, xcprettyInstaller xcpretty.Installer, xcodebuild xcodebuild.Xcodebuild, simulator simulator.Simulator, outputExporter output.Exporter) XcodeTestRunner {
+func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, xcprettyInstaller xcpretty.Installer, xcodebuild xcodebuild.Xcodebuild, simulator simulator.Simulator, cache cache.Cache, outputExporter output.Exporter) XcodeTestRunner {
 	return XcodeTestRunner{
 		inputParser:       inputParser,
 		logger:            logger,
 		xcprettyInstaller: xcprettyInstaller,
 		xcodebuild:        xcodebuild,
 		simulator:         simulator,
+		cache:             cache,
 		outputExporter:    outputExporter,
 	}
 }
@@ -435,7 +437,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 	var swiftPackagesPath string
 	if cfg.XcodeMajorVersion >= 11 {
 		var err error
-		swiftPackagesPath, err = cache.SwiftPackagesPath(cfg.ProjectPath)
+		swiftPackagesPath, err = s.cache.SwiftPackagesPath(cfg.ProjectPath)
 		if err != nil {
 			return result, fmt.Errorf("failed to get Swift Packages path, error: %s", err)
 		}
@@ -487,7 +489,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 
 	// Cache swift PM
 	if cfg.XcodeMajorVersion >= 11 && cfg.CacheLevel == "swift_packages" {
-		if err := cache.CollectSwiftPackages(cfg.ProjectPath); err != nil {
+		if err := s.cache.CollectSwiftPackages(cfg.ProjectPath); err != nil {
 			s.logger.Warnf("Failed to mark swift packages for caching, error: %s", err)
 		}
 	}
