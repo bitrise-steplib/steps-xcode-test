@@ -1,9 +1,15 @@
 package xcodebuild
 
+import (
+	"github.com/bitrise-io/go-xcode/models"
+	"github.com/bitrise-io/go-xcode/utility"
+)
+
 // Xcodebuild ....
 type Xcodebuild interface {
 	RunBuild(buildParams Params, outputTool string) (string, int, error)
 	RunTest(params TestRunParams) (string, int, error)
+	Version() (Version, error)
 }
 
 type xcodebuild struct {
@@ -22,6 +28,13 @@ type Params struct {
 	DeviceDestination         string
 	CleanBuild                bool
 	DisableIndexWhileBuilding bool
+}
+
+type Version models.XcodebuildVersionModel
+
+func (b *xcodebuild) Version() (Version, error) {
+	version, err := utility.GetXcodeVersion()
+	return Version(version), err
 }
 
 // RunBuild ...

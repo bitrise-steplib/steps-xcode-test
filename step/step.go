@@ -20,7 +20,6 @@ import (
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/ziputil"
-	"github.com/bitrise-io/go-xcode/utility"
 	cache "github.com/bitrise-io/go-xcode/xcodecache"
 	"github.com/bitrise-steplib/steps-xcode-test/simulator"
 	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
@@ -183,7 +182,7 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 	s.logger.EnableDebugLog(input.Verbose)
 
 	// validate Xcode version
-	xcodebuildVersion, err := utility.GetXcodeVersion()
+	xcodebuildVersion, err := s.xcodebuild.Version()
 	if err != nil {
 		return Config{}, fmt.Errorf("failed to determine Xcode version, error: %s", err)
 	}
