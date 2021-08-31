@@ -10,8 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
-
 	"github.com/bitrise-io/bitrise/configs"
 	"github.com/bitrise-io/go-steputils/output"
 	"github.com/bitrise-io/go-steputils/stepconf"
@@ -22,9 +20,10 @@ import (
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/ziputil"
-	"github.com/bitrise-io/go-xcode/simulator"
 	"github.com/bitrise-io/go-xcode/utility"
 	cache "github.com/bitrise-io/go-xcode/xcodecache"
+	"github.com/bitrise-steplib/steps-xcode-test/simulator"
+	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
 )
 
 const (
@@ -150,15 +149,17 @@ type XcodeTestRunner struct {
 	logger        log.Logger
 	envRepository env.Repository
 	xcodebuild    xcodebuild.Xcodebuild
+	simulator     simulator.Simulator
 }
 
 // NewXcodeTestRunner ...
-func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, envRepository env.Repository, xcodebuild xcodebuild.Xcodebuild) XcodeTestRunner {
+func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, envRepository env.Repository, xcodebuild xcodebuild.Xcodebuild, simulator simulator.Simulator) XcodeTestRunner {
 	return XcodeTestRunner{
 		inputParser:   inputParser,
 		logger:        logger,
 		envRepository: envRepository,
 		xcodebuild:    xcodebuild,
+		simulator:     simulator,
 	}
 }
 
@@ -241,7 +242,7 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 				simulatorDevice = "iPad Air (3rd generation)"
 			}
 
-			sim, osVersion, errGetSimulator = simulator.GetLatestSimulatorInfoAndVersion(platform, simulatorDevice)
+			sim, osVersion, errGetSimulator = s.simulator.GetLatestSimulatorInfoAndVersion(platform, simulatorDevice)
 		} else {
 			normalizedOsVersion := input.SimulatorOsVersion
 			osVersionSplit := strings.Split(normalizedOsVersion, ".")
@@ -250,7 +251,7 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 			}
 			osVersion = fmt.Sprintf("%s %s", platform, normalizedOsVersion)
 
-			sim, errGetSimulator = simulator.GetSimulatorInfo(osVersion, input.SimulatorDevice)
+			sim, errGetSimulator = s.simulator.GetSimulatorInfo(osVersion, input.SimulatorDevice)
 		}
 
 		if errGetSimulator != nil {
@@ -351,7 +352,7 @@ func (s XcodeTestRunner) InstallDeps(xcpretty bool) error {
 
 // Run ...
 func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
-	err := resetLaunchServices()
+	err := s.simulator.ResetLaunchServices()
 	if err != nil {
 		s.logger.Warnf("Failed to apply simulator boot workaround, error: %s", err)
 	}
@@ -361,10 +362,10 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 		s.logger.Infof("Enabling Simulator verbose log for better diagnostics")
 		// Boot the simulator now, so verbose logging can be enabled and it is kept booted after running tests,
 		// this helps to collect more detailed debug info
-		if err := simulatorBoot(cfg.SimulatorID); err != nil {
+		if err := s.simulator.SimulatorBoot(cfg.SimulatorID); err != nil {
 			return Result{}, fmt.Errorf("%v", err)
 		}
-		if err := simulatorEnableVerboseLog(cfg.SimulatorID); err != nil {
+		if err := s.simulator.SimulatorEnableVerboseLog(cfg.SimulatorID); err != nil {
 			return Result{}, fmt.Errorf("%v", err)
 		}
 
@@ -374,7 +375,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 	if !cfg.IsSimulatorBooted && !cfg.HeadlessMode {
 		s.logger.Infof("Booting simulator (%s)...", cfg.SimulatorID)
 
-		if err := simulator.BootSimulator(cfg.SimulatorID, cfg.XcodeMajorVersion); err != nil {
+		if err := s.simulator.BootSimulator(cfg.SimulatorID, cfg.XcodeMajorVersion); err != nil {
 			return Result{}, fmt.Errorf("failed to boot simulator, error: %s", err)
 		}
 
@@ -467,7 +468,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 		s.logger.Println()
 		s.logger.Infof("Collecting Simulator diagnostics")
 
-		diagnosticsPath, err := simulatorCollectDiagnostics()
+		diagnosticsPath, err := s.simulator.SimulatorCollectDiagnostics()
 		if err != nil {
 			s.logger.Warnf("%v", err)
 		} else {
@@ -478,7 +479,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 
 	// Shut down the simulator if it was started by the step for diagnostic logs.
 	if !cfg.IsSimulatorBooted && cfg.SimulatorDebug != never {
-		if err := simulatorShutdown(cfg.SimulatorID); err != nil {
+		if err := s.simulator.SimulatorShutdown(cfg.SimulatorID); err != nil {
 			s.logger.Warnf("%v", err)
 		}
 	}
@@ -591,7 +592,7 @@ func (s XcodeTestRunner) Export(opts ExportOpts) error {
 
 	// export simulator diagnostics log
 	if opts.SimulatorDiagnosticsPath != "" {
-		diagnosticsName, err := simulatorDiagnosticsName()
+		diagnosticsName, err := s.simulator.SimulatorDiagnosticsName()
 		if err != nil {
 			return err
 		}
