@@ -147,10 +147,11 @@ type XcodeTestRunner struct {
 	simulator         simulator.Simulator
 	cache             cache.Cache
 	outputExporter    output.Exporter
+	pathModifier      pathutil.PathModifier
 }
 
 // NewXcodeTestRunner ...
-func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, xcprettyInstaller xcpretty.Installer, xcodebuild xcodebuild.Xcodebuild, simulator simulator.Simulator, cache cache.Cache, outputExporter output.Exporter) XcodeTestRunner {
+func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, xcprettyInstaller xcpretty.Installer, xcodebuild xcodebuild.Xcodebuild, simulator simulator.Simulator, cache cache.Cache, outputExporter output.Exporter, pathModifier pathutil.PathModifier) XcodeTestRunner {
 	return XcodeTestRunner{
 		inputParser:       inputParser,
 		logger:            logger,
@@ -159,6 +160,7 @@ func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, xcp
 		simulator:         simulator,
 		cache:             cache,
 		outputExporter:    outputExporter,
+		pathModifier:      pathModifier,
 	}
 }
 
@@ -218,7 +220,7 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 	}
 
 	// validate project path
-	projectPath, err := pathutil.AbsPath(input.ProjectPath)
+	projectPath, err := s.pathModifier.AbsPath(input.ProjectPath)
 	if err != nil {
 		return Config{}, fmt.Errorf("failed to get absolute project path, error: %s", err)
 	}
