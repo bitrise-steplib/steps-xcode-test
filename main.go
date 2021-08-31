@@ -3,31 +3,32 @@ package main
 import (
 	"os"
 
-	"github.com/bitrise-steplib/steps-xcode-test/output"
-
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-steputils/stepenv"
 	"github.com/bitrise-io/go-utils/env"
 	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/simulator"
 	"github.com/bitrise-steplib/steps-xcode-test/step"
 	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
 	"github.com/bitrise-steplib/steps-xcode-test/testartifact"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
+	"github.com/bitrise-steplib/steps-xcode-test/xcpretty"
 )
 
 func run() int {
 	logger := log.NewLogger()
 	envRepository := env.NewRepository()
 	inputParser := stepconf.NewInputParser(envRepository)
-	stepenvRepository := stepenv.NewRepository(envRepository)
+	xcprettyInstaller := xcpretty.NewInstaller()
 	xcodebuilder := xcodebuild.New()
 	sim := simulator.New()
 	testAddonExporter := testaddon.NewExporter()
 	testArtifactExporter := testartifact.NewExporter()
+	stepenvRepository := stepenv.NewRepository(envRepository)
 	outputExporter := output.NewExporter(stepenvRepository, logger, testAddonExporter, testArtifactExporter)
 
-	xcodeTestRunner := step.NewXcodeTestRunner(inputParser, logger, xcodebuilder, sim, outputExporter)
+	xcodeTestRunner := step.NewXcodeTestRunner(inputParser, logger, xcprettyInstaller, xcodebuilder, sim, outputExporter)
 
 	config, err := xcodeTestRunner.ProcessConfig()
 	if err != nil {
@@ -38,6 +39,7 @@ func run() int {
 
 	if err := xcodeTestRunner.InstallDeps(config.OutputTool == step.XcprettyTool); err != nil {
 		logger.Warnf("Failed to install deps: %s", err)
+		logger.Printf("Switching to xcodebuild for output tool")
 		config.OutputTool = step.XcodebuildTool
 	}
 

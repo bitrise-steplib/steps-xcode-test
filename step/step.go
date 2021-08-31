@@ -18,6 +18,7 @@ import (
 	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/simulator"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
+	"github.com/bitrise-steplib/steps-xcode-test/xcpretty"
 )
 
 const (
@@ -139,21 +140,23 @@ type Config struct {
 
 // XcodeTestRunner ...
 type XcodeTestRunner struct {
-	inputParser    stepconf.InputParser
-	logger         log.Logger
-	xcodebuild     xcodebuild.Xcodebuild
-	simulator      simulator.Simulator
-	outputExporter output.Exporter
+	inputParser       stepconf.InputParser
+	logger            log.Logger
+	xcprettyInstaller xcpretty.Installer
+	xcodebuild        xcodebuild.Xcodebuild
+	simulator         simulator.Simulator
+	outputExporter    output.Exporter
 }
 
 // NewXcodeTestRunner ...
-func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, xcodebuild xcodebuild.Xcodebuild, simulator simulator.Simulator, outputExporter output.Exporter) XcodeTestRunner {
+func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, xcprettyInstaller xcpretty.Installer, xcodebuild xcodebuild.Xcodebuild, simulator simulator.Simulator, outputExporter output.Exporter) XcodeTestRunner {
 	return XcodeTestRunner{
-		inputParser:    inputParser,
-		logger:         logger,
-		xcodebuild:     xcodebuild,
-		simulator:      simulator,
-		outputExporter: outputExporter,
+		inputParser:       inputParser,
+		logger:            logger,
+		xcprettyInstaller: xcprettyInstaller,
+		xcodebuild:        xcodebuild,
+		simulator:         simulator,
+		outputExporter:    outputExporter,
 	}
 }
 
@@ -331,12 +334,9 @@ func (s XcodeTestRunner) InstallDeps(xcpretty bool) error {
 		return nil
 	}
 
-	xcprettyVersion, err := InstallXcpretty()
+	xcprettyVersion, err := s.xcprettyInstaller.Install()
 	if err != nil {
-		_, err = handleXcprettyInstallError(err)
-		if err != nil {
-			return fmt.Errorf("an error occured during installing xcpretty: %s", err)
-		}
+		return fmt.Errorf("an error occured during installing xcpretty: %s", err)
 	} else {
 		s.logger.Printf("- xcprettyVersion: %s", xcprettyVersion.String())
 		s.logger.Println()
