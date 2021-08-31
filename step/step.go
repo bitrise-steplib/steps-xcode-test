@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
+
 	"github.com/bitrise-io/bitrise/configs"
 	"github.com/bitrise-io/go-steputils/output"
 	"github.com/bitrise-io/go-steputils/stepconf"
@@ -23,44 +25,11 @@ import (
 	"github.com/bitrise-io/go-xcode/simulator"
 	"github.com/bitrise-io/go-xcode/utility"
 	cache "github.com/bitrise-io/go-xcode/xcodecache"
-	"github.com/bitrise-steplib/steps-xcode-test/models"
 )
 
 const (
 	minSupportedXcodeMajorVersion = 6
 )
-
-// On performance limited OS X hosts (ex: VMs) the iPhone/iOS Simulator might time out
-//  while booting. So far it seems that a simple retry solves these issues.
-const (
-	// This boot timeout can happen when running Unit Tests with Xcode Command Line `xcodebuild`.
-	timeOutMessageIPhoneSimulator = "iPhoneSimulator: Timed out waiting"
-	// This boot timeout can happen when running Xcode (7+) UI tests with Xcode Command Line `xcodebuild`.
-	timeOutMessageUITest                     = "Terminating app due to uncaught exception '_XCTestCaseInterruptionException'"
-	earlyUnexpectedExit                      = "Early unexpected exit, operation never finished bootstrapping - no restart will be attempted"
-	failureAttemptingToLaunch                = "Assertion Failure: <unknown>:0: UI Testing Failure - Failure attempting to launch <XCUIApplicationImpl:"
-	failedToBackgroundTestRunner             = `Error Domain=IDETestOperationsObserverErrorDomain Code=12 "Failed to background test runner.`
-	appStateIsStillNotRunning                = `App state is still not running active, state = XCApplicationStateNotRunning`
-	appAccessibilityIsNotLoaded              = `UI Testing Failure - App accessibility isn't loaded`
-	testRunnerFailedToInitializeForUITesting = `Test runner failed to initialize for UI testing`
-	timedOutRegisteringForTestingEvent       = `Timed out registering for testing event accessibility notifications`
-	testRunnerNeverBeganExecuting            = `Test runner never began executing tests after launching.`
-	failedToOpenTestRunner                   = `Error Domain=FBSOpenApplicationServiceErrorDomain Code=1 "The request to open.*NSLocalizedFailureReason=The request was denied by service delegate \(SBMainWorkspace\)\.`
-)
-
-var testRunnerErrorPatterns = []string{
-	timeOutMessageIPhoneSimulator,
-	timeOutMessageUITest,
-	earlyUnexpectedExit,
-	failureAttemptingToLaunch,
-	failedToBackgroundTestRunner,
-	appStateIsStillNotRunning,
-	appAccessibilityIsNotLoaded,
-	testRunnerFailedToInitializeForUITesting,
-	timedOutRegisteringForTestingEvent,
-	testRunnerNeverBeganExecuting,
-	failedToOpenTestRunner,
-}
 
 const simulatorShutdownState = "Shutdown"
 
@@ -70,7 +39,11 @@ const (
 	XcprettyTool   = "xcpretty"
 )
 
-var xcodeCommandEnvs = []string{"NSUnbufferedIO=YES"}
+const (
+	none           = "none"
+	untilFailure   = "until_failure"
+	retryOnFailure = "retry_on_failure"
+)
 
 // Input ...
 type Input struct {
@@ -176,14 +149,16 @@ type XcodeTestRunner struct {
 	inputParser   stepconf.InputParser
 	logger        log.Logger
 	envRepository env.Repository
+	xcodebuild    xcodebuild.Xcodebuild
 }
 
 // NewXcodeTestRunner ...
-func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, envRepository env.Repository) XcodeTestRunner {
+func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, envRepository env.Repository, xcodebuild xcodebuild.Xcodebuild) XcodeTestRunner {
 	return XcodeTestRunner{
 		inputParser:   inputParser,
 		logger:        logger,
 		envRepository: envRepository,
+		xcodebuild:    xcodebuild,
 	}
 }
 
@@ -418,7 +393,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 		projectFlag = "-workspace"
 	}
 
-	buildParams := models.XcodebuildParams{
+	buildParams := xcodebuild.Params{
 		Action:                    projectFlag,
 		ProjectPath:               cfg.ProjectPath,
 		Scheme:                    cfg.Scheme,
@@ -428,7 +403,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 	}
 
 	if !cfg.IsSingleBuild {
-		buildLog, exitCode, err := runBuild(buildParams, cfg.OutputTool)
+		buildLog, exitCode, err := s.xcodebuild.RunBuild(buildParams, cfg.OutputTool)
 		result.XcodebuildBuildLog = buildLog
 		if err != nil {
 			s.logger.Warnf("xcode build exit code: %d", exitCode)
@@ -445,7 +420,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 	}
 	xcresultPath := path.Join(tempDir, "Test.xcresult")
 
-	testParams := models.XcodebuildTestParams{
+	testParams := xcodebuild.TestParams{
 		BuildParams:                    buildParams,
 		TestPlan:                       cfg.TestPlan,
 		TestOutputDir:                  xcresultPath,
@@ -471,16 +446,16 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 		}
 	}
 
-	params := testRunParams{
-		buildTestParams:                    testParams,
-		outputTool:                         cfg.OutputTool,
-		xcprettyOptions:                    cfg.XcprettyOptions,
-		retryOnTestRunnerError:             true,
-		retryOnSwiftPackageResolutionError: true,
-		swiftPackagesPath:                  swiftPackagesPath,
-		xcodeMajorVersion:                  cfg.XcodeMajorVersion,
+	params := xcodebuild.TestRunParams{
+		BuildTestParams:                    testParams,
+		OutputTool:                         cfg.OutputTool,
+		XcprettyOptions:                    cfg.XcprettyOptions,
+		RetryOnTestRunnerError:             true,
+		RetryOnSwiftPackageResolutionError: true,
+		SwiftPackagesPath:                  swiftPackagesPath,
+		XcodeMajorVersion:                  cfg.XcodeMajorVersion,
 	}
-	testLog, exitCode, testErr := runTest(params)
+	testLog, exitCode, testErr := s.xcodebuild.RunTest(params)
 	result.XcresultPath = xcresultPath
 	result.XcodebuildTestLog = testLog
 

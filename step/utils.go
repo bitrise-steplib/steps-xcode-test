@@ -4,26 +4,16 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
-	"regexp"
 
 	"github.com/bitrise-io/go-utils/colorstring"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/stringutil"
-	cmd "github.com/bitrise-steplib/steps-xcode-test/command"
 )
-
-func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
-	r, err := regexp.Compile("(?i)" + searchStr)
-	if err != nil {
-		log.Warnf("Failed to compile regexp: %s", err)
-		return false
-	}
-	return r.MatchString(outputToSearchIn)
-}
 
 func saveRawOutputToLogFile(rawXcodebuildOutput string) (string, error) {
 	tmpDir, err := pathutil.NormalizedOSTempDirPath("xcodebuild-output")
@@ -59,7 +49,7 @@ func saveAttachments(scheme, testSummariesPath, attachementDir string) (string, 
 	}
 
 	zipedTestsDerivedDataPath := filepath.Join(deployDir, fmt.Sprintf("%s-xc-test-Attachments.zip", scheme))
-	if err := cmd.Zip(filepath.Dir(attachementDir), filepath.Base(attachementDir), zipedTestsDerivedDataPath); err != nil {
+	if err := Zip(filepath.Dir(attachementDir), filepath.Base(attachementDir), zipedTestsDerivedDataPath); err != nil {
 		return "", err
 	}
 
@@ -116,4 +106,14 @@ is available in the $BITRISE_XCODEBUILD_TEST_LOG_PATH environment variable.
 
 If you have the Deploy to Bitrise.io step (after this step),
 that will attach the file to your build as an artifact!`))
+}
+
+// Zip ...
+func Zip(targetDir, targetRelPathToZip, zipPath string) error {
+	zipCmd := exec.Command("/usr/bin/zip", "-rTy", zipPath, targetRelPathToZip)
+	zipCmd.Dir = targetDir
+	if out, err := zipCmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("Zip failed, out: %s, err: %#v", out, err)
+	}
+	return nil
 }

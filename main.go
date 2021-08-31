@@ -8,6 +8,7 @@ import (
 	"github.com/bitrise-io/go-utils/env"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-steplib/steps-xcode-test/step"
+	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
 )
 
 func run() int {
@@ -15,8 +16,9 @@ func run() int {
 	envRepository := env.NewRepository()
 	inputParser := stepconf.NewInputParser(envRepository)
 	stepenvRepository := stepenv.NewRepository(envRepository)
+	xcodebuilder := xcodebuild.New()
 
-	xcodeTestRunner := step.NewXcodeTestRunner(inputParser, logger, stepenvRepository)
+	xcodeTestRunner := step.NewXcodeTestRunner(inputParser, logger, stepenvRepository, xcodebuilder)
 
 	config, err := xcodeTestRunner.ProcessConfig()
 	if err != nil {
