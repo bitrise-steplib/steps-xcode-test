@@ -1,4 +1,4 @@
-package step
+package testartifact
 
 import (
 	"path/filepath"

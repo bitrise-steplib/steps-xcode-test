@@ -23,6 +23,8 @@ import (
 	"github.com/bitrise-io/go-xcode/utility"
 	cache "github.com/bitrise-io/go-xcode/xcodecache"
 	"github.com/bitrise-steplib/steps-xcode-test/simulator"
+	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
+	"github.com/bitrise-steplib/steps-xcode-test/testartifact"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
 )
 
@@ -145,21 +147,25 @@ type Config struct {
 
 // XcodeTestRunner ...
 type XcodeTestRunner struct {
-	inputParser   stepconf.InputParser
-	logger        log.Logger
-	envRepository env.Repository
-	xcodebuild    xcodebuild.Xcodebuild
-	simulator     simulator.Simulator
+	inputParser          stepconf.InputParser
+	logger               log.Logger
+	envRepository        env.Repository
+	xcodebuild           xcodebuild.Xcodebuild
+	simulator            simulator.Simulator
+	testAddonExporter    testaddon.Exporter
+	testArtifactExporter testartifact.Exporter
 }
 
 // NewXcodeTestRunner ...
-func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, envRepository env.Repository, xcodebuild xcodebuild.Xcodebuild, simulator simulator.Simulator) XcodeTestRunner {
+func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, envRepository env.Repository, xcodebuild xcodebuild.Xcodebuild, simulator simulator.Simulator, testAddonExporter testaddon.Exporter, testArtifactExporter testartifact.Exporter) XcodeTestRunner {
 	return XcodeTestRunner{
-		inputParser:   inputParser,
-		logger:        logger,
-		envRepository: envRepository,
-		xcodebuild:    xcodebuild,
-		simulator:     simulator,
+		inputParser:          inputParser,
+		logger:               logger,
+		envRepository:        envRepository,
+		xcodebuild:           xcodebuild,
+		simulator:            simulator,
+		testAddonExporter:    testAddonExporter,
+		testArtifactExporter: testArtifactExporter,
 	}
 }
 
@@ -546,10 +552,10 @@ func (s XcodeTestRunner) Export(opts ExportOpts) error {
 			s.logger.Println()
 			s.logger.Infof("Exporting test results")
 
-			if err := copyAndSaveMetadata(addonCopy{
-				sourceTestOutputDir:   opts.XcresultPath,
-				targetAddonPath:       addonResultPath,
-				targetAddonBundleName: opts.Scheme,
+			if err := s.testAddonExporter.CopyAndSaveMetadata(testaddon.AddonCopy{
+				SourceTestOutputDir:   opts.XcresultPath,
+				TargetAddonPath:       addonResultPath,
+				TargetAddonBundleName: opts.Scheme,
 			}); err != nil {
 				s.logger.Warnf("Failed to export test results, error: %s", err)
 			}
@@ -610,12 +616,12 @@ func (s XcodeTestRunner) Export(opts ExportOpts) error {
 		s.logger.Println()
 		s.logger.Infof("Exporting attachments")
 
-		testSummariesPath, attachementDir, err := getSummariesAndAttachmentPath(opts.XcresultPath)
+		testSummariesPath, attachementDir, err := s.testArtifactExporter.GetSummariesAndAttachmentPath(opts.XcresultPath)
 		if err != nil {
 			s.logger.Warnf("Failed to export UI test artifacts, error: %s", err)
 		}
 
-		zipedTestsDerivedDataPath, err := saveAttachments(opts.Scheme, testSummariesPath, attachementDir)
+		zipedTestsDerivedDataPath, err := s.testArtifactExporter.SaveAttachments(opts.Scheme, testSummariesPath, attachementDir)
 		if err != nil {
 			s.logger.Warnf("Failed to export UI test artifacts, error: %s", err)
 		}

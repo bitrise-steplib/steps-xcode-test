@@ -9,6 +9,8 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-steplib/steps-xcode-test/simulator"
 	"github.com/bitrise-steplib/steps-xcode-test/step"
+	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
+	"github.com/bitrise-steplib/steps-xcode-test/testartifact"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
 )
 
@@ -19,8 +21,10 @@ func run() int {
 	stepenvRepository := stepenv.NewRepository(envRepository)
 	xcodebuilder := xcodebuild.New()
 	sim := simulator.New()
+	testAddonExporter := testaddon.NewExporter()
+	testArtifactExporter := testartifact.NewExporter()
 
-	xcodeTestRunner := step.NewXcodeTestRunner(inputParser, logger, stepenvRepository, xcodebuilder, sim)
+	xcodeTestRunner := step.NewXcodeTestRunner(inputParser, logger, stepenvRepository, xcodebuilder, sim, testAddonExporter, testArtifactExporter)
 
 	config, err := xcodeTestRunner.ProcessConfig()
 	if err != nil {

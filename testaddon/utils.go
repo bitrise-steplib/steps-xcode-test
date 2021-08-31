@@ -1,4 +1,4 @@
-package step
+package testaddon
 
 import (
 	"encoding/json"
@@ -6,29 +6,18 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/env"
 	"github.com/bitrise-io/go-utils/log"
 )
 
-type addonCopy struct {
-	sourceTestOutputDir   string
-	targetAddonPath       string
-	targetAddonBundleName string
-}
-
-func copyAndSaveMetadata(info addonCopy) error {
-	info.targetAddonBundleName = replaceUnsupportedFilenameCharacters(info.targetAddonBundleName)
-	addonPerStepOutputDir := filepath.Join(info.targetAddonPath, info.targetAddonBundleName)
-
-	if err := copyDirectory(info.sourceTestOutputDir, addonPerStepOutputDir); err != nil {
-		return err
-	}
-	if err := saveBundleMetadata(addonPerStepOutputDir, info.targetAddonBundleName); err != nil {
-		return err
-	}
-	return nil
+// Replaces characters '/' and ':', which are unsupported in filnenames on macOS
+func replaceUnsupportedFilenameCharacters(s string) string {
+	s = strings.Replace(s, "/", "-", -1)
+	s = strings.Replace(s, ":", "-", -1)
+	return s
 }
 
 func copyDirectory(sourceBundle string, targetDir string) error {

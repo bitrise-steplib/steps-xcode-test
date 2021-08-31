@@ -1,8 +1,9 @@
-package step
+package testartifact
 
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -30,6 +31,18 @@ func UpdateScreenshotNames(testSummariesPath string, attachementDir string) (boo
 	log.Debugf("Test results: %s", pretty.Object(testResults))
 
 	return commitRename(createRenamePlan(testResults, attachementDir)), nil
+}
+
+func filterActivitiesWithScreenshotsFromTree(activities []testsummaries.Activity) []testsummaries.Activity {
+	var activitiesWithScreensots []testsummaries.Activity
+	for _, activity := range activities {
+		if len(activity.Screenshots) > 0 {
+			activitiesWithScreensots = append(activitiesWithScreensots, activity)
+		}
+		activitiesWithScreensots = append(activitiesWithScreensots,
+			filterActivitiesWithScreenshotsFromTree(activity.SubActivities)...)
+	}
+	return activitiesWithScreensots
 }
 
 func createRenamePlan(testResults []testsummaries.TestResult, attachmentDir string) map[string]string {
@@ -61,25 +74,6 @@ func createRenamePlan(testResults []testsummaries.TestResult, attachmentDir stri
 	return renameMap
 }
 
-func filterActivitiesWithScreenshotsFromTree(activities []testsummaries.Activity) []testsummaries.Activity {
-	var activitiesWithScreensots []testsummaries.Activity
-	for _, activity := range activities {
-		if len(activity.Screenshots) > 0 {
-			activitiesWithScreensots = append(activitiesWithScreensots, activity)
-		}
-		activitiesWithScreensots = append(activitiesWithScreensots,
-			filterActivitiesWithScreenshotsFromTree(activity.SubActivities)...)
-	}
-	return activitiesWithScreensots
-}
-
-// Replaces characters '/' and ':', which are unsupported in filnenames on macOS
-func replaceUnsupportedFilenameCharacters(s string) string {
-	s = strings.Replace(s, "/", "-", -1)
-	s = strings.Replace(s, ":", "-", -1)
-	return s
-}
-
 func commitRename(renameMap map[string]string) bool {
 	var succesfulRenames int
 	for fromFileName, toFileName := range renameMap {
@@ -101,4 +95,22 @@ func commitRename(renameMap map[string]string) bool {
 		log.Printf("Screenshot renamed: %s => %s", filepath.Base(fromFileName), filepath.Base(toFileName))
 	}
 	return succesfulRenames > 0
+}
+
+// TODO: merge with testaddon.replaceUnsupportedFilenameCharacters
+// Replaces characters '/' and ':', which are unsupported in filnenames on macOS
+func replaceUnsupportedFilenameCharacters(s string) string {
+	s = strings.Replace(s, "/", "-", -1)
+	s = strings.Replace(s, ":", "-", -1)
+	return s
+}
+
+// Zip ...
+func Zip(targetDir, targetRelPathToZip, zipPath string) error {
+	zipCmd := exec.Command("/usr/bin/zip", "-rTy", zipPath, targetRelPathToZip)
+	zipCmd.Dir = targetDir
+	if out, err := zipCmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("Zip failed, out: %s, err: %#v", out, err)
+	}
+	return nil
 }
