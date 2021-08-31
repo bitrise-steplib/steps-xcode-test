@@ -4,26 +4,19 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/bitrise-io/bitrise/configs"
-	"github.com/bitrise-io/go-steputils/output"
 	"github.com/bitrise-io/go-steputils/stepconf"
-	"github.com/bitrise-io/go-utils/command"
-	"github.com/bitrise-io/go-utils/env"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/retry"
-	"github.com/bitrise-io/go-utils/ziputil"
 	cache "github.com/bitrise-io/go-xcode/xcodecache"
+	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/simulator"
-	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
-	"github.com/bitrise-steplib/steps-xcode-test/testartifact"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
 )
 
@@ -146,25 +139,21 @@ type Config struct {
 
 // XcodeTestRunner ...
 type XcodeTestRunner struct {
-	inputParser          stepconf.InputParser
-	logger               log.Logger
-	envRepository        env.Repository
-	xcodebuild           xcodebuild.Xcodebuild
-	simulator            simulator.Simulator
-	testAddonExporter    testaddon.Exporter
-	testArtifactExporter testartifact.Exporter
+	inputParser    stepconf.InputParser
+	logger         log.Logger
+	xcodebuild     xcodebuild.Xcodebuild
+	simulator      simulator.Simulator
+	outputExporter output.Exporter
 }
 
 // NewXcodeTestRunner ...
-func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, envRepository env.Repository, xcodebuild xcodebuild.Xcodebuild, simulator simulator.Simulator, testAddonExporter testaddon.Exporter, testArtifactExporter testartifact.Exporter) XcodeTestRunner {
+func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, xcodebuild xcodebuild.Xcodebuild, simulator simulator.Simulator, outputExporter output.Exporter) XcodeTestRunner {
 	return XcodeTestRunner{
-		inputParser:          inputParser,
-		logger:               logger,
-		envRepository:        envRepository,
-		xcodebuild:           xcodebuild,
-		simulator:            simulator,
-		testAddonExporter:    testAddonExporter,
-		testArtifactExporter: testArtifactExporter,
+		inputParser:    inputParser,
+		logger:         logger,
+		xcodebuild:     xcodebuild,
+		simulator:      simulator,
+		outputExporter: outputExporter,
 	}
 }
 
@@ -527,72 +516,20 @@ type ExportOpts struct {
 // Export ...
 func (s XcodeTestRunner) Export(opts ExportOpts) error {
 	// export test run status
-	status := "succeeded"
-	if opts.TestFailed {
-		status = "failed"
-	}
-	if err := s.envRepository.Set("BITRISE_XCODE_TEST_RESULT", status); err != nil {
-		s.logger.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
-	}
+	s.outputExporter.ExportTestRunResult(opts.TestFailed)
 
 	if opts.XcresultPath != "" {
-		// export xcresult bundle
-		if err := s.envRepository.Set("BITRISE_XCRESULT_PATH", opts.XcresultPath); err != nil {
-			s.logger.Warnf("Failed to export: BITRISE_XCRESULT_PATH, error: %s", err)
-		}
-
-		xcresultZipPath := filepath.Join(opts.DeployDir, filepath.Base(opts.XcresultPath)+".zip")
-		if err := output.ZipAndExportOutput(opts.XcresultPath, xcresultZipPath, "BITRISE_XCRESULT_ZIP_PATH"); err != nil {
-			s.logger.Warnf("Failed to export: BITRISE_XCRESULT_ZIP_PATH, error: %s", err)
-		}
-
-		// export xcresult for the testing addon
-		if addonResultPath := os.Getenv(configs.BitrisePerStepTestResultDirEnvKey); len(addonResultPath) > 0 {
-			s.logger.Println()
-			s.logger.Infof("Exporting test results")
-
-			if err := s.testAddonExporter.CopyAndSaveMetadata(testaddon.AddonCopy{
-				SourceTestOutputDir:   opts.XcresultPath,
-				TargetAddonPath:       addonResultPath,
-				TargetAddonBundleName: opts.Scheme,
-			}); err != nil {
-				s.logger.Warnf("Failed to export test results, error: %s", err)
-			}
-		}
+		s.outputExporter.ExportXCResultBundle(opts.DeployDir, opts.XcresultPath, opts.Scheme)
 	}
 
 	// export xcodebuild build log
 	if opts.XcodebuildBuildLog != "" {
-		pth, err := saveRawOutputToLogFile(opts.XcodebuildBuildLog)
-		if err != nil {
-			s.logger.Warnf("Failed to save the Raw Output, err: %s", err)
-		}
-
-		deployPth := filepath.Join(opts.DeployDir, "xcodebuild_build.log")
-		if err := command.CopyFile(pth, deployPth); err != nil {
-			return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s), error: %s", pth, deployPth, err)
-		}
-
-		if err := s.envRepository.Set("BITRISE_XCODEBUILD_BUILD_LOG_PATH", deployPth); err != nil {
-			s.logger.Warnf("Failed to export: BITRISE_XCODEBUILD_BUILD_LOG_PATH, error: %s", err)
-		}
+		s.outputExporter.ExportXcodebuildBuildLog(opts.DeployDir, opts.XcodebuildBuildLog)
 	}
 
 	// export xcodebuild test log
 	if opts.XcodebuildTestLog != "" {
-		pth, err := saveRawOutputToLogFile(opts.XcodebuildTestLog)
-		if err != nil {
-			s.logger.Warnf("Failed to save the Raw Output, error: %s", err)
-		}
-
-		deployPth := filepath.Join(opts.DeployDir, "xcodebuild_test.log")
-		if err := command.CopyFile(pth, deployPth); err != nil {
-			return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s), error: %s", pth, deployPth, err)
-		}
-
-		if err := s.envRepository.Set("BITRISE_XCODEBUILD_TEST_LOG_PATH", deployPth); err != nil {
-			s.logger.Warnf("Failed to export: BITRISE_XCODEBUILD_TEST_LOG_PATH, error: %s", err)
-		}
+		s.outputExporter.ExportXcodebuildTestLog(opts.DeployDir, opts.XcodebuildTestLog)
 	}
 
 	// export simulator diagnostics log
@@ -602,34 +539,12 @@ func (s XcodeTestRunner) Export(opts ExportOpts) error {
 			return err
 		}
 
-		outputPath := filepath.Join(opts.DeployDir, diagnosticsName)
-		if err := ziputil.ZipDir(opts.SimulatorDiagnosticsPath, outputPath, true); err != nil {
-			return fmt.Errorf("failed to compress simulator diagnostics result: %v", err)
-		}
+		s.outputExporter.ExportSimulatorDiagnostics(opts.DeployDir, opts.SimulatorDiagnosticsPath, diagnosticsName)
 	}
 
 	// export UITest artifacts
 	if opts.ExportUITestArtifacts && opts.XcresultPath != "" {
-		// The test result bundle (xcresult) structure changed in Xcode 11:
-		// it does not contains TestSummaries.plist nor Attachments directly.
-		s.logger.Println()
-		s.logger.Infof("Exporting attachments")
-
-		testSummariesPath, attachementDir, err := s.testArtifactExporter.GetSummariesAndAttachmentPath(opts.XcresultPath)
-		if err != nil {
-			s.logger.Warnf("Failed to export UI test artifacts, error: %s", err)
-		}
-
-		zipedTestsDerivedDataPath, err := s.testArtifactExporter.SaveAttachments(opts.Scheme, testSummariesPath, attachementDir)
-		if err != nil {
-			s.logger.Warnf("Failed to export UI test artifacts, error: %s", err)
-		}
-
-		if err := s.envRepository.Set("BITRISE_XCODE_TEST_ATTACHMENTS_PATH", zipedTestsDerivedDataPath); err != nil {
-			log.Warnf("Failed to export: BITRISE_XCODE_TEST_ATTACHMENTS_PATH, error: %s", err)
-		}
-
-		log.Donef("The zipped attachments are available in: %s", zipedTestsDerivedDataPath)
+		s.outputExporter.ExportUITestArtifacts(opts.XcresultPath, opts.Scheme)
 	}
 
 	return nil

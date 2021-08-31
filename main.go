@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 
+	"github.com/bitrise-steplib/steps-xcode-test/output"
+
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-steputils/stepenv"
 	"github.com/bitrise-io/go-utils/env"
@@ -23,8 +25,9 @@ func run() int {
 	sim := simulator.New()
 	testAddonExporter := testaddon.NewExporter()
 	testArtifactExporter := testartifact.NewExporter()
+	outputExporter := output.NewExporter(stepenvRepository, logger, testAddonExporter, testArtifactExporter)
 
-	xcodeTestRunner := step.NewXcodeTestRunner(inputParser, logger, stepenvRepository, xcodebuilder, sim, testAddonExporter, testArtifactExporter)
+	xcodeTestRunner := step.NewXcodeTestRunner(inputParser, logger, xcodebuilder, sim, outputExporter)
 
 	config, err := xcodeTestRunner.ProcessConfig()
 	if err != nil {
