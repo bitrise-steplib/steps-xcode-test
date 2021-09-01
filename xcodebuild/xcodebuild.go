@@ -20,6 +20,14 @@ func New() Xcodebuild {
 	return &xcodebuild{}
 }
 
+// Version ...
+type Version models.XcodebuildVersionModel
+
+func (b *xcodebuild) Version() (Version, error) {
+	version, err := utility.GetXcodeVersion()
+	return Version(version), err
+}
+
 // Params ...
 type Params struct {
 	Action                    string
@@ -30,17 +38,20 @@ type Params struct {
 	DisableIndexWhileBuilding bool
 }
 
-// Version ...
-type Version models.XcodebuildVersionModel
-
-func (b *xcodebuild) Version() (Version, error) {
-	version, err := utility.GetXcodeVersion()
-	return Version(version), err
-}
-
 // RunBuild ...
 func (b *xcodebuild) RunBuild(buildParams Params, outputTool string) (string, int, error) {
 	return runBuild(buildParams, outputTool)
+}
+
+// TestRunParams ...
+type TestRunParams struct {
+	BuildTestParams                    TestParams
+	OutputTool                         string
+	XcprettyOptions                    string
+	RetryOnTestRunnerError             bool
+	RetryOnSwiftPackageResolutionError bool
+	SwiftPackagesPath                  string
+	XcodeMajorVersion                  int
 }
 
 // RunTest ...

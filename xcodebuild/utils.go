@@ -78,17 +78,6 @@ type TestParams struct {
 	AdditionalOptions              string
 }
 
-// TestRunParams ...
-type TestRunParams struct {
-	BuildTestParams                    TestParams
-	OutputTool                         string
-	XcprettyOptions                    string
-	RetryOnTestRunnerError             bool
-	RetryOnSwiftPackageResolutionError bool
-	SwiftPackagesPath                  string
-	XcodeMajorVersion                  int
-}
-
 // CreateXcodebuildCmd ...
 func CreateXcodebuildCmd(xcodebuildArgs ...string) *exec.Cmd {
 	return exec.Command("xcodebuild", xcodebuildArgs...)
