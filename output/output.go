@@ -4,16 +4,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/bitrise-steplib/steps-xcode-test/testartifact"
-
-	"github.com/bitrise-io/go-utils/ziputil"
-
 	"github.com/bitrise-io/bitrise/configs"
 	"github.com/bitrise-io/go-steputils/output"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/env"
 	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-io/go-utils/ziputil"
 	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
+	"github.com/bitrise-steplib/steps-xcode-test/testartifact"
 )
 
 type Exporter interface {

@@ -34,9 +34,7 @@ const (
 )
 
 const (
-	none           = "none"
-	untilFailure   = "until_failure"
-	retryOnFailure = "retry_on_failure"
+	testRepetitionModeNone = "none"
 )
 
 // Input ...
@@ -273,15 +271,15 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 	s.logger.Printf("* device_destination: %s", deviceDestination)
 	s.logger.Println()
 
-	if input.TestRepetitionMode != none && xcodeMajorVersion < 13 {
+	if input.TestRepetitionMode != testRepetitionModeNone && xcodeMajorVersion < 13 {
 		return Config{}, errors.New("Test Repetition Mode (test_repetition_mode) is not available below Xcode 13")
 	}
 
-	if input.TestRepetitionMode != none && input.MaximumTestRepetitions < 2 {
+	if input.TestRepetitionMode != testRepetitionModeNone && input.MaximumTestRepetitions < 2 {
 		return Config{}, fmt.Errorf("invalid number of Maximum Test Repetitions (maximum_test_repetitions): %d, should be more than 1", input.MaximumTestRepetitions)
 	}
 
-	if input.RelaunchTestsForEachRepetition && input.TestRepetitionMode == none {
+	if input.RelaunchTestsForEachRepetition && input.TestRepetitionMode == testRepetitionModeNone {
 		return Config{}, errors.New("Relaunch Tests for Each Repetition (relaunch_tests_for_each_repetition) cannot be used if Test Repetition Mode (test_repetition_mode) is 'none'")
 	}
 
@@ -324,14 +322,6 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 	}, nil
 }
 
-// Result ...
-type Result struct {
-	XcresultPath             string
-	XcodebuildBuildLog       string
-	XcodebuildTestLog        string
-	SimulatorDiagnosticsPath string
-}
-
 // InstallDeps ...
 func (s XcodeTestRunner) InstallDeps(xcpretty bool) error {
 	if !xcpretty {
@@ -346,6 +336,14 @@ func (s XcodeTestRunner) InstallDeps(xcpretty bool) error {
 		s.logger.Println()
 	}
 	return nil
+}
+
+// Result ...
+type Result struct {
+	XcresultPath             string
+	XcodebuildBuildLog       string
+	XcodebuildTestLog        string
+	SimulatorDiagnosticsPath string
 }
 
 // Run ...

@@ -9,7 +9,7 @@ github.com/bitrise-io/go-steputils/output
 github.com/bitrise-io/go-steputils/stepconf
 github.com/bitrise-io/go-steputils/stepenv
 github.com/bitrise-io/go-steputils/tools
-# github.com/bitrise-io/go-utils v0.0.0-20210831134047-afd01ad5faab
+# github.com/bitrise-io/go-utils v0.0.0-20210901052717-8e9a0ba7a2ea
 ## explicit
 github.com/bitrise-io/go-utils/colorstring
 github.com/bitrise-io/go-utils/command
@@ -17,8 +17,10 @@ github.com/bitrise-io/go-utils/env
 github.com/bitrise-io/go-utils/errorutil
 github.com/bitrise-io/go-utils/fileutil
 github.com/bitrise-io/go-utils/log
+github.com/bitrise-io/go-utils/log/mocks
 github.com/bitrise-io/go-utils/parseutil
 github.com/bitrise-io/go-utils/pathutil
+github.com/bitrise-io/go-utils/pathutil/mocks
 github.com/bitrise-io/go-utils/pointers
 github.com/bitrise-io/go-utils/pretty
 github.com/bitrise-io/go-utils/progress
@@ -34,6 +36,8 @@ github.com/bitrise-io/go-xcode/utility
 github.com/bitrise-io/go-xcode/xcodebuild
 github.com/bitrise-io/go-xcode/xcodecache
 github.com/bitrise-io/go-xcode/xcpretty
+# github.com/davecgh/go-spew v1.1.1
+github.com/davecgh/go-spew/spew
 # github.com/hashicorp/go-cleanhttp v0.5.2
 github.com/hashicorp/go-cleanhttp
 # github.com/hashicorp/go-retryablehttp v0.7.0
@@ -44,8 +48,17 @@ github.com/hashicorp/go-version
 # github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 ## explicit
 github.com/kballard/go-shellquote
+# github.com/pmezard/go-difflib v1.0.0
+github.com/pmezard/go-difflib/difflib
 # github.com/sirupsen/logrus v1.8.1
 github.com/sirupsen/logrus
+# github.com/stretchr/objx v0.3.0
+github.com/stretchr/objx
+# github.com/stretchr/testify v1.7.0
+## explicit
+github.com/stretchr/testify/assert
+github.com/stretchr/testify/mock
+github.com/stretchr/testify/require
 # golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 golang.org/x/crypto/ssh/terminal
 # golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
@@ -58,5 +71,7 @@ golang.org/x/term
 # golang.org/x/text v0.3.6
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
+# gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+gopkg.in/yaml.v3
 # howett.net/plist v0.0.0-20201203080718-1454fab16a06
 howett.net/plist
