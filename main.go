@@ -5,10 +5,12 @@ import (
 
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-steputils/stepenv"
+	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/env"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-steplib/steps-xcode-test/cache"
+	"github.com/bitrise-steplib/steps-xcode-test/fileremover"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/simulator"
 	"github.com/bitrise-steplib/steps-xcode-test/step"
@@ -23,7 +25,10 @@ func run() int {
 	envRepository := env.NewRepository()
 	inputParser := stepconf.NewInputParser(envRepository)
 	xcprettyInstaller := xcpretty.NewInstaller()
-	xcodebuilder := xcodebuild.New()
+	commandFactory := command.NewFactory(envRepository)
+	pathChecker := pathutil.NewPathChecker()
+	fileRemover := fileremover.NewFileRemover()
+	xcodebuilder := xcodebuild.New(logger, commandFactory, pathChecker, fileRemover)
 	sim := simulator.New()
 	c := cache.NewCache()
 	testAddonExporter := testaddon.NewExporter()

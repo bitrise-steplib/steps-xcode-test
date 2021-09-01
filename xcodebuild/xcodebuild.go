@@ -1,8 +1,12 @@
 package xcodebuild
 
 import (
+	"github.com/bitrise-io/go-utils/command"
+	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-xcode/models"
 	"github.com/bitrise-io/go-xcode/utility"
+	"github.com/bitrise-steplib/steps-xcode-test/fileremover"
 )
 
 // Xcodebuild ....
@@ -13,11 +17,20 @@ type Xcodebuild interface {
 }
 
 type xcodebuild struct {
+	logger         log.Logger
+	commandFactory command.Factory
+	pathChecker    pathutil.PathChecker
+	fileRemover    fileremover.FileRemover
 }
 
 // New ...
-func New() Xcodebuild {
-	return &xcodebuild{}
+func New(logger log.Logger, commandFactory command.Factory, pathChecker pathutil.PathChecker, fileRemover fileremover.FileRemover) Xcodebuild {
+	return &xcodebuild{
+		logger:         logger,
+		commandFactory: commandFactory,
+		pathChecker:    pathChecker,
+		fileRemover:    fileRemover,
+	}
 }
 
 // Version ...
@@ -40,7 +53,7 @@ type Params struct {
 
 // RunBuild ...
 func (b *xcodebuild) RunBuild(buildParams Params, outputTool string) (string, int, error) {
-	return runBuild(buildParams, outputTool)
+	return b.runBuild(buildParams, outputTool)
 }
 
 // TestRunParams ...
@@ -56,5 +69,5 @@ type TestRunParams struct {
 
 // RunTest ...
 func (b *xcodebuild) RunTest(params TestRunParams) (string, int, error) {
-	return runTest(params)
+	return b.runTest(params)
 }

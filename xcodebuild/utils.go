@@ -9,12 +9,12 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
-	"strings"
 	"syscall"
 	"time"
 
+	"github.com/bitrise-io/go-utils/command"
+
 	"github.com/bitrise-io/go-utils/log"
-	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/progress"
 	cache "github.com/bitrise-io/go-xcode/xcodecache"
 	"github.com/kballard/go-shellquote"
@@ -78,60 +78,43 @@ type TestParams struct {
 	AdditionalOptions              string
 }
 
-// CreateXcodebuildCmd ...
-func CreateXcodebuildCmd(xcodebuildArgs ...string) *exec.Cmd {
-	return exec.Command("xcodebuild", xcodebuildArgs...)
-}
+//// CreateXcodebuildCmd ...
+//func CreateXcodebuildCmd(xcodebuildArgs ...string) *exec.Cmd {
+//	return exec.Command("xcodebuild", xcodebuildArgs...)
+//}
+//
+//// CreateXcprettyCmd ...
+//func CreateXcprettyCmd(xcprettydArgs ...string) *exec.Cmd {
+//	return exec.Command("xcpretty", xcprettydArgs...)
+//}
 
-// CreateXcprettyCmd ...
-func CreateXcprettyCmd(xcprettydArgs ...string) *exec.Cmd {
-	return exec.Command("xcpretty", xcprettydArgs...)
-}
-
-func runXcodebuildCmd(args ...string) (string, int, error) {
-	// command
-	buildCmd := CreateXcodebuildCmd(args...)
-	// output buffer
+func (b *xcodebuild) runXcodebuildCmd(args ...string) (string, int, error) {
 	var outBuffer bytes.Buffer
-	// set command streams and env
-	buildCmd.Stdin = nil
-	buildCmd.Stdout = &outBuffer
-	buildCmd.Stderr = &outBuffer
-	buildCmd.Env = append(os.Environ(), xcodeCommandEnvs...)
 
-	cmdArgsForPrint := PrintableCommandArgsWithEnvs(buildCmd.Args, xcodeCommandEnvs)
+	cmd := b.commandFactory.Create("xcodebuild", args, &command.Opts{
+		Stdout: &outBuffer,
+		Stderr: &outBuffer,
+		Env:    xcodeCommandEnvs,
+	})
 
-	log.Printf("$ %s", cmdArgsForPrint)
+	b.logger.Printf("$ %s", cmd.PrintableCommandArgs())
+	b.logger.Println()
 
 	var err error
+	var exitCode int
 	progress.SimpleProgress(".", time.Minute, func() {
-		err = buildCmd.Run()
+		exitCode, err = cmd.RunAndReturnExitCode()
 	})
-	if err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
-			waitStatus, ok := exitError.Sys().(syscall.WaitStatus)
-			if !ok {
-				return outBuffer.String(), 1, errors.New("failed to cast exit status")
-			}
-			return outBuffer.String(), waitStatus.ExitStatus(), err
-		}
-		return outBuffer.String(), 1, err
-	}
-	return outBuffer.String(), 0, nil
+
+	return outBuffer.String(), exitCode, err
 }
 
-func runPrettyXcodebuildCmd(useStdOut bool, xcprettyArgs []string, xcodebuildArgs []string) (string, int, error) {
-	//
-	buildCmd := CreateXcodebuildCmd(xcodebuildArgs...)
-	prettyCmd := CreateXcprettyCmd(xcprettyArgs...)
-	//
-	var buildOutBuffer bytes.Buffer
-	//
-	pipeReader, pipeWriter := io.Pipe()
-	//
+func (b *xcodebuild) runPrettyXcodebuildCmd(useStdOut bool, xcprettyArgs []string, xcodebuildArgs []string) (string, int, error) {
 	// build outputs:
 	// - write it into a buffer
 	// - write it into the pipe, which will be fed into xcpretty
+	var buildOutBuffer bytes.Buffer
+	pipeReader, pipeWriter := io.Pipe()
 	buildOutWriters := []io.Writer{pipeWriter}
 	buildOutWriter := CreateBufferedWriter(&buildOutBuffer, buildOutWriters...)
 	//
@@ -140,22 +123,20 @@ func runPrettyXcodebuildCmd(useStdOut bool, xcprettyArgs []string, xcodebuildArg
 		prettyOutWriter = os.Stdout
 	}
 
-	// and set the writers
-	buildCmd.Stdin = nil
-	buildCmd.Stdout = buildOutWriter
-	buildCmd.Stderr = buildOutWriter
-	//
-	prettyCmd.Stdin = pipeReader
-	prettyCmd.Stdout = prettyOutWriter
-	prettyCmd.Stderr = prettyOutWriter
-	//
-	buildCmd.Env = append(os.Environ(), xcodeCommandEnvs...)
+	buildCmd := b.commandFactory.Create("xcodebuild", xcodebuildArgs, &command.Opts{
+		Stdout: buildOutWriter,
+		Stderr: buildOutWriter,
+		Env:    xcodeCommandEnvs,
+	})
 
-	log.Printf("$ set -o pipefail && %s | %v",
-		PrintableCommandArgsWithEnvs(buildCmd.Args, xcodeCommandEnvs),
-		PrintableCommandArgs(prettyCmd.Args))
+	prettyCmd := b.commandFactory.Create("xcpretty", xcprettyArgs, &command.Opts{
+		Stdin:  pipeReader,
+		Stdout: prettyOutWriter,
+		Stderr: prettyOutWriter,
+	})
 
-	fmt.Println()
+	b.logger.Printf("$ set -o pipefail && %s | %v", buildCmd.PrintableCommandArgs(), prettyCmd.PrintableCommandArgs())
+	b.logger.Println()
 
 	if err := buildCmd.Start(); err != nil {
 		return buildOutBuffer.String(), 1, err
@@ -166,11 +147,11 @@ func runPrettyXcodebuildCmd(useStdOut bool, xcprettyArgs []string, xcodebuildArg
 
 	defer func() {
 		if err := pipeWriter.Close(); err != nil {
-			log.Warnf("Failed to close xcodebuild-xcpretty pipe, error: %s", err)
+			b.logger.Warnf("Failed to close xcodebuild-xcpretty pipe, error: %s", err)
 		}
 
 		if err := prettyCmd.Wait(); err != nil {
-			log.Warnf("xcpretty command failed, error: %s", err)
+			b.logger.Warnf("xcpretty command failed, error: %s", err)
 		}
 	}()
 
@@ -188,7 +169,7 @@ func runPrettyXcodebuildCmd(useStdOut bool, xcprettyArgs []string, xcodebuildArg
 	return buildOutBuffer.String(), 0, nil
 }
 
-func runBuild(buildParams Params, outputTool string) (string, int, error) {
+func (b *xcodebuild) runBuild(buildParams Params, outputTool string) (string, int, error) {
 	xcodebuildArgs := []string{buildParams.Action, buildParams.ProjectPath, "-scheme", buildParams.Scheme}
 	if buildParams.CleanBuild {
 		xcodebuildArgs = append(xcodebuildArgs, "clean")
@@ -202,12 +183,12 @@ func runBuild(buildParams Params, outputTool string) (string, int, error) {
 	}
 	xcodebuildArgs = append(xcodebuildArgs, "build", "-destination", buildParams.DeviceDestination)
 
-	log.Infof("Building the project...")
+	b.logger.Infof("Building the project...")
 
 	if outputTool == XcprettyTool {
-		return runPrettyXcodebuildCmd(false, []string{}, xcodebuildArgs)
+		return b.runPrettyXcodebuildCmd(false, []string{}, xcodebuildArgs)
 	}
-	return runXcodebuildCmd(xcodebuildArgs...)
+	return b.runXcodebuildCmd(xcodebuildArgs...)
 }
 
 func createXcodebuildTestArgs(params TestParams, xcodeMajorVersion int) ([]string, error) {
@@ -275,7 +256,7 @@ func createXcodebuildTestArgs(params TestParams, xcodeMajorVersion int) ([]strin
 	return xcodebuildArgs, nil
 }
 
-func createXCPrettyArgs(options string) ([]string, error) {
+func (b *xcodebuild) createXCPrettyArgs(options string) ([]string, error) {
 	var args []string
 
 	if options != "" {
@@ -297,11 +278,11 @@ func createXCPrettyArgs(options string) ([]string, error) {
 			}
 		}
 		if xcprettyOutputFilePath != "" {
-			if isExist, err := pathutil.IsPathExists(xcprettyOutputFilePath); err != nil {
+			if isExist, err := b.pathChecker.IsPathExists(xcprettyOutputFilePath); err != nil {
 				log.Errorf("Failed to check xcpretty output file status (path: %s), error: %s", xcprettyOutputFilePath, err)
 			} else if isExist {
 				log.Warnf("=> Deleting existing xcpretty output: %s", xcprettyOutputFilePath)
-				if err := os.Remove(xcprettyOutputFilePath); err != nil {
+				if err := b.fileRemover.Remove(xcprettyOutputFilePath); err != nil {
 					log.Errorf("Failed to delete xcpretty output file (path: %s), error: %s", xcprettyOutputFilePath, err)
 				}
 			}
@@ -313,7 +294,7 @@ func createXCPrettyArgs(options string) ([]string, error) {
 	return args, nil
 }
 
-func runTest(params TestRunParams) (string, int, error) {
+func (b *xcodebuild) runTest(params TestRunParams) (string, int, error) {
 	xcodebuildArgs, err := createXcodebuildTestArgs(params.BuildTestParams, params.XcodeMajorVersion)
 	if err != nil {
 		return "", 1, err
@@ -325,20 +306,20 @@ func runTest(params TestRunParams) (string, int, error) {
 	var exit int
 	var testErr error
 	if params.OutputTool == XcprettyTool {
-		xcprettyArgs, err := createXCPrettyArgs(params.XcprettyOptions)
+		xcprettyArgs, err := b.createXCPrettyArgs(params.XcprettyOptions)
 		if err != nil {
 			return "", 1, err
 		}
 
-		rawOutput, exit, testErr = runPrettyXcodebuildCmd(true, xcprettyArgs, xcodebuildArgs)
+		rawOutput, exit, testErr = b.runPrettyXcodebuildCmd(true, xcprettyArgs, xcodebuildArgs)
 	} else {
-		rawOutput, exit, testErr = runXcodebuildCmd(xcodebuildArgs...)
+		rawOutput, exit, testErr = b.runXcodebuildCmd(xcodebuildArgs...)
 	}
 
 	fmt.Println("exit: ", exit)
 
 	if testErr != nil {
-		return handleTestRunError(params, testRunResult{xcodebuildLog: rawOutput, exitCode: exit, err: testErr})
+		return b.handleTestRunError(params, testRunResult{xcodebuildLog: rawOutput, exitCode: exit, err: testErr})
 	}
 
 	return rawOutput, exit, nil
@@ -350,24 +331,24 @@ type testRunResult struct {
 	err           error
 }
 
-func cleanOutputDirAndRerunTest(params TestRunParams) (string, int, error) {
+func (b *xcodebuild) cleanOutputDirAndRerunTest(params TestRunParams) (string, int, error) {
 	// Clean output directory, otherwise after retry test run, xcodebuild fails with `error: Existing file at -resultBundlePath "..."`
-	if err := os.RemoveAll(params.BuildTestParams.TestOutputDir); err != nil {
+	if err := b.fileRemover.RemoveAll(params.BuildTestParams.TestOutputDir); err != nil {
 		return "", 1, fmt.Errorf("failed to clean test output directory: %s, error: %s", params.BuildTestParams.TestOutputDir, err)
 	}
-	return runTest(params)
+	return b.runTest(params)
 }
 
-func handleTestRunError(prevRunParams TestRunParams, prevRunResult testRunResult) (string, int, error) {
+func (b *xcodebuild) handleTestRunError(prevRunParams TestRunParams, prevRunResult testRunResult) (string, int, error) {
 	if prevRunParams.RetryOnSwiftPackageResolutionError && prevRunParams.SwiftPackagesPath != "" && isStringFoundInOutput(cache.SwiftPackagesStateInvalid, prevRunResult.xcodebuildLog) {
 		log.RWarnf("xcode-test", "swift-packages-cache-invalid", nil, "swift packages cache is in an invalid state")
-		if err := os.RemoveAll(prevRunParams.SwiftPackagesPath); err != nil {
+		if err := b.fileRemover.RemoveAll(prevRunParams.SwiftPackagesPath); err != nil {
 			log.Errorf("failed to remove Swift package caches, error: %s", err)
 			return prevRunResult.xcodebuildLog, prevRunResult.exitCode, prevRunResult.err
 		}
 
 		prevRunParams.RetryOnSwiftPackageResolutionError = false
-		return cleanOutputDirAndRerunTest(prevRunParams)
+		return b.cleanOutputDirAndRerunTest(prevRunParams)
 	}
 
 	for _, errorPattern := range testRunnerErrorPatterns {
@@ -378,7 +359,7 @@ func handleTestRunError(prevRunParams TestRunParams, prevRunResult testRunResult
 
 				prevRunParams.BuildTestParams.RetryTestsOnFailure = false
 				prevRunParams.RetryOnTestRunnerError = false
-				return cleanOutputDirAndRerunTest(prevRunParams)
+				return b.cleanOutputDirAndRerunTest(prevRunParams)
 			}
 
 			log.Errorf("Automatic retry is disabled, no more retry, stopping the test!")
@@ -392,7 +373,7 @@ func handleTestRunError(prevRunParams TestRunParams, prevRunResult testRunResult
 
 		prevRunParams.BuildTestParams.RetryTestsOnFailure = false
 		prevRunParams.RetryOnTestRunnerError = false
-		return cleanOutputDirAndRerunTest(prevRunParams)
+		return b.cleanOutputDirAndRerunTest(prevRunParams)
 	}
 
 	return prevRunResult.xcodebuildLog, prevRunResult.exitCode, prevRunResult.err
@@ -407,34 +388,34 @@ func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
 	return r.MatchString(outputToSearchIn)
 }
 
-// PrintableCommandArgs ...
-func PrintableCommandArgs(fullCommandArgs []string) string {
-	return PrintableCommandArgsWithEnvs(fullCommandArgs, []string{})
-}
-
-// PrintableCommandArgsWithEnvs ...
-func PrintableCommandArgsWithEnvs(fullCommandArgs []string, envs []string) string {
-	cmdArgsDecorated := []string{}
-	for idx, anArg := range fullCommandArgs {
-		quotedArg := strconv.Quote(anArg)
-		if idx == 0 {
-			quotedArg = anArg
-		}
-		cmdArgsDecorated = append(cmdArgsDecorated, quotedArg)
-	}
-
-	fullCmdArgs := cmdArgsDecorated
-	if len(envs) > 0 {
-		fullCmdArgs = []string{"env"}
-		for _, anArg := range envs {
-			quotedArg := strconv.Quote(anArg)
-			fullCmdArgs = append(fullCmdArgs, quotedArg)
-		}
-		fullCmdArgs = append(fullCmdArgs, cmdArgsDecorated...)
-	}
-
-	return strings.Join(fullCmdArgs, " ")
-}
+//// PrintableCommandArgs ...
+//func PrintableCommandArgs(fullCommandArgs []string) string {
+//	return PrintableCommandArgsWithEnvs(fullCommandArgs, []string{})
+//}
+//
+//// PrintableCommandArgsWithEnvs ...
+//func PrintableCommandArgsWithEnvs(fullCommandArgs []string, envs []string) string {
+//	cmdArgsDecorated := []string{}
+//	for idx, anArg := range fullCommandArgs {
+//		quotedArg := strconv.Quote(anArg)
+//		if idx == 0 {
+//			quotedArg = anArg
+//		}
+//		cmdArgsDecorated = append(cmdArgsDecorated, quotedArg)
+//	}
+//
+//	fullCmdArgs := cmdArgsDecorated
+//	if len(envs) > 0 {
+//		fullCmdArgs = []string{"env"}
+//		for _, anArg := range envs {
+//			quotedArg := strconv.Quote(anArg)
+//			fullCmdArgs = append(fullCmdArgs, quotedArg)
+//		}
+//		fullCmdArgs = append(fullCmdArgs, cmdArgsDecorated...)
+//	}
+//
+//	return strings.Join(fullCmdArgs, " ")
+//}
 
 // CreateBufferedWriter ...
 func CreateBufferedWriter(buff *bytes.Buffer, writers ...io.Writer) io.Writer {
