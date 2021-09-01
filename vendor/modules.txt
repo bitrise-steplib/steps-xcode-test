@@ -28,7 +28,7 @@ github.com/bitrise-io/go-utils/progress
 github.com/bitrise-io/go-utils/retry
 github.com/bitrise-io/go-utils/stringutil
 github.com/bitrise-io/go-utils/ziputil
-# github.com/bitrise-io/go-xcode v0.0.0-20210901123915-277f7cbbf22a
+# github.com/bitrise-io/go-xcode v0.0.0-20210901135441-4de33870e9ae
 ## explicit
 github.com/bitrise-io/go-xcode/models
 github.com/bitrise-io/go-xcode/plistutil
