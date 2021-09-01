@@ -11,6 +11,7 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 )
 
+// Exporter ...
 type Exporter interface {
 	SaveAttachments(scheme, testSummariesPath, attachementDir string) (string, error)
 	GetSummariesAndAttachmentPath(testOutputDir string) (testSummariesPath string, attachmentDir string, err error)
@@ -19,6 +20,7 @@ type Exporter interface {
 type exporter struct {
 }
 
+// NewExporter ...
 func NewExporter() Exporter {
 	return &exporter{}
 }

@@ -30,6 +30,7 @@ type Params struct {
 	DisableIndexWhileBuilding bool
 }
 
+// Version ...
 type Version models.XcodebuildVersionModel
 
 func (b *xcodebuild) Version() (Version, error) {

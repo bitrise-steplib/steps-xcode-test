@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/go-version"
 )
 
+// Installer ...
 type Installer interface {
 	Install() (*version.Version, error)
 }
@@ -15,6 +16,7 @@ type Installer interface {
 type installer struct {
 }
 
+// NewInstaller ...
 func NewInstaller() Installer {
 	return &installer{}
 }

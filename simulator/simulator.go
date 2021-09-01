@@ -16,8 +16,10 @@ import (
 	sim "github.com/bitrise-io/go-xcode/simulator"
 )
 
+// InfoModel ...
 type InfoModel sim.InfoModel
 
+// Simulator ...
 type Simulator interface {
 	GetLatestSimulatorInfoAndVersion(osName, deviceName string) (InfoModel, string, error)
 	GetSimulatorInfo(osNameAndVersion, deviceName string) (InfoModel, error)
@@ -34,6 +36,7 @@ type Simulator interface {
 type simulator struct {
 }
 
+// New ...
 func New() Simulator {
 	return &simulator{}
 }

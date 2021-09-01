@@ -331,10 +331,10 @@ func (s XcodeTestRunner) InstallDeps(xcpretty bool) error {
 	xcprettyVersion, err := s.xcprettyInstaller.Install()
 	if err != nil {
 		return fmt.Errorf("an error occured during installing xcpretty: %s", err)
-	} else {
-		s.logger.Printf("- xcprettyVersion: %s", xcprettyVersion.String())
-		s.logger.Println()
 	}
+	s.logger.Printf("- xcprettyVersion: %s", xcprettyVersion.String())
+	s.logger.Println()
+
 	return nil
 }
 

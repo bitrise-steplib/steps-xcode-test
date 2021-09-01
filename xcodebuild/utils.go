@@ -20,6 +20,7 @@ import (
 	"github.com/kballard/go-shellquote"
 )
 
+// XcprettyTool ...
 const XcprettyTool = "xcpretty"
 
 const (

@@ -14,6 +14,7 @@ import (
 	"github.com/bitrise-steplib/steps-xcode-test/testartifact"
 )
 
+// Exporter ...
 type Exporter interface {
 	ExportXCResultBundle(deployDir, xcResultPath, scheme string)
 	ExportTestRunResult(failed bool)
@@ -30,6 +31,7 @@ type exporter struct {
 	testArtifactExporter testartifact.Exporter
 }
 
+// NewExporter ...
 func NewExporter(envRepository env.Repository, logger log.Logger, testAddonExporter testaddon.Exporter, testArtifactExporter testartifact.Exporter) Exporter {
 	return &exporter{
 		envRepository:        envRepository,
