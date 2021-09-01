@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/bitrise-io/go-utils/command"
-
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/progress"
 	cache "github.com/bitrise-io/go-xcode/xcodecache"
@@ -279,11 +278,11 @@ func (b *xcodebuild) createXCPrettyArgs(options string) ([]string, error) {
 		}
 		if xcprettyOutputFilePath != "" {
 			if isExist, err := b.pathChecker.IsPathExists(xcprettyOutputFilePath); err != nil {
-				log.Errorf("Failed to check xcpretty output file status (path: %s), error: %s", xcprettyOutputFilePath, err)
+				b.logger.Errorf("Failed to check xcpretty output file status (path: %s), error: %s", xcprettyOutputFilePath, err)
 			} else if isExist {
-				log.Warnf("=> Deleting existing xcpretty output: %s", xcprettyOutputFilePath)
+				b.logger.Warnf("=> Deleting existing xcpretty output: %s", xcprettyOutputFilePath)
 				if err := b.fileRemover.Remove(xcprettyOutputFilePath); err != nil {
-					log.Errorf("Failed to delete xcpretty output file (path: %s), error: %s", xcprettyOutputFilePath, err)
+					b.logger.Errorf("Failed to delete xcpretty output file (path: %s), error: %s", xcprettyOutputFilePath, err)
 				}
 			}
 		}
@@ -300,7 +299,7 @@ func (b *xcodebuild) runTest(params TestRunParams) (string, int, error) {
 		return "", 1, err
 	}
 
-	log.Infof("Running the tests...")
+	b.logger.Infof("Running the tests...")
 
 	var rawOutput string
 	var exit int
@@ -343,7 +342,7 @@ func (b *xcodebuild) handleTestRunError(prevRunParams TestRunParams, prevRunResu
 	if prevRunParams.RetryOnSwiftPackageResolutionError && prevRunParams.SwiftPackagesPath != "" && isStringFoundInOutput(cache.SwiftPackagesStateInvalid, prevRunResult.xcodebuildLog) {
 		log.RWarnf("xcode-test", "swift-packages-cache-invalid", nil, "swift packages cache is in an invalid state")
 		if err := b.fileRemover.RemoveAll(prevRunParams.SwiftPackagesPath); err != nil {
-			log.Errorf("failed to remove Swift package caches, error: %s", err)
+			b.logger.Errorf("failed to remove Swift package caches, error: %s", err)
 			return prevRunResult.xcodebuildLog, prevRunResult.exitCode, prevRunResult.err
 		}
 
@@ -353,23 +352,23 @@ func (b *xcodebuild) handleTestRunError(prevRunParams TestRunParams, prevRunResu
 
 	for _, errorPattern := range testRunnerErrorPatterns {
 		if isStringFoundInOutput(errorPattern, prevRunResult.xcodebuildLog) {
-			log.Warnf("Automatic retry reason found in log: %s", errorPattern)
+			b.logger.Warnf("Automatic retry reason found in log: %s", errorPattern)
 			if prevRunParams.RetryOnTestRunnerError {
-				log.Printf("Automatic retry is enabled - retrying...")
+				b.logger.Printf("Automatic retry is enabled - retrying...")
 
 				prevRunParams.BuildTestParams.RetryTestsOnFailure = false
 				prevRunParams.RetryOnTestRunnerError = false
 				return b.cleanOutputDirAndRerunTest(prevRunParams)
 			}
 
-			log.Errorf("Automatic retry is disabled, no more retry, stopping the test!")
+			b.logger.Errorf("Automatic retry is disabled, no more retry, stopping the test!")
 			return prevRunResult.xcodebuildLog, prevRunResult.exitCode, prevRunResult.err
 		}
 	}
 
 	if prevRunParams.BuildTestParams.RetryTestsOnFailure {
-		log.Warnf("Test run failed")
-		log.Printf("'Should retry tests on failure?' (should_retry_test_on_fail) is enabled - retrying...")
+		b.logger.Warnf("Test run failed")
+		b.logger.Printf("'Should retry tests on failure?' (should_retry_test_on_fail) is enabled - retrying...")
 
 		prevRunParams.BuildTestParams.RetryTestsOnFailure = false
 		prevRunParams.RetryOnTestRunnerError = false
@@ -380,11 +379,7 @@ func (b *xcodebuild) handleTestRunError(prevRunParams TestRunParams, prevRunResu
 }
 
 func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
-	r, err := regexp.Compile("(?i)" + searchStr)
-	if err != nil {
-		log.Warnf("Failed to compile regexp: %s", err)
-		return false
-	}
+	r := regexp.MustCompile("(?i)" + searchStr)
 	return r.MatchString(outputToSearchIn)
 }
 

@@ -1,7 +1,7 @@
 # github.com/bitrise-io/bitrise v0.0.0-20210830100501-97b6f7d7905b
 ## explicit
 github.com/bitrise-io/bitrise/configs
-# github.com/bitrise-io/go-steputils v0.0.0-20210830102622-d4542245e920
+# github.com/bitrise-io/go-steputils v0.0.0-20210831050118-9a8de76b2f19
 ## explicit
 github.com/bitrise-io/go-steputils/cache
 github.com/bitrise-io/go-steputils/command/rubycommand
@@ -9,7 +9,7 @@ github.com/bitrise-io/go-steputils/output
 github.com/bitrise-io/go-steputils/stepconf
 github.com/bitrise-io/go-steputils/stepenv
 github.com/bitrise-io/go-steputils/tools
-# github.com/bitrise-io/go-utils v0.0.0-20210901080500-c9b18339d40e
+# github.com/bitrise-io/go-utils v0.0.0-20210901122528-80582f68ed74
 ## explicit
 github.com/bitrise-io/go-utils/colorstring
 github.com/bitrise-io/go-utils/command
@@ -28,7 +28,7 @@ github.com/bitrise-io/go-utils/progress
 github.com/bitrise-io/go-utils/retry
 github.com/bitrise-io/go-utils/stringutil
 github.com/bitrise-io/go-utils/ziputil
-# github.com/bitrise-io/go-xcode v0.0.0-20210830125207-64be9b301f0a
+# github.com/bitrise-io/go-xcode v0.0.0-20210901123915-277f7cbbf22a
 ## explicit
 github.com/bitrise-io/go-xcode/models
 github.com/bitrise-io/go-xcode/plistutil

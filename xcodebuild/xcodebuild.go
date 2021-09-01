@@ -37,7 +37,7 @@ func New(logger log.Logger, commandFactory command.Factory, pathChecker pathutil
 type Version models.XcodebuildVersionModel
 
 func (b *xcodebuild) Version() (Version, error) {
-	version, err := utility.GetXcodeVersion()
+	version, err := utility.GetXcodeVersion(b.commandFactory)
 	return Version(version), err
 }
 
