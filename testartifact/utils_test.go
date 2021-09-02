@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/bitrise-io/go-utils/pretty"
-	"github.com/bitrise-steplib/steps-xcode-test/xcodeutil/testsummaries"
+	"github.com/bitrise-steplib/steps-xcode-test/testartifact/testsummaries"
 )
 
 func Test_createRenamePlan(t *testing.T) {
