@@ -36,8 +36,8 @@ type Simulator interface {
 type simulator struct {
 }
 
-// New ...
-func New() Simulator {
+// NewSimulator ...
+func NewSimulator() Simulator {
 	return &simulator{}
 }
 

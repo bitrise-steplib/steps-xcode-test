@@ -28,7 +28,7 @@ func createStep(logger log.Logger) step.XcodeTestRunner {
 	pathChecker := pathutil.NewPathChecker()
 	fileRemover := fileutil.NewFileRemover()
 	xcodebuilder := xcodebuild.New(logger, commandFactory, pathChecker, fileRemover)
-	sim := simulator.New()
+	sim := simulator.NewSimulator()
 	c := cache.NewSwiftPackageCache()
 	testAddonExporter := testaddon.NewExporter()
 	testArtifactExporter := testartifact.NewExporter()
