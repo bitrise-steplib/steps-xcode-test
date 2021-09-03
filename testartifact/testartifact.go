@@ -25,7 +25,7 @@ func NewExporter() Exporter {
 	return &exporter{}
 }
 
-func (e *exporter) SaveAttachments(scheme, testSummariesPath, attachementDir string) (string, error) {
+func (e exporter) SaveAttachments(scheme, testSummariesPath, attachementDir string) (string, error) {
 	if exist, err := pathutil.IsDirExists(attachementDir); err != nil {
 		return "", err
 	} else if !exist {
@@ -52,7 +52,7 @@ func (e *exporter) SaveAttachments(scheme, testSummariesPath, attachementDir str
 	return zipedTestsDerivedDataPath, nil
 }
 
-func (e *exporter) GetSummariesAndAttachmentPath(testOutputDir string) (testSummariesPath string, attachmentDir string, err error) {
+func (e exporter) GetSummariesAndAttachmentPath(testOutputDir string) (testSummariesPath string, attachmentDir string, err error) {
 	const testSummaryFileName = "TestSummaries.plist"
 	if exist, err := pathutil.IsDirExists(testOutputDir); err != nil {
 		return "", "", err
