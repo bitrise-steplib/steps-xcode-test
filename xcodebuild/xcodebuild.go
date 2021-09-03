@@ -2,11 +2,11 @@ package xcodebuild
 
 import (
 	"github.com/bitrise-io/go-utils/command"
+	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-xcode/models"
 	"github.com/bitrise-io/go-xcode/utility"
-	"github.com/bitrise-steplib/steps-xcode-test/fileremover"
 )
 
 // Xcodebuild ....
@@ -20,11 +20,11 @@ type xcodebuild struct {
 	logger         log.Logger
 	commandFactory command.Factory
 	pathChecker    pathutil.PathChecker
-	fileRemover    fileremover.FileRemover
+	fileRemover    fileutil.FileRemover
 }
 
 // New ...
-func New(logger log.Logger, commandFactory command.Factory, pathChecker pathutil.PathChecker, fileRemover fileremover.FileRemover) Xcodebuild {
+func New(logger log.Logger, commandFactory command.Factory, pathChecker pathutil.PathChecker, fileRemover fileutil.FileRemover) Xcodebuild {
 	return &xcodebuild{
 		logger:         logger,
 		commandFactory: commandFactory,

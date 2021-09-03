@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	mockcommand "github.com/bitrise-io/go-utils/command/mocks"
+	mockfileutil "github.com/bitrise-io/go-utils/fileutil/mocks"
 	mocklog "github.com/bitrise-io/go-utils/log/mocks"
 	mockpathutil "github.com/bitrise-io/go-utils/pathutil/mocks"
-	mockfileremover "github.com/bitrise-steplib/steps-xcode-test/fileremover/mocks"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -26,7 +26,7 @@ func Test_WhenXcodebuildFails_ThenExitCodeGetsReturned(t *testing.T) {
 	commandFactory.On("Create", mock.Anything, mock.Anything, mock.Anything).Return(cmd)
 
 	pathChecker := new(mockpathutil.PathChecker)
-	fileremover := new(mockfileremover.FileRemover)
+	fileremover := new(mockfileutil.FileRemover)
 
 	xcodebuild := New(logger, commandFactory, pathChecker, fileremover)
 

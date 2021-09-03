@@ -7,10 +7,10 @@ import (
 	"github.com/bitrise-io/go-steputils/stepenv"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/env"
+	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-steplib/steps-xcode-test/cache"
-	"github.com/bitrise-steplib/steps-xcode-test/fileremover"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/simulator"
 	"github.com/bitrise-steplib/steps-xcode-test/step"
@@ -20,14 +20,13 @@ import (
 	"github.com/bitrise-steplib/steps-xcode-test/xcpretty"
 )
 
-func run() int {
-	logger := log.NewLogger()
+func createStep(logger log.Logger) step.XcodeTestRunner {
 	envRepository := env.NewRepository()
 	inputParser := stepconf.NewInputParser(envRepository)
 	xcprettyInstaller := xcpretty.NewInstaller()
 	commandFactory := command.NewFactory(envRepository)
 	pathChecker := pathutil.NewPathChecker()
-	fileRemover := fileremover.NewFileRemover()
+	fileRemover := fileutil.NewFileRemover()
 	xcodebuilder := xcodebuild.New(logger, commandFactory, pathChecker, fileRemover)
 	sim := simulator.New()
 	c := cache.NewSwiftPackageCache()
@@ -37,8 +36,12 @@ func run() int {
 	outputExporter := output.NewExporter(stepenvRepository, logger, testAddonExporter, testArtifactExporter)
 	pathModifier := pathutil.NewPathModifier()
 
-	xcodeTestRunner := step.NewXcodeTestRunner(inputParser, logger, xcprettyInstaller, xcodebuilder, sim, c, outputExporter, pathModifier)
+	return step.NewXcodeTestRunner(inputParser, logger, xcprettyInstaller, xcodebuilder, sim, c, outputExporter, pathModifier)
+}
 
+func run() int {
+	logger := log.NewLogger()
+	xcodeTestRunner := createStep(logger)
 	config, err := xcodeTestRunner.ProcessConfig()
 	if err != nil {
 		logger.Errorf(err.Error())
