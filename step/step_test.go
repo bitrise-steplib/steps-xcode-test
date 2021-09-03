@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_WhenTestRuns_XcodebuildGetsCalled(t *testing.T) {
+func Test_WhenTestRuns_ThenXcodebuildGetsCalled(t *testing.T) {
 	// Given
 	logger := createLogger()
 
