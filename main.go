@@ -49,10 +49,10 @@ func run() int {
 
 	}
 
-	if err := xcodeTestRunner.InstallDeps(config.OutputTool == step.XcprettyTool); err != nil {
+	if err := xcodeTestRunner.InstallDeps(config.OutputTool == xcodebuild.XcprettyTool); err != nil {
 		logger.Warnf("Failed to install deps: %s", err)
 		logger.Printf("Switching to xcodebuild for output tool")
-		config.OutputTool = step.XcodebuildTool
+		config.OutputTool = xcodebuild.XcodebuildTool
 	}
 
 	res, runErr := xcodeTestRunner.Run(config)

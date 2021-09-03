@@ -24,10 +24,6 @@ import (
 const (
 	minSupportedXcodeMajorVersion = 6
 	simulatorShutdownState        = "Shutdown"
-	testRepetitionModeNone        = "none"
-
-	XcodebuildTool = "xcodebuild"
-	XcprettyTool   = "xcpretty"
 )
 
 // Input ...
@@ -264,15 +260,15 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 	s.logger.Printf("* device_destination: %s", deviceDestination)
 	s.logger.Println()
 
-	if input.TestRepetitionMode != testRepetitionModeNone && xcodeMajorVersion < 13 {
+	if input.TestRepetitionMode != xcodebuild.TestRepetitionNone && xcodeMajorVersion < 13 {
 		return Config{}, errors.New("Test Repetition Mode (test_repetition_mode) is not available below Xcode 13")
 	}
 
-	if input.TestRepetitionMode != testRepetitionModeNone && input.MaximumTestRepetitions < 2 {
+	if input.TestRepetitionMode != xcodebuild.TestRepetitionNone && input.MaximumTestRepetitions < 2 {
 		return Config{}, fmt.Errorf("invalid number of Maximum Test Repetitions (maximum_test_repetitions): %d, should be more than 1", input.MaximumTestRepetitions)
 	}
 
-	if input.RelaunchTestsForEachRepetition && input.TestRepetitionMode == testRepetitionModeNone {
+	if input.RelaunchTestsForEachRepetition && input.TestRepetitionMode == xcodebuild.TestRepetitionNone {
 		return Config{}, errors.New("Relaunch Tests for Each Repetition (relaunch_tests_for_each_repetition) cannot be used if Test Repetition Mode (test_repetition_mode) is 'none'")
 	}
 
@@ -449,7 +445,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 	result.XcresultPath = xcresultPath
 	result.XcodebuildTestLog = testLog
 
-	if testErr != nil || cfg.OutputTool == XcodebuildTool {
+	if testErr != nil || cfg.OutputTool == xcodebuild.XcodebuildTool {
 		printLastLinesOfXcodebuildTestLog(testLog, testErr == nil)
 	}
 

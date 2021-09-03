@@ -9,6 +9,17 @@ import (
 	"github.com/bitrise-io/go-xcode/utility"
 )
 
+const (
+	XcodebuildTool = "xcodebuild"
+	XcprettyTool   = "xcpretty"
+)
+
+const (
+	TestRepetitionNone           = "none"
+	TestRepetitionUntilFailure   = "until_failure"
+	TestRepetitionRetryOnFailure = "retry_on_failure"
+)
+
 // Xcodebuild ....
 type Xcodebuild interface {
 	RunBuild(buildParams Params, outputTool string) (string, int, error)

@@ -19,15 +19,6 @@ import (
 	"github.com/kballard/go-shellquote"
 )
 
-// XcprettyTool ...
-const XcprettyTool = "xcpretty"
-
-const (
-	none           = "none"
-	untilFailure   = "until_failure"
-	retryOnFailure = "retry_on_failure"
-)
-
 var xcodeCommandEnvs = []string{"NSUnbufferedIO=YES"}
 
 var testRunnerErrorPatterns = []string{
@@ -220,13 +211,13 @@ func createXcodebuildTestArgs(params TestParams, xcodeMajorVersion int) ([]strin
 	}
 
 	switch params.TestRepetitionMode {
-	case untilFailure:
+	case TestRepetitionUntilFailure:
 		xcodebuildArgs = append(xcodebuildArgs, "-run-tests-until-failure")
-	case retryOnFailure:
+	case TestRepetitionRetryOnFailure:
 		xcodebuildArgs = append(xcodebuildArgs, "-retry-tests-on-failure")
 	}
 
-	if params.TestRepetitionMode != none {
+	if params.TestRepetitionMode != TestRepetitionNone {
 		xcodebuildArgs = append(xcodebuildArgs, "-test-iterations", strconv.Itoa(params.MaximumTestRepetitions))
 	}
 
