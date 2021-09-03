@@ -335,33 +335,32 @@ type Result struct {
 	SimulatorDiagnosticsPath string
 }
 
-// Run ...
-func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
+func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simulatorID string, launchSimulator bool, xcodeMajorVersions int) error {
 	err := s.simulator.ResetLaunchServices()
 	if err != nil {
 		s.logger.Warnf("Failed to apply simulator boot workaround, error: %s", err)
 	}
 
 	// Boot simulator
-	if cfg.SimulatorDebug != never {
+	if enableSimulatorVerboseLog {
 		s.logger.Infof("Enabling Simulator verbose log for better diagnostics")
 		// Boot the simulator now, so verbose logging can be enabled and it is kept booted after running tests,
 		// this helps to collect more detailed debug info
-		if err := s.simulator.SimulatorBoot(cfg.SimulatorID); err != nil {
-			return Result{}, fmt.Errorf("%v", err)
+		if err := s.simulator.SimulatorBoot(simulatorID); err != nil {
+			return fmt.Errorf("%v", err)
 		}
-		if err := s.simulator.SimulatorEnableVerboseLog(cfg.SimulatorID); err != nil {
-			return Result{}, fmt.Errorf("%v", err)
+		if err := s.simulator.SimulatorEnableVerboseLog(simulatorID); err != nil {
+			return fmt.Errorf("%v", err)
 		}
 
 		s.logger.Println()
 	}
 
-	if !cfg.IsSimulatorBooted && !cfg.HeadlessMode {
-		s.logger.Infof("Booting simulator (%s)...", cfg.SimulatorID)
+	if launchSimulator {
+		s.logger.Infof("Booting simulator (%s)...", simulatorID)
 
-		if err := s.simulator.BootSimulator(cfg.SimulatorID, cfg.XcodeMajorVersion); err != nil {
-			return Result{}, fmt.Errorf("failed to boot simulator, error: %s", err)
+		if err := s.simulator.LaunchSimulator(simulatorID, xcodeMajorVersions); err != nil {
+			return fmt.Errorf("failed to boot simulator, error: %s", err)
 		}
 
 		progress.NewDefaultWrapper("Waiting for simulator boot").WrapAction(func() {
@@ -369,6 +368,17 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 		})
 
 		s.logger.Println()
+	}
+
+	return nil
+}
+
+// Run ...
+func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
+	enableSimulatorVerboseLog := cfg.SimulatorDebug != never
+	launchSimulator := !cfg.IsSimulatorBooted && !cfg.HeadlessMode
+	if err := s.prepareSimulator(enableSimulatorVerboseLog, cfg.SimulatorID, launchSimulator, cfg.XcodeMajorVersion); err != nil {
+		return Result{}, err
 	}
 
 	// Run build

@@ -23,7 +23,7 @@ type Info sim.InfoModel
 type Simulator interface {
 	GetLatestSimulatorInfoAndVersion(osName, deviceName string) (Info, string, error)
 	GetSimulatorInfo(osNameAndVersion, deviceName string) (Info, error)
-	BootSimulator(simulatorID string, xcodebuildMajorVersion int) error
+	LaunchSimulator(simulatorID string, xcodebuildMajorVersion int) error
 
 	ResetLaunchServices() error
 	SimulatorBoot(id string) error
@@ -51,7 +51,7 @@ func (s defaultSimulator) GetSimulatorInfo(osNameAndVersion, deviceName string) 
 	return Info(info), err
 }
 
-func (s defaultSimulator) BootSimulator(simulatorID string, xcodebuildMajorVersion int) error {
+func (s defaultSimulator) LaunchSimulator(simulatorID string, xcodebuildMajorVersion int) error {
 	return sim.BootSimulator(simulatorID, xcodebuildMajorVersion)
 }
 
