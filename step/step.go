@@ -23,18 +23,11 @@ import (
 
 const (
 	minSupportedXcodeMajorVersion = 6
-)
+	simulatorShutdownState        = "Shutdown"
+	testRepetitionModeNone        = "none"
 
-const simulatorShutdownState = "Shutdown"
-
-// Output tools ...
-const (
 	XcodebuildTool = "xcodebuild"
 	XcprettyTool   = "xcpretty"
-)
-
-const (
-	testRepetitionModeNone = "none"
 )
 
 // Input ...
