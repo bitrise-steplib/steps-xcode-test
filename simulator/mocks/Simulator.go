@@ -27,14 +27,14 @@ func (_m *Simulator) BootSimulator(simulatorID string, xcodebuildMajorVersion in
 }
 
 // GetLatestSimulatorInfoAndVersion provides a mock function with given fields: osName, deviceName
-func (_m *Simulator) GetLatestSimulatorInfoAndVersion(osName string, deviceName string) (simulator.InfoModel, string, error) {
+func (_m *Simulator) GetLatestSimulatorInfoAndVersion(osName string, deviceName string) (simulator.Info, string, error) {
 	ret := _m.Called(osName, deviceName)
 
-	var r0 simulator.InfoModel
-	if rf, ok := ret.Get(0).(func(string, string) simulator.InfoModel); ok {
+	var r0 simulator.Info
+	if rf, ok := ret.Get(0).(func(string, string) simulator.Info); ok {
 		r0 = rf(osName, deviceName)
 	} else {
-		r0 = ret.Get(0).(simulator.InfoModel)
+		r0 = ret.Get(0).(simulator.Info)
 	}
 
 	var r1 string
@@ -55,14 +55,14 @@ func (_m *Simulator) GetLatestSimulatorInfoAndVersion(osName string, deviceName 
 }
 
 // GetSimulatorInfo provides a mock function with given fields: osNameAndVersion, deviceName
-func (_m *Simulator) GetSimulatorInfo(osNameAndVersion string, deviceName string) (simulator.InfoModel, error) {
+func (_m *Simulator) GetSimulatorInfo(osNameAndVersion string, deviceName string) (simulator.Info, error) {
 	ret := _m.Called(osNameAndVersion, deviceName)
 
-	var r0 simulator.InfoModel
-	if rf, ok := ret.Get(0).(func(string, string) simulator.InfoModel); ok {
+	var r0 simulator.Info
+	if rf, ok := ret.Get(0).(func(string, string) simulator.Info); ok {
 		r0 = rf(osNameAndVersion, deviceName)
 	} else {
-		r0 = ret.Get(0).(simulator.InfoModel)
+		r0 = ret.Get(0).(simulator.Info)
 	}
 
 	var r1 error

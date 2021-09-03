@@ -227,7 +227,7 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 	}
 
 	// validate simulator related inputs
-	var sim simulator.InfoModel
+	var sim simulator.Info
 	var osVersion string
 
 	platform := strings.TrimSuffix(input.SimulatorPlatform, " Simulator")

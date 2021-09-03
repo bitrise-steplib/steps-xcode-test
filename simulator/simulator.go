@@ -16,13 +16,13 @@ import (
 	sim "github.com/bitrise-io/go-xcode/simulator"
 )
 
-// InfoModel ...
-type InfoModel sim.InfoModel
+// Info ...
+type Info sim.InfoModel
 
 // Simulator ...
 type Simulator interface {
-	GetLatestSimulatorInfoAndVersion(osName, deviceName string) (InfoModel, string, error)
-	GetSimulatorInfo(osNameAndVersion, deviceName string) (InfoModel, error)
+	GetLatestSimulatorInfoAndVersion(osName, deviceName string) (Info, string, error)
+	GetSimulatorInfo(osNameAndVersion, deviceName string) (Info, error)
 	BootSimulator(simulatorID string, xcodebuildMajorVersion int) error
 
 	ResetLaunchServices() error
@@ -41,14 +41,14 @@ func New() Simulator {
 	return &simulator{}
 }
 
-func (s *simulator) GetLatestSimulatorInfoAndVersion(osName, deviceName string) (InfoModel, string, error) {
+func (s *simulator) GetLatestSimulatorInfoAndVersion(osName, deviceName string) (Info, string, error) {
 	info, ver, err := sim.GetLatestSimulatorInfoAndVersion(osName, deviceName)
-	return InfoModel(info), ver, err
+	return Info(info), ver, err
 }
 
-func (s *simulator) GetSimulatorInfo(osNameAndVersion, deviceName string) (InfoModel, error) {
+func (s *simulator) GetSimulatorInfo(osNameAndVersion, deviceName string) (Info, error) {
 	info, err := sim.GetSimulatorInfo(osNameAndVersion, deviceName)
-	return InfoModel(info), err
+	return Info(info), err
 }
 
 func (s *simulator) BootSimulator(simulatorID string, xcodebuildMajorVersion int) error {
