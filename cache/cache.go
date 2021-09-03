@@ -4,8 +4,8 @@ import (
 	xcodecache "github.com/bitrise-io/go-xcode/xcodecache"
 )
 
-// Cache ...
-type Cache interface {
+// SwiftPackageCache ...
+type SwiftPackageCache interface {
 	SwiftPackagesPath(projectPth string) (string, error)
 	CollectSwiftPackages(projectPath string) error
 }
@@ -13,8 +13,8 @@ type Cache interface {
 type cache struct {
 }
 
-// NewCache ...
-func NewCache() Cache {
+// NewSwiftPackageCache ...
+func NewSwiftPackageCache() SwiftPackageCache {
 	return &cache{}
 }
 

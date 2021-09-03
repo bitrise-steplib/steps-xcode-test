@@ -30,7 +30,7 @@ func run() int {
 	fileRemover := fileremover.NewFileRemover()
 	xcodebuilder := xcodebuild.New(logger, commandFactory, pathChecker, fileRemover)
 	sim := simulator.New()
-	c := cache.NewCache()
+	c := cache.NewSwiftPackageCache()
 	testAddonExporter := testaddon.NewExporter()
 	testArtifactExporter := testartifact.NewExporter()
 	stepenvRepository := stepenv.NewRepository(envRepository)

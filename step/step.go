@@ -143,13 +143,13 @@ type XcodeTestRunner struct {
 	xcprettyInstaller xcpretty.Installer
 	xcodebuild        xcodebuild.Xcodebuild
 	simulator         simulator.Simulator
-	cache             cache.Cache
+	cache             cache.SwiftPackageCache
 	outputExporter    output.Exporter
 	pathModifier      pathutil.PathModifier
 }
 
 // NewXcodeTestRunner ...
-func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, xcprettyInstaller xcpretty.Installer, xcodebuild xcodebuild.Xcodebuild, simulator simulator.Simulator, cache cache.Cache, outputExporter output.Exporter, pathModifier pathutil.PathModifier) XcodeTestRunner {
+func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, xcprettyInstaller xcpretty.Installer, xcodebuild xcodebuild.Xcodebuild, simulator simulator.Simulator, cache cache.SwiftPackageCache, outputExporter output.Exporter, pathModifier pathutil.PathModifier) XcodeTestRunner {
 	return XcodeTestRunner{
 		inputParser:       inputParser,
 		logger:            logger,
