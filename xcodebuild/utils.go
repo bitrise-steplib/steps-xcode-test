@@ -19,22 +19,6 @@ import (
 	"github.com/kballard/go-shellquote"
 )
 
-var xcodeCommandEnvs = []string{"NSUnbufferedIO=YES"}
-
-var testRunnerErrorPatterns = []string{
-	timeOutMessageIPhoneSimulator,
-	timeOutMessageUITest,
-	earlyUnexpectedExit,
-	failureAttemptingToLaunch,
-	failedToBackgroundTestRunner,
-	appStateIsStillNotRunning,
-	appAccessibilityIsNotLoaded,
-	testRunnerFailedToInitializeForUITesting,
-	timedOutRegisteringForTestingEvent,
-	testRunnerNeverBeganExecuting,
-	failedToOpenTestRunner,
-}
-
 // On performance limited OS X hosts (ex: VMs) the iPhone/iOS Simulator might time out
 //  while booting. So far it seems that a simple retry solves these issues.
 const (
@@ -52,6 +36,22 @@ const (
 	testRunnerNeverBeganExecuting            = `Test runner never began executing tests after launching.`
 	failedToOpenTestRunner                   = `Error Domain=FBSOpenApplicationServiceErrorDomain Code=1 "The request to open.*NSLocalizedFailureReason=The request was denied by service delegate \(SBMainWorkspace\)\.`
 )
+
+var xcodeCommandEnvs = []string{"NSUnbufferedIO=YES"}
+
+var testRunnerErrorPatterns = []string{
+	timeOutMessageIPhoneSimulator,
+	timeOutMessageUITest,
+	earlyUnexpectedExit,
+	failureAttemptingToLaunch,
+	failedToBackgroundTestRunner,
+	appStateIsStillNotRunning,
+	appAccessibilityIsNotLoaded,
+	testRunnerFailedToInitializeForUITesting,
+	timedOutRegisteringForTestingEvent,
+	testRunnerNeverBeganExecuting,
+	failedToOpenTestRunner,
+}
 
 // TestParams ...
 type TestParams struct {
