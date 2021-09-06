@@ -429,19 +429,7 @@ func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 		ExportUITestArtifacts: cfg.ExportUITestArtifacts,
 	}
 
-	projectFlag := "-project"
-	if filepath.Ext(cfg.ProjectPath) == ".xcworkspace" {
-		projectFlag = "-workspace"
-	}
-
-	buildParams := xcodebuild.Params{
-		Action:                    projectFlag,
-		ProjectPath:               cfg.ProjectPath,
-		Scheme:                    cfg.Scheme,
-		DeviceDestination:         fmt.Sprintf("id=%s", cfg.SimulatorID),
-		CleanBuild:                cfg.IsCleanBuild,
-		DisableIndexWhileBuilding: cfg.DisableIndexWhileBuilding,
-	}
+	buildParams := createBuildParams(cfg)
 
 	if !cfg.IsSingleBuild {
 		buildLog, exitCode, err := s.xcodebuild.RunBuild(buildParams, cfg.OutputTool)
@@ -461,18 +449,7 @@ func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 	}
 	xcresultPath := path.Join(tempDir, "Test.xcresult")
 
-	testParams := xcodebuild.TestParams{
-		BuildParams:                    buildParams,
-		TestPlan:                       cfg.TestPlan,
-		TestOutputDir:                  xcresultPath,
-		TestRepetitionMode:             cfg.TestRepetitionMode,
-		MaximumTestRepetitions:         cfg.MaximumTestRepetitions,
-		RelaunchTestsForEachRepetition: cfg.RelaunchTestForEachRepetition,
-		BuildBeforeTest:                cfg.BuildBeforeTesting,
-		GenerateCodeCoverage:           cfg.GenerateCodeCoverageFiles,
-		RetryTestsOnFailure:            cfg.RetryTestsOnFailure,
-		AdditionalOptions:              cfg.XcodebuildTestOptions,
-	}
+	testParams := createTestParams(cfg, buildParams, xcresultPath)
 
 	if cfg.IsSingleBuild {
 		testParams.CleanBuild = cfg.IsCleanBuild
@@ -566,5 +543,36 @@ func createConfig(input Input, projectPath string, xcodeMajorVersion int, sim si
 		ExportUITestArtifacts: input.ExportUITestArtifacts,
 
 		CacheLevel: input.CacheLevel,
+	}
+}
+
+func createBuildParams(cfg Config) xcodebuild.Params {
+	projectFlag := "-project"
+	if filepath.Ext(cfg.ProjectPath) == ".xcworkspace" {
+		projectFlag = "-workspace"
+	}
+
+	return xcodebuild.Params{
+		Action:                    projectFlag,
+		ProjectPath:               cfg.ProjectPath,
+		Scheme:                    cfg.Scheme,
+		DeviceDestination:         fmt.Sprintf("id=%s", cfg.SimulatorID),
+		CleanBuild:                cfg.IsCleanBuild,
+		DisableIndexWhileBuilding: cfg.DisableIndexWhileBuilding,
+	}
+}
+
+func createTestParams(cfg Config, buildParams xcodebuild.Params, xcresultPath string) xcodebuild.TestParams {
+	return xcodebuild.TestParams{
+		BuildParams:                    buildParams,
+		TestPlan:                       cfg.TestPlan,
+		TestOutputDir:                  xcresultPath,
+		TestRepetitionMode:             cfg.TestRepetitionMode,
+		MaximumTestRepetitions:         cfg.MaximumTestRepetitions,
+		RelaunchTestsForEachRepetition: cfg.RelaunchTestForEachRepetition,
+		BuildBeforeTest:                cfg.BuildBeforeTesting,
+		GenerateCodeCoverage:           cfg.GenerateCodeCoverageFiles,
+		RetryTestsOnFailure:            cfg.RetryTestsOnFailure,
+		AdditionalOptions:              cfg.XcodebuildTestOptions,
 	}
 }
