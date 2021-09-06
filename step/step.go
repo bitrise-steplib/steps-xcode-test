@@ -377,14 +377,7 @@ type Result struct {
 	SimulatorDiagnosticsPath string
 }
 
-// Run ...
-func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
-	enableSimulatorVerboseLog := cfg.SimulatorDebug != never
-	launchSimulator := !cfg.IsSimulatorBooted && !cfg.HeadlessMode
-	if err := s.prepareSimulator(enableSimulatorVerboseLog, cfg.SimulatorID, launchSimulator, cfg.XcodeMajorVersion); err != nil {
-		return Result{}, err
-	}
-
+func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 	// Run build
 	result := Result{
 		Scheme:                cfg.Scheme,
@@ -413,14 +406,14 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 			s.logger.Warnf("xcode build exit code: %d", exitCode)
 			s.logger.Warnf("xcode build log:\n%s", buildLog)
 			s.logger.Errorf("xcode build failed with error: %s", err)
-			return result, err
+			return result, -1, err
 		}
 	}
 
 	// Run test
 	tempDir, err := ioutil.TempDir("", "XCUITestOutput")
 	if err != nil {
-		return result, fmt.Errorf("could not create test output temporary directory: %s", err)
+		return result, -1, fmt.Errorf("could not create test output temporary directory: %s", err)
 	}
 	xcresultPath := path.Join(tempDir, "Test.xcresult")
 
@@ -446,7 +439,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 		var err error
 		swiftPackagesPath, err = s.cache.SwiftPackagesPath(cfg.ProjectPath)
 		if err != nil {
-			return result, fmt.Errorf("failed to get Swift Packages path, error: %s", err)
+			return result, -1, fmt.Errorf("failed to get Swift Packages path, error: %s", err)
 		}
 	}
 
@@ -467,7 +460,13 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 		printLastLinesOfXcodebuildTestLog(testLog, testErr == nil)
 	}
 
-	if cfg.SimulatorDebug == always || (cfg.SimulatorDebug == onFailure && testErr != nil) {
+	return result, exitCode, testErr
+}
+
+func (s XcodeTestRunner) teardownSimulator(simulatorDebug exportCondition, isSimulatorBooted bool, testErr error) string {
+	var simulatorDiagnosticsPath string
+
+	if simulatorDebug == always || (simulatorDebug == onFailure && testErr != nil) {
 		s.logger.Println()
 		s.logger.Infof("Collecting Simulator diagnostics")
 
@@ -476,20 +475,45 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 			s.logger.Warnf("%v", err)
 		} else {
 			s.logger.Donef("Simulator diagnostics are available as an artifact (%s)", diagnosticsPath)
-			result.SimulatorDiagnosticsPath = diagnosticsPath
+			simulatorDiagnosticsPath = diagnosticsPath
 		}
 	}
 
 	// Shut down the simulator if it was started by the step for diagnostic logs.
-	if !cfg.IsSimulatorBooted && cfg.SimulatorDebug != never {
+	if !isSimulatorBooted && simulatorDebug != never {
 		if err := s.simulator.SimulatorShutdown(cfg.SimulatorID); err != nil {
 			s.logger.Warnf("%v", err)
 		}
 	}
 
+	return simulatorDiagnosticsPath
+}
+
+// Run ...
+func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
+	enableSimulatorVerboseLog := cfg.SimulatorDebug != never
+	launchSimulator := !cfg.IsSimulatorBooted && !cfg.HeadlessMode
+	if err := s.prepareSimulator(enableSimulatorVerboseLog, cfg.SimulatorID, launchSimulator, cfg.XcodeMajorVersion); err != nil {
+		return Result{}, err
+	}
+
+	var testErr error
+	var testExitCode int
+	result, code, err := s.runTests(cfg)
+	if err != nil {
+		if code == -1 {
+			return result, err
+		}
+
+		testErr = err
+		testExitCode = code
+	}
+
+	result.SimulatorDiagnosticsPath = s.teardownSimulator(cfg.SimulatorDebug, cfg.IsSimulatorBooted, testErr)
+
 	if testErr != nil {
 		s.logger.Println()
-		s.logger.Warnf("Xcode Test command exit code: %d", exitCode)
+		s.logger.Warnf("Xcode Test command exit code: %d", testExitCode)
 		s.logger.Errorf("Xcode Test command failed, error: %s", testErr)
 		return result, testErr
 	}
