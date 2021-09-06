@@ -533,12 +533,16 @@ func (s XcodeTestRunner) Export(result Result, testFailed bool) error {
 
 	// export xcodebuild build log
 	if result.XcodebuildBuildLog != "" {
-		s.outputExporter.ExportXcodebuildBuildLog(result.DeployDir, result.XcodebuildBuildLog)
+		if err := s.outputExporter.ExportXcodebuildBuildLog(result.DeployDir, result.XcodebuildBuildLog); err != nil {
+			return err
+		}
 	}
 
 	// export xcodebuild test log
 	if result.XcodebuildTestLog != "" {
-		s.outputExporter.ExportXcodebuildTestLog(result.DeployDir, result.XcodebuildTestLog)
+		if err := s.outputExporter.ExportXcodebuildTestLog(result.DeployDir, result.XcodebuildTestLog); err != nil {
+			return err
+		}
 	}
 
 	// export simulator diagnostics log
@@ -548,7 +552,9 @@ func (s XcodeTestRunner) Export(result Result, testFailed bool) error {
 			return err
 		}
 
-		s.outputExporter.ExportSimulatorDiagnostics(result.DeployDir, result.SimulatorDiagnosticsPath, diagnosticsName)
+		if err := s.outputExporter.ExportSimulatorDiagnostics(result.DeployDir, result.SimulatorDiagnosticsPath, diagnosticsName); err != nil {
+			return err
+		}
 	}
 
 	// export UITest artifacts

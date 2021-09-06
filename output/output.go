@@ -1,6 +1,7 @@
 package output
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -18,9 +19,9 @@ import (
 type Exporter interface {
 	ExportXCResultBundle(deployDir, xcResultPath, scheme string)
 	ExportTestRunResult(failed bool)
-	ExportXcodebuildBuildLog(deployDir, xcodebuildBuildLog string)
-	ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string)
-	ExportSimulatorDiagnostics(deployDir, pth, name string)
+	ExportXcodebuildBuildLog(deployDir, xcodebuildBuildLog string) error
+	ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) error
+	ExportSimulatorDiagnostics(deployDir, pth, name string) error
 	ExportUITestArtifacts(xcResultPath, scheme string)
 }
 
@@ -77,7 +78,7 @@ func (e exporter) ExportXCResultBundle(deployDir, xcResultPath, scheme string) {
 	}
 }
 
-func (e exporter) ExportXcodebuildBuildLog(deployDir, xcodebuildBuildLog string) {
+func (e exporter) ExportXcodebuildBuildLog(deployDir, xcodebuildBuildLog string) error {
 	pth, err := saveRawOutputToLogFile(xcodebuildBuildLog)
 	if err != nil {
 		e.logger.Warnf("Failed to save the Raw Output, err: %s", err)
@@ -85,17 +86,17 @@ func (e exporter) ExportXcodebuildBuildLog(deployDir, xcodebuildBuildLog string)
 
 	deployPth := filepath.Join(deployDir, "xcodebuild_build.log")
 	if err := command.CopyFile(pth, deployPth); err != nil {
-		// TODO: restore error handling
-		e.logger.Warnf("failed to copy xcodebuild output log file from (%s) to (%s), error: %s", pth, deployPth, err)
-		return
+		return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s), error: %s", pth, deployPth, err)
 	}
 
 	if err := e.envRepository.Set("BITRISE_XCODEBUILD_BUILD_LOG_PATH", deployPth); err != nil {
 		e.logger.Warnf("Failed to export: BITRISE_XCODEBUILD_BUILD_LOG_PATH, error: %s", err)
 	}
+
+	return nil
 }
 
-func (e exporter) ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) {
+func (e exporter) ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) error {
 	pth, err := saveRawOutputToLogFile(xcodebuildTestLog)
 	if err != nil {
 		e.logger.Warnf("Failed to save the Raw Output, error: %s", err)
@@ -103,23 +104,23 @@ func (e exporter) ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) {
 
 	deployPth := filepath.Join(deployDir, "xcodebuild_test.log")
 	if err := command.CopyFile(pth, deployPth); err != nil {
-		// TODO: restore error handling
-		e.logger.Warnf("failed to copy xcodebuild output log file from (%s) to (%s), error: %s", pth, deployPth, err)
-		return
+		return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s), error: %s", pth, deployPth, err)
 	}
 
 	if err := e.envRepository.Set("BITRISE_XCODEBUILD_TEST_LOG_PATH", deployPth); err != nil {
 		e.logger.Warnf("Failed to export: BITRISE_XCODEBUILD_TEST_LOG_PATH, error: %s", err)
 	}
+
+	return nil
 }
 
-func (e exporter) ExportSimulatorDiagnostics(deployDir, pth, name string) {
+func (e exporter) ExportSimulatorDiagnostics(deployDir, pth, name string) error {
 	outputPath := filepath.Join(deployDir, name)
 	if err := ziputil.ZipDir(pth, outputPath, true); err != nil {
-		// TODO: restore error handling
-		e.logger.Warnf("failed to compress simulator diagnostics result: %v", err)
-		return
+		return fmt.Errorf("failed to compress simulator diagnostics result: %v", err)
 	}
+
+	return nil
 }
 
 func (e exporter) ExportUITestArtifacts(xcResultPath, scheme string) {
