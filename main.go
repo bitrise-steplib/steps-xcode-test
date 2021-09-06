@@ -28,15 +28,15 @@ func createStep(logger log.Logger) step.XcodeTestRunner {
 	pathChecker := pathutil.NewPathChecker()
 	fileRemover := fileutil.NewFileRemover()
 	xcodebuilder := xcodebuild.NewXcodebuild(logger, commandFactory, pathChecker, fileRemover)
-	sim := simulator.NewSimulator()
-	c := cache.NewSwiftPackageCache()
+	simulatorManager := simulator.NewManager()
+	swiftCache := cache.NewSwiftPackageCache()
 	testAddonExporter := testaddon.NewExporter()
 	testArtifactExporter := testartifact.NewExporter()
 	stepenvRepository := stepenv.NewRepository(envRepository)
 	outputExporter := output.NewExporter(stepenvRepository, logger, testAddonExporter, testArtifactExporter)
 	pathModifier := pathutil.NewPathModifier()
 
-	return step.NewXcodeTestRunner(inputParser, logger, xcprettyInstaller, xcodebuilder, sim, c, outputExporter, pathModifier)
+	return step.NewXcodeTestRunner(inputParser, logger, xcprettyInstaller, xcodebuilder, simulatorManager, swiftCache, outputExporter, pathModifier)
 }
 
 func run() int {

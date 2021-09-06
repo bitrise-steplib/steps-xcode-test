@@ -117,20 +117,20 @@ type XcodeTestRunner struct {
 	logger            log.Logger
 	xcprettyInstaller xcpretty.Installer
 	xcodebuild        xcodebuild.Xcodebuild
-	simulator         simulator.Simulator
+	simulatorManager  simulator.Manager
 	cache             cache.SwiftPackageCache
 	outputExporter    output.Exporter
 	pathModifier      pathutil.PathModifier
 }
 
 // NewXcodeTestRunner ...
-func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, xcprettyInstaller xcpretty.Installer, xcodebuild xcodebuild.Xcodebuild, simulator simulator.Simulator, cache cache.SwiftPackageCache, outputExporter output.Exporter, pathModifier pathutil.PathModifier) XcodeTestRunner {
+func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, xcprettyInstaller xcpretty.Installer, xcodebuild xcodebuild.Xcodebuild, simulatorManager simulator.Manager, cache cache.SwiftPackageCache, outputExporter output.Exporter, pathModifier pathutil.PathModifier) XcodeTestRunner {
 	return XcodeTestRunner{
 		inputParser:       inputParser,
 		logger:            logger,
 		xcprettyInstaller: xcprettyInstaller,
 		xcodebuild:        xcodebuild,
-		simulator:         simulator,
+		simulatorManager:  simulatorManager,
 		cache:             cache,
 		outputExporter:    outputExporter,
 		pathModifier:      pathModifier,
@@ -192,7 +192,7 @@ func (s XcodeTestRunner) validateSimulator(input Input) (simulator.Info, error) 
 				simulatorDevice = "iPad Air (3rd generation)"
 			}
 
-			sim, osVersion, errGetSimulator = s.simulator.GetLatestSimulatorInfoAndVersion(platform, simulatorDevice)
+			sim, osVersion, errGetSimulator = s.simulatorManager.GetLatestSimulatorInfoAndVersion(platform, simulatorDevice)
 		} else {
 			normalizedOsVersion := input.SimulatorOsVersion
 			osVersionSplit := strings.Split(normalizedOsVersion, ".")
@@ -201,7 +201,7 @@ func (s XcodeTestRunner) validateSimulator(input Input) (simulator.Info, error) 
 			}
 			osVersion = fmt.Sprintf("%s %s", platform, normalizedOsVersion)
 
-			sim, errGetSimulator = s.simulator.GetSimulatorInfo(osVersion, input.SimulatorDevice)
+			sim, errGetSimulator = s.simulatorManager.GetSimulatorInfo(osVersion, input.SimulatorDevice)
 		}
 
 		if errGetSimulator != nil {
@@ -319,7 +319,7 @@ func (s XcodeTestRunner) InstallDeps(xcpretty bool) error {
 }
 
 func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simulatorID string, launchSimulator bool, xcodeMajorVersions int) error {
-	err := s.simulator.ResetLaunchServices()
+	err := s.simulatorManager.ResetLaunchServices()
 	if err != nil {
 		s.logger.Warnf("Failed to apply simulator boot workaround, error: %s", err)
 	}
@@ -329,10 +329,10 @@ func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simula
 		s.logger.Infof("Enabling Simulator verbose log for better diagnostics")
 		// Boot the simulator now, so verbose logging can be enabled and it is kept booted after running tests,
 		// this helps to collect more detailed debug info
-		if err := s.simulator.SimulatorBoot(simulatorID); err != nil {
+		if err := s.simulatorManager.SimulatorBoot(simulatorID); err != nil {
 			return fmt.Errorf("%v", err)
 		}
-		if err := s.simulator.SimulatorEnableVerboseLog(simulatorID); err != nil {
+		if err := s.simulatorManager.SimulatorEnableVerboseLog(simulatorID); err != nil {
 			return fmt.Errorf("%v", err)
 		}
 
@@ -342,7 +342,7 @@ func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simula
 	if launchSimulator {
 		s.logger.Infof("Booting simulator (%s)...", simulatorID)
 
-		if err := s.simulator.LaunchSimulator(simulatorID, xcodeMajorVersions); err != nil {
+		if err := s.simulatorManager.LaunchSimulator(simulatorID, xcodeMajorVersions); err != nil {
 			return fmt.Errorf("failed to boot simulator, error: %s", err)
 		}
 
@@ -461,7 +461,7 @@ func (s XcodeTestRunner) teardownSimulator(simulatorID string, simulatorDebug ex
 		s.logger.Println()
 		s.logger.Infof("Collecting Simulator diagnostics")
 
-		diagnosticsPath, err := s.simulator.SimulatorCollectDiagnostics()
+		diagnosticsPath, err := s.simulatorManager.SimulatorCollectDiagnostics()
 		if err != nil {
 			s.logger.Warnf("%v", err)
 		} else {
@@ -472,7 +472,7 @@ func (s XcodeTestRunner) teardownSimulator(simulatorID string, simulatorDebug ex
 
 	// Shut down the simulator if it was started by the step for diagnostic logs.
 	if !isSimulatorBooted && simulatorDebug != never {
-		if err := s.simulator.SimulatorShutdown(simulatorID); err != nil {
+		if err := s.simulatorManager.SimulatorShutdown(simulatorID); err != nil {
 			s.logger.Warnf("%v", err)
 		}
 	}
@@ -547,7 +547,7 @@ func (s XcodeTestRunner) Export(result Result, testFailed bool) error {
 
 	// export simulator diagnostics log
 	if result.SimulatorDiagnosticsPath != "" {
-		diagnosticsName, err := s.simulator.SimulatorDiagnosticsName()
+		diagnosticsName, err := s.simulatorManager.SimulatorDiagnosticsName()
 		if err != nil {
 			return err
 		}

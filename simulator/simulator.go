@@ -19,8 +19,8 @@ import (
 // Info ...
 type Info sim.InfoModel
 
-// Simulator ...
-type Simulator interface {
+// Manager ...
+type Manager interface {
 	GetLatestSimulatorInfoAndVersion(osName, deviceName string) (Info, string, error)
 	GetSimulatorInfo(osNameAndVersion, deviceName string) (Info, error)
 	LaunchSimulator(simulatorID string, xcodebuildMajorVersion int) error
@@ -33,25 +33,25 @@ type Simulator interface {
 	SimulatorDiagnosticsName() (string, error)
 }
 
-type defaultSimulator struct {
+type manager struct {
 }
 
-// NewSimulator ...
-func NewSimulator() Simulator {
-	return defaultSimulator{}
+// NewManager ...
+func NewManager() Manager {
+	return manager{}
 }
 
-func (s defaultSimulator) GetLatestSimulatorInfoAndVersion(osName, deviceName string) (Info, string, error) {
+func (s manager) GetLatestSimulatorInfoAndVersion(osName, deviceName string) (Info, string, error) {
 	info, ver, err := sim.GetLatestSimulatorInfoAndVersion(osName, deviceName)
 	return Info(info), ver, err
 }
 
-func (s defaultSimulator) GetSimulatorInfo(osNameAndVersion, deviceName string) (Info, error) {
+func (s manager) GetSimulatorInfo(osNameAndVersion, deviceName string) (Info, error) {
 	info, err := sim.GetSimulatorInfo(osNameAndVersion, deviceName)
 	return Info(info), err
 }
 
-func (s defaultSimulator) LaunchSimulator(simulatorID string, xcodebuildMajorVersion int) error {
+func (s manager) LaunchSimulator(simulatorID string, xcodebuildMajorVersion int) error {
 	return sim.BootSimulator(simulatorID, xcodebuildMajorVersion)
 }
 
@@ -60,7 +60,7 @@ func (s defaultSimulator) LaunchSimulator(simulatorID string, xcodebuildMajorVer
 // Details:
 // - https://stackoverflow.com/questions/2182040/the-application-cannot-be-opened-because-its-executable-is-missing/16546673#16546673
 // - https://ss64.com/osx/lsregister.html
-func (s defaultSimulator) ResetLaunchServices() error {
+func (s manager) ResetLaunchServices() error {
 	f := command.NewFactory(env.NewRepository())
 	cmd := f.Create("sw_vers", []string{"-productVersion"}, nil)
 
@@ -91,7 +91,7 @@ func (s defaultSimulator) ResetLaunchServices() error {
 	return nil
 }
 
-func (s defaultSimulator) SimulatorBoot(id string) error {
+func (s manager) SimulatorBoot(id string) error {
 	f := command.NewFactory(env.NewRepository())
 	cmd := f.Create("xcrun", []string{"simctl", "boot", id}, &command.Opts{
 		Stdout: os.Stdout,
@@ -115,7 +115,7 @@ func (s defaultSimulator) SimulatorBoot(id string) error {
 }
 
 // Simulator needs to be booted to enable verbose log
-func (s defaultSimulator) SimulatorEnableVerboseLog(id string) error {
+func (s manager) SimulatorEnableVerboseLog(id string) error {
 	f := command.NewFactory(env.NewRepository())
 	cmd := f.Create("xcrun", []string{"simctl", "logverbose", id, "enable"}, &command.Opts{
 		Stdout: os.Stdout,
@@ -135,7 +135,7 @@ func (s defaultSimulator) SimulatorEnableVerboseLog(id string) error {
 	return nil
 }
 
-func (s defaultSimulator) SimulatorCollectDiagnostics() (string, error) {
+func (s manager) SimulatorCollectDiagnostics() (string, error) {
 	diagnosticsName, err := s.SimulatorDiagnosticsName()
 	if err != nil {
 		return "", err
@@ -164,7 +164,7 @@ func (s defaultSimulator) SimulatorCollectDiagnostics() (string, error) {
 	return diagnosticsOutDir, nil
 }
 
-func (s defaultSimulator) SimulatorShutdown(id string) error {
+func (s manager) SimulatorShutdown(id string) error {
 	f := command.NewFactory(env.NewRepository())
 	cmd := f.Create("xcrun", []string{"simctl", "shutdown", id}, &command.Opts{
 		Stdout: os.Stdout,
@@ -187,7 +187,7 @@ func (s defaultSimulator) SimulatorShutdown(id string) error {
 	return nil
 }
 
-func (s defaultSimulator) SimulatorDiagnosticsName() (string, error) {
+func (s manager) SimulatorDiagnosticsName() (string, error) {
 	timestamp, err := time.Now().MarshalText()
 	if err != nil {
 		return "", fmt.Errorf("failed to collect Simulator diagnostics, failed to marshal timestamp: %v", err)
