@@ -12,20 +12,6 @@ type Simulator struct {
 	mock.Mock
 }
 
-// BootSimulator provides a mock function with given fields: simulatorID, xcodebuildMajorVersion
-func (_m *Simulator) BootSimulator(simulatorID string, xcodebuildMajorVersion int) error {
-	ret := _m.Called(simulatorID, xcodebuildMajorVersion)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string, int) error); ok {
-		r0 = rf(simulatorID, xcodebuildMajorVersion)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // GetLatestSimulatorInfoAndVersion provides a mock function with given fields: osName, deviceName
 func (_m *Simulator) GetLatestSimulatorInfoAndVersion(osName string, deviceName string) (simulator.Info, string, error) {
 	ret := _m.Called(osName, deviceName)
@@ -73,6 +59,20 @@ func (_m *Simulator) GetSimulatorInfo(osNameAndVersion string, deviceName string
 	}
 
 	return r0, r1
+}
+
+// LaunchSimulator provides a mock function with given fields: simulatorID, xcodebuildMajorVersion
+func (_m *Simulator) LaunchSimulator(simulatorID string, xcodebuildMajorVersion int) error {
+	ret := _m.Called(simulatorID, xcodebuildMajorVersion)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, int) error); ok {
+		r0 = rf(simulatorID, xcodebuildMajorVersion)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // ResetLaunchServices provides a mock function with given fields:

@@ -137,7 +137,7 @@ func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, xcp
 	}
 }
 
-func (s XcodeTestRunner) validateXcodeVersions(input *Input, xcodeMajorVersion int) error {
+func (s XcodeTestRunner) validateXcodeVersion(input *Input, xcodeMajorVersion int) error {
 	if xcodeMajorVersion < minSupportedXcodeMajorVersion {
 		return fmt.Errorf("invalid Xcode major version (%d), should not be less then min supported: %d", xcodeMajorVersion, minSupportedXcodeMajorVersion)
 	}
@@ -239,7 +239,7 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 	}
 	s.logger.Printf("- xcodebuildVersion: %s (%s)", xcodebuildVersion.Version, xcodebuildVersion.BuildVersion)
 
-	if err := s.validateXcodeVersions(&input, int(xcodebuildVersion.MajorVersion)); err != nil {
+	if err := s.validateXcodeVersion(&input, int(xcodebuildVersion.MajorVersion)); err != nil {
 		return Config{}, err
 	}
 

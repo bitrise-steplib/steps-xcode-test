@@ -9,11 +9,13 @@ import (
 	"github.com/bitrise-io/go-xcode/utility"
 )
 
+// Output tools ...
 const (
 	XcodebuildTool = "xcodebuild"
 	XcprettyTool   = "xcpretty"
 )
 
+// Test repetition modes ...
 const (
 	TestRepetitionNone           = "none"
 	TestRepetitionUntilFailure   = "until_failure"
@@ -34,8 +36,8 @@ type xcodebuild struct {
 	fileRemover    fileutil.FileRemover
 }
 
-// New ...
-func New(logger log.Logger, commandFactory command.Factory, pathChecker pathutil.PathChecker, fileRemover fileutil.FileRemover) Xcodebuild {
+// NewXcodebuild ...
+func NewXcodebuild(logger log.Logger, commandFactory command.Factory, pathChecker pathutil.PathChecker, fileRemover fileutil.FileRemover) Xcodebuild {
 	return &xcodebuild{
 		logger:         logger,
 		commandFactory: commandFactory,

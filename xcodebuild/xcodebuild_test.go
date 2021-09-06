@@ -28,7 +28,7 @@ func Test_WhenXcodebuildFails_ThenExitCodeGetsReturned(t *testing.T) {
 	pathChecker := new(mockpathutil.PathChecker)
 	fileremover := new(mockfileutil.FileRemover)
 
-	xcodebuild := New(logger, commandFactory, pathChecker, fileremover)
+	xcodebuild := NewXcodebuild(logger, commandFactory, pathChecker, fileremover)
 
 	params := Params{
 		Action:                    "-project",
