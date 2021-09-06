@@ -68,27 +68,13 @@ type Input struct {
 	CacheLevel string `env:"cache_level,opt[none,swift_packages]"`
 }
 
-type exportCondition int
+type exportCondition string
 
 const (
-	invalid exportCondition = iota
-	always
-	never
-	onFailure
+	always    = "always"
+	never     = "never"
+	onFailure = "on_failure"
 )
-
-func parseExportCondition(condition string) exportCondition {
-	switch condition {
-	case "always":
-		return always
-	case "never":
-		return never
-	case "on_failure":
-		return onFailure
-	default:
-		return invalid
-	}
-}
 
 // Config ...
 type Config struct {
@@ -151,77 +137,53 @@ func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, xcp
 	}
 }
 
-// ProcessConfig ...
-func (s XcodeTestRunner) ProcessConfig() (Config, error) {
-	var input Input
-	err := s.inputParser.Parse(&input)
-	if err != nil {
-		return Config{}, err
-	}
-
-	stepconf.Print(input)
-	s.logger.Println()
-
-	s.logger.EnableDebugLog(input.Verbose)
-
-	// validate Xcode version
-	xcodebuildVersion, err := s.xcodebuild.Version()
-	if err != nil {
-		return Config{}, fmt.Errorf("failed to determine Xcode version, error: %s", err)
-	}
-	s.logger.Printf("- xcodebuildVersion: %s (%s)", xcodebuildVersion.Version, xcodebuildVersion.BuildVersion)
-
-	xcodeMajorVersion := xcodebuildVersion.MajorVersion
+func (s XcodeTestRunner) validateXcodeVersions(input *Input, xcodeMajorVersion int) error {
 	if xcodeMajorVersion < minSupportedXcodeMajorVersion {
-		return Config{}, fmt.Errorf("invalid Xcode major version (%d), should not be less then min supported: %d", xcodeMajorVersion, minSupportedXcodeMajorVersion)
+		return fmt.Errorf("invalid Xcode major version (%d), should not be less then min supported: %d", xcodeMajorVersion, minSupportedXcodeMajorVersion)
 	}
 
 	if xcodeMajorVersion < 11 && input.TestPlan != "" {
-		return Config{}, fmt.Errorf("input Test Plan incompatible with Xcode %d, at least Xcode 11 required", xcodeMajorVersion)
+		return fmt.Errorf("input Test Plan incompatible with Xcode %d, at least Xcode 11 required", xcodeMajorVersion)
 	}
 
 	// validate headless mode
-	headlessMode := input.HeadlessMode
 	if xcodeMajorVersion < 9 && input.HeadlessMode {
 		s.logger.Warnf("Headless mode is enabled but it's only available with Xcode 9.x or newer.")
-		headlessMode = false
+		input.HeadlessMode = false
 	}
 
 	// validate export UITest artifacts
-	exportUITestArtifacts := input.ExportUITestArtifacts
 	if input.ExportUITestArtifacts && xcodeMajorVersion >= 11 {
 		// The test result bundle (xcresult) structure changed in Xcode 11:
 		// it does not contains TestSummaries.plist nor Attachments directly.
 		s.logger.Warnf("Export UITest Artifacts (export_uitest_artifacts) turned on, but Xcode version >= 11. The test result bundle structure changed in Xcode 11 it does not contain TestSummaries.plist and Attachments directly, nothing to export.")
-		exportUITestArtifacts = false
+		input.ExportUITestArtifacts = false
 	}
 
 	// validate simulator diagnosis mode
-	simulatorDebug := parseExportCondition(input.CollectSimulatorDiagnostics)
-	if simulatorDebug == invalid {
-		return Config{}, fmt.Errorf("internal error, unexpected value (%s) for collect_simulator_diagnostics", input.CollectSimulatorDiagnostics)
-	}
-	if simulatorDebug != never && xcodeMajorVersion < 10 {
+	if input.CollectSimulatorDiagnostics != never && xcodeMajorVersion < 10 {
 		s.logger.Warnf("Collecting Simulator diagnostics is not available below Xcode version 10, current Xcode version: %s", xcodeMajorVersion)
-		simulatorDebug = never
+		input.CollectSimulatorDiagnostics = never
 	}
 
-	// validate project path
-	projectPath, err := s.pathModifier.AbsPath(input.ProjectPath)
-	if err != nil {
-		return Config{}, fmt.Errorf("failed to get absolute project path, error: %s", err)
-	}
-	if filepath.Ext(projectPath) != ".xcodeproj" && filepath.Ext(projectPath) != ".xcworkspace" {
-		return Config{}, fmt.Errorf("invalid project file (%s), extension should be (.xcodeproj/.xcworkspace)", projectPath)
+	if input.TestRepetitionMode != xcodebuild.TestRepetitionNone && xcodeMajorVersion < 13 {
+		return errors.New("Test Repetition Mode (test_repetition_mode) is not available below Xcode 13")
 	}
 
-	// validate simulator related inputs
+	if input.RetryTestsOnFailure && xcodeMajorVersion > 12 {
+		return errors.New("Should retry tests on failure? (should_retry_test_on_fail) is not available above Xcode 12; use test_repetition_mode=retry_on_failure instead")
+	}
+
+	return nil
+}
+
+func (s XcodeTestRunner) validateSimulator(input Input) (simulator.Info, error) {
 	var sim simulator.Info
 	var osVersion string
 
 	platform := strings.TrimSuffix(input.SimulatorPlatform, " Simulator")
 	// Retry gathering device information since xcrun simctl list can fail to show the complete device list
-	if err = retry.Times(3).Wait(10 * time.Second).Try(func(attempt uint) error {
+	if err := retry.Times(3).Wait(10 * time.Second).Try(func(attempt uint) error {
 		var errGetSimulator error
 		if input.SimulatorOsVersion == "latest" {
 			var simulatorDevice = input.SimulatorDevice
@@ -248,22 +210,55 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 
 		return errGetSimulator
 	}); err != nil {
-		return Config{}, fmt.Errorf("simulator UDID lookup failed: %s", err)
+		return simulator.Info{}, fmt.Errorf("simulator UDID lookup failed: %s", err)
 	}
 
 	s.logger.Infof("Simulator infos")
 	s.logger.Printf("* simulator_name: %s, version: %s, UDID: %s, status: %s", sim.Name, osVersion, sim.ID, sim.Status)
 
-	// Device Destination
-	deviceDestination := fmt.Sprintf("id=%s", sim.ID)
+	return sim, nil
+}
 
-	s.logger.Printf("* device_destination: %s", deviceDestination)
-	s.logger.Println()
-
-	if input.TestRepetitionMode != xcodebuild.TestRepetitionNone && xcodeMajorVersion < 13 {
-		return Config{}, errors.New("Test Repetition Mode (test_repetition_mode) is not available below Xcode 13")
+// ProcessConfig ...
+func (s XcodeTestRunner) ProcessConfig() (Config, error) {
+	var input Input
+	err := s.inputParser.Parse(&input)
+	if err != nil {
+		return Config{}, err
 	}
 
+	stepconf.Print(input)
+	s.logger.Println()
+
+	s.logger.EnableDebugLog(input.Verbose)
+
+	// validate Xcode version
+	xcodebuildVersion, err := s.xcodebuild.Version()
+	if err != nil {
+		return Config{}, fmt.Errorf("failed to determine Xcode version, error: %s", err)
+	}
+	s.logger.Printf("- xcodebuildVersion: %s (%s)", xcodebuildVersion.Version, xcodebuildVersion.BuildVersion)
+
+	if err := s.validateXcodeVersions(&input, int(xcodebuildVersion.MajorVersion)); err != nil {
+		return Config{}, err
+	}
+
+	// validate project path
+	projectPath, err := s.pathModifier.AbsPath(input.ProjectPath)
+	if err != nil {
+		return Config{}, fmt.Errorf("failed to get absolute project path, error: %s", err)
+	}
+	if filepath.Ext(projectPath) != ".xcodeproj" && filepath.Ext(projectPath) != ".xcworkspace" {
+		return Config{}, fmt.Errorf("invalid project file (%s), extension should be (.xcodeproj/.xcworkspace)", projectPath)
+	}
+
+	// validate simulator related inputs
+	sim, err := s.validateSimulator(input)
+	if err != nil {
+		return Config{}, err
+	}
+
+	// validate test repetition related inputs
 	if input.TestRepetitionMode != xcodebuild.TestRepetitionNone && input.MaximumTestRepetitions < 2 {
 		return Config{}, fmt.Errorf("invalid number of Maximum Test Repetitions (maximum_test_repetitions): %d, should be more than 1", input.MaximumTestRepetitions)
 	}
@@ -272,16 +267,12 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 		return Config{}, errors.New("Relaunch Tests for Each Repetition (relaunch_tests_for_each_repetition) cannot be used if Test Repetition Mode (test_repetition_mode) is 'none'")
 	}
 
-	if input.RetryTestsOnFailure && xcodeMajorVersion > 12 {
-		return Config{}, errors.New("Should retry tests on failure? (should_retry_test_on_fail) is not available above Xcode 12; use test_repetition_mode=retry_on_failure instead")
-	}
-
 	return Config{
 		ProjectPath: projectPath,
 		Scheme:      input.Scheme,
 		TestPlan:    input.TestPlan,
 
-		XcodeMajorVersion: int(xcodeMajorVersion),
+		XcodeMajorVersion: int(xcodebuildVersion.MajorVersion),
 		SimulatorID:       sim.ID,
 		IsSimulatorBooted: sim.Status != simulatorShutdownState,
 
@@ -297,15 +288,15 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 		RetryTestsOnFailure:       input.RetryTestsOnFailure,
 		DisableIndexWhileBuilding: input.DisableIndexWhileBuilding,
 		GenerateCodeCoverageFiles: input.GenerateCodeCoverageFiles,
-		HeadlessMode:              headlessMode,
+		HeadlessMode:              input.HeadlessMode,
 
 		XcodebuildTestOptions: input.TestOptions,
 		XcprettyOptions:       input.XcprettyTestOptions,
 
-		SimulatorDebug: simulatorDebug,
+		SimulatorDebug: exportCondition(input.CollectSimulatorDiagnostics),
 
 		DeployDir:             input.DeployDir,
-		ExportUITestArtifacts: exportUITestArtifacts,
+		ExportUITestArtifacts: input.ExportUITestArtifacts,
 
 		CacheLevel: input.CacheLevel,
 	}, nil
@@ -463,7 +454,7 @@ func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 	return result, exitCode, testErr
 }
 
-func (s XcodeTestRunner) teardownSimulator(simulatorDebug exportCondition, isSimulatorBooted bool, testErr error) string {
+func (s XcodeTestRunner) teardownSimulator(simulatorID string, simulatorDebug exportCondition, isSimulatorBooted bool, testErr error) string {
 	var simulatorDiagnosticsPath string
 
 	if simulatorDebug == always || (simulatorDebug == onFailure && testErr != nil) {
@@ -481,7 +472,7 @@ func (s XcodeTestRunner) teardownSimulator(simulatorDebug exportCondition, isSim
 
 	// Shut down the simulator if it was started by the step for diagnostic logs.
 	if !isSimulatorBooted && simulatorDebug != never {
-		if err := s.simulator.SimulatorShutdown(cfg.SimulatorID); err != nil {
+		if err := s.simulator.SimulatorShutdown(simulatorID); err != nil {
 			s.logger.Warnf("%v", err)
 		}
 	}
@@ -509,7 +500,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 		testExitCode = code
 	}
 
-	result.SimulatorDiagnosticsPath = s.teardownSimulator(cfg.SimulatorDebug, cfg.IsSimulatorBooted, testErr)
+	result.SimulatorDiagnosticsPath = s.teardownSimulator(cfg.SimulatorID, cfg.SimulatorDebug, cfg.IsSimulatorBooted, testErr)
 
 	if testErr != nil {
 		s.logger.Println()
