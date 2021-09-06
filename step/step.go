@@ -450,12 +450,6 @@ func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 	}
 	xcresultPath := path.Join(tempDir, "Test.xcresult")
 
-	testParams := createTestParams(cfg, buildParams, xcresultPath)
-
-	if cfg.IsSingleBuild {
-		testParams.CleanBuild = cfg.IsCleanBuild
-	}
-
 	var swiftPackagesPath string
 	if cfg.XcodeMajorVersion >= 11 {
 		var err error
@@ -465,16 +459,9 @@ func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 		}
 	}
 
-	params := xcodebuild.TestRunParams{
-		BuildTestParams:                    testParams,
-		OutputTool:                         cfg.OutputTool,
-		XcprettyOptions:                    cfg.XcprettyOptions,
-		RetryOnTestRunnerError:             true,
-		RetryOnSwiftPackageResolutionError: true,
-		SwiftPackagesPath:                  swiftPackagesPath,
-		XcodeMajorVersion:                  cfg.XcodeMajorVersion,
-	}
-	testLog, exitCode, testErr := s.xcodebuild.RunTest(params)
+	testParams := createTestParams(cfg, buildParams, xcresultPath, swiftPackagesPath)
+
+	testLog, exitCode, testErr := s.xcodebuild.RunTest(testParams)
 	result.XcresultPath = xcresultPath
 	result.XcodebuildTestLog = testLog
 
@@ -563,17 +550,28 @@ func createBuildParams(cfg Config) xcodebuild.Params {
 	}
 }
 
-func createTestParams(cfg Config, buildParams xcodebuild.Params, xcresultPath string) xcodebuild.TestParams {
-	return xcodebuild.TestParams{
+func createTestParams(cfg Config, buildParams xcodebuild.Params, xcresultPath, swiftPackagesPath string) xcodebuild.TestRunParams {
+	testParams := xcodebuild.TestParams{
 		BuildParams:                    buildParams,
 		TestPlan:                       cfg.TestPlan,
 		TestOutputDir:                  xcresultPath,
 		TestRepetitionMode:             cfg.TestRepetitionMode,
 		MaximumTestRepetitions:         cfg.MaximumTestRepetitions,
 		RelaunchTestsForEachRepetition: cfg.RelaunchTestForEachRepetition,
+		CleanBuild:                     cfg.IsCleanBuild,
 		BuildBeforeTest:                cfg.BuildBeforeTesting,
 		GenerateCodeCoverage:           cfg.GenerateCodeCoverageFiles,
 		RetryTestsOnFailure:            cfg.RetryTestsOnFailure,
 		AdditionalOptions:              cfg.XcodebuildTestOptions,
+	}
+
+	return xcodebuild.TestRunParams{
+		BuildTestParams:                    testParams,
+		OutputTool:                         cfg.OutputTool,
+		XcprettyOptions:                    cfg.XcprettyOptions,
+		RetryOnTestRunnerError:             true,
+		RetryOnSwiftPackageResolutionError: true,
+		SwiftPackagesPath:                  swiftPackagesPath,
+		XcodeMajorVersion:                  cfg.XcodeMajorVersion,
 	}
 }
