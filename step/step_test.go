@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	mocklog "github.com/bitrise-io/go-utils/log/mocks"
+	mockPathutil "github.com/bitrise-io/go-utils/pathutil/mocks"
 	mockcache "github.com/bitrise-steplib/steps-xcode-test/cache/mocks"
 	mocksimulator "github.com/bitrise-steplib/steps-xcode-test/simulator/mocks"
 	mockxcodebuild "github.com/bitrise-steplib/steps-xcode-test/xcodebuild/mocks"
@@ -24,7 +25,10 @@ func Test_WhenTestRuns_ThenXcodebuildGetsCalled(t *testing.T) {
 	cache := new(mockcache.Cache)
 	cache.On("SwiftPackagesPath", mock.Anything).Return("", nil)
 
-	step := NewXcodeTestRunner(nil, logger, nil, xcodebuilder, simulatorManager, cache, nil, nil)
+	pathProvider := new(mockPathutil.PathProvider)
+	pathProvider.On("CreateTempDir", mock.Anything).Return("tmp_dir", nil)
+
+	step := NewXcodeTestRunner(nil, logger, nil, xcodebuilder, simulatorManager, cache, nil, nil, pathProvider)
 
 	config := Config{
 		ProjectPath: "./project.xcodeproj",

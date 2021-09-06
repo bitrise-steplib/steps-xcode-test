@@ -3,7 +3,6 @@ package step
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"path"
 	"path/filepath"
 	"strings"
@@ -121,10 +120,11 @@ type XcodeTestRunner struct {
 	cache             cache.SwiftPackageCache
 	outputExporter    output.Exporter
 	pathModifier      pathutil.PathModifier
+	pathProvider      pathutil.PathProvider
 }
 
 // NewXcodeTestRunner ...
-func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, xcprettyInstaller xcpretty.Installer, xcodebuild xcodebuild.Xcodebuild, simulatorManager simulator.Manager, cache cache.SwiftPackageCache, outputExporter output.Exporter, pathModifier pathutil.PathModifier) XcodeTestRunner {
+func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, xcprettyInstaller xcpretty.Installer, xcodebuild xcodebuild.Xcodebuild, simulatorManager simulator.Manager, cache cache.SwiftPackageCache, outputExporter output.Exporter, pathModifier pathutil.PathModifier, pathProvider pathutil.PathProvider) XcodeTestRunner {
 	return XcodeTestRunner{
 		inputParser:       inputParser,
 		logger:            logger,
@@ -134,6 +134,7 @@ func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, xcp
 		cache:             cache,
 		outputExporter:    outputExporter,
 		pathModifier:      pathModifier,
+		pathProvider:      pathProvider,
 	}
 }
 
@@ -443,7 +444,7 @@ func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 	}
 
 	// Run test
-	tempDir, err := ioutil.TempDir("", "XCUITestOutput")
+	tempDir, err := s.pathProvider.CreateTempDir("XCUITestOutput")
 	if err != nil {
 		return result, -1, fmt.Errorf("could not create test output temporary directory: %s", err)
 	}

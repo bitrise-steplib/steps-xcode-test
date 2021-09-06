@@ -20,23 +20,8 @@ import (
 	"github.com/bitrise-steplib/steps-xcode-test/xcpretty"
 )
 
-func createStep(logger log.Logger) step.XcodeTestRunner {
-	envRepository := env.NewRepository()
-	inputParser := stepconf.NewInputParser(envRepository)
-	xcprettyInstaller := xcpretty.NewInstaller()
-	commandFactory := command.NewFactory(envRepository)
-	pathChecker := pathutil.NewPathChecker()
-	fileRemover := fileutil.NewFileRemover()
-	xcodebuilder := xcodebuild.NewXcodebuild(logger, commandFactory, pathChecker, fileRemover)
-	simulatorManager := simulator.NewManager()
-	swiftCache := cache.NewSwiftPackageCache()
-	testAddonExporter := testaddon.NewExporter()
-	testArtifactExporter := testartifact.NewExporter()
-	stepenvRepository := stepenv.NewRepository(envRepository)
-	outputExporter := output.NewExporter(stepenvRepository, logger, testAddonExporter, testArtifactExporter)
-	pathModifier := pathutil.NewPathModifier()
-
-	return step.NewXcodeTestRunner(inputParser, logger, xcprettyInstaller, xcodebuilder, simulatorManager, swiftCache, outputExporter, pathModifier)
+func main() {
+	os.Exit(run())
 }
 
 func run() int {
@@ -71,6 +56,22 @@ func run() int {
 	return 0
 }
 
-func main() {
-	os.Exit(run())
+func createStep(logger log.Logger) step.XcodeTestRunner {
+	envRepository := env.NewRepository()
+	inputParser := stepconf.NewInputParser(envRepository)
+	xcprettyInstaller := xcpretty.NewInstaller()
+	commandFactory := command.NewFactory(envRepository)
+	pathChecker := pathutil.NewPathChecker()
+	fileRemover := fileutil.NewFileRemover()
+	xcodebuilder := xcodebuild.NewXcodebuild(logger, commandFactory, pathChecker, fileRemover)
+	simulatorManager := simulator.NewManager()
+	swiftCache := cache.NewSwiftPackageCache()
+	testAddonExporter := testaddon.NewExporter()
+	testArtifactExporter := testartifact.NewExporter()
+	stepenvRepository := stepenv.NewRepository(envRepository)
+	outputExporter := output.NewExporter(stepenvRepository, logger, testAddonExporter, testArtifactExporter)
+	pathModifier := pathutil.NewPathModifier()
+	pathProvider := pathutil.NewPathProvider()
+
+	return step.NewXcodeTestRunner(inputParser, logger, xcprettyInstaller, xcodebuilder, simulatorManager, swiftCache, outputExporter, pathModifier, pathProvider)
 }
