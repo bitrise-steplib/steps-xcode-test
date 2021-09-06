@@ -18,13 +18,13 @@ func Test_WhenTestRuns_ThenXcodebuildGetsCalled(t *testing.T) {
 	xcodebuilder := new(mockxcodebuild.Xcodebuild)
 	xcodebuilder.On("RunTest", mock.Anything).Return("", 0, nil)
 
-	simulator := new(mocksimulator.Simulator)
-	simulator.On("ResetLaunchServices").Return(nil)
+	simulatorManager := new(mocksimulator.Manager)
+	simulatorManager.On("ResetLaunchServices").Return(nil)
 
 	cache := new(mockcache.Cache)
 	cache.On("SwiftPackagesPath", mock.Anything).Return("", nil)
 
-	step := NewXcodeTestRunner(nil, logger, nil, xcodebuilder, simulator, cache, nil, nil)
+	step := NewXcodeTestRunner(nil, logger, nil, xcodebuilder, simulatorManager, cache, nil, nil)
 
 	config := Config{
 		ProjectPath: "./project.xcodeproj",

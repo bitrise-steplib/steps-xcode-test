@@ -16,13 +16,13 @@ import (
 	sim "github.com/bitrise-io/go-xcode/simulator"
 )
 
-// Info ...
-type Info sim.InfoModel
+// Simulator ...
+type Simulator sim.InfoModel
 
 // Manager ...
 type Manager interface {
-	GetLatestSimulatorInfoAndVersion(osName, deviceName string) (Info, string, error)
-	GetSimulatorInfo(osNameAndVersion, deviceName string) (Info, error)
+	GetLatestSimulatorAndVersion(osName, deviceName string) (Simulator, string, error)
+	GetSimulator(osNameAndVersion, deviceName string) (Simulator, error)
 	LaunchSimulator(simulatorID string, xcodebuildMajorVersion int) error
 
 	ResetLaunchServices() error
@@ -41,14 +41,14 @@ func NewManager() Manager {
 	return manager{}
 }
 
-func (s manager) GetLatestSimulatorInfoAndVersion(osName, deviceName string) (Info, string, error) {
+func (s manager) GetLatestSimulatorAndVersion(osName, deviceName string) (Simulator, string, error) {
 	info, ver, err := sim.GetLatestSimulatorInfoAndVersion(osName, deviceName)
-	return Info(info), ver, err
+	return Simulator(info), ver, err
 }
 
-func (s manager) GetSimulatorInfo(osNameAndVersion, deviceName string) (Info, error) {
+func (s manager) GetSimulator(osNameAndVersion, deviceName string) (Simulator, error) {
 	info, err := sim.GetSimulatorInfo(osNameAndVersion, deviceName)
-	return Info(info), err
+	return Simulator(info), err
 }
 
 func (s manager) LaunchSimulator(simulatorID string, xcodebuildMajorVersion int) error {

@@ -177,8 +177,8 @@ func (s XcodeTestRunner) validateXcodeVersion(input *Input, xcodeMajorVersion in
 	return nil
 }
 
-func (s XcodeTestRunner) validateSimulator(input Input) (simulator.Info, error) {
-	var sim simulator.Info
+func (s XcodeTestRunner) validateSimulator(input Input) (simulator.Simulator, error) {
+	var sim simulator.Simulator
 	var osVersion string
 
 	platform := strings.TrimSuffix(input.SimulatorPlatform, " Simulator")
@@ -192,7 +192,7 @@ func (s XcodeTestRunner) validateSimulator(input Input) (simulator.Info, error) 
 				simulatorDevice = "iPad Air (3rd generation)"
 			}
 
-			sim, osVersion, errGetSimulator = s.simulatorManager.GetLatestSimulatorInfoAndVersion(platform, simulatorDevice)
+			sim, osVersion, errGetSimulator = s.simulatorManager.GetLatestSimulatorAndVersion(platform, simulatorDevice)
 		} else {
 			normalizedOsVersion := input.SimulatorOsVersion
 			osVersionSplit := strings.Split(normalizedOsVersion, ".")
@@ -201,7 +201,7 @@ func (s XcodeTestRunner) validateSimulator(input Input) (simulator.Info, error) 
 			}
 			osVersion = fmt.Sprintf("%s %s", platform, normalizedOsVersion)
 
-			sim, errGetSimulator = s.simulatorManager.GetSimulatorInfo(osVersion, input.SimulatorDevice)
+			sim, errGetSimulator = s.simulatorManager.GetSimulator(osVersion, input.SimulatorDevice)
 		}
 
 		if errGetSimulator != nil {
@@ -210,7 +210,7 @@ func (s XcodeTestRunner) validateSimulator(input Input) (simulator.Info, error) 
 
 		return errGetSimulator
 	}); err != nil {
-		return simulator.Info{}, fmt.Errorf("simulator UDID lookup failed: %s", err)
+		return simulator.Simulator{}, fmt.Errorf("simulator UDID lookup failed: %s", err)
 	}
 
 	s.logger.Infof("Simulator infos")
