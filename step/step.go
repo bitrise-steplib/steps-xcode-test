@@ -327,14 +327,6 @@ func (s XcodeTestRunner) InstallDeps(xcpretty bool) error {
 	return nil
 }
 
-// Result ...
-type Result struct {
-	XcresultPath             string
-	XcodebuildBuildLog       string
-	XcodebuildTestLog        string
-	SimulatorDiagnosticsPath string
-}
-
 func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simulatorID string, launchSimulator bool, xcodeMajorVersions int) error {
 	err := s.simulator.ResetLaunchServices()
 	if err != nil {
@@ -373,6 +365,18 @@ func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simula
 	return nil
 }
 
+// Result ...
+type Result struct {
+	Scheme                string
+	DeployDir             string
+	ExportUITestArtifacts bool
+
+	XcresultPath             string
+	XcodebuildBuildLog       string
+	XcodebuildTestLog        string
+	SimulatorDiagnosticsPath string
+}
+
 // Run ...
 func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 	enableSimulatorVerboseLog := cfg.SimulatorDebug != never
@@ -382,7 +386,11 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 	}
 
 	// Run build
-	result := Result{}
+	result := Result{
+		Scheme:                cfg.Scheme,
+		DeployDir:             cfg.DeployDir,
+		ExportUITestArtifacts: cfg.ExportUITestArtifacts,
+	}
 
 	projectFlag := "-project"
 	if filepath.Ext(cfg.ProjectPath) == ".xcworkspace" {
@@ -499,53 +507,38 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 	return result, nil
 }
 
-// ExportOpts ...
-type ExportOpts struct {
-	TestFailed bool
-
-	Scheme       string
-	DeployDir    string
-	XcresultPath string
-
-	XcodebuildBuildLog string
-	XcodebuildTestLog  string
-
-	SimulatorDiagnosticsPath string
-	ExportUITestArtifacts    bool
-}
-
 // Export ...
-func (s XcodeTestRunner) Export(opts ExportOpts) error {
+func (s XcodeTestRunner) Export(result Result, testFailed bool) error {
 	// export test run status
-	s.outputExporter.ExportTestRunResult(opts.TestFailed)
+	s.outputExporter.ExportTestRunResult(testFailed)
 
-	if opts.XcresultPath != "" {
-		s.outputExporter.ExportXCResultBundle(opts.DeployDir, opts.XcresultPath, opts.Scheme)
+	if result.XcresultPath != "" {
+		s.outputExporter.ExportXCResultBundle(result.DeployDir, result.XcresultPath, result.Scheme)
 	}
 
 	// export xcodebuild build log
-	if opts.XcodebuildBuildLog != "" {
-		s.outputExporter.ExportXcodebuildBuildLog(opts.DeployDir, opts.XcodebuildBuildLog)
+	if result.XcodebuildBuildLog != "" {
+		s.outputExporter.ExportXcodebuildBuildLog(result.DeployDir, result.XcodebuildBuildLog)
 	}
 
 	// export xcodebuild test log
-	if opts.XcodebuildTestLog != "" {
-		s.outputExporter.ExportXcodebuildTestLog(opts.DeployDir, opts.XcodebuildTestLog)
+	if result.XcodebuildTestLog != "" {
+		s.outputExporter.ExportXcodebuildTestLog(result.DeployDir, result.XcodebuildTestLog)
 	}
 
 	// export simulator diagnostics log
-	if opts.SimulatorDiagnosticsPath != "" {
+	if result.SimulatorDiagnosticsPath != "" {
 		diagnosticsName, err := s.simulator.SimulatorDiagnosticsName()
 		if err != nil {
 			return err
 		}
 
-		s.outputExporter.ExportSimulatorDiagnostics(opts.DeployDir, opts.SimulatorDiagnosticsPath, diagnosticsName)
+		s.outputExporter.ExportSimulatorDiagnostics(result.DeployDir, result.SimulatorDiagnosticsPath, diagnosticsName)
 	}
 
 	// export UITest artifacts
-	if opts.ExportUITestArtifacts && opts.XcresultPath != "" {
-		s.outputExporter.ExportUITestArtifacts(opts.XcresultPath, opts.Scheme)
+	if result.ExportUITestArtifacts && result.XcresultPath != "" {
+		s.outputExporter.ExportUITestArtifacts(result.XcresultPath, result.Scheme)
 	}
 
 	return nil

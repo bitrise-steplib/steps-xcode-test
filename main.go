@@ -56,21 +56,7 @@ func run() int {
 	}
 
 	res, runErr := xcodeTestRunner.Run(config)
-
-	opts := step.ExportOpts{
-		TestFailed: runErr != nil,
-
-		Scheme:       config.Scheme,
-		DeployDir:    config.DeployDir,
-		XcresultPath: res.XcresultPath,
-
-		XcodebuildBuildLog: res.XcodebuildBuildLog,
-		XcodebuildTestLog:  res.XcodebuildTestLog,
-
-		SimulatorDiagnosticsPath: res.SimulatorDiagnosticsPath,
-		ExportUITestArtifacts:    config.ExportUITestArtifacts,
-	}
-	exportErr := xcodeTestRunner.Export(opts)
+	exportErr := xcodeTestRunner.Export(res, runErr != nil)
 
 	if runErr != nil {
 		logger.Errorf(runErr.Error())
