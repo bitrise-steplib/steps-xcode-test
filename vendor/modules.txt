@@ -1,29 +1,35 @@
-# github.com/bitrise-io/bitrise v0.0.0-20210519130014-380842fb41c1
+# github.com/bitrise-io/bitrise v0.0.0-20210830100501-97b6f7d7905b
 ## explicit
 github.com/bitrise-io/bitrise/configs
-# github.com/bitrise-io/go-steputils v0.0.0-20210527075147-910ce7a105a1
+# github.com/bitrise-io/go-steputils v0.0.0-20210831050118-9a8de76b2f19
 ## explicit
 github.com/bitrise-io/go-steputils/cache
 github.com/bitrise-io/go-steputils/command/rubycommand
 github.com/bitrise-io/go-steputils/output
 github.com/bitrise-io/go-steputils/stepconf
+github.com/bitrise-io/go-steputils/stepenv
 github.com/bitrise-io/go-steputils/tools
-# github.com/bitrise-io/go-utils v0.0.0-20210520073355-367fa34178f5
+# github.com/bitrise-io/go-utils v0.0.0-20210903060322-ecae303f0264
 ## explicit
 github.com/bitrise-io/go-utils/colorstring
 github.com/bitrise-io/go-utils/command
+github.com/bitrise-io/go-utils/command/mocks
+github.com/bitrise-io/go-utils/env
 github.com/bitrise-io/go-utils/errorutil
 github.com/bitrise-io/go-utils/fileutil
+github.com/bitrise-io/go-utils/fileutil/mocks
 github.com/bitrise-io/go-utils/log
+github.com/bitrise-io/go-utils/log/mocks
 github.com/bitrise-io/go-utils/parseutil
 github.com/bitrise-io/go-utils/pathutil
+github.com/bitrise-io/go-utils/pathutil/mocks
 github.com/bitrise-io/go-utils/pointers
 github.com/bitrise-io/go-utils/pretty
 github.com/bitrise-io/go-utils/progress
 github.com/bitrise-io/go-utils/retry
 github.com/bitrise-io/go-utils/stringutil
 github.com/bitrise-io/go-utils/ziputil
-# github.com/bitrise-io/go-xcode v0.0.0-20210521101355-fb6a1eb6e05b
+# github.com/bitrise-io/go-xcode v0.0.0-20210901135441-4de33870e9ae
 ## explicit
 github.com/bitrise-io/go-xcode/models
 github.com/bitrise-io/go-xcode/plistutil
@@ -35,10 +41,8 @@ github.com/bitrise-io/go-xcode/xcpretty
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/hashicorp/go-cleanhttp v0.5.2
-## explicit
 github.com/hashicorp/go-cleanhttp
 # github.com/hashicorp/go-retryablehttp v0.7.0
-## explicit
 github.com/hashicorp/go-retryablehttp
 # github.com/hashicorp/go-version v1.3.0
 ## explicit
@@ -50,18 +54,21 @@ github.com/kballard/go-shellquote
 github.com/pmezard/go-difflib/difflib
 # github.com/sirupsen/logrus v1.8.1
 github.com/sirupsen/logrus
+# github.com/stretchr/objx v0.3.0
+github.com/stretchr/objx
 # github.com/stretchr/testify v1.7.0
 ## explicit
 github.com/stretchr/testify/assert
-# golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
+github.com/stretchr/testify/mock
+github.com/stretchr/testify/require
+# golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/sys v0.0.0-20210531080801-fdfd190a6549
-## explicit
+# golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.0.0-20210503060354-a79de5458b56
+# golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b
 golang.org/x/term
 # golang.org/x/text v0.3.6
 golang.org/x/text/transform

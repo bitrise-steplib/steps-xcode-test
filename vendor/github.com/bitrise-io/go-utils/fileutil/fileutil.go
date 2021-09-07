@@ -7,9 +7,66 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/bitrise-io/go-utils/pathutil"
 )
+
+// FileRemover ...
+type FileRemover interface {
+	Remove(name string) error
+	RemoveAll(path string) error
+}
+
+type defaultFileRemover struct{}
+
+// NewFileRemover ...
+func NewFileRemover() FileRemover {
+	return defaultFileRemover{}
+}
+
+// Remove ...
+func (r defaultFileRemover) Remove(name string) error {
+	return os.Remove(name)
+}
+
+// RemoveAll ...
+func (r defaultFileRemover) RemoveAll(path string) error {
+	return os.RemoveAll(path)
+}
+
+// FileWriter ...
+type FileWriter interface {
+	Write(path string, value string, mode os.FileMode) error
+}
+
+type defaultFileWriter struct{}
+
+// NewFileWriter ...
+func NewFileWriter() FileWriter {
+	return defaultFileWriter{}
+}
+
+// Write ...
+func (defaultFileWriter) Write(path string, value string, mode os.FileMode) error {
+	if err := ensureSavePath(path); err != nil {
+		return err
+	}
+
+	if err := WriteStringToFile(path, value); err != nil {
+		return err
+	}
+
+	if err := os.Chmod(path, mode); err != nil {
+		return err
+	}
+	return nil
+}
+
+func ensureSavePath(savePath string) error {
+	dirPath := filepath.Dir(savePath)
+	return os.MkdirAll(dirPath, 0700)
+}
 
 // WriteStringToFile ...
 func WriteStringToFile(pth string, fileCont string) error {

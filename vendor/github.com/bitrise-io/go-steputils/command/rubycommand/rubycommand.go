@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/bitrise-io/go-utils/env"
 	"regexp"
 	"strings"
 
@@ -34,22 +35,36 @@ const (
 	RbenvRuby
 )
 
+// TODO remove
+var temporaryFactory = command.NewFactory(env.NewRepository())
+
+// TODO remove
+func newWithParams(args ...string) (command.Command, error) {
+	if len(args) == 0 {
+		return nil, errors.New("no command provided")
+	} else if len(args) == 1 {
+		return temporaryFactory.Create(args[0], nil, nil), nil
+	}
+
+	return temporaryFactory.Create(args[0], args[1:], nil), nil
+}
+
 func cmdExist(slice ...string) bool {
 	if len(slice) == 0 {
 		return false
 	}
 
-	cmd, err := command.NewWithParams(slice...)
+	cmd, err := newWithParams(slice...)
 	if err != nil {
 		return false
 	}
 
-	return (cmd.Run() == nil)
+	return cmd.Run() == nil
 }
 
 // RubyInstallType returns which version manager was used for the ruby install
 func RubyInstallType() InstallType {
-	whichRuby, err := command.New("which", "ruby").RunAndReturnTrimmedCombinedOutput()
+	whichRuby, err := temporaryFactory.Create("which", []string{"ruby"}, nil).RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
 		return Unkown
 	}
@@ -81,7 +96,7 @@ func sudoNeeded(installType InstallType, slice ...string) bool {
 
 	name := slice[0]
 	if name == "bundle" {
-		command := slice[1]
+		cmd := slice[1]
 		/*
 			bundle command can contain version:
 			`bundle _2.0.1_ install`
@@ -91,20 +106,20 @@ func sudoNeeded(installType InstallType, slice ...string) bool {
 			if len(slice) < 3 {
 				return false
 			}
-			command = slice[2]
+			cmd = slice[2]
 		}
 
-		return (command == "install" || command == "update")
+		return cmd == "install" || cmd == "update"
 	} else if name == "gem" {
-		command := slice[1]
-		return (command == "install" || command == "uninstall")
+		cmd := slice[1]
+		return cmd == "install" || cmd == "uninstall"
 	}
 
 	return false
 }
 
 // NewWithParams ...
-func NewWithParams(params ...string) (*command.Model, error) {
+func NewWithParams(params ...string) (command.Command, error) {
 	rubyInstallType := RubyInstallType()
 	if rubyInstallType == Unkown {
 		return nil, errors.New("unknown ruby installation type")
@@ -114,27 +129,27 @@ func NewWithParams(params ...string) (*command.Model, error) {
 		params = append([]string{"sudo"}, params...)
 	}
 
-	return command.NewWithParams(params...)
+	return newWithParams(params...)
 }
 
 // NewFromSlice ...
-func NewFromSlice(slice []string) (*command.Model, error) {
+func NewFromSlice(slice []string) (command.Command, error) {
 	return NewWithParams(slice...)
 }
 
 // New ...
-func New(name string, args ...string) (*command.Model, error) {
+func New(name string, args ...string) (command.Command, error) {
 	slice := append([]string{name}, args...)
 	return NewWithParams(slice...)
 }
 
 // GemUpdate ...
-func GemUpdate(gem string) ([]*command.Model, error) {
-	cmds := []*command.Model{}
+func GemUpdate(gem string) ([]command.Command, error) {
+	var cmds []command.Command
 
 	cmd, err := New("gem", "update", gem, "--no-document")
 	if err != nil {
-		return []*command.Model{}, err
+		return []command.Command{}, err
 	}
 
 	cmds = append(cmds, cmd)
@@ -143,7 +158,7 @@ func GemUpdate(gem string) ([]*command.Model, error) {
 	if rubyInstallType == RbenvRuby {
 		cmd, err := New("rbenv", "rehash")
 		if err != nil {
-			return []*command.Model{}, err
+			return []command.Command{}, err
 		}
 
 		cmds = append(cmds, cmd)
@@ -165,19 +180,19 @@ func gemInstallCommand(gem, version string, enablePrerelease bool) []string {
 }
 
 // GemInstall ...
-func GemInstall(gem, version string, enablePrerelease bool) ([]*command.Model, error) {
+func GemInstall(gem, version string, enablePrerelease bool) ([]command.Command, error) {
 	cmd, err := NewFromSlice(gemInstallCommand(gem, version, enablePrerelease))
 	if err != nil {
-		return []*command.Model{}, err
+		return []command.Command{}, err
 	}
 
-	cmds := []*command.Model{cmd}
+	cmds := []command.Command{cmd}
 
 	rubyInstallType := RubyInstallType()
 	if rubyInstallType == RbenvRuby {
 		cmd, err := New("rbenv", "rehash")
 		if err != nil {
-			return []*command.Model{}, err
+			return []command.Command{}, err
 		}
 
 		cmds = append(cmds, cmd)
@@ -266,7 +281,7 @@ func IsSpecifiedRbenvRubyInstalled(workdir string) (bool, string, error) {
 		return false, "", fmt.Errorf("failed to get absolute path for ( %s ), error: %s", workdir, err)
 	}
 
-	cmd := command.New("rbenv", "version").SetDir(absWorkdir)
+	cmd := temporaryFactory.Create("rbenv", []string{"version"}, &command.Opts{Dir: absWorkdir})
 	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
 		return false, "", fmt.Errorf("failed to check installed ruby version, %s error: %s", out, err)

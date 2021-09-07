@@ -3,7 +3,6 @@ package xcodebuild
 import (
 	"fmt"
 	"os"
-	"os/exec"
 
 	"github.com/bitrise-io/go-utils/command"
 )
@@ -41,6 +40,8 @@ type Action string
 
 // CommandBuilder ...
 type CommandBuilder struct {
+	commandFactory command.Factory
+
 	projectPath   string
 	isWorkspace   bool
 	scheme        string
@@ -59,20 +60,22 @@ type CommandBuilder struct {
 	customBuildActions []string
 
 	// Options
-	archivePath   string
-	customOptions []string
-	sdk           string
+	archivePath      string
+	customOptions    []string
+	sdk              string
+	resultBundlePath string
 
 	// Archive
 	action Action
 }
 
 // NewCommandBuilder ...
-func NewCommandBuilder(projectPath string, isWorkspace bool, action Action) *CommandBuilder {
+func NewCommandBuilder(projectPath string, isWorkspace bool, action Action, commandFactory command.Factory) *CommandBuilder {
 	return &CommandBuilder{
-		projectPath: projectPath,
-		isWorkspace: isWorkspace,
-		action:      action,
+		commandFactory: commandFactory,
+		projectPath:    projectPath,
+		isWorkspace:    isWorkspace,
+		action:         action,
 	}
 }
 
@@ -130,6 +133,12 @@ func (c *CommandBuilder) SetArchivePath(archivePath string) *CommandBuilder {
 	return c
 }
 
+// SetResultBundlePath ...
+func (c *CommandBuilder) SetResultBundlePath(resultBundlePath string) *CommandBuilder {
+	c.resultBundlePath = resultBundlePath
+	return c
+}
+
 // SetCustomOptions ...
 func (c *CommandBuilder) SetCustomOptions(customOptions []string) *CommandBuilder {
 	c.customOptions = customOptions
@@ -154,8 +163,8 @@ func (c *CommandBuilder) SetDisableIndexWhileBuilding(disable bool) *CommandBuil
 	return c
 }
 
-func (c *CommandBuilder) cmdSlice() []string {
-	slice := []string{toolName}
+func (c *CommandBuilder) args() []string {
+	var slice []string
 
 	if c.projectPath != "" {
 		if c.isWorkspace {
@@ -222,35 +231,30 @@ func (c *CommandBuilder) cmdSlice() []string {
 		slice = append(slice, "-sdk", c.sdk)
 	}
 
+	if c.resultBundlePath != "" {
+		slice = append(slice, "-resultBundlePath", c.resultBundlePath)
+	}
+
 	slice = append(slice, c.customOptions...)
 
 	return slice
 }
 
+// Command ...
+func (c CommandBuilder) Command(opts *command.Opts) command.Command {
+	return c.commandFactory.Create(toolName, c.args(), opts)
+}
+
 // PrintableCmd ...
 func (c CommandBuilder) PrintableCmd() string {
-	cmdSlice := c.cmdSlice()
-	return command.PrintableCommandArgs(false, cmdSlice)
-}
-
-// Command ...
-func (c CommandBuilder) Command() *command.Model {
-	cmdSlice := c.cmdSlice()
-	return command.New(cmdSlice[0], cmdSlice[1:]...)
-}
-
-// ExecCommand ...
-func (c CommandBuilder) ExecCommand() *exec.Cmd {
-	command := c.Command()
-	return command.GetCmd()
+	return c.Command(nil).PrintableCommandArgs()
 }
 
 // Run ...
 func (c CommandBuilder) Run() error {
-	command := c.Command()
-
-	command.SetStdout(os.Stdout)
-	command.SetStderr(os.Stderr)
-
+	command := c.Command(&command.Opts{
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+	})
 	return command.Run()
 }
