@@ -551,6 +551,11 @@ func createBuildParams(cfg Config) xcodebuild.Params {
 }
 
 func createTestParams(cfg Config, buildParams xcodebuild.Params, xcresultPath, swiftPackagesPath string) xcodebuild.TestRunParams {
+	isCleanBuild := false
+	if cfg.IsSingleBuild {
+		isCleanBuild = cfg.IsCleanBuild
+	}
+
 	testParams := xcodebuild.TestParams{
 		BuildParams:                    buildParams,
 		TestPlan:                       cfg.TestPlan,
@@ -558,7 +563,7 @@ func createTestParams(cfg Config, buildParams xcodebuild.Params, xcresultPath, s
 		TestRepetitionMode:             cfg.TestRepetitionMode,
 		MaximumTestRepetitions:         cfg.MaximumTestRepetitions,
 		RelaunchTestsForEachRepetition: cfg.RelaunchTestForEachRepetition,
-		CleanBuild:                     cfg.IsCleanBuild,
+		CleanBuild:                     isCleanBuild,
 		BuildBeforeTest:                cfg.BuildBeforeTesting,
 		GenerateCodeCoverage:           cfg.GenerateCodeCoverageFiles,
 		RetryTestsOnFailure:            cfg.RetryTestsOnFailure,
