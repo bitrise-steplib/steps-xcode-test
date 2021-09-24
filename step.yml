@@ -8,14 +8,12 @@ description: |-
 
   ### Configuring the Step
   If you click into the Step, there are some required input fields whose input must be set in accordance with the Xcode configuration of the project.  
-  The **Scheme name** input field must be marked as Shared in Xcode. 
-  The **Device**, **OS version**, **Platform** input fields must be set to the value that's shown in Xcode’s device selection dropdown menu.
-  If you wish to export code coverage files as well, set the "Generate code coverage files?" to `yes`.
+  The **Scheme** input field must be marked as Shared in Xcode.
 
   ### Troubleshooting
   If the **Deploy to Bitrise.io** Step is missing from your Workflow, then the **Xcode Test for iOS** Step will not be able to export the test results on the Test Reports page and you won't be able to view them either.
   The xcpretty output tool does not support parallel tests. 
-  If parallel tests are enabled in your project, go to the Step’s Debug section and set the **Output tool** input’s value to xcodebuild.
+  If parallel tests are enabled in your project, go to the Step’s Debug section and set the **Log formatter** input’s value to xcodebuild.
   If the Xcode test fails with the error `Unable to find a destination matching the provided destination specifier`, then check our [system reports](https://github.com/bitrise-io/bitrise.io/tree/master/system_reports) to see if the requested simulator is on the stack or not. 
   If it is not, then pick a simulator that is on the stack.
 
@@ -53,16 +51,24 @@ toolkit:
 inputs:
   - project_path: $BITRISE_PROJECT_PATH
     opts:
-      title: "Project (or Workspace) path"
+      title: "Project path"
+      summary: Xcode Project (`.xcodeproj`) or Workspace (`.xcworkspace`) path.
       description: |-
-        A `.xcodeproj` or `.xcworkspace` path.
+        Xcode Project (`.xcodeproj`) or Workspace (`.xcworkspace`) path.
+
+        The Input value will set xcodebuild’s `-project` or `-workspace` option.
       is_required: true
+
   - scheme: $BITRISE_SCHEME
     opts:
-      title: "Scheme name"
+      title: "Scheme"
+      summary: Xcode Scheme name.
       description: |-
-        The Scheme to use.
+        Xcode Scheme name.
+
+        The Input value will set xcodebuild’s `-scheme` option.
       is_required: true
+
   - test_plan:
     opts:
       title: "Test Plan"
@@ -71,101 +77,22 @@ inputs:
         Run tests in a specific Test Plan associated with the Scheme.
 
         Leave this input empty to run the default Test Plan or Test Targets associated with the Scheme.
-  - simulator_device: iPhone 8 Plus
+
+  - destination: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
     opts:
-      title: "Device"
+      title: Device destination specifier
+      summary: Destination specifier describes the device to use as a destination.
       description: |-
-        Set it as it is shown in Xcode's device selection dropdown UI.
+        Destination specifier describes the device to use as a destination.
 
-        A couple of examples (the
-        actual available options depend on which versions
-        are installed):
+        The Input value will set xcodebuild’s `-destination` option.
 
-        * iPhone 8 Plus
-        * iPhone Xs Max
-        * iPad Air (3rd generation)
-        * iPad Pro (12.9-inch) (3rd generation)
-        * Apple TV 4K (don't forget to set the platform to `tvOS Simulator` to use this option!)
-      is_required: true
-  - simulator_os_version: latest
-    opts:
-      title: "OS version"
-      description: |-
-        Set it as it is shown in
-        Xcode's device selection dropdown UI.
+  # Test Repetition
 
-        A couple of format examples (the
-        actual available options depend on which versions
-        are installed):
-
-        * 8.4
-        * latest
-      is_required: true
-  - simulator_platform: iOS Simulator
-    opts:
-      title: Platform
-      description: |-
-        Set it as it is shown in Xcode's device selection dropdown UI.
-
-        A couple of examples (the
-        actual available options depend on which versions
-        are installed):
-
-        * iOS Simulator
-        * tvOS Simulator
-      value_options:
-      - iOS Simulator
-      - tvOS Simulator
-      is_required: true
-  - export_uitest_artifacts: "false"
-    opts:
-      title: Export UITest Artifacts
-      description: |-
-        If enabled, the attachments of the UITest will be exported into the `BITRISE_DEPLOY_DIR`, as a compressed ZIP file.
-        Attachments include screenshots taken during the UI test, and other artifacts.
-
-        __NOTE:__ works only with Xcode version < 11.
-      value_options:
-      - "true"
-      - "false"
-  - generate_code_coverage_files: "no"
-    opts:
-      title: "Generate code coverage files?"
-      description: |-
-        In case of `generate_code_coverage_files: "yes"`
-        `xcodebuild` gets two additional flags:
-
-        * GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES
-        * GCC_GENERATE_TEST_COVERAGE_FILES=YES
-      value_options:
-        - "yes"
-        - "no"
-      is_required: true
-  - disable_index_while_building: "yes"
-    opts:
-      title: Disable indexing during the build
-      summary: Could make the build faster by disabling the indexing during the build run.
-      description: |-
-        Could make the build faster by adding `COMPILER_INDEX_STORE_ENABLE=NO` flag to the `xcodebuild` command which will disable the indexing during the build.
-
-        Indexing is needed for
-
-        * Autocomplete
-        * Ability to quickly jump to definition
-        * Get class and method help by alt clicking.
-
-        Which are not needed in CI environment.
-
-        **Note:** In Xcode you can turn off the `Index-WhileBuilding` feature  by disabling the `Enable Index-WhileBuilding Functionality` in the `Build Settings`.<br/>
-        In CI environment you can disable it by adding `COMPILER_INDEX_STORE_ENABLE=NO` flag to the `xcodebuild` command.
-      value_options:
-        - "yes"
-        - "no"
-      is_required: true
   - test_repetition_mode: "none"
     opts:
-      title: Test Repetition Mode (Available in Xcode 13+)
       category: Test Repetition
+      title: Test Repetition Mode (Available in Xcode 13+)
       summary: Determines how the tests will repeat.
       description: |-
         Determines how the tests will repeat.
@@ -176,20 +103,22 @@ inputs:
         - `retry_on_failure`: Only failed tests will repeat up to maximum repetitions.
         - `up_until_maximum_repetitions`: Tests will repeat up until maximum repetitions.
       value_options:
-        - "none"
-        - "until_failure"
-        - "retry_on_failure"
-        - "up_until_maximum_repetitions"
+      - "none"
+      - "until_failure"
+      - "retry_on_failure"
+      - "up_until_maximum_repetitions"
+
   - maximum_test_repetitions: 3
     opts:
-      title: Maximum Test Repetitions (Available in Xcode 13+)
       category: Test Repetition
+      title: Maximum Test Repetitions (Available in Xcode 13+)
       summary: The maximum number of times a test will repeat based on Test Repetition Mode.
       description: |-
         The maximum number of times a test will repeat based on Test Repetition Mode.
 
         Should be more than 1 if the Test Repetition Mode (`test_repetition_mode`) is other than `none`.
       is_required: true
+
   - relaunch_tests_for_each_repetition: "no"
     opts:
       title: Relaunch Tests for Each Repetition (Available in Xcode 13+)
@@ -202,149 +131,125 @@ inputs:
       value_options:
       - "yes"
       - "no"
-  - verbose: "no"
-    opts:
-      category: Debug
-      title: Enable verbose log?
-      description: |-
-        You can enable the verbose log for easier debugging.
-      value_options:
-        - "yes"
-        - "no"
-  - headless_mode: "yes"
-    opts:
-      category: Debug
-      title: Run the test in headless mode?
-      summary: In headless mode the simulator is not launched in the foreground.
-      description: |-
-        If you run your tests in headless mode the xcodebuild will start a simulator in a background.
-        In headless mode the simulator will not be visible but your tests (even the screenshots) will run just like if you run a simulator in foreground.
 
-        **NOTE:** Headless mode is available with Xcode 9.x or newer.
-      value_options:
-        - "yes"
-        - "no"
-  - is_clean_build: "no"
-    opts:
-      category: Debug
-      title: "Do a clean Xcode build before testing?"
-      value_options:
-        - "yes"
-        - "no"
-      is_required: true
-  - output_tool: xcpretty
-    opts:
-      category: Debug
-      title: Output tool
-      description: |-
-        If set to `xcpretty`, the xcodebuild output will be prettified by xcpretty.
-
-
-        If set to `xcodebuild`, only the last 20 lines of raw xcodebuild output will be visible in the build log.
-        The build log will always be added as an artifact.
-      value_options:
-      - xcpretty
-      - xcodebuild
-      is_required: true
-  - xcodebuild_test_options: ""
-    opts:
-      category: Debug
-      title: Additional options for `xcodebuild build test` call
-      description: |-
-        Options added to the end of the `xcodebuild build test` call.
-
-        If you leave empty this input, xcodebuild will be called as:
-
-        `xcodebuild
-          -project\-workspace PROJECT.xcodeproj\WORKSPACE.xcworkspace
-          -scheme SCHEME
-          build test
-          -destination platform=PLATFORM Simulator,name=NAME,OS=VERSION`
-
-        In case of `generate_code_coverage_files: "yes"`
-        `xcodebuild` gets two additional flags:
-
-        * GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES
-        * GCC_GENERATE_TEST_COVERAGE_FILES=YES
-
-        If you want to add more options, list that separated by space character.
-        Example: `-xcconfig PATH -verbose`
-  - single_build: "true"
-    opts:
-      category: Debug
-      title: "Run xcodebuild test only"
-      description: |-
-        If `single_build` is set to false, the Step runs `xcodebuild OPTIONS build OPTIONS` before the test
-        to generate the project derived data. This is followed by `xcodebuild OPTIONS build test OPTIONS`. This command's log is presented in the Step's log.
-
-        If `single_build` is set to true, then the Step calls only `xcodebuild OPTIONS build test OPTIONS`.
-      value_options:
-      - "true"
-      - "false"
-  - should_build_before_test: "yes"
-    opts:
-      category: Debug
-      title: "Should run a build before testing?"
-      description: |-
-        Previous Xcode versions and configurations may throw the error `iPhoneSimulator: Timed out waiting 120 seconds for simulator to boot, current state is 1.`
-        when the compilation before performing the tests takes too long.
-
-        This is fixed by running `xcodebuild OPTIONS build test OPTIONS` instead of `xcodebuild OPTIONS test OPTIONS`.
-        Calling an explicit build before the test results in the code being compiled twice, thus creating an overhead.
-
-        Unless you are sure that your configuration is not prone to this error, it is recommended to leave this option turned on.
-      value_options:
-        - "yes"
-        - "no"
-      is_required: true
   - should_retry_test_on_fail: "no"
     opts:
-      category: Debug
-      title: "Should retry tests on failure? (Not available in Xcode 13+)"
+      category: Test Repetition
+      title: Should retry tests on failure? (Not available in Xcode 13+)
       summary: If you set this input to `yes`, the Step will rerun your failed tests.
       description: |-
         If you set this input to `yes`, the Step will rerun ALL your tests once in the case of failed test/s. Note that ALL your tests will be rerun, not just the ones that failed.
 
         This input is not available if you are using Xcode 13+. In that case, we recommend using the `retry_on_failure` Test Repetition Mode (test_repetition_mode).
       value_options:
+      - "yes"
+      - "no"
+      is_required: true
+
+  # xcodebuild configuration
+
+  - xcconfig_content: "COMPILER_INDEX_STORE_ENABLE = NO"
+    opts:
+      category: xcodebuild configuration
+      title: Build settings overrides
+      summary: Apply the build settings as overrides.
+      description: |-
+        Apply the build settings as overrides.
+
+        The Input value will set xcodebuild’s `-xcconfig` option.
+
+  - perform_clean_action: "no"
+      opts:
+        category: xcodebuild configuration
+        title: Perform clean action
+        summary: If set `clean` xcodebuild action will be performed in addition to the `test` / `archive` action.
+        value_options:
         - "yes"
         - "no"
-      is_required: true
-  - xcpretty_test_options: --color --report html --output "${BITRISE_DEPLOY_DIR}/xcode-test-results-${BITRISE_SCHEME}.html"
+        is_required: true
+
+  - xcodebuild_options: ""
     opts:
-      category: Debug
-      title: Additional options for `xcpretty` test call
-      description: |-
-        Options added to the end of the `xcpretty` test call.
+      category: xcodebuild configuration
+      title: Additional options for the xcodebuild command
+      summary: Additional options to be added to the executed xcodebuild command.
 
-        If you leave empty this input, xcpretty will be called as:
+  # xcodebuild log formatting
 
-        `set -o pipefail && XCODEBUILD_TEST_COMMAND | xcpretty`
-
-        In case of leaving this input on default value:
-
-        `set -o pipefail && XCODEBUILD_TEST_COMMAND | xcpretty --color --report html --output "${BITRISE_DEPLOY_DIR}/xcode-test-results-${BITRISE_SCHEME}.html"
-
-        If you want to add more options, list that separated by space character.
-  - cache_level: swift_packages
+  - log_formatter: "xcpretty"
     opts:
-      category: Debug
-      title: Enable caching of Swift Package Manager packages
+      category: xcodebuild log formatting
+      title: Log formatter
+      summary: Defines how xcodebuild command’s log is formatted.
       description: |-
+        Defines how xcodebuild command’s log is formatted.
+
         Available options:
-        - `none` : Disable caching
-        - `swift_packages` : Cache Swift PM packages added to the Xcode project
+        - `xcpretty`: The xcodebuild command’s output will be prettified by xcpretty.
+        - `xcodebuild`: Only the last 20 lines of raw xcodebuild output will be visible in the build log.
+
+        The raw xcodebuild log will be exported in both cases.
+      value_options:
+      - xcpretty
+      - xcodebuild
+      is_required: true
+
+  - xcpretty_options: --color --report html --output "${BITRISE_DEPLOY_DIR}/xcode-test-results-${BITRISE_SCHEME}.html"
+    opts:
+      category: xcodebuild configuration
+      title: Additional options for the `xcpretty` command
+      summary: Additional options to be added to the executed `xcpretty` command.
+
+  # Caching
+
+  - cache_level: "swift_packages"
+    opts:
+      category: Caching
+      title: Enable collecting cache content
+      summary: Defines what cache content should be automatically collected.
+      description: |-
+        Defines what cache content should be automatically collected.
+
+        Available options:
+        - `none`: Disable collecting cache content.
+        - `swift_packages`: Collect Swift PM packages added to the Xcode project.
       value_options:
       - "none"
       - "swift_packages"
+
+  # Debugging
+
+  - verbose_log: "no"
+    opts:
+      category: Debugging
+      title: Enable verbose logging
+      summary: If set the Step will print additional logs for debugging.
+      value_options:
+      - "yes"
+      - "no"
+
   - collect_simulator_diagnostics: "never"
     opts:
-      category: Debug
+      category: Debugging
       title: Collect Simulator diagnostics
+      summary: If set simulator verbose logging will be enabled and the simulator diagnostics log will be exported.
       value_options:
       - "always"
       - "on_failure"
       - "never"
+
+  - headless_mode: "yes"
+    opts:
+      category: Debugging
+      title: Run the simulator in headless mode
+      summary: In headless mode the simulator is not launched in the foreground.
+      description: |-
+        In headless mode the simulator is not launched in the foreground.
+
+        If set the simulator will not be visible but tests (even the screenshots) will run just like if you run a simulator in foreground.
+      value_options:
+      - "yes"
+      - "no"
 outputs:
 - BITRISE_XCODE_TEST_RESULT:
   opts:
