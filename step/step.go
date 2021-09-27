@@ -3,6 +3,8 @@ package step
 import (
 	"errors"
 	"fmt"
+	destination "github.com/bitrise-steplib/steps-xcode-test/destination"
+	"github.com/bitrise-steplib/steps-xcode-test/simulator"
 	"path"
 	"path/filepath"
 	"strings"
@@ -15,7 +17,6 @@ import (
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-steplib/steps-xcode-test/cache"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
-	"github.com/bitrise-steplib/steps-xcode-test/simulator"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
 	"github.com/bitrise-steplib/steps-xcode-test/xcpretty"
 )
@@ -31,11 +32,7 @@ type Input struct {
 	ProjectPath string `env:"project_path,required"`
 	Scheme      string `env:"scheme,required"`
 	TestPlan    string `env:"test_plan"`
-
-	// Simulator Configs
-	SimulatorPlatform  string `env:"simulator_platform,required"`
-	SimulatorDevice    string `env:"simulator_device,required"`
-	SimulatorOsVersion string `env:"simulator_os_version,required"`
+	Destination string `env:"destination,required"`
 
 	// Test Repetition
 	TestRepetitionMode             string `env:"test_repetition_mode,opt[none,until_failure,retry_on_failure,up_until_maximum_repetitions]"`
@@ -171,8 +168,7 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 		return Config{}, fmt.Errorf("invalid project file (%s), extension should be (.xcodeproj/.xcworkspace)", projectPath)
 	}
 
-	// validate simulator related inputs
-	sim, err := s.validateSimulator(input)
+	sim, err := s.getSimulatorForDestination(input.Destination)
 	if err != nil {
 		return Config{}, err
 	}
@@ -342,16 +338,21 @@ func (s XcodeTestRunner) validateXcodeVersion(input *Input, xcodeMajorVersion in
 	return nil
 }
 
-func (s XcodeTestRunner) validateSimulator(input Input) (simulator.Simulator, error) {
+func (s XcodeTestRunner) getSimulatorForDestination(destinationSpecifier string) (simulator.Simulator, error) {
 	var sim simulator.Simulator
 	var osVersion string
 
-	platform := strings.TrimSuffix(input.SimulatorPlatform, " Simulator")
+	simulatorDestination, err := destination.NewSimulator(destinationSpecifier)
+	if err != nil {
+		return simulator.Simulator{}, fmt.Errorf("invalid destination specifier: %v", err)
+	}
+
+	platform := strings.TrimSuffix(simulatorDestination.Platform, " Simulator")
 	// Retry gathering device information since xcrun simctl list can fail to show the complete device list
 	if err := retry.Times(3).Wait(10 * time.Second).Try(func(attempt uint) error {
 		var errGetSimulator error
-		if input.SimulatorOsVersion == "latest" {
-			var simulatorDevice = input.SimulatorDevice
+		if simulatorDestination.OS == "latest" {
+			simulatorDevice := simulatorDestination.Name
 			if simulatorDevice == "iPad" {
 				s.logger.Warnf("Given device (%s) is deprecated, using iPad Air (3rd generation)...", simulatorDevice)
 				simulatorDevice = "iPad Air (3rd generation)"
@@ -359,18 +360,18 @@ func (s XcodeTestRunner) validateSimulator(input Input) (simulator.Simulator, er
 
 			sim, osVersion, errGetSimulator = s.simulatorManager.GetLatestSimulatorAndVersion(platform, simulatorDevice)
 		} else {
-			normalizedOsVersion := input.SimulatorOsVersion
+			normalizedOsVersion := simulatorDestination.OS
 			osVersionSplit := strings.Split(normalizedOsVersion, ".")
 			if len(osVersionSplit) > 2 {
 				normalizedOsVersion = strings.Join(osVersionSplit[0:2], ".")
 			}
 			osVersion = fmt.Sprintf("%s %s", platform, normalizedOsVersion)
 
-			sim, errGetSimulator = s.simulatorManager.GetSimulator(osVersion, input.SimulatorDevice)
+			sim, errGetSimulator = s.simulatorManager.GetSimulator(osVersion, simulatorDestination.Name)
 		}
 
 		if errGetSimulator != nil {
-			s.logger.Warnf("attempt %d to get simulator udid failed with error: %s", attempt, errGetSimulator)
+			s.logger.Warnf("attempt %d to get simulator UDID failed with error: %s", attempt, errGetSimulator)
 		}
 
 		return errGetSimulator
@@ -393,8 +394,7 @@ func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simula
 	// Boot simulator
 	if enableSimulatorVerboseLog {
 		s.logger.Infof("Enabling Simulator verbose log for better diagnostics")
-		// Boot the simulator now, so verbose logging can be enabled and it is kept booted after running tests,
-		// this helps to collect more detailed debug info
+		// Boot the simulator now, so verbose logging can be enabled, and it is kept booted after running tests.
 		if err := s.simulatorManager.SimulatorBoot(simulatorID); err != nil {
 			return fmt.Errorf("%v", err)
 		}
