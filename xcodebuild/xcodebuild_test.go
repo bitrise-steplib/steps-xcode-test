@@ -35,7 +35,7 @@ func Test_WhenXcodebuildFails_ThenExitCodeGetsReturned(t *testing.T) {
 		ProjectPath:               "project.xcproj",
 		Scheme:                    "scheme",
 		DeviceDestination:         "simulator",
-		CleanBuild:                false,
+		PerformCleanAction:        false,
 		DisableIndexWhileBuilding: false,
 	}
 	_, exitCode, err := xcodebuild.RunBuild(params, "xcodebuild")

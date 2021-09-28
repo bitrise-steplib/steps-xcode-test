@@ -160,14 +160,14 @@ inputs:
         The Input value will set xcodebuild’s `-xcconfig` option.
 
   - perform_clean_action: "no"
-      opts:
-        category: xcodebuild configuration
-        title: Perform clean action
-        summary: If set `clean` xcodebuild action will be performed in addition to the `test` / `archive` action.
-        value_options:
-        - "yes"
-        - "no"
-        is_required: true
+    opts:
+      category: xcodebuild configuration
+      title: Perform clean action
+      summary: If set `clean` xcodebuild action will be performed in addition to the `test` / `archive` action.
+      value_options:
+      - "yes"
+      - "no"
+      is_required: true
 
   - xcodebuild_options: ""
     opts:

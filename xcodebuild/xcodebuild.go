@@ -24,7 +24,6 @@ const (
 
 // Xcodebuild ....
 type Xcodebuild interface {
-	RunBuild(buildParams Params, outputTool string) (string, int, error)
 	RunTest(params TestRunParams) (string, int, error)
 	Version() (Version, error)
 }
@@ -60,13 +59,8 @@ type Params struct {
 	ProjectPath               string
 	Scheme                    string
 	DeviceDestination         string
-	CleanBuild                bool
+	PerformCleanAction        bool
 	DisableIndexWhileBuilding bool
-}
-
-// RunBuild ...
-func (b *xcodebuild) RunBuild(buildParams Params, outputTool string) (string, int, error) {
-	return b.runBuild(buildParams, outputTool)
 }
 
 // TestRunParams ...
