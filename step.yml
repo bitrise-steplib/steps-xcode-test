@@ -86,6 +86,7 @@ inputs:
         Destination specifier describes the device to use as a destination.
 
         The Input value will set xcodebuild’s `-destination` option.
+      is_required: true
 
   # Test Repetition
 
