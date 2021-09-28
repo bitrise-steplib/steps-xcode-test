@@ -61,7 +61,8 @@ type TestParams struct {
 	TestRepetitionMode             string
 	MaximumTestRepetitions         int
 	RelaunchTestsForEachRepetition bool
-	CleanBuild                     bool
+	XCConfigContent                string
+	PerformCleanAction             bool
 	RetryTestsOnFailure            bool
 	AdditionalOptions              string
 }
@@ -147,11 +148,11 @@ func (b *xcodebuild) runPrettyXcodebuildCmd(useStdOut bool, xcprettyArgs []strin
 	return buildOutBuffer.String(), 0, nil
 }
 
-func createXcodebuildTestArgs(params TestParams, xcodeMajorVersion int) ([]string, error) {
+func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, error) {
 	buildParams := params.BuildParams
 
 	xcodebuildArgs := []string{buildParams.Action, buildParams.ProjectPath, "-scheme", buildParams.Scheme}
-	if params.CleanBuild {
+	if params.PerformCleanAction {
 		xcodebuildArgs = append(xcodebuildArgs, "clean")
 	}
 
@@ -181,6 +182,14 @@ func createXcodebuildTestArgs(params TestParams, xcodeMajorVersion int) ([]strin
 
 	if params.RelaunchTestsForEachRepetition {
 		xcodebuildArgs = append(xcodebuildArgs, "-test-repetition-relaunch-enabled", "YES")
+	}
+
+	if params.XCConfigContent != "" {
+		xcconfigPath, err := b.xcconfigWriter.Write(params.XCConfigContent)
+		if err != nil {
+			return nil, err
+		}
+		xcodebuildArgs = append(xcodebuildArgs, "-xcconfig", xcconfigPath)
 	}
 
 	if params.AdditionalOptions != "" {
@@ -233,7 +242,7 @@ func (b *xcodebuild) createXCPrettyArgs(options string) ([]string, error) {
 }
 
 func (b *xcodebuild) runTest(params TestRunParams) (string, int, error) {
-	xcodebuildArgs, err := createXcodebuildTestArgs(params.BuildTestParams, params.XcodeMajorVersion)
+	xcodebuildArgs, err := b.createXcodebuildTestArgs(params.BuildTestParams)
 	if err != nil {
 		return "", 1, err
 	}
@@ -243,7 +252,7 @@ func (b *xcodebuild) runTest(params TestRunParams) (string, int, error) {
 	var rawOutput string
 	var exit int
 	var testErr error
-	if params.OutputTool == XcprettyTool {
+	if params.LogFormatter == XcprettyTool {
 		xcprettyArgs, err := b.createXCPrettyArgs(params.XcprettyOptions)
 		if err != nil {
 			return "", 1, err

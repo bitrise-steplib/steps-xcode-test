@@ -519,14 +519,15 @@ func createTestParams(cfg Config, buildParams xcodebuild.Params, xcresultPath, s
 		TestRepetitionMode:             cfg.TestRepetitionMode,
 		MaximumTestRepetitions:         cfg.MaximumTestRepetitions,
 		RelaunchTestsForEachRepetition: cfg.RelaunchTestForEachRepetition,
-		CleanBuild:                     cfg.PerformCleanAction,
+		XCConfigContent:                cfg.XCConfigContent,
+		PerformCleanAction:             cfg.PerformCleanAction,
 		RetryTestsOnFailure:            cfg.RetryTestsOnFailure,
 		AdditionalOptions:              cfg.XcodebuildOptions,
 	}
 
 	return xcodebuild.TestRunParams{
 		BuildTestParams:                    testParams,
-		OutputTool:                         cfg.LogFormatter,
+		LogFormatter:                       cfg.LogFormatter,
 		XcprettyOptions:                    cfg.XcprettyOptions,
 		RetryOnTestRunnerError:             true,
 		RetryOnSwiftPackageResolutionError: true,

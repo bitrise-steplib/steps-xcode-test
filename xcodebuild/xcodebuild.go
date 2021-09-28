@@ -7,6 +7,7 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-xcode/models"
 	"github.com/bitrise-io/go-xcode/utility"
+	"github.com/bitrise-steplib/steps-xcode-test/xcconfig"
 )
 
 // Output tools ...
@@ -33,15 +34,17 @@ type xcodebuild struct {
 	commandFactory command.Factory
 	pathChecker    pathutil.PathChecker
 	fileRemover    fileutil.FileRemover
+	xcconfigWriter xcconfig.Writer
 }
 
 // NewXcodebuild ...
-func NewXcodebuild(logger log.Logger, commandFactory command.Factory, pathChecker pathutil.PathChecker, fileRemover fileutil.FileRemover) Xcodebuild {
+func NewXcodebuild(logger log.Logger, commandFactory command.Factory, pathChecker pathutil.PathChecker, fileRemover fileutil.FileRemover, xcconfigWriter xcconfig.Writer) Xcodebuild {
 	return &xcodebuild{
 		logger:         logger,
 		commandFactory: commandFactory,
 		pathChecker:    pathChecker,
 		fileRemover:    fileRemover,
+		xcconfigWriter: xcconfigWriter,
 	}
 }
 
@@ -66,7 +69,7 @@ type Params struct {
 // TestRunParams ...
 type TestRunParams struct {
 	BuildTestParams                    TestParams
-	OutputTool                         string
+	LogFormatter                       string
 	XcprettyOptions                    string
 	RetryOnTestRunnerError             bool
 	RetryOnSwiftPackageResolutionError bool
