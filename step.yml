@@ -88,6 +88,8 @@ inputs:
 
         Leave this input empty to run the default Test Plan or Test Targets associated with the Scheme.
 
+        The input value sets xcodebuild’s `-testPlan` option.
+
   # Test Repetition
 
   - test_repetition_mode: "none"
@@ -128,9 +130,9 @@ inputs:
     opts:
       title: Relaunch Tests for Each Repetition (Available in Xcode 13+)
       category: Test Repetition
-      summary: If enabled, tests will launch in a new process for each repetition.
+      summary: If this input is set, tests will launch in a new process for each repetition.
       description: |-
-        If enabled, tests will launch in a new process for each repetition.
+        If this input is set, tests will launch in a new process for each repetition.
 
         By default, tests launch in the same process for each repetition.
 
@@ -145,9 +147,11 @@ inputs:
       title: Should retry tests on failure? (Not available in Xcode 13+)
       summary: If set, the Step will rerun the tests in the case of failed tests.
       description: |-
-        If set, the Step will rerun the tests in the case of failed tests.
+        If this input is set, the Step will rerun the tests in the case of failed tests.
 
         Note that all the tests will be rerun, not just the ones that failed.
+
+        This input is not available if you are using Xcode 13+. In that case, we recommend using the `retry_on_failure` Test Repetition Mode (`test_repetition_mode`).
       value_options:
       - "yes"
       - "no"
