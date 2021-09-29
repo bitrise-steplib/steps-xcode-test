@@ -1083,15 +1083,6 @@ workflows:
             BITRISE_XCODEBUILD_TEST_LOG_PATH
             BITRISE_XCRESULT_ZIP_PATH
         - deployed_dirs:
-    - git::https://github.com/bitrise-steplib/bitrise-step-check-step-outputs.git@main:
-        inputs:
-        - envs:
-        - files:
-        - dirs:
-        - deploy_dir: $BITRISE_DEPLOY_DIR
-        - deployed_files: |-
-            BITRISE_XCODEBUILD_BUILD_LOG_PATH
-        - deployed_dirs:
     - script:
         title: Check testing addon support
         is_always_run: true
