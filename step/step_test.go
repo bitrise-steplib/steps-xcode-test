@@ -22,7 +22,7 @@ func Test_WhenTestRuns_ThenXcodebuildGetsCalled(t *testing.T) {
 	simulatorManager := new(mocksimulator.Manager)
 	simulatorManager.On("ResetLaunchServices").Return(nil)
 
-	cache := new(mockcache.Cache)
+	cache := new(mockcache.SwiftPackageCache)
 	cache.On("SwiftPackagesPath", mock.Anything).Return("", nil)
 
 	pathProvider := new(mockPathutil.PathProvider)

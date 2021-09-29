@@ -15,6 +15,7 @@ import (
 	"github.com/bitrise-steplib/steps-xcode-test/simulator"
 	"github.com/bitrise-steplib/steps-xcode-test/step"
 	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
+	"github.com/bitrise-steplib/steps-xcode-test/xcconfig"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
 	"github.com/bitrise-steplib/steps-xcode-test/xcpretty"
 )
@@ -62,14 +63,16 @@ func createStep(logger log.Logger) step.XcodeTestRunner {
 	commandFactory := command.NewFactory(envRepository)
 	pathChecker := pathutil.NewPathChecker()
 	fileRemover := fileutil.NewFileRemover()
-	xcodebuilder := xcodebuild.NewXcodebuild(logger, commandFactory, pathChecker, fileRemover)
+	pathProvider := pathutil.NewPathProvider()
+	fileWriter := fileutil.NewFileWriter()
+	xcconfigWriter := xcconfig.NewWriter(pathProvider, fileWriter)
+	xcodebuilder := xcodebuild.NewXcodebuild(logger, commandFactory, pathChecker, fileRemover, xcconfigWriter)
 	simulatorManager := simulator.NewManager()
 	swiftCache := cache.NewSwiftPackageCache()
 	testAddonExporter := testaddon.NewExporter()
 	stepenvRepository := stepenv.NewRepository(envRepository)
 	outputExporter := output.NewExporter(stepenvRepository, logger, testAddonExporter)
 	pathModifier := pathutil.NewPathModifier()
-	pathProvider := pathutil.NewPathProvider()
 
 	return step.NewXcodeTestRunner(inputParser, logger, xcprettyInstaller, xcodebuilder, simulatorManager, swiftCache, outputExporter, pathModifier, pathProvider)
 }
