@@ -95,7 +95,7 @@ workflows:
             fi
 
             echo "Destination set based on Xcode version: $destination"
-            envman add --key DESTINATION --value "destination"
+            envman add --key DESTINATION --value "$destination"
     - bitrise-run:
         run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_11" "true"}}'
         inputs:
