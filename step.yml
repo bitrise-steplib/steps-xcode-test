@@ -56,7 +56,7 @@ inputs:
       description: |-
         Xcode Project (`.xcodeproj`) or Workspace (`.xcworkspace`) path.
 
-        The Input value will set xcodebuild’s `-project` or `-workspace` option.
+        The input value sets xcodebuild’s `-project` or `-workspace` option.
       is_required: true
 
   - scheme: $BITRISE_SCHEME
@@ -66,7 +66,7 @@ inputs:
       description: |-
         Xcode Scheme name.
 
-        The Input value will set xcodebuild’s `-scheme` option.
+        The input value sets xcodebuild’s `-scheme` option.
       is_required: true
 
   - test_plan:
@@ -85,7 +85,7 @@ inputs:
       description: |-
         Destination specifier describes the device to use as a destination.
 
-        The Input value will set xcodebuild’s `-destination` option.
+        The input value sets xcodebuild’s `-destination` option.
       is_required: true
 
   # Test Repetition
@@ -103,6 +103,8 @@ inputs:
         - `until_failure`: Tests will repeat until failure or up to maximum repetitions.
         - `retry_on_failure`: Only failed tests will repeat up to maximum repetitions.
         - `up_until_maximum_repetitions`: Tests will repeat up until maximum repetitions.
+
+        The input value together with Maximum Test Repetitions (`maximum_test_repetitions`) input sets xcodebuild’s `-run-tests-until-failure` / `-retry-tests-on-failure` or `-test-iterations option`.
       value_options:
       - "none"
       - "until_failure"
@@ -113,11 +115,13 @@ inputs:
     opts:
       category: Test Repetition
       title: Maximum Test Repetitions (Available in Xcode 13+)
-      summary: The maximum number of times a test will repeat based on Test Repetition Mode.
+      summary: The maximum number of times a test repeats based on the Test Repetition Mode (`test_repetition_mode`).
       description: |-
-        The maximum number of times a test will repeat based on Test Repetition Mode.
+        The maximum number of times a test repeats based on the Test Repetition Mode (`test_repetition_mode`).
 
-        Should be more than 1 if the Test Repetition Mode (`test_repetition_mode`) is other than `none`.
+        Should be more than 1 if the Test Repetition Mode is other than `none`.
+
+        The input value sets xcodebuild’s `-test-iterations` option.
       is_required: true
 
   - relaunch_tests_for_each_repetition: "no"
@@ -129,6 +133,8 @@ inputs:
         If enabled, tests will launch in a new process for each repetition.
 
         By default, tests launch in the same process for each repetition.
+
+        The input value sets xcodebuild’s `-test-repetition-relaunch-enabled` option.
       value_options:
       - "yes"
       - "no"
@@ -137,11 +143,11 @@ inputs:
     opts:
       category: Test Repetition
       title: Should retry tests on failure? (Not available in Xcode 13+)
-      summary: If you set this input to `yes`, the Step will rerun your failed tests.
+      summary: If set, the Step will rerun the tests in the case of failed tests.
       description: |-
-        If you set this input to `yes`, the Step will rerun ALL your tests once in the case of failed test/s. Note that ALL your tests will be rerun, not just the ones that failed.
+        If set, the Step will rerun the tests in the case of failed tests.
 
-        This input is not available if you are using Xcode 13+. In that case, we recommend using the `retry_on_failure` Test Repetition Mode (test_repetition_mode).
+        Note that all the tests will be rerun, not just the ones that failed.
       value_options:
       - "yes"
       - "no"
@@ -152,18 +158,18 @@ inputs:
   - xcconfig_content: "COMPILER_INDEX_STORE_ENABLE = NO"
     opts:
       category: xcodebuild configuration
-      title: Build settings overrides
+      title: Build settings
       summary: Apply the build settings as overrides.
       description: |-
-        Apply the build settings as overrides.
+        Build settings to override the project's build settings.
 
-        The Input value will set xcodebuild’s `-xcconfig` option.
+        The input value sets xcodebuild’s `-xcconfig` option.
 
   - perform_clean_action: "no"
     opts:
       category: xcodebuild configuration
       title: Perform clean action
-      summary: If set `clean` xcodebuild action will be performed in addition to the `test` / `archive` action.
+      summary: If this input is set, `clean` xcodebuild action will be performed besides the `test` / `archive` action.
       value_options:
       - "yes"
       - "no"
@@ -224,7 +230,7 @@ inputs:
     opts:
       category: Debugging
       title: Enable verbose logging
-      summary: If set the Step will print additional logs for debugging.
+      summary: If this input is set, the Step will print additional logs for debugging.
       value_options:
       - "yes"
       - "no"
@@ -233,7 +239,7 @@ inputs:
     opts:
       category: Debugging
       title: Collect Simulator diagnostics
-      summary: If set simulator verbose logging will be enabled and the simulator diagnostics log will be exported.
+      summary: If this input is set, the simulator verbose logging will be enabled and the simulator diagnostics log will be exported.
       value_options:
       - "always"
       - "on_failure"
@@ -247,7 +253,7 @@ inputs:
       description: |-
         In headless mode the simulator is not launched in the foreground.
 
-        If set the simulator will not be visible but tests (even the screenshots) will run just like if you run a simulator in foreground.
+        If this input is set, the simulator will not be visible but tests (even the screenshots) will run just like if you run a simulator in foreground.
       value_options:
       - "yes"
       - "no"
