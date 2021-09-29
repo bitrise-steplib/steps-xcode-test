@@ -12,6 +12,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
     - SINGLE_BUILD: "false"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "no"
@@ -32,6 +33,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_DESTINATION: "platform=iOS Simulator,name=iPhone 8,OS=latest"
     - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcpretty
     - RETRY_ON_FAILURE: "no"
@@ -67,6 +69,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_DESTINATION: "platform=iOS Simulator,name=iPhone 8,OS=latest"
     - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "yes"
@@ -105,6 +108,7 @@ workflows:
 
             echo "Xcode version based iPad device: $device"
             envman add --key XCODE_SIMULATOR_DEVICE --value "$device"
+            envman add --key XCODE_DESTINATION --value "platform=iOS Simulator,name=$device,OS=latest"
     - bitrise-run:
         run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_11" "true"}}'
         inputs:
@@ -160,6 +164,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 12
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_DESTINATION: "platform=iOS Simulator,name=iPhone 12,OS=latest"
     - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "no"
@@ -206,6 +211,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
     - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "yes"
@@ -249,6 +255,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
     - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "no"
@@ -293,6 +300,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
     - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "no"
@@ -336,6 +344,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
     - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "yes"
@@ -388,6 +397,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
     - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "yes"
@@ -439,6 +449,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 12
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_DESTINATION: "platform=iOS Simulator,name=iPhone 12,OS=latest"
     - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "no"
@@ -479,6 +490,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
     - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - TEST_REPETITION_MODE: "retry_on_failure"
@@ -529,6 +541,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
     - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - TEST_REPETITION_MODE: "retry_on_failure"
@@ -572,6 +585,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
     - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - TEST_REPETITION_MODE: "retry_on_failure"
@@ -615,6 +629,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
     - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - TEST_REPETITION_MODE: "until_failure"
@@ -665,6 +680,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
     - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - TEST_REPETITION_MODE: "until_failure"
@@ -715,6 +731,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
     - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - TEST_REPETITION_MODE: "until_failure"
@@ -758,6 +775,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
     - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - TEST_REPETITION_MODE: "up_until_maximum_repetitions"
@@ -808,6 +826,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
     - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - TEST_REPETITION_MODE: "up_until_maximum_repetitions"
@@ -858,6 +877,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
     - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - TEST_REPETITION_MODE: "up_until_maximum_repetitions"
@@ -901,6 +921,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
     - XCODE_SIMULATOR_OS_VERSION: "latest"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
     - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - TEST_REPETITION_MODE: "up_until_maximum_repetitions"
@@ -946,6 +967,7 @@ workflows:
     - XCODE_SIMULATOR_DEVICE: iPhone 12
     - XCODE_SIMULATOR_OS_VERSION: "15.0"
     - XCODE_SIMULATOR_PLATFORM: iOS Simulator
+    - XCODE_DESTINATION: "platform=iOS Simulator,name=iPhone 12,OS=15.0"
     - SINGLE_BUILD: "true"
     - XCODE_OUTPUT_TOOL: xcodebuild
     - RETRY_ON_FAILURE: "no"
@@ -958,15 +980,11 @@ workflows:
   _set_number_of_initial_test_failures_in_test_app:
     envs:
     - TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES: $TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES
-    - XCODE_SIMULATOR_DEVICE: $XCODE_SIMULATOR_DEVICE
-    - XCODE_SIMULATOR_OS_VERSION: $XCODE_SIMULATOR_OS_VERSION
-    - XCODE_SIMULATOR_PLATFORM: $XCODE_SIMULATOR_PLATFORM
+    - XCODE_DESTINATION: $XCODE_DESTINATION
     steps:
     - git::https://github.com/bitrise-steplib/steps-lookup-xcode-simulator:
         inputs:
-        - simulator_device: $XCODE_SIMULATOR_DEVICE
-        - simulator_os_version: $XCODE_SIMULATOR_OS_VERSION
-        - simulator_platform: $XCODE_SIMULATOR_PLATFORM
+        - destination: $XCODE_DESTINATION
     - script:
         title: Set number of flaky test number of initial failures on the Simulator for the app io.bitrise.BullsEye
         inputs:
@@ -990,15 +1008,11 @@ workflows:
   _set_number_of_initial_test_successes_in_test_app:
     envs:
     - TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES: $TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES
-    - XCODE_SIMULATOR_DEVICE: $XCODE_SIMULATOR_DEVICE
-    - XCODE_SIMULATOR_OS_VERSION: $XCODE_SIMULATOR_OS_VERSION
-    - XCODE_SIMULATOR_PLATFORM: $XCODE_SIMULATOR_PLATFORM
+    - XCODE_DESTINATION: $XCODE_DESTINATION
     steps:
     - git::https://github.com/bitrise-steplib/steps-lookup-xcode-simulator:
         inputs:
-        - simulator_device: $XCODE_SIMULATOR_DEVICE
-        - simulator_os_version: $XCODE_SIMULATOR_OS_VERSION
-        - simulator_platform: $XCODE_SIMULATOR_PLATFORM
+        - XCODE_DESTINATION: $XCODE_DESTINATION
     - script:
         title: Set number of flaky test number of initial successes on the Simulator for the app io.bitrise.BullsEye
         inputs:
