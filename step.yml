@@ -69,15 +69,6 @@ inputs:
         The input value sets xcodebuild’s `-scheme` option.
       is_required: true
 
-  - test_plan:
-    opts:
-      title: "Test Plan"
-      summary: Run tests in a specific Test Plan associated with the Scheme.
-      description: |-
-        Run tests in a specific Test Plan associated with the Scheme.
-
-        Leave this input empty to run the default Test Plan or Test Targets associated with the Scheme.
-
   - destination: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
     opts:
       title: Device destination specifier
@@ -87,6 +78,15 @@ inputs:
 
         The input value sets xcodebuild’s `-destination` option.
       is_required: true
+
+  - test_plan:
+    opts:
+      title: "Test Plan"
+      summary: Run tests in a specific Test Plan associated with the Scheme.
+      description: |-
+        Run tests in a specific Test Plan associated with the Scheme.
+
+        Leave this input empty to run the default Test Plan or Test Targets associated with the Scheme.
 
   # Test Repetition
 
@@ -169,7 +169,7 @@ inputs:
     opts:
       category: xcodebuild configuration
       title: Perform clean action
-      summary: If this input is set, `clean` xcodebuild action will be performed besides the `test` / `archive` action.
+      summary: If this input is set, `clean` xcodebuild action will be performed besides the `test` action.
       value_options:
       - "yes"
       - "no"
