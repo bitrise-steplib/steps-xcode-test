@@ -1012,7 +1012,7 @@ workflows:
     steps:
     - git::https://github.com/bitrise-steplib/steps-lookup-xcode-simulator:
         inputs:
-        - XCODE_DESTINATION: $XCODE_DESTINATION
+        - destination: $XCODE_DESTINATION
     - script:
         title: Set number of flaky test number of initial successes on the Simulator for the app io.bitrise.BullsEye
         inputs:
