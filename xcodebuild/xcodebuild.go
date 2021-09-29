@@ -58,12 +58,10 @@ func (b *xcodebuild) Version() (Version, error) {
 
 // Params ...
 type Params struct {
-	Action                    string
-	ProjectPath               string
-	Scheme                    string
-	DeviceDestination         string
-	PerformCleanAction        bool
-	DisableIndexWhileBuilding bool
+	Action      string
+	ProjectPath string
+	Scheme      string
+	Destination string
 }
 
 // TestRunParams ...

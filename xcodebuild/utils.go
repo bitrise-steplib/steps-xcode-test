@@ -156,14 +156,7 @@ func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, erro
 		xcodebuildArgs = append(xcodebuildArgs, "clean")
 	}
 
-	// Disable indexing during the build.
-	// Indexing is needed for autocomplete, ability to quickly jump to definition, get class and method help by alt clicking.
-	// Which are not needed in CI environment.
-	if buildParams.DisableIndexWhileBuilding {
-		xcodebuildArgs = append(xcodebuildArgs, "COMPILER_INDEX_STORE_ENABLE=NO")
-	}
-
-	xcodebuildArgs = append(xcodebuildArgs, "test", "-destination", buildParams.DeviceDestination)
+	xcodebuildArgs = append(xcodebuildArgs, "test", "-destination", buildParams.Destination)
 	if params.TestPlan != "" {
 		xcodebuildArgs = append(xcodebuildArgs, "-testPlan", params.TestPlan)
 	}

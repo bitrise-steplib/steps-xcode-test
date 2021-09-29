@@ -503,11 +503,10 @@ func createBuildParams(cfg Config) xcodebuild.Params {
 	}
 
 	return xcodebuild.Params{
-		Action:             projectFlag,
-		ProjectPath:        cfg.ProjectPath,
-		Scheme:             cfg.Scheme,
-		DeviceDestination:  fmt.Sprintf("id=%s", cfg.SimulatorID),
-		PerformCleanAction: cfg.PerformCleanAction,
+		Action:      projectFlag,
+		ProjectPath: cfg.ProjectPath,
+		Scheme:      cfg.Scheme,
+		Destination: fmt.Sprintf("id=%s", cfg.SimulatorID),
 	}
 }
 
