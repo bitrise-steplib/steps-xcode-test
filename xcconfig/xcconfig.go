@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 )
 
+// Writer ...
 type Writer interface {
 	Write(content string) (string, error)
 }
@@ -16,6 +17,7 @@ type writer struct {
 	fileWriter   fileutil.FileWriter
 }
 
+// NewWriter ...
 func NewWriter(pathProvider pathutil.PathProvider, fileWriter fileutil.FileWriter) Writer {
 	return &writer{pathProvider: pathProvider, fileWriter: fileWriter}
 }
