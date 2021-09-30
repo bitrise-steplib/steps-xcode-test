@@ -3,8 +3,6 @@ package step
 import (
 	"errors"
 	"fmt"
-	destination "github.com/bitrise-steplib/steps-xcode-test/destination"
-	"github.com/bitrise-steplib/steps-xcode-test/simulator"
 	"path"
 	"path/filepath"
 	"strings"
@@ -16,7 +14,9 @@ import (
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-steplib/steps-xcode-test/cache"
+	"github.com/bitrise-steplib/steps-xcode-test/destination"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
+	"github.com/bitrise-steplib/steps-xcode-test/simulator"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
 	"github.com/bitrise-steplib/steps-xcode-test/xcpretty"
 )
@@ -30,8 +30,8 @@ const (
 type Input struct {
 	ProjectPath string `env:"project_path,required"`
 	Scheme      string `env:"scheme,required"`
-	TestPlan    string `env:"test_plan"`
 	Destination string `env:"destination,required"`
+	TestPlan    string `env:"test_plan"`
 
 	// Test Repetition
 	TestRepetitionMode             string `env:"test_repetition_mode,opt[none,until_failure,retry_on_failure,up_until_maximum_repetitions]"`

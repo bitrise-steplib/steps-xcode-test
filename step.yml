@@ -106,7 +106,7 @@ inputs:
       - `retry_on_failure`: Only failed tests will repeat up to maximum repetitions.
       - `up_until_maximum_repetitions`: Tests will repeat up until maximum repetitions.
 
-      The input value together with Maximum Test Repetitions (`maximum_test_repetitions`) input sets xcodebuild’s `-run-tests-until-failure` / `-retry-tests-on-failure` or `-test-iterations option`.
+      The input value together with Maximum Test Repetitions (`maximum_test_repetitions`) input sets xcodebuild’s `-run-tests-until-failure` / `-retry-tests-on-failure` or `-test-iterations` option.
     value_options:
     - "none"
     - "until_failure"
@@ -163,7 +163,7 @@ inputs:
   opts:
     category: xcodebuild configuration
     title: Build settings (xcconfig)
-    summary: Apply the build settings as overrides.
+    summary: Build settings to override the project's build settings.
     description: |-
       Build settings to override the project's build settings.
 
@@ -270,6 +270,7 @@ inputs:
     value_options:
     - "yes"
     - "no"
+
 outputs:
 - BITRISE_XCODE_TEST_RESULT:
   opts:
@@ -277,27 +278,32 @@ outputs:
     value_options:
     - succeeded
     - failed
+
 - BITRISE_XCRESULT_PATH:
   opts:
     title: The path of the generated `.xcresult`
     description: |-
       The path of the generated `.xcresult`.
+
 - BITRISE_XCRESULT_ZIP_PATH:
   opts:
     title: The path of the zipped `.xcresult`
     description: |-
       The path of the zipped `.xcresult`.
+
 - BITRISE_XCODE_TEST_ATTACHMENTS_PATH:
   opts:
     title: The full, test attachments zip path
     description: |-
       This is the path of the test attachments zip.
+
 - BITRISE_XCODEBUILD_BUILD_LOG_PATH:
   opts:
     title: xcodebuild build command log file path
     description: |-
       If `single_build` is set to false, the step runs `xcodebuild build` before the test,  
       and exports the raw xcodebuild log.
+
 - BITRISE_XCODEBUILD_TEST_LOG_PATH:
   opts:
     title: xcodebuild test command log file path
