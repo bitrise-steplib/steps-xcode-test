@@ -162,10 +162,19 @@ inputs:
 - xcconfig_content: "COMPILER_INDEX_STORE_ENABLE = NO"
   opts:
     category: xcodebuild configuration
-    title: Build settings
+    title: Build settings (xcconfig)
     summary: Apply the build settings as overrides.
     description: |-
       Build settings to override the project's build settings.
+
+      Build settings must be separated by newline character (`\n`).
+
+      Example:
+
+      ```
+      COMPILER_INDEX_STORE_ENABLE = NO
+      ONLY_ACTIVE_ARCH[config=Debug][sdk=*][arch=*] = YES
+      ```
 
       The input value sets xcodebuild’s `-xcconfig` option.
 
