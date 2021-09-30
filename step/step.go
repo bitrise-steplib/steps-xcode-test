@@ -407,8 +407,6 @@ func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 		DeployDir: cfg.DeployDir,
 	}
 
-	buildParams := createBuildParams(cfg)
-
 	// Run test
 	tempDir, err := s.pathProvider.CreateTempDir("XCUITestOutput")
 	if err != nil {
@@ -425,7 +423,7 @@ func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 		}
 	}
 
-	testParams := createTestParams(cfg, buildParams, xcresultPath, swiftPackagesPath)
+	testParams := createTestParams(cfg, xcresultPath, swiftPackagesPath)
 
 	testLog, exitCode, testErr := s.xcodebuild.RunTest(testParams)
 	result.XcresultPath = xcresultPath
@@ -496,23 +494,11 @@ func createConfig(input Input, projectPath string, xcodeMajorVersion int, sim si
 	}
 }
 
-func createBuildParams(cfg Config) xcodebuild.Params {
-	projectFlag := "-project"
-	if filepath.Ext(cfg.ProjectPath) == ".xcworkspace" {
-		projectFlag = "-workspace"
-	}
-
-	return xcodebuild.Params{
-		Action:      projectFlag,
-		ProjectPath: cfg.ProjectPath,
-		Scheme:      cfg.Scheme,
-		Destination: fmt.Sprintf("id=%s", cfg.SimulatorID),
-	}
-}
-
-func createTestParams(cfg Config, buildParams xcodebuild.Params, xcresultPath, swiftPackagesPath string) xcodebuild.TestRunParams {
+func createTestParams(cfg Config, xcresultPath, swiftPackagesPath string) xcodebuild.TestRunParams {
 	testParams := xcodebuild.TestParams{
-		BuildParams:                    buildParams,
+		ProjectPath:                    cfg.ProjectPath,
+		Scheme:                         cfg.Scheme,
+		Destination:                    fmt.Sprintf("id=%s", cfg.SimulatorID),
 		TestPlan:                       cfg.TestPlan,
 		TestOutputDir:                  xcresultPath,
 		TestRepetitionMode:             cfg.TestRepetitionMode,
@@ -525,7 +511,7 @@ func createTestParams(cfg Config, buildParams xcodebuild.Params, xcresultPath, s
 	}
 
 	return xcodebuild.TestRunParams{
-		BuildTestParams:                    testParams,
+		TestParams:                         testParams,
 		LogFormatter:                       cfg.LogFormatter,
 		XcprettyOptions:                    cfg.XcprettyOptions,
 		RetryOnTestRunnerError:             true,

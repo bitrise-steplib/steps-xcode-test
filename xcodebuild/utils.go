@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"syscall"
@@ -55,7 +56,9 @@ var testRunnerErrorPatterns = []string{
 
 // TestParams ...
 type TestParams struct {
-	BuildParams                    Params
+	ProjectPath                    string
+	Scheme                         string
+	Destination                    string
 	TestPlan                       string
 	TestOutputDir                  string
 	TestRepetitionMode             string
@@ -149,14 +152,16 @@ func (b *xcodebuild) runPrettyXcodebuildCmd(useStdOut bool, xcprettyArgs []strin
 }
 
 func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, error) {
-	buildParams := params.BuildParams
-
-	xcodebuildArgs := []string{buildParams.Action, buildParams.ProjectPath, "-scheme", buildParams.Scheme}
+	projectFlag := "-project"
+	if filepath.Ext(params.ProjectPath) == ".xcworkspace" {
+		projectFlag = "-workspace"
+	}
+	xcodebuildArgs := []string{projectFlag, params.ProjectPath, "-scheme", params.Scheme}
 	if params.PerformCleanAction {
 		xcodebuildArgs = append(xcodebuildArgs, "clean")
 	}
 
-	xcodebuildArgs = append(xcodebuildArgs, "test", "-destination", buildParams.Destination)
+	xcodebuildArgs = append(xcodebuildArgs, "test", "-destination", params.Destination)
 	if params.TestPlan != "" {
 		xcodebuildArgs = append(xcodebuildArgs, "-testPlan", params.TestPlan)
 	}
@@ -235,7 +240,7 @@ func (b *xcodebuild) createXCPrettyArgs(options string) ([]string, error) {
 }
 
 func (b *xcodebuild) runTest(params TestRunParams) (string, int, error) {
-	xcodebuildArgs, err := b.createXcodebuildTestArgs(params.BuildTestParams)
+	xcodebuildArgs, err := b.createXcodebuildTestArgs(params.TestParams)
 	if err != nil {
 		return "", 1, err
 	}
@@ -273,8 +278,8 @@ type testRunResult struct {
 
 func (b *xcodebuild) cleanOutputDirAndRerunTest(params TestRunParams) (string, int, error) {
 	// Clean output directory, otherwise after retry test run, xcodebuild fails with `error: Existing file at -resultBundlePath "..."`
-	if err := b.fileManager.RemoveAll(params.BuildTestParams.TestOutputDir); err != nil {
-		return "", 1, fmt.Errorf("failed to clean test output directory: %s, error: %s", params.BuildTestParams.TestOutputDir, err)
+	if err := b.fileManager.RemoveAll(params.TestParams.TestOutputDir); err != nil {
+		return "", 1, fmt.Errorf("failed to clean test output directory: %s, error: %s", params.TestParams.TestOutputDir, err)
 	}
 	return b.runTest(params)
 }
@@ -297,7 +302,7 @@ func (b *xcodebuild) handleTestRunError(prevRunParams TestRunParams, prevRunResu
 			if prevRunParams.RetryOnTestRunnerError {
 				b.logger.Printf("Automatic retry is enabled - retrying...")
 
-				prevRunParams.BuildTestParams.RetryTestsOnFailure = false
+				prevRunParams.TestParams.RetryTestsOnFailure = false
 				prevRunParams.RetryOnTestRunnerError = false
 				return b.cleanOutputDirAndRerunTest(prevRunParams)
 			}
@@ -307,11 +312,11 @@ func (b *xcodebuild) handleTestRunError(prevRunParams TestRunParams, prevRunResu
 		}
 	}
 
-	if prevRunParams.BuildTestParams.RetryTestsOnFailure {
+	if prevRunParams.TestParams.RetryTestsOnFailure {
 		b.logger.Warnf("Test run failed")
 		b.logger.Printf("'Should retry tests on failure?' (should_retry_test_on_fail) is enabled - retrying...")
 
-		prevRunParams.BuildTestParams.RetryTestsOnFailure = false
+		prevRunParams.TestParams.RetryTestsOnFailure = false
 		prevRunParams.RetryOnTestRunnerError = false
 		return b.cleanOutputDirAndRerunTest(prevRunParams)
 	}

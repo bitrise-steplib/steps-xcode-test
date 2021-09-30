@@ -56,17 +56,9 @@ func (b *xcodebuild) Version() (Version, error) {
 	return Version(version), err
 }
 
-// Params ...
-type Params struct {
-	Action      string
-	ProjectPath string
-	Scheme      string
-	Destination string
-}
-
 // TestRunParams ...
 type TestRunParams struct {
-	BuildTestParams                    TestParams
+	TestParams                         TestParams
 	LogFormatter                       string
 	XcprettyOptions                    string
 	RetryOnTestRunnerError             bool
