@@ -56,7 +56,7 @@ inputs:
     description: |-
       Xcode Project (`.xcodeproj`) or Workspace (`.xcworkspace`) path.
 
-      The input value sets xcodebuild’s `-project` or `-workspace` option.
+      The input value sets xcodebuild's `-project` or `-workspace` option.
     is_required: true
 
 - scheme: $BITRISE_SCHEME
@@ -66,7 +66,7 @@ inputs:
     description: |-
       Xcode Scheme name.
 
-      The input value sets xcodebuild’s `-scheme` option.
+      The input value sets xcodebuild's `-scheme` option.
     is_required: true
 
 - destination: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
@@ -76,7 +76,7 @@ inputs:
     description: |-
       Destination specifier describes the device to use as a destination.
 
-      The input value sets xcodebuild’s `-destination` option.
+      The input value sets xcodebuild's `-destination` option.
     is_required: true
 
 - test_plan:
@@ -88,7 +88,7 @@ inputs:
 
       Leave this input empty to run the default Test Plan or Test Targets associated with the Scheme.
 
-      The input value sets xcodebuild’s `-testPlan` option.
+      The input value sets xcodebuild's `-testPlan` option.
 
 # Test Repetition
 
@@ -106,7 +106,7 @@ inputs:
       - `retry_on_failure`: Only failed tests will repeat up to maximum repetitions.
       - `up_until_maximum_repetitions`: Tests will repeat up until maximum repetitions.
 
-      The input value together with Maximum Test Repetitions (`maximum_test_repetitions`) input sets xcodebuild’s `-run-tests-until-failure` / `-retry-tests-on-failure` or `-test-iterations` option.
+      The input value together with Maximum Test Repetitions (`maximum_test_repetitions`) input sets xcodebuild's `-run-tests-until-failure` / `-retry-tests-on-failure` or `-test-iterations` option.
     value_options:
     - "none"
     - "until_failure"
@@ -123,7 +123,7 @@ inputs:
 
       Should be more than 1 if the Test Repetition Mode is other than `none`.
 
-      The input value sets xcodebuild’s `-test-iterations` option.
+      The input value sets xcodebuild's `-test-iterations` option.
     is_required: true
 
 - relaunch_tests_for_each_repetition: "no"
@@ -136,7 +136,7 @@ inputs:
 
       By default, tests launch in the same process for each repetition.
 
-      The input value sets xcodebuild’s `-test-repetition-relaunch-enabled` option.
+      The input value sets xcodebuild's `-test-repetition-relaunch-enabled` option.
     value_options:
     - "yes"
     - "no"
@@ -176,7 +176,7 @@ inputs:
       ONLY_ACTIVE_ARCH[config=Debug][sdk=*][arch=*] = YES
       ```
 
-      The input value sets xcodebuild’s `-xcconfig` option.
+      The input value sets xcodebuild's `-xcconfig` option.
 
 - perform_clean_action: "no"
   opts:
@@ -200,12 +200,12 @@ inputs:
   opts:
     category: xcodebuild log formatting
     title: Log formatter
-    summary: Defines how xcodebuild command’s log is formatted.
+    summary: Defines how xcodebuild command's log is formatted.
     description: |-
-      Defines how xcodebuild command’s log is formatted.
+      Defines how xcodebuild command's log is formatted.
 
       Available options:
-      - `xcpretty`: The xcodebuild command’s output will be prettified by xcpretty.
+      - `xcpretty`: The xcodebuild command's output will be prettified by xcpretty.
       - `xcodebuild`: Only the last 20 lines of raw xcodebuild output will be visible in the build log.
 
       The raw xcodebuild log will be exported in both cases.
