@@ -16,9 +16,9 @@ func Test_WhenWritingXCConfigContent_ThenItShouldReturnFilePath(t *testing.T) {
 	expectedPath := filepath.Join(testTempDir, "temp.xcconfig")
 	mockPathProvider := new(mockpathutil.PathProvider)
 	mockPathProvider.On("CreateTempDir", "").Return(testTempDir, nil)
-	mockFileWriter := new(mockfileutil.FileWriter)
-	mockFileWriter.On("Write", expectedPath, testContent, fs.FileMode(0644)).Return(nil)
-	xcconfigWriter := NewWriter(mockPathProvider, mockFileWriter)
+	mockFileManager := new(mockfileutil.FileManager)
+	mockFileManager.On("Write", expectedPath, testContent, fs.FileMode(0644)).Return(nil)
+	xcconfigWriter := NewWriter(mockPathProvider, mockFileManager)
 
 	// When
 	path, err := xcconfigWriter.Write(testContent)

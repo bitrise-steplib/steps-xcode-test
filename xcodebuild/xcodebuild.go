@@ -33,17 +33,17 @@ type xcodebuild struct {
 	logger         log.Logger
 	commandFactory command.Factory
 	pathChecker    pathutil.PathChecker
-	fileRemover    fileutil.FileRemover
+	fileManager    fileutil.FileManager
 	xcconfigWriter xcconfig.Writer
 }
 
 // NewXcodebuild ...
-func NewXcodebuild(logger log.Logger, commandFactory command.Factory, pathChecker pathutil.PathChecker, fileRemover fileutil.FileRemover, xcconfigWriter xcconfig.Writer) Xcodebuild {
+func NewXcodebuild(logger log.Logger, commandFactory command.Factory, pathChecker pathutil.PathChecker, fileManager fileutil.FileManager, xcconfigWriter xcconfig.Writer) Xcodebuild {
 	return &xcodebuild{
 		logger:         logger,
 		commandFactory: commandFactory,
 		pathChecker:    pathChecker,
-		fileRemover:    fileRemover,
+		fileManager:    fileManager,
 		xcconfigWriter: xcconfigWriter,
 	}
 }

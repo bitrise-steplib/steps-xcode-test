@@ -9,11 +9,10 @@ github.com/bitrise-io/go-steputils/output
 github.com/bitrise-io/go-steputils/stepconf
 github.com/bitrise-io/go-steputils/stepenv
 github.com/bitrise-io/go-steputils/tools
-# github.com/bitrise-io/go-utils v0.0.0-20210903060322-ecae303f0264
+# github.com/bitrise-io/go-utils v0.0.0-20210930092040-cceb74a5ac24
 ## explicit
 github.com/bitrise-io/go-utils/colorstring
 github.com/bitrise-io/go-utils/command
-github.com/bitrise-io/go-utils/command/mocks
 github.com/bitrise-io/go-utils/env
 github.com/bitrise-io/go-utils/errorutil
 github.com/bitrise-io/go-utils/fileutil

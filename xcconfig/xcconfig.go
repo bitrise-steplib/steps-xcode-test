@@ -14,12 +14,12 @@ type Writer interface {
 
 type writer struct {
 	pathProvider pathutil.PathProvider
-	fileWriter   fileutil.FileWriter
+	fileManager  fileutil.FileManager
 }
 
 // NewWriter ...
-func NewWriter(pathProvider pathutil.PathProvider, fileWriter fileutil.FileWriter) Writer {
-	return &writer{pathProvider: pathProvider, fileWriter: fileWriter}
+func NewWriter(pathProvider pathutil.PathProvider, fileManager fileutil.FileManager) Writer {
+	return &writer{pathProvider: pathProvider, fileManager: fileManager}
 }
 
 func (w writer) Write(content string) (string, error) {
@@ -28,7 +28,7 @@ func (w writer) Write(content string) (string, error) {
 		return "", fmt.Errorf("unable to create temp dir for writing XCConfig: %v", err)
 	}
 	xcconfigPath := filepath.Join(dir, "temp.xcconfig")
-	if err = w.fileWriter.Write(xcconfigPath, content, 0644); err != nil {
+	if err = w.fileManager.Write(xcconfigPath, content, 0644); err != nil {
 		return "", fmt.Errorf("unable to write XCConfig content into file: %v", err)
 	}
 	return xcconfigPath, nil

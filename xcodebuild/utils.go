@@ -222,7 +222,7 @@ func (b *xcodebuild) createXCPrettyArgs(options string) ([]string, error) {
 				b.logger.Errorf("Failed to check xcpretty output file status (path: %s), error: %s", xcprettyOutputFilePath, err)
 			} else if isExist {
 				b.logger.Warnf("=> Deleting existing xcpretty output: %s", xcprettyOutputFilePath)
-				if err := b.fileRemover.Remove(xcprettyOutputFilePath); err != nil {
+				if err := b.fileManager.Remove(xcprettyOutputFilePath); err != nil {
 					b.logger.Errorf("Failed to delete xcpretty output file (path: %s), error: %s", xcprettyOutputFilePath, err)
 				}
 			}
@@ -273,7 +273,7 @@ type testRunResult struct {
 
 func (b *xcodebuild) cleanOutputDirAndRerunTest(params TestRunParams) (string, int, error) {
 	// Clean output directory, otherwise after retry test run, xcodebuild fails with `error: Existing file at -resultBundlePath "..."`
-	if err := b.fileRemover.RemoveAll(params.BuildTestParams.TestOutputDir); err != nil {
+	if err := b.fileManager.RemoveAll(params.BuildTestParams.TestOutputDir); err != nil {
 		return "", 1, fmt.Errorf("failed to clean test output directory: %s, error: %s", params.BuildTestParams.TestOutputDir, err)
 	}
 	return b.runTest(params)
@@ -282,7 +282,7 @@ func (b *xcodebuild) cleanOutputDirAndRerunTest(params TestRunParams) (string, i
 func (b *xcodebuild) handleTestRunError(prevRunParams TestRunParams, prevRunResult testRunResult) (string, int, error) {
 	if prevRunParams.RetryOnSwiftPackageResolutionError && prevRunParams.SwiftPackagesPath != "" && isStringFoundInOutput(cache.SwiftPackagesStateInvalid, prevRunResult.xcodebuildLog) {
 		log.RWarnf("xcode-test", "swift-packages-cache-invalid", nil, "swift packages cache is in an invalid state")
-		if err := b.fileRemover.RemoveAll(prevRunParams.SwiftPackagesPath); err != nil {
+		if err := b.fileManager.RemoveAll(prevRunParams.SwiftPackagesPath); err != nil {
 			b.logger.Errorf("failed to remove Swift package caches, error: %s", err)
 			return prevRunResult.xcodebuildLog, prevRunResult.exitCode, prevRunResult.err
 		}
