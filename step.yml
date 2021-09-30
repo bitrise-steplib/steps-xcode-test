@@ -51,7 +51,7 @@ toolkit:
 inputs:
 - project_path: $BITRISE_PROJECT_PATH
   opts:
-    title: "Project path"
+    title: Project path
     summary: Xcode Project (`.xcodeproj`) or Workspace (`.xcworkspace`) path.
     description: |-
       Xcode Project (`.xcodeproj`) or Workspace (`.xcworkspace`) path.
@@ -61,7 +61,7 @@ inputs:
 
 - scheme: $BITRISE_SCHEME
   opts:
-    title: "Scheme"
+    title: Scheme
     summary: Xcode Scheme name.
     description: |-
       Xcode Scheme name.
@@ -81,7 +81,7 @@ inputs:
 
 - test_plan:
   opts:
-    title: "Test Plan"
+    title: Test Plan
     summary: Run tests in a specific Test Plan associated with the Scheme.
     description: |-
       Run tests in a specific Test Plan associated with the Scheme.
