@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"syscall"
@@ -55,15 +56,16 @@ var testRunnerErrorPatterns = []string{
 
 // TestParams ...
 type TestParams struct {
-	BuildParams                    Params
+	ProjectPath                    string
+	Scheme                         string
+	Destination                    string
 	TestPlan                       string
 	TestOutputDir                  string
 	TestRepetitionMode             string
 	MaximumTestRepetitions         int
 	RelaunchTestsForEachRepetition bool
-	CleanBuild                     bool
-	BuildBeforeTest                bool
-	GenerateCodeCoverage           bool
+	XCConfigContent                string
+	PerformCleanAction             bool
 	RetryTestsOnFailure            bool
 	AdditionalOptions              string
 }
@@ -149,66 +151,21 @@ func (b *xcodebuild) runPrettyXcodebuildCmd(useStdOut bool, xcprettyArgs []strin
 	return buildOutBuffer.String(), 0, nil
 }
 
-func (b *xcodebuild) runBuild(buildParams Params, outputTool string) (string, int, error) {
-	xcodebuildArgs := []string{buildParams.Action, buildParams.ProjectPath, "-scheme", buildParams.Scheme}
-	if buildParams.CleanBuild {
+func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, error) {
+	projectFlag := "-project"
+	if filepath.Ext(params.ProjectPath) == ".xcworkspace" {
+		projectFlag = "-workspace"
+	}
+	xcodebuildArgs := []string{projectFlag, params.ProjectPath, "-scheme", params.Scheme}
+	if params.PerformCleanAction {
 		xcodebuildArgs = append(xcodebuildArgs, "clean")
 	}
 
-	// Disable indexing during the build.
-	// Indexing is needed for autocomplete, ability to quickly jump to definition, get class and method help by alt clicking.
-	// Which are not needed in CI environment.
-	if buildParams.DisableIndexWhileBuilding {
-		xcodebuildArgs = append(xcodebuildArgs, "COMPILER_INDEX_STORE_ENABLE=NO")
-	}
-	xcodebuildArgs = append(xcodebuildArgs, "build", "-destination", buildParams.DeviceDestination)
-
-	b.logger.Infof("Building the project...")
-
-	if outputTool == XcprettyTool {
-		return b.runPrettyXcodebuildCmd(false, []string{}, xcodebuildArgs)
-	}
-	return b.runXcodebuildCmd(xcodebuildArgs...)
-}
-
-func createXcodebuildTestArgs(params TestParams, xcodeMajorVersion int) ([]string, error) {
-	buildParams := params.BuildParams
-
-	xcodebuildArgs := []string{buildParams.Action, buildParams.ProjectPath, "-scheme", buildParams.Scheme}
-	if params.CleanBuild {
-		xcodebuildArgs = append(xcodebuildArgs, "clean")
-	}
-	// the 'build' argument is required *before* the 'test' arg, to prevent
-	//  the Xcode bug described in the README, which causes:
-	// 'iPhoneSimulator: Timed out waiting 120 seconds for simulator to boot, current state is 1.'
-	//  in case the compilation takes a long time.
-	// Related Radar link: https://openradar.appspot.com/22413115
-	// Demonstration project: https://github.com/bitrise-io/simulator-launch-timeout-includes-build-time
-
-	// for builds < 120 seconds or fixed Xcode versions, one should
-	// have the possibility of opting out, because the explicit build arg
-	// leads the project to be compiled twice and increase the duration
-	// Related issue link: https://github.com/bitrise-steplib/steps-xcode-test/issues/55
-	if params.BuildBeforeTest {
-		xcodebuildArgs = append(xcodebuildArgs, "build")
-	}
-
-	// Disable indexing during the build.
-	// Indexing is needed for autocomplete, ability to quickly jump to definition, get class and method help by alt clicking.
-	// Which are not needed in CI environment.
-	if buildParams.DisableIndexWhileBuilding {
-		xcodebuildArgs = append(xcodebuildArgs, "COMPILER_INDEX_STORE_ENABLE=NO")
-	}
-
-	xcodebuildArgs = append(xcodebuildArgs, "test", "-destination", buildParams.DeviceDestination)
+	xcodebuildArgs = append(xcodebuildArgs, "test", "-destination", params.Destination)
 	if params.TestPlan != "" {
 		xcodebuildArgs = append(xcodebuildArgs, "-testPlan", params.TestPlan)
 	}
 	xcodebuildArgs = append(xcodebuildArgs, "-resultBundlePath", params.TestOutputDir)
-
-	if params.GenerateCodeCoverage {
-		xcodebuildArgs = append(xcodebuildArgs, "GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES", "GCC_GENERATE_TEST_COVERAGE_FILES=YES")
-	}
 
 	switch params.TestRepetitionMode {
 	case TestRepetitionUntilFailure:
@@ -223,6 +180,14 @@ func createXcodebuildTestArgs(params TestParams, xcodeMajorVersion int) ([]strin
 
 	if params.RelaunchTestsForEachRepetition {
 		xcodebuildArgs = append(xcodebuildArgs, "-test-repetition-relaunch-enabled", "YES")
+	}
+
+	if params.XCConfigContent != "" {
+		xcconfigPath, err := b.xcconfigWriter.Write(params.XCConfigContent)
+		if err != nil {
+			return nil, err
+		}
+		xcodebuildArgs = append(xcodebuildArgs, "-xcconfig", xcconfigPath)
 	}
 
 	if params.AdditionalOptions != "" {
@@ -262,7 +227,7 @@ func (b *xcodebuild) createXCPrettyArgs(options string) ([]string, error) {
 				b.logger.Errorf("Failed to check xcpretty output file status (path: %s), error: %s", xcprettyOutputFilePath, err)
 			} else if isExist {
 				b.logger.Warnf("=> Deleting existing xcpretty output: %s", xcprettyOutputFilePath)
-				if err := b.fileRemover.Remove(xcprettyOutputFilePath); err != nil {
+				if err := b.fileManager.Remove(xcprettyOutputFilePath); err != nil {
 					b.logger.Errorf("Failed to delete xcpretty output file (path: %s), error: %s", xcprettyOutputFilePath, err)
 				}
 			}
@@ -275,7 +240,7 @@ func (b *xcodebuild) createXCPrettyArgs(options string) ([]string, error) {
 }
 
 func (b *xcodebuild) runTest(params TestRunParams) (string, int, error) {
-	xcodebuildArgs, err := createXcodebuildTestArgs(params.BuildTestParams, params.XcodeMajorVersion)
+	xcodebuildArgs, err := b.createXcodebuildTestArgs(params.TestParams)
 	if err != nil {
 		return "", 1, err
 	}
@@ -285,7 +250,7 @@ func (b *xcodebuild) runTest(params TestRunParams) (string, int, error) {
 	var rawOutput string
 	var exit int
 	var testErr error
-	if params.OutputTool == XcprettyTool {
+	if params.LogFormatter == XcprettyTool {
 		xcprettyArgs, err := b.createXCPrettyArgs(params.XcprettyOptions)
 		if err != nil {
 			return "", 1, err
@@ -313,8 +278,8 @@ type testRunResult struct {
 
 func (b *xcodebuild) cleanOutputDirAndRerunTest(params TestRunParams) (string, int, error) {
 	// Clean output directory, otherwise after retry test run, xcodebuild fails with `error: Existing file at -resultBundlePath "..."`
-	if err := b.fileRemover.RemoveAll(params.BuildTestParams.TestOutputDir); err != nil {
-		return "", 1, fmt.Errorf("failed to clean test output directory: %s, error: %s", params.BuildTestParams.TestOutputDir, err)
+	if err := b.fileManager.RemoveAll(params.TestParams.TestOutputDir); err != nil {
+		return "", 1, fmt.Errorf("failed to clean test output directory: %s, error: %s", params.TestParams.TestOutputDir, err)
 	}
 	return b.runTest(params)
 }
@@ -322,7 +287,7 @@ func (b *xcodebuild) cleanOutputDirAndRerunTest(params TestRunParams) (string, i
 func (b *xcodebuild) handleTestRunError(prevRunParams TestRunParams, prevRunResult testRunResult) (string, int, error) {
 	if prevRunParams.RetryOnSwiftPackageResolutionError && prevRunParams.SwiftPackagesPath != "" && isStringFoundInOutput(cache.SwiftPackagesStateInvalid, prevRunResult.xcodebuildLog) {
 		log.RWarnf("xcode-test", "swift-packages-cache-invalid", nil, "swift packages cache is in an invalid state")
-		if err := b.fileRemover.RemoveAll(prevRunParams.SwiftPackagesPath); err != nil {
+		if err := b.fileManager.RemoveAll(prevRunParams.SwiftPackagesPath); err != nil {
 			b.logger.Errorf("failed to remove Swift package caches, error: %s", err)
 			return prevRunResult.xcodebuildLog, prevRunResult.exitCode, prevRunResult.err
 		}
@@ -337,7 +302,7 @@ func (b *xcodebuild) handleTestRunError(prevRunParams TestRunParams, prevRunResu
 			if prevRunParams.RetryOnTestRunnerError {
 				b.logger.Printf("Automatic retry is enabled - retrying...")
 
-				prevRunParams.BuildTestParams.RetryTestsOnFailure = false
+				prevRunParams.TestParams.RetryTestsOnFailure = false
 				prevRunParams.RetryOnTestRunnerError = false
 				return b.cleanOutputDirAndRerunTest(prevRunParams)
 			}
@@ -347,11 +312,11 @@ func (b *xcodebuild) handleTestRunError(prevRunParams TestRunParams, prevRunResu
 		}
 	}
 
-	if prevRunParams.BuildTestParams.RetryTestsOnFailure {
+	if prevRunParams.TestParams.RetryTestsOnFailure {
 		b.logger.Warnf("Test run failed")
 		b.logger.Printf("'Should retry tests on failure?' (should_retry_test_on_fail) is enabled - retrying...")
 
-		prevRunParams.BuildTestParams.RetryTestsOnFailure = false
+		prevRunParams.TestParams.RetryTestsOnFailure = false
 		prevRunParams.RetryOnTestRunnerError = false
 		return b.cleanOutputDirAndRerunTest(prevRunParams)
 	}

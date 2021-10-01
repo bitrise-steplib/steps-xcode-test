@@ -14,6 +14,7 @@ import (
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-steplib/steps-xcode-test/cache"
+	"github.com/bitrise-steplib/steps-xcode-test/destination"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/simulator"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
@@ -27,44 +28,36 @@ const (
 
 // Input ...
 type Input struct {
-	// Project Parameters
 	ProjectPath string `env:"project_path,required"`
 	Scheme      string `env:"scheme,required"`
+	Destination string `env:"destination,required"`
 	TestPlan    string `env:"test_plan"`
-
-	// Simulator Configs
-	SimulatorPlatform  string `env:"simulator_platform,required"`
-	SimulatorDevice    string `env:"simulator_device,required"`
-	SimulatorOsVersion string `env:"simulator_os_version,required"`
 
 	// Test Repetition
 	TestRepetitionMode             string `env:"test_repetition_mode,opt[none,until_failure,retry_on_failure,up_until_maximum_repetitions]"`
 	MaximumTestRepetitions         int    `env:"maximum_test_repetitions,required"`
 	RelaunchTestsForEachRepetition bool   `env:"relaunch_tests_for_each_repetition,opt[yes,no]"`
+	RetryTestsOnFailure            bool   `env:"should_retry_test_on_fail,opt[yes,no]"`
 
-	// Test Run Configs
-	OutputTool            string `env:"output_tool,opt[xcpretty,xcodebuild]"`
-	IsCleanBuild          bool   `env:"is_clean_build,opt[yes,no]"`
-	IsSingleBuild         bool   `env:"single_build,opt[true,false]"`
-	ShouldBuildBeforeTest bool   `env:"should_build_before_test,opt[yes,no]"`
+	// xcodebuild configuration
+	XCConfigContent    string `env:"xcconfig_content"`
+	PerformCleanAction bool   `env:"perform_clean_action,opt[yes,no]"`
+	XcodebuildOptions  string `env:"xcodebuild_options"`
 
-	RetryTestsOnFailure       bool `env:"should_retry_test_on_fail,opt[yes,no]"`
-	DisableIndexWhileBuilding bool `env:"disable_index_while_building,opt[yes,no]"`
-	GenerateCodeCoverageFiles bool `env:"generate_code_coverage_files,opt[yes,no]"`
-	HeadlessMode              bool `env:"headless_mode,opt[yes,no]"`
+	// xcodebuild log formatting
+	LogFormatter    string `env:"log_formatter,opt[xcpretty,xcodebuild]"`
+	XcprettyOptions string `env:"xcpretty_options"`
 
-	TestOptions         string `env:"xcodebuild_test_options"`
-	XcprettyTestOptions string `env:"xcpretty_test_options"`
+	// Caching
+	CacheLevel string `env:"cache_level,opt[none,swift_packages]"`
 
-	// Debug
-	Verbose                     bool   `env:"verbose,opt[yes,no]"`
+	// Debugging
+	VerboseLog                  bool   `env:"verbose_log,opt[yes,no]"`
 	CollectSimulatorDiagnostics string `env:"collect_simulator_diagnostics,opt[always,on_failure,never]"`
+	HeadlessMode                bool   `env:"headless_mode,opt[yes,no]"`
 
 	// Output export
-	DeployDir             string `env:"BITRISE_DEPLOY_DIR"`
-	ExportUITestArtifacts bool   `env:"export_uitest_artifacts,opt[true,false]"`
-
-	CacheLevel string `env:"cache_level,opt[none,swift_packages]"`
+	DeployDir string `env:"BITRISE_DEPLOY_DIR"`
 }
 
 type exportCondition string
@@ -81,33 +74,29 @@ type Config struct {
 	Scheme      string
 	TestPlan    string
 
-	XcodeMajorVersion int
 	SimulatorID       string
 	IsSimulatorBooted bool
+
+	XcodeMajorVersion int
 
 	TestRepetitionMode            string
 	MaximumTestRepetitions        int
 	RelaunchTestForEachRepetition bool
+	RetryTestsOnFailure           bool
 
-	OutputTool         string
-	IsCleanBuild       bool
-	IsSingleBuild      bool
-	BuildBeforeTesting bool
+	XCConfigContent    string
+	PerformCleanAction bool
+	XcodebuildOptions  string
 
-	RetryTestsOnFailure       bool
-	DisableIndexWhileBuilding bool
-	GenerateCodeCoverageFiles bool
-	HeadlessMode              bool
-
-	XcodebuildTestOptions string
-	XcprettyOptions       string
-
-	SimulatorDebug exportCondition
-
-	DeployDir             string
-	ExportUITestArtifacts bool
+	LogFormatter    string
+	XcprettyOptions string
 
 	CacheLevel string
+
+	CollectSimulatorDiagnostics exportCondition
+	HeadlessMode                bool
+
+	DeployDir string
 }
 
 // XcodeTestRunner ...
@@ -149,7 +138,7 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 	stepconf.Print(input)
 	s.logger.Println()
 
-	s.logger.EnableDebugLog(input.Verbose)
+	s.logger.EnableDebugLog(input.VerboseLog)
 
 	// validate Xcode version
 	xcodebuildVersion, err := s.xcodebuild.Version()
@@ -171,8 +160,7 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 		return Config{}, fmt.Errorf("invalid project file (%s), extension should be (.xcodeproj/.xcworkspace)", projectPath)
 	}
 
-	// validate simulator related inputs
-	sim, err := s.validateSimulator(input)
+	sim, err := s.getSimulatorForDestination(input.Destination)
 	if err != nil {
 		return Config{}, err
 	}
@@ -207,9 +195,8 @@ func (s XcodeTestRunner) InstallDeps(xcpretty bool) error {
 
 // Result ...
 type Result struct {
-	Scheme                string
-	DeployDir             string
-	ExportUITestArtifacts bool
+	Scheme    string
+	DeployDir string
 
 	XcresultPath             string
 	XcodebuildBuildLog       string
@@ -219,7 +206,7 @@ type Result struct {
 
 // Run ...
 func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
-	enableSimulatorVerboseLog := cfg.SimulatorDebug != never
+	enableSimulatorVerboseLog := cfg.CollectSimulatorDiagnostics != never
 	launchSimulator := !cfg.IsSimulatorBooted && !cfg.HeadlessMode
 	if err := s.prepareSimulator(enableSimulatorVerboseLog, cfg.SimulatorID, launchSimulator, cfg.XcodeMajorVersion); err != nil {
 		return Result{}, err
@@ -237,7 +224,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 		testExitCode = code
 	}
 
-	result.SimulatorDiagnosticsPath = s.teardownSimulator(cfg.SimulatorID, cfg.SimulatorDebug, cfg.IsSimulatorBooted, testErr)
+	result.SimulatorDiagnosticsPath = s.teardownSimulator(cfg.SimulatorID, cfg.CollectSimulatorDiagnostics, cfg.IsSimulatorBooted, testErr)
 
 	if testErr != nil {
 		s.logger.Println()
@@ -294,11 +281,6 @@ func (s XcodeTestRunner) Export(result Result, testFailed bool) error {
 		}
 	}
 
-	// export UITest artifacts
-	if result.ExportUITestArtifacts && result.XcresultPath != "" {
-		s.outputExporter.ExportUITestArtifacts(result.XcresultPath, result.Scheme)
-	}
-
 	return nil
 }
 
@@ -315,14 +297,6 @@ func (s XcodeTestRunner) validateXcodeVersion(input *Input, xcodeMajorVersion in
 	if xcodeMajorVersion < 9 && input.HeadlessMode {
 		s.logger.Warnf("Headless mode is enabled but it's only available with Xcode 9.x or newer.")
 		input.HeadlessMode = false
-	}
-
-	// validate export UITest artifacts
-	if input.ExportUITestArtifacts && xcodeMajorVersion >= 11 {
-		// The test result bundle (xcresult) structure changed in Xcode 11:
-		// it does not contains TestSummaries.plist nor Attachments directly.
-		s.logger.Warnf("Export UITest Artifacts (export_uitest_artifacts) turned on, but Xcode version >= 11. The test result bundle structure changed in Xcode 11 it does not contain TestSummaries.plist and Attachments directly, nothing to export.")
-		input.ExportUITestArtifacts = false
 	}
 
 	// validate simulator diagnosis mode
@@ -342,16 +316,21 @@ func (s XcodeTestRunner) validateXcodeVersion(input *Input, xcodeMajorVersion in
 	return nil
 }
 
-func (s XcodeTestRunner) validateSimulator(input Input) (simulator.Simulator, error) {
+func (s XcodeTestRunner) getSimulatorForDestination(destinationSpecifier string) (simulator.Simulator, error) {
 	var sim simulator.Simulator
 	var osVersion string
 
-	platform := strings.TrimSuffix(input.SimulatorPlatform, " Simulator")
+	simulatorDestination, err := destination.NewSimulator(destinationSpecifier)
+	if err != nil {
+		return simulator.Simulator{}, fmt.Errorf("invalid destination specifier: %v", err)
+	}
+
+	platform := strings.TrimSuffix(simulatorDestination.Platform, " Simulator")
 	// Retry gathering device information since xcrun simctl list can fail to show the complete device list
 	if err := retry.Times(3).Wait(10 * time.Second).Try(func(attempt uint) error {
 		var errGetSimulator error
-		if input.SimulatorOsVersion == "latest" {
-			var simulatorDevice = input.SimulatorDevice
+		if simulatorDestination.OS == "latest" {
+			simulatorDevice := simulatorDestination.Name
 			if simulatorDevice == "iPad" {
 				s.logger.Warnf("Given device (%s) is deprecated, using iPad Air (3rd generation)...", simulatorDevice)
 				simulatorDevice = "iPad Air (3rd generation)"
@@ -359,18 +338,18 @@ func (s XcodeTestRunner) validateSimulator(input Input) (simulator.Simulator, er
 
 			sim, osVersion, errGetSimulator = s.simulatorManager.GetLatestSimulatorAndVersion(platform, simulatorDevice)
 		} else {
-			normalizedOsVersion := input.SimulatorOsVersion
+			normalizedOsVersion := simulatorDestination.OS
 			osVersionSplit := strings.Split(normalizedOsVersion, ".")
 			if len(osVersionSplit) > 2 {
 				normalizedOsVersion = strings.Join(osVersionSplit[0:2], ".")
 			}
 			osVersion = fmt.Sprintf("%s %s", platform, normalizedOsVersion)
 
-			sim, errGetSimulator = s.simulatorManager.GetSimulator(osVersion, input.SimulatorDevice)
+			sim, errGetSimulator = s.simulatorManager.GetSimulator(osVersion, simulatorDestination.Name)
 		}
 
 		if errGetSimulator != nil {
-			s.logger.Warnf("attempt %d to get simulator udid failed with error: %s", attempt, errGetSimulator)
+			s.logger.Warnf("attempt %d to get simulator UDID failed with error: %s", attempt, errGetSimulator)
 		}
 
 		return errGetSimulator
@@ -393,8 +372,7 @@ func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simula
 	// Boot simulator
 	if enableSimulatorVerboseLog {
 		s.logger.Infof("Enabling Simulator verbose log for better diagnostics")
-		// Boot the simulator now, so verbose logging can be enabled and it is kept booted after running tests,
-		// this helps to collect more detailed debug info
+		// Boot the simulator now, so verbose logging can be enabled, and it is kept booted after running tests.
 		if err := s.simulatorManager.SimulatorBoot(simulatorID); err != nil {
 			return fmt.Errorf("%v", err)
 		}
@@ -425,22 +403,8 @@ func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simula
 func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 	// Run build
 	result := Result{
-		Scheme:                cfg.Scheme,
-		DeployDir:             cfg.DeployDir,
-		ExportUITestArtifacts: cfg.ExportUITestArtifacts,
-	}
-
-	buildParams := createBuildParams(cfg)
-
-	if !cfg.IsSingleBuild {
-		buildLog, exitCode, err := s.xcodebuild.RunBuild(buildParams, cfg.OutputTool)
-		result.XcodebuildBuildLog = buildLog
-		if err != nil {
-			s.logger.Warnf("xcode build exit code: %d", exitCode)
-			s.logger.Warnf("xcode build log:\n%s", buildLog)
-			s.logger.Errorf("xcode build failed with error: %s", err)
-			return result, -1, err
-		}
+		Scheme:    cfg.Scheme,
+		DeployDir: cfg.DeployDir,
 	}
 
 	// Run test
@@ -459,13 +423,13 @@ func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 		}
 	}
 
-	testParams := createTestParams(cfg, buildParams, xcresultPath, swiftPackagesPath)
+	testParams := createTestParams(cfg, xcresultPath, swiftPackagesPath)
 
 	testLog, exitCode, testErr := s.xcodebuild.RunTest(testParams)
 	result.XcresultPath = xcresultPath
 	result.XcodebuildTestLog = testLog
 
-	if testErr != nil || cfg.OutputTool == xcodebuild.XcodebuildTool {
+	if testErr != nil || cfg.LogFormatter == xcodebuild.XcodebuildTool {
 		printLastLinesOfXcodebuildTestLog(testLog, testErr == nil)
 	}
 
@@ -504,75 +468,51 @@ func createConfig(input Input, projectPath string, xcodeMajorVersion int, sim si
 		Scheme:      input.Scheme,
 		TestPlan:    input.TestPlan,
 
-		XcodeMajorVersion: xcodeMajorVersion,
 		SimulatorID:       sim.ID,
 		IsSimulatorBooted: sim.Status != simulatorShutdownState,
+
+		XcodeMajorVersion: xcodeMajorVersion,
 
 		TestRepetitionMode:            input.TestRepetitionMode,
 		MaximumTestRepetitions:        input.MaximumTestRepetitions,
 		RelaunchTestForEachRepetition: input.RelaunchTestsForEachRepetition,
+		RetryTestsOnFailure:           input.RetryTestsOnFailure,
 
-		OutputTool:         input.OutputTool,
-		IsCleanBuild:       input.IsCleanBuild,
-		IsSingleBuild:      input.IsSingleBuild,
-		BuildBeforeTesting: input.ShouldBuildBeforeTest,
+		XCConfigContent:    input.XCConfigContent,
+		PerformCleanAction: input.PerformCleanAction,
+		XcodebuildOptions:  input.XcodebuildOptions,
 
-		RetryTestsOnFailure:       input.RetryTestsOnFailure,
-		DisableIndexWhileBuilding: input.DisableIndexWhileBuilding,
-		GenerateCodeCoverageFiles: input.GenerateCodeCoverageFiles,
-		HeadlessMode:              input.HeadlessMode,
-
-		XcodebuildTestOptions: input.TestOptions,
-		XcprettyOptions:       input.XcprettyTestOptions,
-
-		SimulatorDebug: exportCondition(input.CollectSimulatorDiagnostics),
-
-		DeployDir:             input.DeployDir,
-		ExportUITestArtifacts: input.ExportUITestArtifacts,
+		LogFormatter:    input.LogFormatter,
+		XcprettyOptions: input.XcprettyOptions,
 
 		CacheLevel: input.CacheLevel,
+
+		CollectSimulatorDiagnostics: exportCondition(input.CollectSimulatorDiagnostics),
+		HeadlessMode:                input.HeadlessMode,
+
+		DeployDir: input.DeployDir,
 	}
 }
 
-func createBuildParams(cfg Config) xcodebuild.Params {
-	projectFlag := "-project"
-	if filepath.Ext(cfg.ProjectPath) == ".xcworkspace" {
-		projectFlag = "-workspace"
-	}
-
-	return xcodebuild.Params{
-		Action:                    projectFlag,
-		ProjectPath:               cfg.ProjectPath,
-		Scheme:                    cfg.Scheme,
-		DeviceDestination:         fmt.Sprintf("id=%s", cfg.SimulatorID),
-		CleanBuild:                cfg.IsCleanBuild,
-		DisableIndexWhileBuilding: cfg.DisableIndexWhileBuilding,
-	}
-}
-
-func createTestParams(cfg Config, buildParams xcodebuild.Params, xcresultPath, swiftPackagesPath string) xcodebuild.TestRunParams {
-	isCleanBuild := false
-	if cfg.IsSingleBuild {
-		isCleanBuild = cfg.IsCleanBuild
-	}
-
+func createTestParams(cfg Config, xcresultPath, swiftPackagesPath string) xcodebuild.TestRunParams {
 	testParams := xcodebuild.TestParams{
-		BuildParams:                    buildParams,
+		ProjectPath:                    cfg.ProjectPath,
+		Scheme:                         cfg.Scheme,
+		Destination:                    fmt.Sprintf("id=%s", cfg.SimulatorID),
 		TestPlan:                       cfg.TestPlan,
 		TestOutputDir:                  xcresultPath,
 		TestRepetitionMode:             cfg.TestRepetitionMode,
 		MaximumTestRepetitions:         cfg.MaximumTestRepetitions,
 		RelaunchTestsForEachRepetition: cfg.RelaunchTestForEachRepetition,
-		CleanBuild:                     isCleanBuild,
-		BuildBeforeTest:                cfg.BuildBeforeTesting,
-		GenerateCodeCoverage:           cfg.GenerateCodeCoverageFiles,
+		XCConfigContent:                cfg.XCConfigContent,
+		PerformCleanAction:             cfg.PerformCleanAction,
 		RetryTestsOnFailure:            cfg.RetryTestsOnFailure,
-		AdditionalOptions:              cfg.XcodebuildTestOptions,
+		AdditionalOptions:              cfg.XcodebuildOptions,
 	}
 
 	return xcodebuild.TestRunParams{
-		BuildTestParams:                    testParams,
-		OutputTool:                         cfg.OutputTool,
+		TestParams:                         testParams,
+		LogFormatter:                       cfg.LogFormatter,
 		XcprettyOptions:                    cfg.XcprettyOptions,
 		RetryOnTestRunnerError:             true,
 		RetryOnSwiftPackageResolutionError: true,

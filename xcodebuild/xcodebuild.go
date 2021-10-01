@@ -7,6 +7,7 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-xcode/models"
 	"github.com/bitrise-io/go-xcode/utility"
+	"github.com/bitrise-steplib/steps-xcode-test/xcconfig"
 )
 
 // Output tools ...
@@ -24,7 +25,6 @@ const (
 
 // Xcodebuild ....
 type Xcodebuild interface {
-	RunBuild(buildParams Params, outputTool string) (string, int, error)
 	RunTest(params TestRunParams) (string, int, error)
 	Version() (Version, error)
 }
@@ -33,16 +33,18 @@ type xcodebuild struct {
 	logger         log.Logger
 	commandFactory command.Factory
 	pathChecker    pathutil.PathChecker
-	fileRemover    fileutil.FileRemover
+	fileManager    fileutil.FileManager
+	xcconfigWriter xcconfig.Writer
 }
 
 // NewXcodebuild ...
-func NewXcodebuild(logger log.Logger, commandFactory command.Factory, pathChecker pathutil.PathChecker, fileRemover fileutil.FileRemover) Xcodebuild {
+func NewXcodebuild(logger log.Logger, commandFactory command.Factory, pathChecker pathutil.PathChecker, fileManager fileutil.FileManager, xcconfigWriter xcconfig.Writer) Xcodebuild {
 	return &xcodebuild{
 		logger:         logger,
 		commandFactory: commandFactory,
 		pathChecker:    pathChecker,
-		fileRemover:    fileRemover,
+		fileManager:    fileManager,
+		xcconfigWriter: xcconfigWriter,
 	}
 }
 
@@ -54,25 +56,10 @@ func (b *xcodebuild) Version() (Version, error) {
 	return Version(version), err
 }
 
-// Params ...
-type Params struct {
-	Action                    string
-	ProjectPath               string
-	Scheme                    string
-	DeviceDestination         string
-	CleanBuild                bool
-	DisableIndexWhileBuilding bool
-}
-
-// RunBuild ...
-func (b *xcodebuild) RunBuild(buildParams Params, outputTool string) (string, int, error) {
-	return b.runBuild(buildParams, outputTool)
-}
-
 // TestRunParams ...
 type TestRunParams struct {
-	BuildTestParams                    TestParams
-	OutputTool                         string
+	TestParams                         TestParams
+	LogFormatter                       string
 	XcprettyOptions                    string
 	RetryOnTestRunnerError             bool
 	RetryOnSwiftPackageResolutionError bool

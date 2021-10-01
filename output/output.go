@@ -12,7 +12,6 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/ziputil"
 	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
-	"github.com/bitrise-steplib/steps-xcode-test/testartifact"
 )
 
 // Exporter ...
@@ -22,23 +21,20 @@ type Exporter interface {
 	ExportXcodebuildBuildLog(deployDir, xcodebuildBuildLog string) error
 	ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) error
 	ExportSimulatorDiagnostics(deployDir, pth, name string) error
-	ExportUITestArtifacts(xcResultPath, scheme string)
 }
 
 type exporter struct {
-	envRepository        env.Repository
-	logger               log.Logger
-	testAddonExporter    testaddon.Exporter
-	testArtifactExporter testartifact.Exporter
+	envRepository     env.Repository
+	logger            log.Logger
+	testAddonExporter testaddon.Exporter
 }
 
 // NewExporter ...
-func NewExporter(envRepository env.Repository, logger log.Logger, testAddonExporter testaddon.Exporter, testArtifactExporter testartifact.Exporter) Exporter {
+func NewExporter(envRepository env.Repository, logger log.Logger, testAddonExporter testaddon.Exporter) Exporter {
 	return &exporter{
-		envRepository:        envRepository,
-		logger:               logger,
-		testAddonExporter:    testAddonExporter,
-		testArtifactExporter: testArtifactExporter,
+		envRepository:     envRepository,
+		logger:            logger,
+		testAddonExporter: testAddonExporter,
 	}
 }
 
@@ -121,30 +117,4 @@ func (e exporter) ExportSimulatorDiagnostics(deployDir, pth, name string) error 
 	}
 
 	return nil
-}
-
-func (e exporter) ExportUITestArtifacts(xcResultPath, scheme string) {
-	// The test result bundle (xcresult) structure changed in Xcode 11:
-	// it does not contains TestSummaries.plist nor Attachments directly.
-	e.logger.Println()
-	e.logger.Infof("Exporting attachments")
-
-	testSummariesPath, attachementDir, err := e.testArtifactExporter.GetSummariesAndAttachmentPath(xcResultPath)
-	if err != nil {
-		e.logger.Warnf("Failed to export UI test artifacts, error: %s", err)
-		return
-	}
-
-	zipedTestsDerivedDataPath, err := e.testArtifactExporter.SaveAttachments(scheme, testSummariesPath, attachementDir)
-	if err != nil {
-		e.logger.Warnf("Failed to export UI test artifacts, error: %s", err)
-		return
-	}
-
-	if err := e.envRepository.Set("BITRISE_XCODE_TEST_ATTACHMENTS_PATH", zipedTestsDerivedDataPath); err != nil {
-		e.logger.Warnf("Failed to export: BITRISE_XCODE_TEST_ATTACHMENTS_PATH, error: %s", err)
-		return
-	}
-
-	e.logger.Donef("The zipped attachments are available in: %s", zipedTestsDerivedDataPath)
 }

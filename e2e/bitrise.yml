@@ -9,11 +9,8 @@ workflows:
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
     - TEST_PLAN: ""
-    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "false"
-    - XCODE_OUTPUT_TOOL: xcodebuild
+    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: "none"
@@ -29,11 +26,8 @@ workflows:
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
     - TEST_PLAN: ""
-    - XCODE_SIMULATOR_DEVICE: iPhone 8
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "true"
-    - XCODE_OUTPUT_TOOL: xcpretty
+    - DESTINATION: "platform=iOS Simulator,name=iPhone 8,OS=latest"
+    - LOG_FORMATTER: xcpretty
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: "none"
@@ -64,11 +58,8 @@ workflows:
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
     - TEST_PLAN: ""
-    - XCODE_SIMULATOR_DEVICE: iPhone 8
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "true"
-    - XCODE_OUTPUT_TOOL: xcodebuild
+    - DESTINATION: "platform=iOS Simulator,name=iPhone 8,OS=latest"
+    - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "yes"
     - EXPECT_TEST_FAILURE: "true"
     - CACHE_LEVEL: "none"
@@ -94,17 +85,17 @@ workflows:
 
             envman add --key XCODE_MAJOR_VERSION_AT_LEAST_11 --value "true"
 
-            device="iPad Air (4th generation)"
+            destination="platform=iOS Simulator,name=iPad Air (4th generation)"
             if [[ ${XCODE_MAJOR_VERSION} -eq 11 ]]; then
-              device="iPad Air (3rd generation)"
+              destination="platform=iOS Simulator,name=iPad Air (3rd generation)"
             elif [[ ${XCODE_MAJOR_VERSION} -eq 12 ]]; then
-              device="iPad Air (4th generation)"
+              destination="platform=iOS Simulator,name=iPad Air (4th generation)"
             elif [[ ${XCODE_MAJOR_VERSION} -eq 13 ]]; then
-              device="iPad Air (4th generation)"
+              destination="platform=iOS Simulator,name=iPad Air (4th generation)"
             fi
 
-            echo "Xcode version based iPad device: $device"
-            envman add --key XCODE_SIMULATOR_DEVICE --value "$device"
+            echo "Destination set based on Xcode version: $destination"
+            envman add --key DESTINATION --value "$destination"
     - bitrise-run:
         run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_11" "true"}}'
         inputs:
@@ -118,10 +109,7 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: ""
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "true"
-    - XCODE_OUTPUT_TOOL: xcodebuild
+    - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: "swift_packages"
@@ -157,11 +145,8 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "UnitTests"
-    - XCODE_SIMULATOR_DEVICE: iPhone 12
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "true"
-    - XCODE_OUTPUT_TOOL: xcodebuild
+    - DESTINATION: "platform=iOS Simulator,name=iPhone 12,OS=latest"
+    - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: "swift_packages"
@@ -203,11 +188,8 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "true"
-    - XCODE_OUTPUT_TOOL: xcodebuild
+    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "yes"
     - CACHE_LEVEL: "swift_packages"
     after_run:
@@ -246,11 +228,8 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "true"
-    - XCODE_OUTPUT_TOOL: xcodebuild
+    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - TEST_REPETITION_MODE: "retry_on_failure"
     - CACHE_LEVEL: "swift_packages"
@@ -290,11 +269,8 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "true"
-    - XCODE_OUTPUT_TOOL: xcodebuild
+    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - TEST_REPETITION_MODE: "none"
     - RELAUNCH_TESTS_FOR_EACH_REPETITION: "yes"
@@ -333,11 +309,8 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallySucceedingTests"
-    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "true"
-    - XCODE_OUTPUT_TOOL: xcodebuild
+    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "yes"
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: "swift_packages"
@@ -385,11 +358,8 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallySucceedingTests"
-    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "true"
-    - XCODE_OUTPUT_TOOL: xcodebuild
+    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "yes"
     - CACHE_LEVEL: "swift_packages"
     after_run:
@@ -436,11 +406,8 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallySucceedingTests"
-    - XCODE_SIMULATOR_DEVICE: iPhone 12
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "true"
-    - XCODE_OUTPUT_TOOL: xcodebuild
+    - DESTINATION: "platform=iOS Simulator,name=iPhone 12,OS=latest"
+    - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - CACHE_LEVEL: "swift_packages"
     after_run:
@@ -476,11 +443,8 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallySucceedingTests"
-    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "true"
-    - XCODE_OUTPUT_TOOL: xcodebuild
+    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - LOG_FORMATTER: xcodebuild
     - TEST_REPETITION_MODE: "retry_on_failure"
     - MAXIMUM_TEST_REPETITIONS: 2
     - RETRY_ON_FAILURE: "no"
@@ -526,11 +490,8 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallySucceedingTests"
-    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "true"
-    - XCODE_OUTPUT_TOOL: xcodebuild
+    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - LOG_FORMATTER: xcodebuild
     - TEST_REPETITION_MODE: "retry_on_failure"
     - MAXIMUM_TEST_REPETITIONS: 2
     - RETRY_ON_FAILURE: "no"
@@ -569,11 +530,8 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallySucceedingTests"
-    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "true"
-    - XCODE_OUTPUT_TOOL: xcodebuild
+    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - LOG_FORMATTER: xcodebuild
     - TEST_REPETITION_MODE: "retry_on_failure"
     - MAXIMUM_TEST_REPETITIONS: 3
     - RETRY_ON_FAILURE: "no"
@@ -612,11 +570,8 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallyFailingTests"
-    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "true"
-    - XCODE_OUTPUT_TOOL: xcodebuild
+    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - LOG_FORMATTER: xcodebuild
     - TEST_REPETITION_MODE: "until_failure"
     - MAXIMUM_TEST_REPETITIONS: 2
     - RETRY_ON_FAILURE: "no"
@@ -662,11 +617,8 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallyFailingTests"
-    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "true"
-    - XCODE_OUTPUT_TOOL: xcodebuild
+    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - LOG_FORMATTER: xcodebuild
     - TEST_REPETITION_MODE: "until_failure"
     - MAXIMUM_TEST_REPETITIONS: 2
     - RETRY_ON_FAILURE: "no"
@@ -712,11 +664,8 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallyFailingTests"
-    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "true"
-    - XCODE_OUTPUT_TOOL: xcodebuild
+    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - LOG_FORMATTER: xcodebuild
     - TEST_REPETITION_MODE: "until_failure"
     - MAXIMUM_TEST_REPETITIONS: 3
     - RETRY_ON_FAILURE: "no"
@@ -755,11 +704,8 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallyFailingTests"
-    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "true"
-    - XCODE_OUTPUT_TOOL: xcodebuild
+    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - LOG_FORMATTER: xcodebuild
     - TEST_REPETITION_MODE: "up_until_maximum_repetitions"
     - MAXIMUM_TEST_REPETITIONS: 2
     - RETRY_ON_FAILURE: "no"
@@ -805,11 +751,8 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallyFailingTests"
-    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "true"
-    - XCODE_OUTPUT_TOOL: xcodebuild
+    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - LOG_FORMATTER: xcodebuild
     - TEST_REPETITION_MODE: "up_until_maximum_repetitions"
     - MAXIMUM_TEST_REPETITIONS: 2
     - RETRY_ON_FAILURE: "no"
@@ -855,11 +798,8 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallyFailingTests"
-    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "true"
-    - XCODE_OUTPUT_TOOL: xcodebuild
+    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - LOG_FORMATTER: xcodebuild
     - TEST_REPETITION_MODE: "up_until_maximum_repetitions"
     - MAXIMUM_TEST_REPETITIONS: 3
     - RETRY_ON_FAILURE: "no"
@@ -898,11 +838,8 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: "EventuallyFailingInMemoryTests"
-    - XCODE_SIMULATOR_DEVICE: iPhone 8 Plus
-    - XCODE_SIMULATOR_OS_VERSION: "latest"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "true"
-    - XCODE_OUTPUT_TOOL: xcodebuild
+    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - LOG_FORMATTER: xcodebuild
     - TEST_REPETITION_MODE: "up_until_maximum_repetitions"
     - MAXIMUM_TEST_REPETITIONS: 2
     - RELAUNCH_TESTS_FOR_EACH_REPETITION: "yes"
@@ -943,11 +880,8 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: ""
-    - XCODE_SIMULATOR_DEVICE: iPhone 12
-    - XCODE_SIMULATOR_OS_VERSION: "15.0"
-    - XCODE_SIMULATOR_PLATFORM: iOS Simulator
-    - SINGLE_BUILD: "true"
-    - XCODE_OUTPUT_TOOL: xcodebuild
+    - DESTINATION: "platform=iOS Simulator,name=iPhone 12,OS=15.0"
+    - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: "none"
@@ -958,15 +892,11 @@ workflows:
   _set_number_of_initial_test_failures_in_test_app:
     envs:
     - TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES: $TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES
-    - XCODE_SIMULATOR_DEVICE: $XCODE_SIMULATOR_DEVICE
-    - XCODE_SIMULATOR_OS_VERSION: $XCODE_SIMULATOR_OS_VERSION
-    - XCODE_SIMULATOR_PLATFORM: $XCODE_SIMULATOR_PLATFORM
+    - DESTINATION: $DESTINATION
     steps:
     - git::https://github.com/bitrise-steplib/steps-lookup-xcode-simulator:
         inputs:
-        - simulator_device: $XCODE_SIMULATOR_DEVICE
-        - simulator_os_version: $XCODE_SIMULATOR_OS_VERSION
-        - simulator_platform: $XCODE_SIMULATOR_PLATFORM
+        - destination: $DESTINATION
     - script:
         title: Set number of flaky test number of initial failures on the Simulator for the app io.bitrise.BullsEye
         inputs:
@@ -990,15 +920,11 @@ workflows:
   _set_number_of_initial_test_successes_in_test_app:
     envs:
     - TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES: $TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES
-    - XCODE_SIMULATOR_DEVICE: $XCODE_SIMULATOR_DEVICE
-    - XCODE_SIMULATOR_OS_VERSION: $XCODE_SIMULATOR_OS_VERSION
-    - XCODE_SIMULATOR_PLATFORM: $XCODE_SIMULATOR_PLATFORM
+    - DESTINATION: $DESTINATION
     steps:
     - git::https://github.com/bitrise-steplib/steps-lookup-xcode-simulator:
         inputs:
-        - simulator_device: $XCODE_SIMULATOR_DEVICE
-        - simulator_os_version: $XCODE_SIMULATOR_OS_VERSION
-        - simulator_platform: $XCODE_SIMULATOR_PLATFORM
+        - destination: $DESTINATION
     - script:
         title: Set number of flaky test number of initial successes on the Simulator for the app io.bitrise.BullsEye
         inputs:
@@ -1075,15 +1001,11 @@ workflows:
         - test_repetition_mode: $TEST_REPETITION_MODE
         - maximum_test_repetitions: $MAXIMUM_TEST_REPETITIONS
         - relaunch_tests_for_each_repetition: $RELAUNCH_TESTS_FOR_EACH_REPETITION
-        - simulator_device: $XCODE_SIMULATOR_DEVICE
-        - simulator_os_version: $XCODE_SIMULATOR_OS_VERSION
-        - simulator_platform: $XCODE_SIMULATOR_PLATFORM
-        - single_build: $SINGLE_BUILD
-        - output_tool: $XCODE_OUTPUT_TOOL
-        - is_clean_build: "yes"
-        - xcodebuild_test_options: -verbose
-        - export_uitest_artifacts: "true"
-        - verbose: "yes"
+        - destination: $DESTINATION
+        - log_formatter: $LOG_FORMATTER
+        - perform_clean_action: "yes"
+        - xcodebuild_options: -verbose
+        - verbose_log: "yes"
         - should_retry_test_on_fail: $RETRY_ON_FAILURE
         - cache_level: $CACHE_LEVEL
         - collect_simulator_diagnostics: $COLLECT_SIM_DIAGNOSTICS
@@ -1161,18 +1083,8 @@ workflows:
             BITRISE_XCODEBUILD_TEST_LOG_PATH
             BITRISE_XCRESULT_ZIP_PATH
         - deployed_dirs:
-    - git::https://github.com/bitrise-steplib/bitrise-step-check-step-outputs.git@main:
-        run_if: '{{enveq "SINGLE_BUILD" "false"}}'
-        inputs:
-        - envs:
-        - files:
-        - dirs:
-        - deploy_dir: $BITRISE_DEPLOY_DIR
-        - deployed_files: |-
-            BITRISE_XCODEBUILD_BUILD_LOG_PATH
-        - deployed_dirs:
     - script:
-        title: Check  testing addon support
+        title: Check testing addon support
         is_always_run: true
         inputs:
         - content: |-
