@@ -216,7 +216,7 @@ inputs:
 
 - xcpretty_options: --color --report html --output "${BITRISE_DEPLOY_DIR}/xcode-test-results-${BITRISE_SCHEME}.html"
   opts:
-    category: xcodebuild configuration
+    category: xcodebuild log formatting
     title: Additional options for the xcpretty command
     summary: Additional options to be added to the executed xcpretty command.
 
