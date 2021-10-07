@@ -61,13 +61,13 @@ func (_m *Manager) GetSimulator(osNameAndVersion string, deviceName string) (sim
 	return r0, r1
 }
 
-// LaunchSimulator provides a mock function with given fields: simulatorID, xcodebuildMajorVersion
-func (_m *Manager) LaunchSimulator(simulatorID string, xcodebuildMajorVersion int) error {
-	ret := _m.Called(simulatorID, xcodebuildMajorVersion)
+// LaunchSimulator provides a mock function with given fields: simulatorID
+func (_m *Manager) LaunchSimulator(simulatorID string) error {
+	ret := _m.Called(simulatorID)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, int) error); ok {
-		r0 = rf(simulatorID, xcodebuildMajorVersion)
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(simulatorID)
 	} else {
 		r0 = ret.Error(0)
 	}
