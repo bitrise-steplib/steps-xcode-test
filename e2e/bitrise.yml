@@ -894,7 +894,7 @@ workflows:
     - TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES: $TEST_APP_NUMBER_OF_INITIAL_TEST_FAILURES
     - DESTINATION: $DESTINATION
     steps:
-    - git::https://github.com/bitrise-steplib/steps-lookup-xcode-simulator:
+    - git::https://github.com/bitrise-steplib/steps-lookup-xcode-simulator@MOB-199-migrate-duplicated-logic:
         inputs:
         - destination: $DESTINATION
     - script:
@@ -922,7 +922,7 @@ workflows:
     - TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES: $TEST_APP_NUMBER_OF_INITIAL_TEST_SUCCESSES
     - DESTINATION: $DESTINATION
     steps:
-    - git::https://github.com/bitrise-steplib/steps-lookup-xcode-simulator:
+    - git::https://github.com/bitrise-steplib/steps-lookup-xcode-simulator@MOB-199-migrate-duplicated-logic:
         inputs:
         - destination: $DESTINATION
     - script:
