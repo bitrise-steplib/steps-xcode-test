@@ -23,7 +23,7 @@ type Simulator sim.InfoModel
 type Manager interface {
 	GetLatestSimulatorAndVersion(osName, deviceName string) (Simulator, string, error)
 	GetSimulator(osNameAndVersion, deviceName string) (Simulator, error)
-	LaunchSimulator(simulatorID string, xcodebuildMajorVersion int) error
+	LaunchSimulator(simulatorID string) error
 
 	ResetLaunchServices() error
 	SimulatorBoot(id string) error
@@ -51,8 +51,8 @@ func (m manager) GetSimulator(osNameAndVersion, deviceName string) (Simulator, e
 	return Simulator(info), err
 }
 
-func (m manager) LaunchSimulator(simulatorID string, xcodebuildMajorVersion int) error {
-	return sim.BootSimulator(simulatorID, xcodebuildMajorVersion)
+func (m manager) LaunchSimulator(simulatorID string) error {
+	return sim.BootSimulator(simulatorID)
 }
 
 // Reset launch services database to avoid Big Sur's sporadic failure to find the Simulator App
