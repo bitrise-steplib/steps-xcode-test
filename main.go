@@ -10,12 +10,12 @@ import (
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
+	"github.com/bitrise-io/go-xcode/xcconfig"
 	"github.com/bitrise-steplib/steps-xcode-test/cache"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/simulator"
 	"github.com/bitrise-steplib/steps-xcode-test/step"
 	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
-	"github.com/bitrise-steplib/steps-xcode-test/xcconfig"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
 	"github.com/bitrise-steplib/steps-xcode-test/xcpretty"
 )

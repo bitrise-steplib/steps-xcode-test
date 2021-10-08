@@ -13,8 +13,8 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/retry"
+	"github.com/bitrise-io/go-xcode/destination"
 	"github.com/bitrise-steplib/steps-xcode-test/cache"
-	"github.com/bitrise-steplib/steps-xcode-test/destination"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/simulator"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
@@ -208,7 +208,7 @@ type Result struct {
 func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 	enableSimulatorVerboseLog := cfg.CollectSimulatorDiagnostics != never
 	launchSimulator := !cfg.IsSimulatorBooted && !cfg.HeadlessMode
-	if err := s.prepareSimulator(enableSimulatorVerboseLog, cfg.SimulatorID, launchSimulator, cfg.XcodeMajorVersion); err != nil {
+	if err := s.prepareSimulator(enableSimulatorVerboseLog, cfg.SimulatorID, launchSimulator); err != nil {
 		return Result{}, err
 	}
 
@@ -363,7 +363,7 @@ func (s XcodeTestRunner) getSimulatorForDestination(destinationSpecifier string)
 	return sim, nil
 }
 
-func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simulatorID string, launchSimulator bool, xcodeMajorVersions int) error {
+func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simulatorID string, launchSimulator bool) error {
 	err := s.simulatorManager.ResetLaunchServices()
 	if err != nil {
 		s.logger.Warnf("Failed to apply simulator boot workaround, error: %s", err)
@@ -386,7 +386,7 @@ func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simula
 	if launchSimulator {
 		s.logger.Infof("Booting simulator (%s)...", simulatorID)
 
-		if err := s.simulatorManager.LaunchSimulator(simulatorID, xcodeMajorVersions); err != nil {
+		if err := s.simulatorManager.LaunchSimulator(simulatorID); err != nil {
 			return fmt.Errorf("failed to boot simulator, error: %s", err)
 		}
 

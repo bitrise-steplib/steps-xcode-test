@@ -7,7 +7,7 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-xcode/models"
 	"github.com/bitrise-io/go-xcode/utility"
-	"github.com/bitrise-steplib/steps-xcode-test/xcconfig"
+	"github.com/bitrise-io/go-xcode/xcconfig"
 )
 
 // Output tools ...
