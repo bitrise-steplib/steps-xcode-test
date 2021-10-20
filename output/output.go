@@ -2,7 +2,6 @@ package output
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/bitrise-io/bitrise/configs"
@@ -60,7 +59,7 @@ func (e exporter) ExportXCResultBundle(deployDir, xcResultPath, scheme string) {
 	}
 
 	// export xcresult for the testing addon
-	if addonResultPath := os.Getenv(configs.BitrisePerStepTestResultDirEnvKey); len(addonResultPath) > 0 {
+	if addonResultPath := e.envRepository.Get(configs.BitrisePerStepTestResultDirEnvKey); len(addonResultPath) > 0 {
 		e.logger.Println()
 		e.logger.Infof("Exporting test results")
 
