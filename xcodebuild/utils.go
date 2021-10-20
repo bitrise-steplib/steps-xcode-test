@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"syscall"
 	"time"
@@ -322,11 +321,6 @@ func (b *xcodebuild) handleTestRunError(prevRunParams TestRunParams, prevRunResu
 	}
 
 	return prevRunResult.xcodebuildLog, prevRunResult.exitCode, prevRunResult.err
-}
-
-func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
-	r := regexp.MustCompile("(?i)" + searchStr)
-	return r.MatchString(outputToSearchIn)
 }
 
 // CreateBufferedWriter ...
