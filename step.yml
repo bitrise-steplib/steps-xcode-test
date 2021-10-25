@@ -2,19 +2,19 @@ title: Xcode Test for iOS
 summary: |-
   Runs your project's pre-defined Xcode tests on every build.
 description: |-
-  This Steps runs all those Xcode tests that are included in your project. 
-  The Step will work out of the box if your project has test targets and your Workflow has the **Deploy to Bitrise.io** Step which exports the test results and (code coverage files if needed) to the Test Reports page. 
+  This Steps runs all those Xcode tests that are included in your project.
+  The Step will work out of the box if your project has test targets and your Workflow has the **Deploy to Bitrise.io** Step which exports the test results and (code coverage files if needed) to the Test Reports page.
   This Step does not need any code signing files since the Step deploys only the test results to [bitrise.io](https://www.bitrise.io).
 
   ### Configuring the Step
-  If you click into the Step, there are some required input fields whose input must be set in accordance with the Xcode configuration of the project.  
+  If you click into the Step, there are some required input fields whose input must be set in accordance with the Xcode configuration of the project.
   The **Scheme** input field must be marked as Shared in Xcode.
 
   ### Troubleshooting
   If the **Deploy to Bitrise.io** Step is missing from your Workflow, then the **Xcode Test for iOS** Step will not be able to export the test results on the Test Reports page and you won't be able to view them either.
-  The xcpretty output tool does not support parallel tests. 
+  The xcpretty output tool does not support parallel tests.
   If parallel tests are enabled in your project, go to the Step's Debug section and set the **Log formatter** input's value to xcodebuild.
-  If the Xcode test fails with the error `Unable to find a destination matching the provided destination specifier`, then check our [system reports](https://github.com/bitrise-io/bitrise.io/tree/master/system_reports) to see if the requested simulator is on the stack or not. 
+  If the Xcode test fails with the error `Unable to find a destination matching the provided destination specifier`, then check our [system reports](https://github.com/bitrise-io/bitrise.io/tree/master/system_reports) to see if the requested simulator is on the stack or not.
   If it is not, then pick a simulator that is on the stack.
 
   ### Useful links
@@ -28,7 +28,7 @@ website: https://github.com/bitrise-steplib/steps-xcode-test
 source_code_url: https://github.com/bitrise-steplib/steps-xcode-test
 support_url: https://github.com/bitrise-steplib/steps-xcode-test/issues
 host_os_tags:
-- "osx-10.10"
+- osx-10.10
 project_type_tags:
 - ios
 - cordova
@@ -69,7 +69,7 @@ inputs:
       The input value sets xcodebuild's `-scheme` option.
     is_required: true
 
-- destination: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+- destination: platform=iOS Simulator,name=iPhone 8 Plus,OS=latest
   opts:
     title: Device destination specifier
     summary: Destination specifier describes the device to use as a destination.
@@ -92,7 +92,7 @@ inputs:
 
 # Test Repetition
 
-- test_repetition_mode: "none"
+- test_repetition_mode: none
   opts:
     category: Test Repetition
     title: Test Repetition Mode (Available in Xcode 13+)
@@ -108,10 +108,10 @@ inputs:
 
       The input value together with Maximum Test Repetitions (`maximum_test_repetitions`) input sets xcodebuild's `-run-tests-until-failure` / `-retry-tests-on-failure` or `-test-iterations` option.
     value_options:
-    - "none"
-    - "until_failure"
-    - "retry_on_failure"
-    - "up_until_maximum_repetitions"
+    - none
+    - until_failure
+    - retry_on_failure
+    - up_until_maximum_repetitions
 
 - maximum_test_repetitions: 3
   opts:
@@ -159,7 +159,7 @@ inputs:
 
 # xcodebuild configuration
 
-- xcconfig_content: "COMPILER_INDEX_STORE_ENABLE = NO"
+- xcconfig_content: COMPILER_INDEX_STORE_ENABLE = NO
   opts:
     category: xcodebuild configuration
     title: Build settings (xcconfig)
@@ -196,7 +196,7 @@ inputs:
 
 # xcodebuild log formatting
 
-- log_formatter: "xcpretty"
+- log_formatter: xcpretty
   opts:
     category: xcodebuild log formatting
     title: Log formatter
@@ -222,7 +222,7 @@ inputs:
 
 # Caching
 
-- cache_level: "swift_packages"
+- cache_level: swift_packages
   opts:
     category: Caching
     title: Enable collecting cache content
@@ -234,8 +234,8 @@ inputs:
       - `none`: Disable collecting cache content.
       - `swift_packages`: Collect Swift PM packages added to the Xcode project.
     value_options:
-    - "none"
-    - "swift_packages"
+    - none
+    - swift_packages
 
 # Debugging
 
@@ -248,15 +248,15 @@ inputs:
     - "yes"
     - "no"
 
-- collect_simulator_diagnostics: "never"
+- collect_simulator_diagnostics: never
   opts:
     category: Debugging
     title: Collect Simulator diagnostics
     summary: If this input is set, the simulator verbose logging will be enabled and the simulator diagnostics log will be exported.
     value_options:
-    - "always"
-    - "on_failure"
-    - "never"
+    - always
+    - on_failure
+    - never
 
 - headless_mode: "yes"
   opts:
@@ -301,7 +301,7 @@ outputs:
   opts:
     title: xcodebuild build command log file path
     description: |-
-      If `single_build` is set to false, the step runs `xcodebuild build` before the test,  
+      If `single_build` is set to false, the step runs `xcodebuild build` before the test,
       and exports the raw xcodebuild log.
 
 - BITRISE_XCODEBUILD_TEST_LOG_PATH:
