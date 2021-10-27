@@ -9,11 +9,11 @@ workflows:
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
     - TEST_PLAN: ""
-    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - DESTINATION: platform=iOS Simulator,name=iPhone 8 Plus,OS=latest
     - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
-    - CACHE_LEVEL: "none"
+    - CACHE_LEVEL: none
     after_run:
     - _run
     - _check_outputs
@@ -26,11 +26,11 @@ workflows:
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
     - TEST_PLAN: ""
-    - DESTINATION: "platform=iOS Simulator,name=iPhone 8,OS=latest"
+    - DESTINATION: platform=iOS Simulator,name=iPhone 8,OS=latest
     - LOG_FORMATTER: xcpretty
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
-    - CACHE_LEVEL: "none"
+    - CACHE_LEVEL: none
     after_run:
     - _run
     - _check_outputs
@@ -58,11 +58,11 @@ workflows:
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
     - TEST_PLAN: ""
-    - DESTINATION: "platform=iOS Simulator,name=iPhone 8,OS=latest"
+    - DESTINATION: platform=iOS Simulator,name=iPhone 8,OS=latest
     - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "yes"
     - EXPECT_TEST_FAILURE: "true"
-    - CACHE_LEVEL: "none"
+    - CACHE_LEVEL: none
     after_run:
     - _run
     - _check_outputs
@@ -97,7 +97,8 @@ workflows:
             echo "Destination set based on Xcode version: $destination"
             envman add --key DESTINATION --value "$destination"
     - bitrise-run:
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_11" "true"}}'
+        run_if: |-
+          {{ enveq "XCODE_MAJOR_VERSION_AT_LEAST_11" "true" }}
         inputs:
         - workflow_id: utility_test_parallel
         - bitrise_config_path: ./e2e/bitrise.yml
@@ -112,7 +113,7 @@ workflows:
     - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
-    - CACHE_LEVEL: "swift_packages"
+    - CACHE_LEVEL: swift_packages
     after_run:
     - _run
     - _check_outputs
@@ -133,7 +134,8 @@ workflows:
             fi
             envman add --key XCODE_MAJOR_VERSION_AT_LEAST_11 --value "true"
     - bitrise-run:
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_11" "true"}}'
+        run_if: |-
+          {{ enveq "XCODE_MAJOR_VERSION_AT_LEAST_11" "true" }}
         inputs:
         - workflow_id: utility_test_test_plan
         - bitrise_config_path: ./e2e/bitrise.yml
@@ -144,12 +146,12 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: "UnitTests"
-    - DESTINATION: "platform=iOS Simulator,name=iPhone 12,OS=latest"
+    - TEST_PLAN: UnitTests
+    - DESTINATION: platform=iOS Simulator,name=iPhone 12,OS=latest
     - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
-    - CACHE_LEVEL: "swift_packages"
+    - CACHE_LEVEL: swift_packages
     after_run:
     - _run
     - _check_outputs
@@ -171,7 +173,8 @@ workflows:
             envman add --key XCODE_MAJOR_VERSION_AT_LEAST_13 --value "true"
     - script:
         title: Start a failing workflow, wrapped in a script.
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true"}}'
+        run_if: |-
+          {{ enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true" }}
         inputs:
         - content: |-
             #!/bin/env bash
@@ -188,10 +191,10 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - DESTINATION: platform=iOS Simulator,name=iPhone 8 Plus,OS=latest
     - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "yes"
-    - CACHE_LEVEL: "swift_packages"
+    - CACHE_LEVEL: swift_packages
     after_run:
     - _run
 
@@ -211,7 +214,8 @@ workflows:
             envman add --key XCODE_MAJOR_VERSION_AT_MOST_12 --value "true"
     - script:
         title: Start a failing workflow, wrapped in a script.
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_MOST_12" "true"}}'
+        run_if: |-
+          {{ enveq "XCODE_MAJOR_VERSION_AT_MOST_12" "true" }}
         inputs:
         - content: |-
             #!/bin/env bash
@@ -228,11 +232,11 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - DESTINATION: platform=iOS Simulator,name=iPhone 8 Plus,OS=latest
     - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "no"
-    - TEST_REPETITION_MODE: "retry_on_failure"
-    - CACHE_LEVEL: "swift_packages"
+    - TEST_REPETITION_MODE: retry_on_failure
+    - CACHE_LEVEL: swift_packages
     after_run:
     - _run
 
@@ -252,7 +256,8 @@ workflows:
             envman add --key XCODE_MAJOR_VERSION_AT_LEAST_13 --value "true"
     - script:
         title: Start a failing workflow, wrapped in a script.
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true"}}'
+        run_if: |-
+          {{ enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true" }}
         inputs:
         - content: |-
             #!/bin/env bash
@@ -269,12 +274,12 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - DESTINATION: platform=iOS Simulator,name=iPhone 8 Plus,OS=latest
     - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "no"
-    - TEST_REPETITION_MODE: "none"
+    - TEST_REPETITION_MODE: none
     - RELAUNCH_TESTS_FOR_EACH_REPETITION: "yes"
-    - CACHE_LEVEL: "swift_packages"
+    - CACHE_LEVEL: swift_packages
     after_run:
     - _run
 
@@ -296,7 +301,8 @@ workflows:
             fi
             envman add --key XCODE_MAJOR_VERSION_BETWEEN_11_AND_12 --value "true"
     - bitrise-run:
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_BETWEEN_11_AND_12" "true"}}'
+        run_if: |-
+          {{ enveq "XCODE_MAJOR_VERSION_BETWEEN_11_AND_12" "true" }}
         inputs:
         - workflow_id: utility_test_should_retry_test_on_fail_succeeds
         - bitrise_config_path: ./e2e/bitrise.yml
@@ -308,12 +314,12 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: "EventuallySucceedingTests"
-    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - TEST_PLAN: EventuallySucceedingTests
+    - DESTINATION: platform=iOS Simulator,name=iPhone 8 Plus,OS=latest
     - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "yes"
     - EXPECT_TEST_FAILURE: "false"
-    - CACHE_LEVEL: "swift_packages"
+    - CACHE_LEVEL: swift_packages
     after_run:
     - _set_number_of_initial_test_failures_in_test_app
     - _run
@@ -338,7 +344,8 @@ workflows:
             envman add --key XCODE_MAJOR_VERSION_BETWEEN_11_AND_12 --value "true"
     - script:
         title: Start a failing workflow, wrapped in a script.
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_BETWEEN_11_AND_12" "true"}}'
+        run_if: |-
+          {{ enveq "XCODE_MAJOR_VERSION_BETWEEN_11_AND_12" "true" }}
         inputs:
         - content: |-
             #!/bin/env bash
@@ -357,11 +364,11 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: "EventuallySucceedingTests"
-    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - TEST_PLAN: EventuallySucceedingTests
+    - DESTINATION: platform=iOS Simulator,name=iPhone 8 Plus,OS=latest
     - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "yes"
-    - CACHE_LEVEL: "swift_packages"
+    - CACHE_LEVEL: swift_packages
     after_run:
     - _set_number_of_initial_test_failures_in_test_app
     - _run
@@ -386,7 +393,8 @@ workflows:
             envman add --key XCODE_MAJOR_VERSION_BETWEEN_11_AND_12 --value "true"
     - script:
         title: Start a failing workflow, wrapped in a script.
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_BETWEEN_11_AND_12" "true"}}'
+        run_if: |-
+          {{ enveq "XCODE_MAJOR_VERSION_BETWEEN_11_AND_12" "true" }}
         inputs:
         - content: |-
             #!/bin/env bash
@@ -405,11 +413,11 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: "EventuallySucceedingTests"
-    - DESTINATION: "platform=iOS Simulator,name=iPhone 12,OS=latest"
+    - TEST_PLAN: EventuallySucceedingTests
+    - DESTINATION: platform=iOS Simulator,name=iPhone 12,OS=latest
     - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "no"
-    - CACHE_LEVEL: "swift_packages"
+    - CACHE_LEVEL: swift_packages
     after_run:
     - _set_number_of_initial_test_failures_in_test_app
     - _run
@@ -430,7 +438,8 @@ workflows:
             fi
             envman add --key XCODE_MAJOR_VERSION_AT_LEAST_13 --value "true"
     - bitrise-run:
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true"}}'
+        run_if: |-
+          {{ enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true" }}
         inputs:
         - workflow_id: utility_test_test_repetition_mode_retry_on_failure_2_iterations_succeeds
         - bitrise_config_path: ./e2e/bitrise.yml
@@ -442,14 +451,14 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: "EventuallySucceedingTests"
-    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - TEST_PLAN: EventuallySucceedingTests
+    - DESTINATION: platform=iOS Simulator,name=iPhone 8 Plus,OS=latest
     - LOG_FORMATTER: xcodebuild
-    - TEST_REPETITION_MODE: "retry_on_failure"
+    - TEST_REPETITION_MODE: retry_on_failure
     - MAXIMUM_TEST_REPETITIONS: 2
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
-    - CACHE_LEVEL: "swift_packages"
+    - CACHE_LEVEL: swift_packages
     after_run:
     - _set_number_of_initial_test_failures_in_test_app
     - _run
@@ -471,7 +480,8 @@ workflows:
             envman add --key XCODE_MAJOR_VERSION_AT_LEAST_13 --value "true"
     - script:
         title: Start a failing workflow, wrapped in a script.
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true"}}'
+        run_if: |-
+          {{ enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true" }}
         inputs:
         - content: |-
             #!/bin/env bash
@@ -489,14 +499,14 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: "EventuallySucceedingTests"
-    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - TEST_PLAN: EventuallySucceedingTests
+    - DESTINATION: platform=iOS Simulator,name=iPhone 8 Plus,OS=latest
     - LOG_FORMATTER: xcodebuild
-    - TEST_REPETITION_MODE: "retry_on_failure"
+    - TEST_REPETITION_MODE: retry_on_failure
     - MAXIMUM_TEST_REPETITIONS: 2
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "true"
-    - CACHE_LEVEL: "swift_packages"
+    - CACHE_LEVEL: swift_packages
     after_run:
     - _set_number_of_initial_test_failures_in_test_app
     - _run
@@ -517,7 +527,8 @@ workflows:
             fi
             envman add --key XCODE_MAJOR_VERSION_AT_LEAST_13 --value "true"
     - bitrise-run:
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true"}}'
+        run_if: |-
+          {{ enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true" }}
         inputs:
         - workflow_id: utility_test_test_repetition_mode_retry_on_failure_3_iterations_succeeds
         - bitrise_config_path: ./e2e/bitrise.yml
@@ -529,14 +540,14 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: "EventuallySucceedingTests"
-    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - TEST_PLAN: EventuallySucceedingTests
+    - DESTINATION: platform=iOS Simulator,name=iPhone 8 Plus,OS=latest
     - LOG_FORMATTER: xcodebuild
-    - TEST_REPETITION_MODE: "retry_on_failure"
+    - TEST_REPETITION_MODE: retry_on_failure
     - MAXIMUM_TEST_REPETITIONS: 3
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
-    - CACHE_LEVEL: "swift_packages"
+    - CACHE_LEVEL: swift_packages
     after_run:
     - _set_number_of_initial_test_failures_in_test_app
     - _run
@@ -557,7 +568,8 @@ workflows:
             fi
             envman add --key XCODE_MAJOR_VERSION_AT_LEAST_13 --value "true"
     - bitrise-run:
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true"}}'
+        run_if: |-
+          {{ enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true" }}
         inputs:
         - workflow_id: utility_test_test_repetition_mode_until_failure_2_iterations_succeeds
         - bitrise_config_path: ./e2e/bitrise.yml
@@ -569,14 +581,14 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: "EventuallyFailingTests"
-    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - TEST_PLAN: EventuallyFailingTests
+    - DESTINATION: platform=iOS Simulator,name=iPhone 8 Plus,OS=latest
     - LOG_FORMATTER: xcodebuild
-    - TEST_REPETITION_MODE: "until_failure"
+    - TEST_REPETITION_MODE: until_failure
     - MAXIMUM_TEST_REPETITIONS: 2
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
-    - CACHE_LEVEL: "swift_packages"
+    - CACHE_LEVEL: swift_packages
     after_run:
     - _set_number_of_initial_test_successes_in_test_app
     - _run
@@ -598,7 +610,8 @@ workflows:
             envman add --key XCODE_MAJOR_VERSION_AT_LEAST_13 --value "true"
     - script:
         title: Start a failing workflow, wrapped in a script.
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true"}}'
+        run_if: |-
+          {{ enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true" }}
         inputs:
         - content: |-
             #!/bin/env bash
@@ -616,14 +629,14 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: "EventuallyFailingTests"
-    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - TEST_PLAN: EventuallyFailingTests
+    - DESTINATION: platform=iOS Simulator,name=iPhone 8 Plus,OS=latest
     - LOG_FORMATTER: xcodebuild
-    - TEST_REPETITION_MODE: "until_failure"
+    - TEST_REPETITION_MODE: until_failure
     - MAXIMUM_TEST_REPETITIONS: 2
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "true"
-    - CACHE_LEVEL: "swift_packages"
+    - CACHE_LEVEL: swift_packages
     after_run:
     - _set_number_of_initial_test_successes_in_test_app
     - _run
@@ -645,7 +658,8 @@ workflows:
             envman add --key XCODE_MAJOR_VERSION_AT_LEAST_13 --value "true"
     - script:
         title: Start a failing workflow, wrapped in a script.
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true"}}'
+        run_if: |-
+          {{ enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true" }}
         inputs:
         - content: |-
             #!/bin/env bash
@@ -663,14 +677,14 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: "EventuallyFailingTests"
-    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - TEST_PLAN: EventuallyFailingTests
+    - DESTINATION: platform=iOS Simulator,name=iPhone 8 Plus,OS=latest
     - LOG_FORMATTER: xcodebuild
-    - TEST_REPETITION_MODE: "until_failure"
+    - TEST_REPETITION_MODE: until_failure
     - MAXIMUM_TEST_REPETITIONS: 3
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
-    - CACHE_LEVEL: "swift_packages"
+    - CACHE_LEVEL: swift_packages
     after_run:
     - _set_number_of_initial_test_successes_in_test_app
     - _run
@@ -691,7 +705,8 @@ workflows:
             fi
             envman add --key XCODE_MAJOR_VERSION_AT_LEAST_13 --value "true"
     - bitrise-run:
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true"}}'
+        run_if: |-
+          {{ enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true" }}
         inputs:
         - workflow_id: utility_test_test_repetition_mode_up_until_maximum_repetitions_2_iterations_succeeds
         - bitrise_config_path: ./e2e/bitrise.yml
@@ -703,14 +718,14 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: "EventuallyFailingTests"
-    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - TEST_PLAN: EventuallyFailingTests
+    - DESTINATION: platform=iOS Simulator,name=iPhone 8 Plus,OS=latest
     - LOG_FORMATTER: xcodebuild
-    - TEST_REPETITION_MODE: "up_until_maximum_repetitions"
+    - TEST_REPETITION_MODE: up_until_maximum_repetitions
     - MAXIMUM_TEST_REPETITIONS: 2
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
-    - CACHE_LEVEL: "swift_packages"
+    - CACHE_LEVEL: swift_packages
     after_run:
     - _set_number_of_initial_test_successes_in_test_app
     - _run
@@ -732,7 +747,8 @@ workflows:
             envman add --key XCODE_MAJOR_VERSION_AT_LEAST_13 --value "true"
     - script:
         title: Start a failing workflow, wrapped in a script.
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true"}}'
+        run_if: |-
+          {{ enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true" }}
         inputs:
         - content: |-
             #!/bin/env bash
@@ -750,14 +766,14 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: "EventuallyFailingTests"
-    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - TEST_PLAN: EventuallyFailingTests
+    - DESTINATION: platform=iOS Simulator,name=iPhone 8 Plus,OS=latest
     - LOG_FORMATTER: xcodebuild
-    - TEST_REPETITION_MODE: "up_until_maximum_repetitions"
+    - TEST_REPETITION_MODE: up_until_maximum_repetitions
     - MAXIMUM_TEST_REPETITIONS: 2
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "true"
-    - CACHE_LEVEL: "swift_packages"
+    - CACHE_LEVEL: swift_packages
     after_run:
     - _set_number_of_initial_test_successes_in_test_app
     - _run
@@ -779,7 +795,8 @@ workflows:
             envman add --key XCODE_MAJOR_VERSION_AT_LEAST_13 --value "true"
     - script:
         title: Start a failing workflow, wrapped in a script.
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true"}}'
+        run_if: |-
+          {{ enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true" }}
         inputs:
         - content: |-
             #!/bin/env bash
@@ -797,14 +814,14 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: "EventuallyFailingTests"
-    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - TEST_PLAN: EventuallyFailingTests
+    - DESTINATION: platform=iOS Simulator,name=iPhone 8 Plus,OS=latest
     - LOG_FORMATTER: xcodebuild
-    - TEST_REPETITION_MODE: "up_until_maximum_repetitions"
+    - TEST_REPETITION_MODE: up_until_maximum_repetitions
     - MAXIMUM_TEST_REPETITIONS: 3
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
-    - CACHE_LEVEL: "swift_packages"
+    - CACHE_LEVEL: swift_packages
     after_run:
     - _set_number_of_initial_test_successes_in_test_app
     - _run
@@ -825,7 +842,8 @@ workflows:
             fi
             envman add --key XCODE_MAJOR_VERSION_AT_LEAST_13 --value "true"
     - bitrise-run:
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true"}}'
+        run_if: |-
+          {{ enveq "XCODE_MAJOR_VERSION_AT_LEAST_13" "true" }}
         inputs:
         - workflow_id: utility_test_relaunch_tests_for_each_repetition_succeeds
         - bitrise_config_path: ./e2e/bitrise.yml
@@ -837,15 +855,15 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: "EventuallyFailingInMemoryTests"
-    - DESTINATION: "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest"
+    - TEST_PLAN: EventuallyFailingInMemoryTests
+    - DESTINATION: platform=iOS Simulator,name=iPhone 8 Plus,OS=latest
     - LOG_FORMATTER: xcodebuild
-    - TEST_REPETITION_MODE: "up_until_maximum_repetitions"
+    - TEST_REPETITION_MODE: up_until_maximum_repetitions
     - MAXIMUM_TEST_REPETITIONS: 2
     - RELAUNCH_TESTS_FOR_EACH_REPETITION: "yes"
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
-    - CACHE_LEVEL: "swift_packages"
+    - CACHE_LEVEL: swift_packages
     after_run:
     - _set_number_of_initial_test_successes_in_test_app
     - _run
@@ -868,7 +886,8 @@ workflows:
 
             envman add --key XCODE_MAJOR_VERSION_GREATER_THAN_12 --value "true"
     - bitrise-run:
-        run_if: '{{enveq "XCODE_MAJOR_VERSION_GREATER_THAN_12" "true"}}'
+        run_if: |-
+          {{ enveq "XCODE_MAJOR_VERSION_GREATER_THAN_12" "true" }}
         inputs:
         - workflow_id: utility_test_simulator_os_version
         - bitrise_config_path: ./e2e/bitrise.yml
@@ -880,11 +899,11 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: ""
-    - DESTINATION: "platform=iOS Simulator,name=iPhone 12,OS=15.0"
+    - DESTINATION: platform=iOS Simulator,name=iPhone 12,OS=15.0
     - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
-    - CACHE_LEVEL: "none"
+    - CACHE_LEVEL: none
     after_run:
     - _run
     - _check_outputs
