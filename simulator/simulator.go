@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/bitrise-io/go-utils/command"
-	"github.com/bitrise-io/go-utils/env"
 	"github.com/bitrise-io/go-utils/errorutil"
 	"github.com/bitrise-io/go-utils/log"
 	sim "github.com/bitrise-io/go-xcode/simulator"
@@ -34,11 +33,14 @@ type Manager interface {
 }
 
 type manager struct {
+	commandFactory command.Factory
 }
 
 // NewManager ...
-func NewManager() Manager {
-	return manager{}
+func NewManager(commandFactory command.Factory) Manager {
+	return manager{
+		commandFactory: commandFactory,
+	}
 }
 
 func (m manager) GetLatestSimulatorAndVersion(osName, deviceName string) (Simulator, string, error) {
@@ -61,8 +63,7 @@ func (m manager) LaunchSimulator(simulatorID string) error {
 // - https://stackoverflow.com/questions/2182040/the-application-cannot-be-opened-because-its-executable-is-missing/16546673#16546673
 // - https://ss64.com/osx/lsregister.html
 func (m manager) ResetLaunchServices() error {
-	f := command.NewFactory(env.NewRepository())
-	cmd := f.Create("sw_vers", []string{"-productVersion"}, nil)
+	cmd := m.commandFactory.Create("sw_vers", []string{"-productVersion"}, nil)
 
 	macOSVersion, err := cmd.RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
@@ -70,7 +71,7 @@ func (m manager) ResetLaunchServices() error {
 	}
 
 	if strings.HasPrefix(macOSVersion, "11.") { // It's Big Sur
-		cmd := f.Create("xcode-select", []string{"--print-path"}, nil)
+		cmd := m.commandFactory.Create("xcode-select", []string{"--print-path"}, nil)
 		xcodeDevDirPath, err := cmd.RunAndReturnTrimmedCombinedOutput()
 		if err != nil {
 			return err
@@ -79,7 +80,7 @@ func (m manager) ResetLaunchServices() error {
 		simulatorAppPath := filepath.Join(xcodeDevDirPath, "Applications", "Simulator.app")
 
 		cmdString := "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
-		cmd = f.Create(cmdString, []string{"-f", simulatorAppPath}, nil)
+		cmd = m.commandFactory.Create(cmdString, []string{"-f", simulatorAppPath}, nil)
 
 		log.Infof("Applying launch services reset workaround before booting simulator")
 		_, err = cmd.RunAndReturnTrimmedCombinedOutput()
@@ -92,8 +93,7 @@ func (m manager) ResetLaunchServices() error {
 }
 
 func (m manager) SimulatorBoot(id string) error {
-	f := command.NewFactory(env.NewRepository())
-	cmd := f.Create("xcrun", []string{"simctl", "boot", id}, &command.Opts{
+	cmd := m.commandFactory.Create("xcrun", []string{"simctl", "boot", id}, &command.Opts{
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
 	})
@@ -116,8 +116,7 @@ func (m manager) SimulatorBoot(id string) error {
 
 // Simulator needs to be booted to enable verbose log
 func (m manager) SimulatorEnableVerboseLog(id string) error {
-	f := command.NewFactory(env.NewRepository())
-	cmd := f.Create("xcrun", []string{"simctl", "logverbose", id, "enable"}, &command.Opts{
+	cmd := m.commandFactory.Create("xcrun", []string{"simctl", "logverbose", id, "enable"}, &command.Opts{
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
 	})
@@ -145,8 +144,7 @@ func (m manager) SimulatorCollectDiagnostics() (string, error) {
 		return "", fmt.Errorf("failed to collect Simulator diagnostics, could not create temporary directory: %v", err)
 	}
 
-	f := command.NewFactory(env.NewRepository())
-	cmd := f.Create("xcrun", []string{"simctl", "diagnose", "-b", "--no-archive", fmt.Sprintf("--output=%s", diagnosticsOutDir)}, &command.Opts{
+	cmd := m.commandFactory.Create("xcrun", []string{"simctl", "diagnose", "-b", "--no-archive", fmt.Sprintf("--output=%s", diagnosticsOutDir)}, &command.Opts{
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
 		Stdin:  bytes.NewReader([]byte("\n")),
@@ -165,8 +163,7 @@ func (m manager) SimulatorCollectDiagnostics() (string, error) {
 }
 
 func (m manager) SimulatorShutdown(id string) error {
-	f := command.NewFactory(env.NewRepository())
-	cmd := f.Create("xcrun", []string{"simctl", "shutdown", id}, &command.Opts{
+	cmd := m.commandFactory.Create("xcrun", []string{"simctl", "shutdown", id}, &command.Opts{
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
 	})
