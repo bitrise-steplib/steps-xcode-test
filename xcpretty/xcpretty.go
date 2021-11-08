@@ -14,11 +14,14 @@ type Installer interface {
 }
 
 type installer struct {
+	xcpretty xcpretty.Xcpretty
 }
 
 // NewInstaller ...
-func NewInstaller() Installer {
-	return &installer{}
+func NewInstaller(xcpretty xcpretty.Xcpretty) Installer {
+	return &installer{
+		xcpretty: xcpretty,
+	}
 }
 
 // Install installs and gets xcpretty version
@@ -26,7 +29,7 @@ func (i installer) Install() (*version.Version, error) {
 	fmt.Println()
 	log.Infof("Checking if output tool (xcpretty) is installed")
 
-	installed, err := xcpretty.IsInstalled()
+	installed, err := i.xcpretty.IsInstalled()
 	if err != nil {
 		return nil, err
 	} else if !installed {
@@ -34,7 +37,7 @@ func (i installer) Install() (*version.Version, error) {
 		fmt.Println()
 		log.Printf("Installing xcpretty")
 
-		cmdModelSlice, err := xcpretty.Install()
+		cmdModelSlice, err := i.xcpretty.Install()
 		if err != nil {
 			return nil, fmt.Errorf("failed to install xcpretty: %s", err)
 		}
@@ -46,7 +49,7 @@ func (i installer) Install() (*version.Version, error) {
 		}
 	}
 
-	xcprettyVersion, err := xcpretty.Version()
+	xcprettyVersion, err := i.xcpretty.Version()
 	if err != nil {
 		return nil, fmt.Errorf("failed to determine xcpretty version: %s", err)
 	}
