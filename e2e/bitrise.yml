@@ -899,7 +899,7 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: ""
-    - DESTINATION: platform=iOS Simulator,name=iPhone 12,OS=15.0
+    - DESTINATION: platform=iOS Simulator,name=iPhone 12,OS=latest
     - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
