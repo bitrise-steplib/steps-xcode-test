@@ -1,4 +1,4 @@
-# github.com/bitrise-io/bitrise v0.0.0-20210830100501-97b6f7d7905b
+# github.com/bitrise-io/bitrise v0.0.0-20211005113218-472adb338a1a
 ## explicit
 github.com/bitrise-io/bitrise/configs
 # github.com/bitrise-io/go-steputils v0.0.0-20210929162140-866a65a1e14a
@@ -9,7 +9,7 @@ github.com/bitrise-io/go-steputils/ruby
 github.com/bitrise-io/go-steputils/stepconf
 github.com/bitrise-io/go-steputils/stepenv
 github.com/bitrise-io/go-steputils/tools
-# github.com/bitrise-io/go-utils v0.0.0-20211008161027-fa11986847a0
+# github.com/bitrise-io/go-utils v0.0.0-20211110205926-af3caef627ae
 ## explicit
 github.com/bitrise-io/go-utils/colorstring
 github.com/bitrise-io/go-utils/command
@@ -24,24 +24,24 @@ github.com/bitrise-io/go-utils/parseutil
 github.com/bitrise-io/go-utils/pathutil
 github.com/bitrise-io/go-utils/pathutil/mocks
 github.com/bitrise-io/go-utils/pointers
-github.com/bitrise-io/go-utils/pretty
 github.com/bitrise-io/go-utils/progress
 github.com/bitrise-io/go-utils/retry
 github.com/bitrise-io/go-utils/stringutil
 github.com/bitrise-io/go-utils/ziputil
-# github.com/bitrise-io/go-xcode v0.0.0-20211021131230-4e6dee6a01ac
+# github.com/bitrise-io/go-xcode v0.0.0-20211111092701-a5d9d53ef6ca
 ## explicit
 github.com/bitrise-io/go-xcode/destination
 github.com/bitrise-io/go-xcode/models
-github.com/bitrise-io/go-xcode/plistutil
 github.com/bitrise-io/go-xcode/simulator
 github.com/bitrise-io/go-xcode/utility
 github.com/bitrise-io/go-xcode/xcconfig
 github.com/bitrise-io/go-xcode/xcconfig/mocks
 github.com/bitrise-io/go-xcode/xcodebuild
 github.com/bitrise-io/go-xcode/xcodecache
+github.com/bitrise-io/go-xcode/xcodecache/mocks
 github.com/bitrise-io/go-xcode/xcodeproject/serialized
 github.com/bitrise-io/go-xcode/xcpretty
+github.com/bitrise-io/go-xcode/xcpretty/mocks
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/hashicorp/go-cleanhttp v0.5.2
@@ -65,19 +65,20 @@ github.com/stretchr/objx
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/mock
 github.com/stretchr/testify/require
-# golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
+# golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa
+## explicit
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
+# golang.org/x/sys v0.0.0-20211110154304-99a53858aa08
+## explicit
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b
+# golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
+## explicit
 golang.org/x/term
 # golang.org/x/text v0.3.7
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
 # gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 gopkg.in/yaml.v3
-# howett.net/plist v0.0.0-20201203080718-1454fab16a06
-howett.net/plist
