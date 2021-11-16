@@ -6,7 +6,7 @@ import (
 	mockenv "github.com/bitrise-io/go-utils/env/mocks"
 	"github.com/bitrise-io/go-utils/log"
 	mockPathutil "github.com/bitrise-io/go-utils/pathutil/mocks"
-	mockcache "github.com/bitrise-steplib/steps-xcode-test/cache/mocks"
+	mockcache "github.com/bitrise-io/go-xcode/xcodecache/mocks"
 	mockexporter "github.com/bitrise-steplib/steps-xcode-test/output/mocks"
 	"github.com/bitrise-steplib/steps-xcode-test/simulator"
 	mocksimulator "github.com/bitrise-steplib/steps-xcode-test/simulator/mocks"

@@ -1,6 +1,7 @@
 package main
 
 import (
+	goxcpretty "github.com/bitrise-io/go-xcode/xcpretty"
 	"os"
 
 	"github.com/bitrise-io/go-steputils/stepconf"
@@ -11,7 +12,7 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-xcode/xcconfig"
-	"github.com/bitrise-steplib/steps-xcode-test/cache"
+	"github.com/bitrise-io/go-xcode/xcodecache"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/simulator"
 	"github.com/bitrise-steplib/steps-xcode-test/step"
@@ -59,7 +60,7 @@ func run() int {
 func createStep(logger log.Logger) step.XcodeTestRunner {
 	envRepository := env.NewRepository()
 	inputParser := stepconf.NewInputParser(envRepository)
-	xcprettyInstaller := xcpretty.NewInstaller()
+	xcprettyInstaller := xcpretty.NewInstaller(goxcpretty.NewXcpretty())
 	commandFactory := command.NewFactory(envRepository)
 	pathChecker := pathutil.NewPathChecker()
 	pathProvider := pathutil.NewPathProvider()
