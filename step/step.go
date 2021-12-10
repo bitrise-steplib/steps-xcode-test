@@ -412,7 +412,7 @@ func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 	if err != nil {
 		return result, -1, fmt.Errorf("could not create test output temporary directory: %s", err)
 	}
-	xcresultPath := path.Join(tempDir, "Test.xcresult")
+	xcresultPath := path.Join(tempDir, fmt.Sprintf("%s.xcresult", cfg.Scheme))
 
 	var swiftPackagesPath string
 	if cfg.XcodeMajorVersion >= 11 {
