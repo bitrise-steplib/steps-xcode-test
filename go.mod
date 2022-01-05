@@ -6,7 +6,8 @@ require (
 	github.com/bitrise-io/bitrise v0.0.0-20211005113218-472adb338a1a
 	github.com/bitrise-io/go-steputils v0.0.0-20210929162140-866a65a1e14a
 	github.com/bitrise-io/go-utils v0.0.0-20211110205926-af3caef627ae
-	github.com/bitrise-io/go-xcode v0.0.0-20211111092701-a5d9d53ef6ca
+	github.com/bitrise-io/go-xcode v0.0.0-20220105112357-9757160a67eb
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/hashicorp/go-version v1.3.0
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/stretchr/testify v1.7.0

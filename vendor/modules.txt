@@ -28,7 +28,7 @@ github.com/bitrise-io/go-utils/progress
 github.com/bitrise-io/go-utils/retry
 github.com/bitrise-io/go-utils/stringutil
 github.com/bitrise-io/go-utils/ziputil
-# github.com/bitrise-io/go-xcode v0.0.0-20211111092701-a5d9d53ef6ca
+# github.com/bitrise-io/go-xcode v0.0.0-20220105112357-9757160a67eb
 ## explicit
 github.com/bitrise-io/go-xcode/destination
 github.com/bitrise-io/go-xcode/models
@@ -44,6 +44,8 @@ github.com/bitrise-io/go-xcode/xcpretty
 github.com/bitrise-io/go-xcode/xcpretty/mocks
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
+# github.com/dgrijalva/jwt-go v3.2.0+incompatible
+## explicit
 # github.com/hashicorp/go-cleanhttp v0.5.2
 github.com/hashicorp/go-cleanhttp
 # github.com/hashicorp/go-retryablehttp v0.7.0
