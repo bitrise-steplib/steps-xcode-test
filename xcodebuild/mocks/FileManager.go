@@ -41,13 +41,27 @@ func (_m *FileManager) RemoveAll(path string) error {
 	return r0
 }
 
-// Write provides a mock function with given fields: path, value, mode
-func (_m *FileManager) Write(path string, value string, mode fs.FileMode) error {
-	ret := _m.Called(path, value, mode)
+// Write provides a mock function with given fields: path, value, perm
+func (_m *FileManager) Write(path string, value string, perm fs.FileMode) error {
+	ret := _m.Called(path, value, perm)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(string, string, fs.FileMode) error); ok {
-		r0 = rf(path, value, mode)
+		r0 = rf(path, value, perm)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// WriteBytes provides a mock function with given fields: path, value
+func (_m *FileManager) WriteBytes(path string, value []byte) error {
+	ret := _m.Called(path, value)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, []byte) error); ok {
+		r0 = rf(path, value)
 	} else {
 		r0 = ret.Error(0)
 	}
