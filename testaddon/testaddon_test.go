@@ -2,13 +2,15 @@ package testaddon
 
 import (
 	"encoding/json"
-	"github.com/bitrise-io/go-utils/fileutil"
-	"github.com/bitrise-io/go-utils/pathutil"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/bitrise-io/go-utils/v2/fileutil"
+	"github.com/bitrise-io/go-utils/v2/pathutil"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_GivenNormalBundleName_WhenExport_ThenCreatesOutputStructure(t *testing.T) {
@@ -41,10 +43,11 @@ func prepareArtifacts(t *testing.T) (string, string) {
 	tempDir := t.TempDir()
 
 	resultDir := filepath.Join(tempDir, "result")
-	_ = pathutil.EnsureDirExist(resultDir)
 
 	xcresultFile := filepath.Join(resultDir, "test.xcresult")
-	_ = fileutil.NewFileManager().Write(xcresultFile, "test-results", 0777)
+	err := fileutil.NewFileManager().Write(xcresultFile, "test-results", 0777)
+	require.NoError(t, err)
+	require.FileExists(t, xcresultFile)
 
 	outputDir := filepath.Join(tempDir, "output")
 

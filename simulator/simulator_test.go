@@ -2,16 +2,17 @@ package simulator
 
 import (
 	"fmt"
-	mockcommand "github.com/bitrise-io/go-utils/command/mocks"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"os"
 	"path/filepath"
 	"testing"
+
+	mockcommand "github.com/bitrise-steplib/steps-xcode-test/mocks"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 type testingMocks struct {
-	commandFactory *mockcommand.Factory
+	commandFactory *mockcommand.CommandFactory
 }
 
 func Test_GivenSimulator_WhenResetLaunchServices_ThenPerformsAction(t *testing.T) {
@@ -107,7 +108,7 @@ func Test_GivenSimulator_WhenShutdown_ThenShutsItDown(t *testing.T) {
 // Helpers
 
 func createSimulatorAndMocks() (Manager, testingMocks) {
-	commandFactory := new(mockcommand.Factory)
+	commandFactory := new(mockcommand.CommandFactory)
 	manager := NewManager(commandFactory)
 
 	return manager, testingMocks{

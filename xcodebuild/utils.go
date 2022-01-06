@@ -12,10 +12,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/bitrise-io/go-utils/command"
-	"github.com/bitrise-io/go-utils/log"
+	v1log "github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/progress"
-	cache "github.com/bitrise-io/go-xcode/xcodecache"
+	"github.com/bitrise-io/go-utils/v2/command"
+	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
 	"github.com/kballard/go-shellquote"
 )
 
@@ -285,7 +285,7 @@ func (b *xcodebuild) cleanOutputDirAndRerunTest(params TestRunParams) (string, i
 
 func (b *xcodebuild) handleTestRunError(prevRunParams TestRunParams, prevRunResult testRunResult) (string, int, error) {
 	if prevRunParams.RetryOnSwiftPackageResolutionError && prevRunParams.SwiftPackagesPath != "" && isStringFoundInOutput(cache.SwiftPackagesStateInvalid, prevRunResult.xcodebuildLog) {
-		log.RWarnf("xcode-test", "swift-packages-cache-invalid", nil, "swift packages cache is in an invalid state")
+		v1log.RWarnf("xcode-test", "swift-packages-cache-invalid", nil, "swift packages cache is in an invalid state")
 		if err := b.fileManager.RemoveAll(prevRunParams.SwiftPackagesPath); err != nil {
 			b.logger.Errorf("failed to remove Swift package caches, error: %s", err)
 			return prevRunResult.xcodebuildLog, prevRunResult.exitCode, prevRunResult.err
