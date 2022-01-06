@@ -25,7 +25,7 @@ github.com/bitrise-io/go-utils/progress
 github.com/bitrise-io/go-utils/retry
 github.com/bitrise-io/go-utils/stringutil
 github.com/bitrise-io/go-utils/ziputil
-# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.1.0.20220106131812-ab37f75c2add
+# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.2
 ## explicit
 github.com/bitrise-io/go-utils/v2/command
 github.com/bitrise-io/go-utils/v2/env
