@@ -7,8 +7,8 @@ import (
 	"github.com/bitrise-io/bitrise/configs"
 	"github.com/bitrise-io/go-steputils/output"
 	"github.com/bitrise-io/go-utils/command"
-	"github.com/bitrise-io/go-utils/env"
-	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-io/go-utils/v2/env"
+	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/ziputil"
 	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
 )
@@ -54,7 +54,7 @@ func (e exporter) ExportXCResultBundle(deployDir, xcResultPath, scheme string) {
 	}
 
 	xcresultZipPath := filepath.Join(deployDir, filepath.Base(xcResultPath)+".zip")
-	if err := output.ZipAndExportOutput(xcResultPath, xcresultZipPath, "BITRISE_XCRESULT_ZIP_PATH"); err != nil {
+	if err := output.ZipAndExportOutput([]string{xcResultPath}, xcresultZipPath, "BITRISE_XCRESULT_ZIP_PATH"); err != nil {
 		e.logger.Warnf("Failed to export: BITRISE_XCRESULT_ZIP_PATH, error: %s", err)
 	}
 

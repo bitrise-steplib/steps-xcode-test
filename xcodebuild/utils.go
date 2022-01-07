@@ -12,10 +12,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/progress"
-	cache "github.com/bitrise-io/go-xcode/xcodecache"
+	"github.com/bitrise-io/go-utils/v2/command"
+	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
 	"github.com/kballard/go-shellquote"
 )
 

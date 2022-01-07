@@ -3,27 +3,26 @@ package xcodebuild
 import (
 	"errors"
 	"fmt"
-	realcommand "github.com/bitrise-io/go-utils/command"
-	mockcommand "github.com/bitrise-io/go-utils/command/mocks"
-	mockfileutil "github.com/bitrise-io/go-utils/fileutil/mocks"
-	"github.com/bitrise-io/go-utils/log"
-	mockpathutil "github.com/bitrise-io/go-utils/pathutil/mocks"
-	mockwriter "github.com/bitrise-io/go-xcode/xcconfig/mocks"
-	"github.com/stretchr/testify/mock"
 	"io"
 	"strconv"
 	"strings"
 	"testing"
+
+	realcommand "github.com/bitrise-io/go-utils/v2/command"
+	"github.com/bitrise-io/go-utils/v2/log"
+	mockcommand "github.com/bitrise-steplib/steps-xcode-test/mocks"
+	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild/mocks"
+	"github.com/stretchr/testify/mock"
 )
 
 const xcconfigPath = "xcconfigPath"
 
 type testingMocks struct {
 	command        *mockcommand.Command
-	commandFactory *mockcommand.Factory
-	pathChecker    *mockpathutil.PathChecker
-	fileManager    *mockfileutil.FileManager
-	xcconfigWriter *mockwriter.Writer
+	commandFactory *mockcommand.CommandFactory
+	pathChecker    *mocks.PathChecker
+	fileManager    *mocks.FileManager
+	xcconfigWriter *mocks.XcconfigWriter
 }
 
 func Test_GivenXcodebuild_WhenInvoked_ThenUsesCorrectArguments(t *testing.T) {
@@ -229,10 +228,10 @@ func Test_GivenXcprettyFormatter_WhenEnabled_ThenUsesCorrectArguments(t *testing
 
 func createXcodebuildAndMocks(stdoutProvider func() string) (Xcodebuild, testingMocks) {
 	command := new(mockcommand.Command)
-	commandFactory := new(mockcommand.Factory)
-	pathChecker := new(mockpathutil.PathChecker)
-	fileManager := new(mockfileutil.FileManager)
-	xcconfigWriter := new(mockwriter.Writer)
+	commandFactory := new(mockcommand.CommandFactory)
+	pathChecker := new(mocks.PathChecker)
+	fileManager := new(mocks.FileManager)
+	xcconfigWriter := new(mocks.XcconfigWriter)
 
 	command.On("PrintableCommandArgs").Return("Test")
 

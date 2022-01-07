@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/bitrise-io/go-utils/command"
-	"github.com/bitrise-io/go-utils/env"
 	version "github.com/hashicorp/go-version"
 )
 
@@ -24,9 +23,6 @@ type InfoModel struct {
 
 // OsVersionSimulatorInfosMap ...
 type OsVersionSimulatorInfosMap map[string][]InfoModel // Os version - []Info map
-
-// TODO remove
-var temporaryFactory = command.NewFactory(env.NewRepository())
 
 // getSimulatorInfoFromLine ...
 // a simulator info line should look like this:
@@ -103,7 +99,7 @@ func getOsVersionSimulatorInfosMapFromSimctlList(simctlList string) (OsVersionSi
 
 // GetOsVersionSimulatorInfosMap ...
 func GetOsVersionSimulatorInfosMap() (OsVersionSimulatorInfosMap, error) {
-	cmd := temporaryFactory.Create("xcrun", []string{"simctl", "list"}, nil)
+	cmd := command.New("xcrun", "simctl", "list")
 	simctlListOut, err := cmd.RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
 		return OsVersionSimulatorInfosMap{}, err
@@ -134,7 +130,7 @@ func getSimulatorInfoFromSimctlOut(simctlListOut, osNameAndVersion, deviceName s
 
 // GetSimulatorInfo ...
 func GetSimulatorInfo(osNameAndVersion, deviceName string) (InfoModel, error) {
-	cmd := temporaryFactory.Create("xcrun", []string{"simctl", "list"}, nil)
+	cmd := command.New("xcrun", "simctl", "list")
 	simctlListOut, err := cmd.RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
 		return InfoModel{}, err
@@ -199,7 +195,7 @@ func getLatestSimulatorInfoFromSimctlOut(simctlListOut, osName, deviceName strin
 
 // GetLatestSimulatorInfoAndVersion ...
 func GetLatestSimulatorInfoAndVersion(osName, deviceName string) (InfoModel, string, error) {
-	cmd := temporaryFactory.Create("xcrun", []string{"simctl", "list"}, nil)
+	cmd := command.New("xcrun", "simctl", "list")
 	simctlListOut, err := cmd.RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
 		return InfoModel{}, "", err
@@ -280,7 +276,7 @@ func Is64BitArchitecture(simulatorDevice string) (bool, error) {
 }
 
 func getXcodeDeveloperDirPath() (string, error) {
-	cmd := temporaryFactory.Create("xcode-select", []string{"--print-path"}, nil)
+	cmd := command.New("xcode-select", "--print-path")
 	return cmd.RunAndReturnTrimmedCombinedOutput()
 }
 
@@ -293,11 +289,11 @@ func BootSimulator(simulatorID string) error {
 	}
 	simulatorAppFullPath := filepath.Join(xcodeDevDirPth, "Applications", simulatorApp+".app")
 
-	cmd := temporaryFactory.Create("open", []string{simulatorAppFullPath, "--args", "-CurrentDeviceUDID", simulatorID}, nil)
+	openCmd := command.New("open", simulatorAppFullPath, "--args", "-CurrentDeviceUDID", simulatorID)
 
-	log.Printf("$ %s", cmd.PrintableCommandArgs())
+	log.Printf("$ %s", openCmd.PrintableCommandArgs())
 
-	outStr, err := cmd.RunAndReturnTrimmedCombinedOutput()
+	outStr, err := openCmd.RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to start simulators (%s), output: %s, error: %s", simulatorID, outStr, err)
 	}

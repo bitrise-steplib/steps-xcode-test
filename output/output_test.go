@@ -1,15 +1,17 @@
 package output
 
 import (
-	mockenv "github.com/bitrise-io/go-utils/env/mocks"
-	"github.com/bitrise-io/go-utils/fileutil"
-	"github.com/bitrise-io/go-utils/log"
-	"github.com/bitrise-io/go-utils/pathutil"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/bitrise-io/go-utils/v2/fileutil"
+	"github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/pathutil"
+	"github.com/bitrise-steplib/steps-xcode-test/output/mocks"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -19,7 +21,7 @@ const (
 )
 
 type testingMocks struct {
-	envRepository *mockenv.Repository
+	envRepository *mocks.Repository
 }
 
 func Test_GivenSuccessfulTest_WhenExportingTestRunResults_ThenSetsEnvVariableToSuccess(t *testing.T) {
@@ -88,15 +90,17 @@ func Test_GivenSimulatorDiagnostics_WhenExporting_ThenCopiesItAndSetsEnvVariable
 	tempDir := t.TempDir()
 
 	diagnosticsDir := filepath.Join(tempDir, "diagnostics")
-	_ = pathutil.EnsureDirExist(diagnosticsDir)
 
 	diagnosticsFile := filepath.Join(diagnosticsDir, "simulatorDiagnostics.txt")
-	_ = fileutil.NewFileManager().Write(diagnosticsFile, "test-diagnostics", 0777)
+	err := fileutil.NewFileManager().Write(diagnosticsFile, "test-diagnostics", 0777)
+
+	require.NoError(t, err)
+	require.FileExists(t, diagnosticsFile)
 
 	exporter, _ := createSutAndMocks()
 
 	// When
-	err := exporter.ExportSimulatorDiagnostics(tempDir, diagnosticsDir, name)
+	err = exporter.ExportSimulatorDiagnostics(tempDir, diagnosticsDir, name)
 
 	// Then
 	assert.NoError(t, err)
@@ -106,7 +110,7 @@ func Test_GivenSimulatorDiagnostics_WhenExporting_ThenCopiesItAndSetsEnvVariable
 // Helpers
 
 func createSutAndMocks() (Exporter, testingMocks) {
-	envRepository := new(mockenv.Repository)
+	envRepository := new(mocks.Repository)
 	envRepository.On("Set", mock.Anything, mock.Anything).Return(nil)
 
 	exporter := NewExporter(envRepository, log.NewLogger(), nil)

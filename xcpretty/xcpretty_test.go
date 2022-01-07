@@ -1,17 +1,18 @@
 package xcpretty
 
 import (
-	gocommand "github.com/bitrise-io/go-utils/command"
-	mockcommand "github.com/bitrise-io/go-utils/command/mocks"
-	mockxcpretty "github.com/bitrise-io/go-xcode/xcpretty/mocks"
+	"testing"
+
+	gocommand "github.com/bitrise-io/go-utils/v2/command"
+	mockcommand "github.com/bitrise-steplib/steps-xcode-test/mocks"
+	"github.com/bitrise-steplib/steps-xcode-test/xcpretty/mocks"
 	"github.com/hashicorp/go-version"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 type testingMocks struct {
-	command *mockcommand.Command
-	xcpretty *mockxcpretty.Xcpretty
+	command  *mockcommand.Command
+	xcpretty *mocks.Xcpretty
 }
 
 func Test_GivenNotInstalled_WhenInstall_ThenInstallsIt(t *testing.T) {
@@ -52,7 +53,7 @@ func createInstallerAndMocks(installed bool) (Installer, *version.Version, testi
 
 	version, _ := version.NewVersion("1.0.0")
 
-	mockxcpretty := new(mockxcpretty.Xcpretty)
+	mockxcpretty := new(mocks.Xcpretty)
 	mockxcpretty.On("IsInstalled").Return(installed, nil)
 	mockxcpretty.On("Install").Return([]gocommand.Command{command}, nil)
 	mockxcpretty.On("Version").Return(version, nil)
