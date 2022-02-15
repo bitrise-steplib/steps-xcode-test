@@ -2,33 +2,28 @@ package step
 
 import (
 	"fmt"
-	"github.com/bitrise-io/go-steputils/stepconf"
-	mockenv "github.com/bitrise-io/go-utils/env/mocks"
-	"github.com/bitrise-io/go-utils/log"
-	mockPathutil "github.com/bitrise-io/go-utils/pathutil/mocks"
-	mockcache "github.com/bitrise-io/go-xcode/xcodecache/mocks"
-	mockexporter "github.com/bitrise-steplib/steps-xcode-test/output/mocks"
+	"strings"
+	"testing"
+
+	"github.com/bitrise-io/go-steputils/v2/stepconf"
+	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-steplib/steps-xcode-test/simulator"
-	mocksimulator "github.com/bitrise-steplib/steps-xcode-test/simulator/mocks"
+	"github.com/bitrise-steplib/steps-xcode-test/step/mocks"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
-	mockxcodebuild "github.com/bitrise-steplib/steps-xcode-test/xcodebuild/mocks"
-	mockinstaller "github.com/bitrise-steplib/steps-xcode-test/xcpretty/mocks"
 	"github.com/hashicorp/go-version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"strings"
-	"testing"
 )
 
 type testingMocks struct {
-	installer *mockinstaller.Installer
-	xcodebuilder *mockxcodebuild.Xcodebuild
-	simulatorManager *mocksimulator.Manager
-	cache *mockcache.SwiftPackageCache
-	outputExporter *mockexporter.Exporter
-	pathModifier *mockPathutil.PathModifier
-	pathProvider *mockPathutil.PathProvider
+	installer        *mocks.Installer
+	xcodebuilder     *mocks.Xcodebuild
+	simulatorManager *mocks.Manager
+	cache            *mocks.SwiftPackageCache
+	outputExporter   *mocks.Exporter
+	pathModifier     *mocks.PathModifier
+	pathProvider     *mocks.PathProvider
 }
 
 func Test_GivenStep_WhenRuns_ThenXcodebuildGetsCalled(t *testing.T) {
@@ -147,7 +142,7 @@ func Test_GivenStep_WhenInstallXcpretty_ThenInstallIt(t *testing.T) {
 
 func Test_GivenStep_WhenExportsTestResult_ThenSetsCorrectly(t *testing.T) {
 	tests := []struct {
-		name string
+		name       string
 		testFailed bool
 	}{
 		{
@@ -163,7 +158,7 @@ func Test_GivenStep_WhenExportsTestResult_ThenSetsCorrectly(t *testing.T) {
 	for _, test := range tests {
 		t.Log(test.name)
 
-		runExportTest(t,test.testFailed)
+		runExportTest(t, test.testFailed)
 	}
 }
 
@@ -211,19 +206,19 @@ func Test_GivenStep_WhenExport_ThenExportsAllTestArtifacts(t *testing.T) {
 
 func defaultEnvValues() map[string]string {
 	return map[string]string{
-		"project_path": "./_tmp/BullsEye.xcworkspace",
-		"scheme": "BullsEye",
-		"destination": "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest",
-		"test_repetition_mode": "none",
-		"maximum_test_repetitions": "3",
+		"project_path":                       "./_tmp/BullsEye.xcworkspace",
+		"scheme":                             "BullsEye",
+		"destination":                        "platform=iOS Simulator,name=iPhone 8 Plus,OS=latest",
+		"test_repetition_mode":               "none",
+		"maximum_test_repetitions":           "3",
 		"relaunch_tests_for_each_repetition": "no",
-		"should_retry_test_on_fail": "no",
-		"perform_clean_action": "no",
-		"log_formatter": "xcpretty",
-		"cache_level": "swift_packages",
-		"verbose_log": "no",
-		"collect_simulator_diagnostics": "never",
-		"headless_mode": "yes",
+		"should_retry_test_on_fail":          "no",
+		"perform_clean_action":               "no",
+		"log_formatter":                      "xcpretty",
+		"cache_level":                        "swift_packages",
+		"verbose_log":                        "no",
+		"collect_simulator_diagnostics":      "never",
+		"headless_mode":                      "yes",
 	}
 }
 
@@ -248,7 +243,7 @@ func defaultResult() Result {
 }
 
 func createStepAndMocks(envValues map[string]string) (XcodeTestRunner, testingMocks) {
-	envRepository := new(mockenv.Repository)
+	envRepository := new(mocks.Repository)
 	call := envRepository.On("Get", mock.Anything)
 	call.RunFn = func(arguments mock.Arguments) {
 		key := arguments[0].(string)
@@ -257,23 +252,23 @@ func createStepAndMocks(envValues map[string]string) (XcodeTestRunner, testingMo
 	}
 
 	inputParser := stepconf.NewInputParser(envRepository)
-	installer := new(mockinstaller.Installer)
-	xcodebuilder := new(mockxcodebuild.Xcodebuild)
-	simulatorManager := new(mocksimulator.Manager)
-	cache := new(mockcache.SwiftPackageCache)
-	outputExporter := new(mockexporter.Exporter)
-	pathModifier := new(mockPathutil.PathModifier)
-	pathProvider := new(mockPathutil.PathProvider)
+	installer := new(mocks.Installer)
+	xcodebuilder := new(mocks.Xcodebuild)
+	simulatorManager := new(mocks.Manager)
+	cache := new(mocks.SwiftPackageCache)
+	outputExporter := new(mocks.Exporter)
+	pathModifier := new(mocks.PathModifier)
+	pathProvider := new(mocks.PathProvider)
 
 	step := NewXcodeTestRunner(inputParser, log.NewLogger(), installer, xcodebuilder, simulatorManager, cache, outputExporter, pathModifier, pathProvider)
 	mocks := testingMocks{
-		installer: installer,
-		xcodebuilder: xcodebuilder,
+		installer:        installer,
+		xcodebuilder:     xcodebuilder,
 		simulatorManager: simulatorManager,
-		cache: cache,
-		outputExporter: outputExporter,
-		pathModifier: pathModifier,
-		pathProvider: pathProvider,
+		cache:            cache,
+		outputExporter:   outputExporter,
+		pathModifier:     pathModifier,
+		pathProvider:     pathProvider,
 	}
 
 	return step, mocks

@@ -2,6 +2,7 @@ package step
 
 import (
 	"fmt"
+
 	"github.com/bitrise-io/go-utils/colorstring"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/stringutil"

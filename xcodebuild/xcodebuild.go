@@ -1,13 +1,13 @@
 package xcodebuild
 
 import (
-	"github.com/bitrise-io/go-utils/command"
-	"github.com/bitrise-io/go-utils/fileutil"
-	"github.com/bitrise-io/go-utils/log"
-	"github.com/bitrise-io/go-utils/pathutil"
+	"github.com/bitrise-io/go-utils/v2/command"
+	"github.com/bitrise-io/go-utils/v2/fileutil"
+	"github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-io/go-xcode/models"
 	"github.com/bitrise-io/go-xcode/utility"
-	"github.com/bitrise-io/go-xcode/xcconfig"
+	"github.com/bitrise-io/go-xcode/v2/xcconfig"
 )
 
 // Output tools ...
@@ -52,7 +52,7 @@ func NewXcodebuild(logger log.Logger, commandFactory command.Factory, pathChecke
 type Version models.XcodebuildVersionModel
 
 func (b *xcodebuild) Version() (Version, error) {
-	version, err := utility.GetXcodeVersion(b.commandFactory)
+	version, err := utility.GetXcodeVersion()
 	return Version(version), err
 }
 

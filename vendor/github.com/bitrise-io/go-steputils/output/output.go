@@ -75,30 +75,84 @@ func ExportOutputFileContentAndReturnLastNLines(content, destinationPath, envKey
 }
 
 // ZipAndExportOutput ...
-func ZipAndExportOutput(sourcePth, destinationZipPth, envKey string) error {
-	tmpDir, err := pathutil.NormalizedOSTempDirPath("__export_tmp_dir__")
+func ZipAndExportOutput(sourcePths []string, destinationZipPth, envKey string) error {
+	tmpZipFilePth, err := zipFilePath()
 	if err != nil {
 		return err
 	}
 
-	base := filepath.Base(sourcePth)
-	tmpZipFilePth := filepath.Join(tmpDir, base+".zip")
+	inputType, err := getInputType(sourcePths)
+	if err != nil {
+		return err
+	}
 
-	if exist, err := pathutil.IsDirExists(sourcePth); err != nil {
+	// We have separate zip functions for files and folders and that is the main reason we cannot have mixed
+	// paths (files and also folders) in the input. It has to be either folders or files. Everything
+	// else leads to an error.
+	switch inputType {
+	case filesType:
+		err = ziputil.ZipFiles(sourcePths, tmpZipFilePth)
+	case foldersType:
+		err = ziputil.ZipDirs(sourcePths, tmpZipFilePth)
+	case mixedFileAndFolderType:
+		return fmt.Errorf("source path list (%s) contains a mix of files and folders", sourcePths)
+	default:
+		return fmt.Errorf("source path list (%s) is empty", sourcePths)
+	}
+
+	if err != nil {
 		return err
-	} else if exist {
-		if err := ziputil.ZipDir(sourcePth, tmpZipFilePth, false); err != nil {
-			return err
-		}
-	} else if exist, err := pathutil.IsPathExists(sourcePth); err != nil {
-		return err
-	} else if exist {
-		if err := ziputil.ZipFile(sourcePth, tmpZipFilePth); err != nil {
-			return err
-		}
-	} else {
-		return fmt.Errorf("source path (%s) not exists", sourcePth)
 	}
 
 	return ExportOutputFile(tmpZipFilePth, destinationZipPth, envKey)
+}
+
+func zipFilePath() (string, error) {
+	tmpDir, err := pathutil.NormalizedOSTempDirPath("__export_tmp_dir__")
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(tmpDir, "temp-zip-file.zip"), nil
+}
+
+const (
+	filesType = "files"
+	foldersType = "folders"
+	mixedFileAndFolderType = "mixed"
+)
+
+func getInputType(sourcePths []string) (string, error) {
+	var folderCount, fileCount int
+
+	for _, path := range sourcePths {
+		exist, err := pathutil.IsDirExists(path)
+		if err != nil {
+			return "", err
+		}
+
+		if exist {
+			folderCount++
+			continue
+		}
+
+		exist, err = pathutil.IsPathExists(path)
+		if err != nil {
+			return "", err
+		}
+
+		if exist {
+			fileCount++
+		}
+	}
+
+	if fileCount == len(sourcePths) {
+		return filesType, nil
+	} else if folderCount == len(sourcePths) {
+		return foldersType, nil
+	} else if 0 < folderCount && 0 < fileCount {
+		return mixedFileAndFolderType, nil
+	}
+
+	return "", nil
 }

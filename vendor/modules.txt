@@ -1,47 +1,49 @@
 # github.com/bitrise-io/bitrise v0.0.0-20211005113218-472adb338a1a
 ## explicit
 github.com/bitrise-io/bitrise/configs
-# github.com/bitrise-io/go-steputils v0.0.0-20210929162140-866a65a1e14a
+# github.com/bitrise-io/go-steputils v1.0.1
 ## explicit
 github.com/bitrise-io/go-steputils/cache
 github.com/bitrise-io/go-steputils/output
-github.com/bitrise-io/go-steputils/ruby
-github.com/bitrise-io/go-steputils/stepconf
-github.com/bitrise-io/go-steputils/stepenv
 github.com/bitrise-io/go-steputils/tools
-# github.com/bitrise-io/go-utils v0.0.0-20211110205926-af3caef627ae
+# github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.1
+## explicit
+github.com/bitrise-io/go-steputils/v2/ruby
+github.com/bitrise-io/go-steputils/v2/stepconf
+github.com/bitrise-io/go-steputils/v2/stepenv
+# github.com/bitrise-io/go-utils v1.0.1
 ## explicit
 github.com/bitrise-io/go-utils/colorstring
 github.com/bitrise-io/go-utils/command
-github.com/bitrise-io/go-utils/command/mocks
-github.com/bitrise-io/go-utils/env
-github.com/bitrise-io/go-utils/env/mocks
 github.com/bitrise-io/go-utils/errorutil
 github.com/bitrise-io/go-utils/fileutil
-github.com/bitrise-io/go-utils/fileutil/mocks
 github.com/bitrise-io/go-utils/log
 github.com/bitrise-io/go-utils/parseutil
 github.com/bitrise-io/go-utils/pathutil
-github.com/bitrise-io/go-utils/pathutil/mocks
 github.com/bitrise-io/go-utils/pointers
 github.com/bitrise-io/go-utils/progress
 github.com/bitrise-io/go-utils/retry
 github.com/bitrise-io/go-utils/stringutil
 github.com/bitrise-io/go-utils/ziputil
-# github.com/bitrise-io/go-xcode v0.0.0-20211111092701-a5d9d53ef6ca
+# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.2
 ## explicit
-github.com/bitrise-io/go-xcode/destination
+github.com/bitrise-io/go-utils/v2/command
+github.com/bitrise-io/go-utils/v2/env
+github.com/bitrise-io/go-utils/v2/fileutil
+github.com/bitrise-io/go-utils/v2/log
+github.com/bitrise-io/go-utils/v2/pathutil
+# github.com/bitrise-io/go-xcode v1.0.2
+## explicit
 github.com/bitrise-io/go-xcode/models
 github.com/bitrise-io/go-xcode/simulator
 github.com/bitrise-io/go-xcode/utility
-github.com/bitrise-io/go-xcode/xcconfig
-github.com/bitrise-io/go-xcode/xcconfig/mocks
-github.com/bitrise-io/go-xcode/xcodebuild
-github.com/bitrise-io/go-xcode/xcodecache
-github.com/bitrise-io/go-xcode/xcodecache/mocks
-github.com/bitrise-io/go-xcode/xcodeproject/serialized
-github.com/bitrise-io/go-xcode/xcpretty
-github.com/bitrise-io/go-xcode/xcpretty/mocks
+# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.3
+## explicit
+github.com/bitrise-io/go-xcode/v2/destination
+github.com/bitrise-io/go-xcode/v2/xcconfig
+github.com/bitrise-io/go-xcode/v2/xcodebuild
+github.com/bitrise-io/go-xcode/v2/xcodecache
+github.com/bitrise-io/go-xcode/v2/xcpretty
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/hashicorp/go-cleanhttp v0.5.2
@@ -65,17 +67,14 @@ github.com/stretchr/objx
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/mock
 github.com/stretchr/testify/require
-# golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa
-## explicit
+# golang.org/x/crypto v0.0.0-20211202192323-5770296d904e
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/sys v0.0.0-20211110154304-99a53858aa08
-## explicit
+# golang.org/x/sys v0.0.0-20211205182925-97ca703d548d
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
-## explicit
 golang.org/x/term
 # golang.org/x/text v0.3.7
 golang.org/x/text/transform
