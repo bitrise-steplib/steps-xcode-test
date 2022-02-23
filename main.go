@@ -30,13 +30,13 @@ func run() int {
 	xcodeTestRunner := createStep(logger)
 	config, err := xcodeTestRunner.ProcessConfig()
 	if err != nil {
-		logger.Errorf(err.Error())
+		logger.Errorf("Process config: %s", err)
 		return 1
 
 	}
 
 	if err := xcodeTestRunner.InstallDeps(config.LogFormatter == xcodebuild.XcprettyTool); err != nil {
-		logger.Warnf("Failed to install deps: %s", err)
+		logger.Warnf("Install dependencies: %s", err)
 		logger.Printf("Switching to xcodebuild for output tool")
 		config.LogFormatter = xcodebuild.XcodebuildTool
 	}
@@ -45,12 +45,12 @@ func run() int {
 	exportErr := xcodeTestRunner.Export(res, runErr != nil)
 
 	if runErr != nil {
-		logger.Errorf(runErr.Error())
+		logger.Errorf("Run: %s", runErr)
 		return 1
 	}
 
 	if exportErr != nil {
-		logger.Errorf(exportErr.Error())
+		logger.Errorf("Export outputs: %s", err)
 		return 1
 	}
 
