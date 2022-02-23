@@ -81,7 +81,7 @@ func (e exporter) ExportXcodebuildBuildLog(deployDir, xcodebuildBuildLog string)
 
 	deployPth := filepath.Join(deployDir, "xcodebuild_build.log")
 	if err := command.CopyFile(pth, deployPth); err != nil {
-		return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s), error: %s", pth, deployPth, err)
+		return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s): %w", pth, deployPth, err)
 	}
 
 	if err := e.envRepository.Set("BITRISE_XCODEBUILD_BUILD_LOG_PATH", deployPth); err != nil {
@@ -99,7 +99,7 @@ func (e exporter) ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) e
 
 	deployPth := filepath.Join(deployDir, "xcodebuild_test.log")
 	if err := command.CopyFile(pth, deployPth); err != nil {
-		return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s), error: %s", pth, deployPth, err)
+		return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s): %w", pth, deployPth, err)
 	}
 
 	if err := e.envRepository.Set("BITRISE_XCODEBUILD_TEST_LOG_PATH", deployPth); err != nil {
@@ -112,7 +112,7 @@ func (e exporter) ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) e
 func (e exporter) ExportSimulatorDiagnostics(deployDir, pth, name string) error {
 	outputPath := filepath.Join(deployDir, name)
 	if err := ziputil.ZipDir(pth, outputPath, true); err != nil {
-		return fmt.Errorf("failed to compress simulator diagnostics result: %v", err)
+		return fmt.Errorf("failed to compress simulator diagnostics result: %w", err)
 	}
 
 	return nil

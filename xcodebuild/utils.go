@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
-	"syscall"
 	"time"
 
 	"github.com/bitrise-io/go-utils/log"
@@ -128,21 +127,18 @@ func (b *xcodebuild) runPrettyXcodebuildCmd(useStdOut bool, xcprettyArgs []strin
 
 	defer func() {
 		if err := pipeWriter.Close(); err != nil {
-			b.logger.Warnf("Failed to close xcodebuild-xcpretty pipe, error: %s", err)
+			b.logger.Warnf("Failed to close xcodebuild-xcpretty pipe: %s", err)
 		}
 
 		if err := prettyCmd.Wait(); err != nil {
-			b.logger.Warnf("xcpretty command failed, error: %s", err)
+			b.logger.Warnf("xcpretty command failed: %s", err)
 		}
 	}()
 
 	if err := buildCmd.Wait(); err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
-			waitStatus, ok := exitError.Sys().(syscall.WaitStatus)
-			if !ok {
-				return buildOutBuffer.String(), 1, errors.New("failed to cast exit status")
-			}
-			return buildOutBuffer.String(), waitStatus.ExitStatus(), err
+		var exerr *exec.ExitError
+		if errors.As(err, &exerr) {
+			return buildOutBuffer.String(), exerr.ExitCode(), err
 		}
 		return buildOutBuffer.String(), 1, err
 	}
@@ -192,7 +188,7 @@ func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, erro
 	if params.AdditionalOptions != "" {
 		options, err := shellquote.Split(params.AdditionalOptions)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse additional options (%s), error: %s", params.AdditionalOptions, err)
+			return nil, fmt.Errorf("failed to parse additional options (%s): %w", params.AdditionalOptions, err)
 		}
 		xcodebuildArgs = append(xcodebuildArgs, options...)
 	}
@@ -203,37 +199,40 @@ func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, erro
 func (b *xcodebuild) createXCPrettyArgs(options string) ([]string, error) {
 	var args []string
 
-	if options != "" {
-		options, err := shellquote.Split(options)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse additional options (%s), error: %s", options, err)
-		}
-		// get and delete the xcpretty output file, if exists
-		xcprettyOutputFilePath := ""
-		isNextOptOutputPth := false
-		for _, aOpt := range options {
-			if isNextOptOutputPth {
-				xcprettyOutputFilePath = aOpt
-				break
-			}
-			if aOpt == "--output" {
-				isNextOptOutputPth = true
-				continue
-			}
-		}
-		if xcprettyOutputFilePath != "" {
-			if isExist, err := b.pathChecker.IsPathExists(xcprettyOutputFilePath); err != nil {
-				b.logger.Errorf("Failed to check xcpretty output file status (path: %s), error: %s", xcprettyOutputFilePath, err)
-			} else if isExist {
-				b.logger.Warnf("=> Deleting existing xcpretty output: %s", xcprettyOutputFilePath)
-				if err := b.fileManager.Remove(xcprettyOutputFilePath); err != nil {
-					b.logger.Errorf("Failed to delete xcpretty output file (path: %s), error: %s", xcprettyOutputFilePath, err)
-				}
-			}
-		}
-		//
-		args = append(args, options...)
+	if options == "" {
+		return args, nil
 	}
+
+	opts, err := shellquote.Split(options)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse additional options (%s): %w", options, err)
+	}
+
+	// get and delete the xcpretty output file, if exists
+	xcprettyOutputFilePath := ""
+	isNextOptOutputPth := false
+	for _, aOpt := range opts {
+		if isNextOptOutputPth {
+			xcprettyOutputFilePath = aOpt
+			break
+		}
+		if aOpt == "--output" {
+			isNextOptOutputPth = true
+			continue
+		}
+	}
+	if xcprettyOutputFilePath != "" {
+		if isExist, err := b.pathChecker.IsPathExists(xcprettyOutputFilePath); err != nil {
+			b.logger.Errorf("Failed to check xcpretty output file status (path: %s), error: %s", xcprettyOutputFilePath, err)
+		} else if isExist {
+			b.logger.Warnf("=> Deleting existing xcpretty output: %s", xcprettyOutputFilePath)
+			if err := b.fileManager.Remove(xcprettyOutputFilePath); err != nil {
+				b.logger.Errorf("Failed to delete xcpretty output file (path: %s), error: %s", xcprettyOutputFilePath, err)
+			}
+		}
+	}
+	//
+	args = append(args, opts...)
 
 	return args, nil
 }
@@ -278,7 +277,7 @@ type testRunResult struct {
 func (b *xcodebuild) cleanOutputDirAndRerunTest(params TestRunParams) (string, int, error) {
 	// Clean output directory, otherwise after retry test run, xcodebuild fails with `error: Existing file at -resultBundlePath "..."`
 	if err := b.fileManager.RemoveAll(params.TestParams.TestOutputDir); err != nil {
-		return "", 1, fmt.Errorf("failed to clean test output directory: %s, error: %s", params.TestParams.TestOutputDir, err)
+		return "", 1, fmt.Errorf("failed to clean test output directory: %s: %w", params.TestParams.TestOutputDir, err)
 	}
 	return b.runTest(params)
 }

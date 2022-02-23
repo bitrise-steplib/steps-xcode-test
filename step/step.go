@@ -143,7 +143,7 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 	// validate Xcode version
 	xcodebuildVersion, err := s.xcodebuild.Version()
 	if err != nil {
-		return Config{}, fmt.Errorf("failed to determine Xcode version, error: %s", err)
+		return Config{}, fmt.Errorf("failed to determine Xcode version: %w", err)
 	}
 	s.logger.Printf("- xcodebuildVersion: %s (%s)", xcodebuildVersion.Version, xcodebuildVersion.BuildVersion)
 
@@ -154,7 +154,7 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 	// validate project path
 	projectPath, err := s.pathModifier.AbsPath(input.ProjectPath)
 	if err != nil {
-		return Config{}, fmt.Errorf("failed to get absolute project path, error: %s", err)
+		return Config{}, fmt.Errorf("failed to get absolute project path: %w", err)
 	}
 	if filepath.Ext(projectPath) != ".xcodeproj" && filepath.Ext(projectPath) != ".xcworkspace" {
 		return Config{}, fmt.Errorf("invalid project file (%s), extension should be (.xcodeproj/.xcworkspace)", projectPath)
@@ -171,7 +171,7 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 	}
 
 	if input.RelaunchTestsForEachRepetition && input.TestRepetitionMode == xcodebuild.TestRepetitionNone {
-		return Config{}, errors.New("Relaunch Tests for Each Repetition (relaunch_tests_for_each_repetition) cannot be used if Test Repetition Mode (test_repetition_mode) is 'none'")
+		return Config{}, errors.New("the Relaunch Tests for Each Repetition (relaunch_tests_for_each_repetition) cannot be used if Test Repetition Mode (test_repetition_mode) is 'none'")
 	}
 
 	return createConfig(input, projectPath, int(xcodebuildVersion.MajorVersion), sim), nil
@@ -185,9 +185,9 @@ func (s XcodeTestRunner) InstallDeps(xcpretty bool) error {
 
 	xcprettyVersion, err := s.xcprettyInstaller.Install()
 	if err != nil {
-		return fmt.Errorf("an error occured during installing xcpretty: %s", err)
+		return fmt.Errorf("installing xcpretty: %w", err)
 	}
-	s.logger.Printf("- xcprettyVersion: %s", xcprettyVersion.String())
+	s.logger.Printf("- xcpretty version: %s", xcprettyVersion.String())
 	s.logger.Println()
 
 	return nil
@@ -229,14 +229,14 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 	if testErr != nil {
 		s.logger.Println()
 		s.logger.Warnf("Xcode Test command exit code: %d", testExitCode)
-		s.logger.Errorf("Xcode Test command failed, error: %s", testErr)
+		s.logger.Errorf("Xcode Test command failed: %s", testErr)
 		return result, testErr
 	}
 
 	// Cache swift PM
 	if cfg.XcodeMajorVersion >= 11 && cfg.CacheLevel == "swift_packages" {
 		if err := s.cache.CollectSwiftPackages(cfg.ProjectPath); err != nil {
-			s.logger.Warnf("Failed to mark swift packages for caching, error: %s", err)
+			s.logger.Warnf("Failed to mark swift packages for caching: %s", err)
 		}
 	}
 
@@ -273,11 +273,11 @@ func (s XcodeTestRunner) Export(result Result, testFailed bool) error {
 	if result.SimulatorDiagnosticsPath != "" {
 		diagnosticsName, err := s.simulatorManager.SimulatorDiagnosticsName()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get simulator diagnostics name: %w", err)
 		}
 
 		if err := s.outputExporter.ExportSimulatorDiagnostics(result.DeployDir, result.SimulatorDiagnosticsPath, diagnosticsName); err != nil {
-			return err
+			return fmt.Errorf("failed to export simulator diagnostics: %w", err)
 		}
 	}
 
@@ -322,7 +322,7 @@ func (s XcodeTestRunner) getSimulatorForDestination(destinationSpecifier string)
 
 	simulatorDestination, err := destination.NewSimulator(destinationSpecifier)
 	if err != nil {
-		return simulator.Simulator{}, fmt.Errorf("invalid destination specifier: %v", err)
+		return simulator.Simulator{}, fmt.Errorf("invalid destination specifier: %s: %w", destinationSpecifier, err)
 	}
 
 	platform := strings.TrimSuffix(simulatorDestination.Platform, " Simulator")
@@ -354,7 +354,7 @@ func (s XcodeTestRunner) getSimulatorForDestination(destinationSpecifier string)
 
 		return errGetSimulator
 	}); err != nil {
-		return simulator.Simulator{}, fmt.Errorf("simulator UDID lookup failed: %s", err)
+		return simulator.Simulator{}, fmt.Errorf("simulator UDID lookup failed: %w", err)
 	}
 
 	s.logger.Infof("Simulator infos")
@@ -387,7 +387,7 @@ func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simula
 		s.logger.Infof("Booting simulator (%s)...", simulatorID)
 
 		if err := s.simulatorManager.LaunchSimulator(simulatorID); err != nil {
-			return fmt.Errorf("failed to boot simulator, error: %s", err)
+			return fmt.Errorf("failed to boot simulator: %w", err)
 		}
 
 		progress.NewDefaultWrapper("Waiting for simulator boot").WrapAction(func() {
@@ -410,7 +410,7 @@ func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 	// Run test
 	tempDir, err := s.pathProvider.CreateTempDir("XCUITestOutput")
 	if err != nil {
-		return result, -1, fmt.Errorf("could not create test output temporary directory: %s", err)
+		return result, -1, fmt.Errorf("could not create test output temporary directory: %w", err)
 	}
 	xcresultPath := path.Join(tempDir, fmt.Sprintf("Test-%s.xcresult", cfg.Scheme))
 
@@ -419,7 +419,7 @@ func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 		var err error
 		swiftPackagesPath, err = s.cache.SwiftPackagesPath(cfg.ProjectPath)
 		if err != nil {
-			return result, -1, fmt.Errorf("failed to get Swift Packages path, error: %s", err)
+			return result, -1, fmt.Errorf("failed to get Swift Packages path: %w", err)
 		}
 	}
 
@@ -445,7 +445,7 @@ func (s XcodeTestRunner) teardownSimulator(simulatorID string, simulatorDebug ex
 
 		diagnosticsPath, err := s.simulatorManager.SimulatorCollectDiagnostics()
 		if err != nil {
-			s.logger.Warnf("%v", err)
+			s.logger.Warnf(err.Error())
 		} else {
 			s.logger.Donef("Simulator diagnostics are available as an artifact (%s)", diagnosticsPath)
 			simulatorDiagnosticsPath = diagnosticsPath
@@ -455,7 +455,7 @@ func (s XcodeTestRunner) teardownSimulator(simulatorID string, simulatorDebug ex
 	// Shut down the simulator if it was started by the step for diagnostic logs.
 	if !isSimulatorBooted && simulatorDebug != never {
 		if err := s.simulatorManager.SimulatorShutdown(simulatorID); err != nil {
-			s.logger.Warnf("%v", err)
+			s.logger.Warnf(err.Error())
 		}
 	}
 
