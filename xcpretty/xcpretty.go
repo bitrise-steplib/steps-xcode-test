@@ -39,7 +39,7 @@ func (i installer) Install() (*version.Version, error) {
 
 		cmdModelSlice, err := i.xcpretty.Install()
 		if err != nil {
-			return nil, fmt.Errorf("failed to create xcpretty commands: %w", err)
+			return nil, fmt.Errorf("failed to create xcpretty install commands: %w", err)
 		}
 
 		for _, cmd := range cmdModelSlice {

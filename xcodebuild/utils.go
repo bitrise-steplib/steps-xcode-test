@@ -231,7 +231,7 @@ func (b *xcodebuild) createXCPrettyArgs(options string) ([]string, error) {
 			}
 		}
 	}
-	//
+
 	args = append(args, opts...)
 
 	return args, nil

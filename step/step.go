@@ -171,7 +171,7 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 	}
 
 	if input.RelaunchTestsForEachRepetition && input.TestRepetitionMode == xcodebuild.TestRepetitionNone {
-		return Config{}, errors.New("the Relaunch Tests for Each Repetition (relaunch_tests_for_each_repetition) cannot be used if Test Repetition Mode (test_repetition_mode) is 'none'")
+		return Config{}, errors.New("the 'Relaunch Tests for Each Repetition' (relaunch_tests_for_each_repetition) cannot be used if 'Test Repetition Mode' (test_repetition_mode) is 'none'")
 	}
 
 	return createConfig(input, projectPath, int(xcodebuildVersion.MajorVersion), sim), nil
@@ -322,7 +322,7 @@ func (s XcodeTestRunner) getSimulatorForDestination(destinationSpecifier string)
 
 	simulatorDestination, err := destination.NewSimulator(destinationSpecifier)
 	if err != nil {
-		return simulator.Simulator{}, fmt.Errorf("invalid destination specifier: %s: %w", destinationSpecifier, err)
+		return simulator.Simulator{}, fmt.Errorf("invalid destination specifier (%s): %w", destinationSpecifier, err)
 	}
 
 	platform := strings.TrimSuffix(simulatorDestination.Platform, " Simulator")
