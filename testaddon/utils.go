@@ -22,7 +22,7 @@ func replaceUnsupportedFilenameCharacters(s string) string {
 
 func copyDirectory(sourceBundle string, targetDir string) error {
 	if err := os.MkdirAll(targetDir, 0700); err != nil {
-		return fmt.Errorf("failed to create directory (%s), error: %s", targetDir, err)
+		return fmt.Errorf("failed to create directory (%s): %w", targetDir, err)
 	}
 
 	// the leading `/` means to copy not the content but the whole dir
@@ -32,7 +32,7 @@ func copyDirectory(sourceBundle string, targetDir string) error {
 	// TODO: migrate log
 	log.Donef("$ %s", cmd.PrintableCommandArgs())
 	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-		return fmt.Errorf("copy failed, error: %s, output: %s", err, out)
+		return fmt.Errorf("copy failed: %w, output: %s", err, out)
 	}
 
 	return nil
@@ -47,10 +47,10 @@ func saveBundleMetadata(outputDir string, bundleName string) error {
 		BundleName: bundleName,
 	})
 	if err != nil {
-		return fmt.Errorf("could not encode metadata, error: %s", err)
+		return fmt.Errorf("could not encode metadata: %w", err)
 	}
 	if err = ioutil.WriteFile(filepath.Join(outputDir, "test-info.json"), bytes, 0600); err != nil {
-		return fmt.Errorf("failed to write file, error: %s", err)
+		return fmt.Errorf("failed to write file: %w", err)
 	}
 	return nil
 }

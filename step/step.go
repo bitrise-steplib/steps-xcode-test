@@ -366,7 +366,7 @@ func (s XcodeTestRunner) getSimulatorForDestination(destinationSpecifier string)
 func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simulatorID string, launchSimulator bool) error {
 	err := s.simulatorManager.ResetLaunchServices()
 	if err != nil {
-		s.logger.Warnf("Failed to apply simulator boot workaround, error: %s", err)
+		s.logger.Warnf("Failed to apply simulator boot workaround: %s", err)
 	}
 
 	// Boot simulator

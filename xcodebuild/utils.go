@@ -223,11 +223,11 @@ func (b *xcodebuild) createXCPrettyArgs(options string) ([]string, error) {
 	}
 	if xcprettyOutputFilePath != "" {
 		if isExist, err := b.pathChecker.IsPathExists(xcprettyOutputFilePath); err != nil {
-			b.logger.Errorf("Failed to check xcpretty output file status (path: %s), error: %s", xcprettyOutputFilePath, err)
+			b.logger.Errorf("Failed to check xcpretty output file status (path: %s): %s", xcprettyOutputFilePath, err)
 		} else if isExist {
 			b.logger.Warnf("=> Deleting existing xcpretty output: %s", xcprettyOutputFilePath)
 			if err := b.fileManager.Remove(xcprettyOutputFilePath); err != nil {
-				b.logger.Errorf("Failed to delete xcpretty output file (path: %s), error: %s", xcprettyOutputFilePath, err)
+				b.logger.Errorf("Failed to delete xcpretty output file (path: %s): %w", xcprettyOutputFilePath, err)
 			}
 		}
 	}
@@ -286,7 +286,7 @@ func (b *xcodebuild) handleTestRunError(prevRunParams TestRunParams, prevRunResu
 	if prevRunParams.RetryOnSwiftPackageResolutionError && prevRunParams.SwiftPackagesPath != "" && isStringFoundInOutput(cache.SwiftPackagesStateInvalid, prevRunResult.xcodebuildLog) {
 		log.RWarnf("xcode-test", "swift-packages-cache-invalid", nil, "swift packages cache is in an invalid state")
 		if err := b.fileManager.RemoveAll(prevRunParams.SwiftPackagesPath); err != nil {
-			b.logger.Errorf("failed to remove Swift package caches, error: %s", err)
+			b.logger.Errorf("failed to remove Swift package caches: %s", err)
 			return prevRunResult.xcodebuildLog, prevRunResult.exitCode, prevRunResult.err
 		}
 
