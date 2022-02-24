@@ -187,7 +187,7 @@ func (m manager) SimulatorShutdown(id string) error {
 func (m manager) SimulatorDiagnosticsName() (string, error) {
 	timestamp, err := time.Now().MarshalText()
 	if err != nil {
-		return "", fmt.Errorf("failed to collect Simulator diagnostics, failed to marshal timestamp: %v", err)
+		return "", fmt.Errorf("failed to marshal timestamp: %w", err)
 	}
 
 	return fmt.Sprintf("simctl_diagnose_%s.zip", strings.ReplaceAll(string(timestamp), ":", "-")), nil

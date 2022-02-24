@@ -39,19 +39,19 @@ func (i installer) Install() (*version.Version, error) {
 
 		cmdModelSlice, err := i.xcpretty.Install()
 		if err != nil {
-			return nil, fmt.Errorf("failed to install xcpretty: %s", err)
+			return nil, fmt.Errorf("failed to create xcpretty install commands: %w", err)
 		}
 
 		for _, cmd := range cmdModelSlice {
 			if err := cmd.Run(); err != nil {
-				return nil, fmt.Errorf("failed to install xcpretty: %s", err)
+				return nil, fmt.Errorf("failed to run xcpretty install command (%s): %w", cmd.PrintableCommandArgs(), err)
 			}
 		}
 	}
 
 	xcprettyVersion, err := i.xcpretty.Version()
 	if err != nil {
-		return nil, fmt.Errorf("failed to determine xcpretty version: %s", err)
+		return nil, fmt.Errorf("failed to get xcpretty version: %w", err)
 	}
 	return xcprettyVersion, nil
 }

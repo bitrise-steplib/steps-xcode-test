@@ -43,19 +43,19 @@ func (e exporter) ExportTestRunResult(failed bool) {
 		status = "failed"
 	}
 	if err := e.envRepository.Set("BITRISE_XCODE_TEST_RESULT", status); err != nil {
-		e.logger.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT, error: %s", err)
+		e.logger.Warnf("Failed to export: BITRISE_XCODE_TEST_RESULT: %s", err)
 	}
 }
 
 func (e exporter) ExportXCResultBundle(deployDir, xcResultPath, scheme string) {
 	// export xcresult bundle
 	if err := e.envRepository.Set("BITRISE_XCRESULT_PATH", xcResultPath); err != nil {
-		e.logger.Warnf("Failed to export: BITRISE_XCRESULT_PATH, error: %s", err)
+		e.logger.Warnf("Failed to export: BITRISE_XCRESULT_PATH: %s", err)
 	}
 
 	xcresultZipPath := filepath.Join(deployDir, filepath.Base(xcResultPath)+".zip")
 	if err := output.ZipAndExportOutput([]string{xcResultPath}, xcresultZipPath, "BITRISE_XCRESULT_ZIP_PATH"); err != nil {
-		e.logger.Warnf("Failed to export: BITRISE_XCRESULT_ZIP_PATH, error: %s", err)
+		e.logger.Warnf("Failed to export: BITRISE_XCRESULT_ZIP_PATH: %s", err)
 	}
 
 	// export xcresult for the testing addon
@@ -68,7 +68,7 @@ func (e exporter) ExportXCResultBundle(deployDir, xcResultPath, scheme string) {
 			TargetAddonPath:       addonResultPath,
 			TargetAddonBundleName: scheme,
 		}); err != nil {
-			e.logger.Warnf("Failed to export test results, error: %s", err)
+			e.logger.Warnf("Failed to export test results: %s", err)
 		}
 	}
 }
@@ -81,11 +81,11 @@ func (e exporter) ExportXcodebuildBuildLog(deployDir, xcodebuildBuildLog string)
 
 	deployPth := filepath.Join(deployDir, "xcodebuild_build.log")
 	if err := command.CopyFile(pth, deployPth); err != nil {
-		return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s), error: %s", pth, deployPth, err)
+		return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s): %w", pth, deployPth, err)
 	}
 
 	if err := e.envRepository.Set("BITRISE_XCODEBUILD_BUILD_LOG_PATH", deployPth); err != nil {
-		e.logger.Warnf("Failed to export: BITRISE_XCODEBUILD_BUILD_LOG_PATH, error: %s", err)
+		e.logger.Warnf("Failed to export: BITRISE_XCODEBUILD_BUILD_LOG_PATH: %s", err)
 	}
 
 	return nil
@@ -94,16 +94,16 @@ func (e exporter) ExportXcodebuildBuildLog(deployDir, xcodebuildBuildLog string)
 func (e exporter) ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) error {
 	pth, err := saveRawOutputToLogFile(xcodebuildTestLog)
 	if err != nil {
-		e.logger.Warnf("Failed to save the Raw Output, error: %s", err)
+		e.logger.Warnf("Failed to save the Raw Output: %s", err)
 	}
 
 	deployPth := filepath.Join(deployDir, "xcodebuild_test.log")
 	if err := command.CopyFile(pth, deployPth); err != nil {
-		return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s), error: %s", pth, deployPth, err)
+		return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s): %w", pth, deployPth, err)
 	}
 
 	if err := e.envRepository.Set("BITRISE_XCODEBUILD_TEST_LOG_PATH", deployPth); err != nil {
-		e.logger.Warnf("Failed to export: BITRISE_XCODEBUILD_TEST_LOG_PATH, error: %s", err)
+		e.logger.Warnf("Failed to export: BITRISE_XCODEBUILD_TEST_LOG_PATH: %s", err)
 	}
 
 	return nil
@@ -112,7 +112,7 @@ func (e exporter) ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) e
 func (e exporter) ExportSimulatorDiagnostics(deployDir, pth, name string) error {
 	outputPath := filepath.Join(deployDir, name)
 	if err := ziputil.ZipDir(pth, outputPath, true); err != nil {
-		return fmt.Errorf("failed to compress simulator diagnostics result: %v", err)
+		return fmt.Errorf("failed to compress simulator diagnostics result: %w", err)
 	}
 
 	return nil
