@@ -117,8 +117,8 @@ func zipFilePath() (string, error) {
 }
 
 const (
-	filesType = "files"
-	foldersType = "folders"
+	filesType              = "files"
+	foldersType            = "folders"
 	mixedFileAndFolderType = "mixed"
 )
 

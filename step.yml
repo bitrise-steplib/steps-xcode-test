@@ -52,11 +52,12 @@ inputs:
 - project_path: $BITRISE_PROJECT_PATH
   opts:
     title: Project path
-    summary: Xcode Project (`.xcodeproj`) or Workspace (`.xcworkspace`) path.
+    summary: Xcode Project (`.xcodeproj`), Workspace (`.xcworkspace`) or Package.swift path.
     description: |-
       Xcode Project (`.xcodeproj`) or Workspace (`.xcworkspace`) path.
-
       The input value sets xcodebuild's `-project` or `-workspace` option.
+
+      If this is a Swift package, this should be the path to the Package.swift file.
     is_required: true
 
 - scheme: $BITRISE_SCHEME

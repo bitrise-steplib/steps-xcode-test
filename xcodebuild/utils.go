@@ -89,7 +89,7 @@ func (b *xcodebuild) runXcodebuildCmd(args ...string) (string, int, error) {
 	return outBuffer.String(), exitCode, err
 }
 
-func (b *xcodebuild) runPrettyXcodebuildCmd(useStdOut bool, xcprettyArgs []string, xcodebuildArgs []string) (string, int, error) {
+func (b *xcodebuild) runPrettyXcodebuildCmd(xcprettyArgs []string, xcodebuildArgs []string) (string, int, error) {
 	// build outputs:
 	// - write it into a buffer
 	// - write it into the pipe, which will be fed into xcpretty
@@ -98,10 +98,7 @@ func (b *xcodebuild) runPrettyXcodebuildCmd(useStdOut bool, xcprettyArgs []strin
 	buildOutWriters := []io.Writer{pipeWriter}
 	buildOutWriter := CreateBufferedWriter(&buildOutBuffer, buildOutWriters...)
 	//
-	var prettyOutWriter io.Writer
-	if useStdOut {
-		prettyOutWriter = os.Stdout
-	}
+	prettyOutWriter := os.Stdout
 
 	buildCmd := b.commandFactory.Create("xcodebuild", xcodebuildArgs, &command.Opts{
 		Stdout: buildOutWriter,
@@ -146,12 +143,21 @@ func (b *xcodebuild) runPrettyXcodebuildCmd(useStdOut bool, xcprettyArgs []strin
 	return buildOutBuffer.String(), 0, nil
 }
 
+// $ set -o pipefail && xcodebuild "-project" "/Users/michaelmatranga/Documents/workspace/steps/steps-xcode-test/_tmp/Package.swift" "-scheme" "DeckOfPlayingCards" "clean" "test" "-destination" "id=36ED7FD8-83B8-444C-AFFA-75F74B0240A5" "-resultBundlePath" "/var/folders/32/bqm5nm6s2434r2k8brhxstk00000gn/T/XCUITestOutput3320521194/Test-DeckOfPlayingCards.xcresult" "-xcconfig" "/var/folders/32/bqm5nm6s2434r2k8brhxstk00000gn/T/2220206536/temp.xcconfig" "-verbose" | xcpretty "--color" "--report" "html" "--output" "/var/folders/32/bqm5nm6s2434r2k8brhxstk00000gn/T/deploy609866553/xcode-test-results-DeckOfPlayingCards.html"
+// xcodebuild clean test -scheme DeckOfPlayingCards -sdk iphonesimulator15.4 "-destination" "id=36ED7FD8-83B8-444C-AFFA-75F74B0240A5"
+
 func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, error) {
-	projectFlag := "-project"
-	if filepath.Ext(params.ProjectPath) == ".xcworkspace" {
-		projectFlag = "-workspace"
+	xcodebuildArgs := []string{}
+
+	fileExtension := filepath.Ext(params.ProjectPath)
+	if fileExtension == ".xcodeproj" {
+		xcodebuildArgs = append(xcodebuildArgs, "-project", params.ProjectPath)
 	}
-	xcodebuildArgs := []string{projectFlag, params.ProjectPath, "-scheme", params.Scheme}
+	if fileExtension == ".xcworkspace" {
+		xcodebuildArgs = append(xcodebuildArgs, "-workspace", params.ProjectPath)
+	}
+	xcodebuildArgs = append(xcodebuildArgs, "-scheme", params.Scheme)
+
 	if params.PerformCleanAction {
 		xcodebuildArgs = append(xcodebuildArgs, "clean")
 	}
@@ -244,6 +250,7 @@ func (b *xcodebuild) runTest(params TestRunParams) (string, int, error) {
 	}
 
 	b.logger.Infof("Running the tests...")
+	b.logger.Infof("%s", xcodebuildArgs)
 
 	var rawOutput string
 	var exit int
@@ -254,7 +261,7 @@ func (b *xcodebuild) runTest(params TestRunParams) (string, int, error) {
 			return "", 1, err
 		}
 
-		rawOutput, exit, testErr = b.runPrettyXcodebuildCmd(true, xcprettyArgs, xcodebuildArgs)
+		rawOutput, exit, testErr = b.runPrettyXcodebuildCmd(xcprettyArgs, xcodebuildArgs)
 	} else {
 		rawOutput, exit, testErr = b.runXcodebuildCmd(xcodebuildArgs...)
 	}
