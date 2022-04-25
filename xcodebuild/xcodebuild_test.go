@@ -68,9 +68,9 @@ func Test_GivenXcodebuild_WhenInvoked_ThenUsesCorrectArguments(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Log(test.name)
-
-		runArgumentsTest(t, test.input())
+		t.Run(test.name, func(t *testing.T) {
+			runArgumentsTest(t, test.input())
+		})
 	}
 }
 
@@ -266,7 +266,7 @@ func createXcodebuildAndMocks(stdoutProvider func() string) (Xcodebuild, testing
 
 func runParameters() TestRunParams {
 	testParams := TestParams{
-		ProjectPath:                    "ProjectPath",
+		ProjectPath:                    "ProjectPath.xcodeproj",
 		Scheme:                         "Scheme",
 		Destination:                    "Destination",
 		TestPlan:                       "TestPlan",
@@ -293,7 +293,7 @@ func runParameters() TestRunParams {
 
 func argumentsFromRunParameters(parameters TestRunParams) []string {
 	arguments := []string{
-		"-project", parameters.TestParams.ProjectPath,
+		"-project", parameters.TestParams.ProjectPath, // TODO: make it more flexible
 		"-scheme", parameters.TestParams.Scheme,
 	}
 
