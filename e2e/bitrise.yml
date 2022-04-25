@@ -12,7 +12,6 @@ workflows:
     - DESTINATION: platform=iOS Simulator,name=iPhone 8,OS=latest
     - LOG_FORMATTER: xcpretty
     - RETRY_ON_FAILURE: "no"
-    - TEST_REPETITION_MODE: until_failure
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: swift_packages
     after_run:
