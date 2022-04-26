@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/bitrise-io/go-utils/pathutil"
 	log "github.com/sirupsen/logrus"
+	"github.com/bitrise-io/go-utils/pathutil"
 )
 
 var (

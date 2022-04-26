@@ -38,11 +38,10 @@ func (c swiftPackageCache) SwiftPackagesPath(xcodeProjectPath string) (string, e
 
 	fileExtension := filepath.Ext(xcodeProjectPath)
 	if fileExtension != ".xcodeproj" && fileExtension != ".xcworkspace" && fileExtension != ".swift" {
-		return "", fmt.Errorf("invalid Xcode project path %s, no .xcodeproj or .xcworkspace suffix, or Package.swift file found", xcodeProjectPath)
+		return "", fmt.Errorf("invalid Xcode project path: %s, no .xcodeproj or .xcworkspace suffix, or Package.swift file found", xcodeProjectPath)
 	}
 
 	trimmedXcodeProjectPath := strings.TrimSuffix(xcodeProjectPath, "/Package.swift")
-
 	projectDerivedData, err := xcodeProjectDerivedDataPath(trimmedXcodeProjectPath)
 	if err != nil {
 		return "", err
