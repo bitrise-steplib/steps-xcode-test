@@ -157,8 +157,8 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 		return Config{}, fmt.Errorf("failed to get absolute project path: %w", err)
 	}
 	fileExtension := filepath.Ext(projectPath)
-	if fileExtension != ".xcodeproj" && fileExtension != ".xcworkspace" && fileExtension != ".swift" {
-		return Config{}, fmt.Errorf("invalid project file (%s), extension should be (.xcodeproj/.xcworkspace/.swift)", projectPath)
+	if fileExtension != ".xcodeproj" && fileExtension != ".xcworkspace" && filepath.Base(projectPath) != "Package.swift" {
+		return Config{}, fmt.Errorf("invalid project path: should be an .xcodeproj/.xcworkspace or Package.swift file (actual: %s)", projectPath)
 	}
 
 	sim, err := s.getSimulatorForDestination(input.Destination)
