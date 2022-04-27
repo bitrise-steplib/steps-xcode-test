@@ -248,8 +248,7 @@ func (b *xcodebuild) runTest(params TestRunParams) (string, int, error) {
 		return "", 1, err
 	}
 
-	b.logger.Infof("Running the tests...")
-	b.logger.Infof("%s", xcodebuildArgs)
+	b.logger.Donef("Running the tests...")
 
 	// When the project path input is set to an SPM Package.swift file, we need to execute the xcodebuild command
 	// within the working directory of the project. This is optional for regular workspaces and projects,
