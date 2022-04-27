@@ -275,7 +275,8 @@ inputs:
 outputs:
 - BITRISE_XCODE_TEST_RESULT:
   opts:
-    title: Result of the tests. 'succeeded' or 'failed'.
+    title: Test result
+    description: Result of the tests. 'succeeded' or 'failed'.
     value_options:
     - succeeded
     - failed
