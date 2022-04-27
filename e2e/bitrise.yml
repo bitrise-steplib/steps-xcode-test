@@ -2,9 +2,9 @@ format_version: "11"
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 workflows:
-  test_spm_project:
+  test_swift_package:
     envs:
-    - TEST_APP_URL: https://github.com/apple/example-package-deckofplayingcards.git
+    - TEST_APP_URL: https://github.com/bitrise-io/swift-package-deckofplayingcards
     - TEST_APP_BRANCH: main
     - BITRISE_PROJECT_PATH: Package.swift
     - BITRISE_SCHEME: DeckOfPlayingCards
