@@ -146,13 +146,12 @@ func (b *xcodebuild) runPrettyXcodebuildCmd(workDir string, xcprettyArgs []strin
 }
 
 func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, error) {
-	xcodebuildArgs := []string{}
+	var xcodebuildArgs []string
 
 	fileExtension := filepath.Ext(params.ProjectPath)
 	if fileExtension == ".xcodeproj" {
 		xcodebuildArgs = append(xcodebuildArgs, "-project", params.ProjectPath)
-	}
-	if fileExtension == ".xcworkspace" {
+	} else if fileExtension == ".xcworkspace" {
 		xcodebuildArgs = append(xcodebuildArgs, "-workspace", params.ProjectPath)
 	}
 	xcodebuildArgs = append(xcodebuildArgs, "-scheme", params.Scheme)
