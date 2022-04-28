@@ -7,19 +7,19 @@ Runs your project's pre-defined Xcode tests on every build.
 <details>
 <summary>Description</summary>
 
-This Steps runs all those Xcode tests that are included in your project. 
-The Step will work out of the box if your project has test targets and your Workflow has the **Deploy to Bitrise.io** Step which exports the test results and (code coverage files if needed) to the Test Reports page. 
+This Steps runs all those Xcode tests that are included in your project.
+The Step will work out of the box if your project has test targets and your Workflow has the **Deploy to Bitrise.io** Step which exports the test results and (code coverage files if needed) to the Test Reports page.
 This Step does not need any code signing files since the Step deploys only the test results to [bitrise.io](https://www.bitrise.io).
 
 ### Configuring the Step
-If you click into the Step, there are some required input fields whose input must be set in accordance with the Xcode configuration of the project.  
+If you click into the Step, there are some required input fields whose input must be set in accordance with the Xcode configuration of the project.
 The **Scheme** input field must be marked as Shared in Xcode.
 
 ### Troubleshooting
 If the **Deploy to Bitrise.io** Step is missing from your Workflow, then the **Xcode Test for iOS** Step will not be able to export the test results on the Test Reports page and you won't be able to view them either.
-The xcpretty output tool does not support parallel tests. 
+The xcpretty output tool does not support parallel tests.
 If parallel tests are enabled in your project, go to the Step's Debug section and set the **Log formatter** input's value to xcodebuild.
-If the Xcode test fails with the error `Unable to find a destination matching the provided destination specifier`, then check our [system reports](https://github.com/bitrise-io/bitrise.io/tree/master/system_reports) to see if the requested simulator is on the stack or not. 
+If the Xcode test fails with the error `Unable to find a destination matching the provided destination specifier`, then check our [system reports](https://github.com/bitrise-io/bitrise.io/tree/master/system_reports) to see if the requested simulator is on the stack or not.
 If it is not, then pick a simulator that is on the stack.
 
 ### Useful links
@@ -44,7 +44,7 @@ You can also run this step directly with [Bitrise CLI](https://github.com/bitris
 
 | Key | Description | Flags | Default |
 | --- | --- | --- | --- |
-| `project_path` | Xcode Project (`.xcodeproj`) or Workspace (`.xcworkspace`) path.  The input value sets xcodebuild's `-project` or `-workspace` option. | required | `$BITRISE_PROJECT_PATH` |
+| `project_path` | Xcode Project (`.xcodeproj`) or Workspace (`.xcworkspace`) path. The input value sets xcodebuild's `-project` or `-workspace` option.  If this is a Swift package, this should be the path to the `Package.swift` file. | required | `$BITRISE_PROJECT_PATH` |
 | `scheme` | Xcode Scheme name.  The input value sets xcodebuild's `-scheme` option. | required | `$BITRISE_SCHEME` |
 | `destination` | Destination specifier describes the device to use as a destination.  The input value sets xcodebuild's `-destination` option. | required | `platform=iOS Simulator,name=iPhone 8 Plus,OS=latest` |
 | `test_plan` | Run tests in a specific Test Plan associated with the Scheme.  Leave this input empty to run the default Test Plan or Test Targets associated with the Scheme.  The input value sets xcodebuild's `-testPlan` option. |  |  |
@@ -53,13 +53,13 @@ You can also run this step directly with [Bitrise CLI](https://github.com/bitris
 | `relaunch_tests_for_each_repetition` | If this input is set, tests will launch in a new process for each repetition.  By default, tests launch in the same process for each repetition.  The input value sets xcodebuild's `-test-repetition-relaunch-enabled` option. |  | `no` |
 | `should_retry_test_on_fail` | If this input is set, the Step will rerun the tests in the case of failed tests.  Note that all the tests will be rerun, not just the ones that failed.  This input is not available if you are using Xcode 13+. In that case, we recommend using the `retry_on_failure` Test Repetition Mode (`test_repetition_mode`). | required | `no` |
 | `xcconfig_content` | Build settings to override the project's build settings.  Build settings must be separated by newline character (`\n`).  Example:  ``` COMPILER_INDEX_STORE_ENABLE = NO ONLY_ACTIVE_ARCH[config=Debug][sdk=*][arch=*] = YES ```  The input value sets xcodebuild's `-xcconfig` option. |  | `COMPILER_INDEX_STORE_ENABLE = NO` |
-| `perform_clean_action` |  | required | `no` |
-| `xcodebuild_options` |  |  |  |
+| `perform_clean_action` | If this input is set, `clean` xcodebuild action will be performed besides the `test` action. | required | `no` |
+| `xcodebuild_options` | Additional options to be added to the executed xcodebuild command. |  |  |
 | `log_formatter` | Defines how xcodebuild command's log is formatted.  Available options: - `xcpretty`: The xcodebuild command's output will be prettified by xcpretty. - `xcodebuild`: Only the last 20 lines of raw xcodebuild output will be visible in the build log.  The raw xcodebuild log will be exported in both cases. | required | `xcpretty` |
-| `xcpretty_options` |  |  | `--color --report html --output "${BITRISE_DEPLOY_DIR}/xcode-test-results-${BITRISE_SCHEME}.html"` |
+| `xcpretty_options` | Additional options to be added to the executed xcpretty command. |  | `--color --report html --output "${BITRISE_DEPLOY_DIR}/xcode-test-results-${BITRISE_SCHEME}.html"` |
 | `cache_level` | Defines what cache content should be automatically collected.  Available options: - `none`: Disable collecting cache content. - `swift_packages`: Collect Swift PM packages added to the Xcode project. |  | `swift_packages` |
-| `verbose_log` |  |  | `no` |
-| `collect_simulator_diagnostics` |  |  | `never` |
+| `verbose_log` | If this input is set, the Step will print additional logs for debugging. |  | `no` |
+| `collect_simulator_diagnostics` | If this input is set, the simulator verbose logging will be enabled and the simulator diagnostics log will be exported. |  | `never` |
 | `headless_mode` | In headless mode the simulator is not launched in the foreground.  If this input is set, the simulator will not be visible but tests (even the screenshots) will run just like if you run a simulator in foreground. |  | `yes` |
 </details>
 
@@ -68,11 +68,11 @@ You can also run this step directly with [Bitrise CLI](https://github.com/bitris
 
 | Environment Variable | Description |
 | --- | --- |
-| `BITRISE_XCODE_TEST_RESULT` |  |
+| `BITRISE_XCODE_TEST_RESULT` | Result of the tests. 'succeeded' or 'failed'. |
 | `BITRISE_XCRESULT_PATH` | The path of the generated `.xcresult`. |
 | `BITRISE_XCRESULT_ZIP_PATH` | The path of the zipped `.xcresult`. |
 | `BITRISE_XCODE_TEST_ATTACHMENTS_PATH` | This is the path of the test attachments zip. |
-| `BITRISE_XCODEBUILD_BUILD_LOG_PATH` | If `single_build` is set to false, the step runs `xcodebuild build` before the test,   and exports the raw xcodebuild log. |
+| `BITRISE_XCODEBUILD_BUILD_LOG_PATH` | If `single_build` is set to false, the step runs `xcodebuild build` before the test, and exports the raw xcodebuild log. |
 | `BITRISE_XCODEBUILD_TEST_LOG_PATH` | The step exports the `xcodebuild test` command output log. |
 </details>
 

@@ -156,8 +156,9 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 	if err != nil {
 		return Config{}, fmt.Errorf("failed to get absolute project path: %w", err)
 	}
-	if filepath.Ext(projectPath) != ".xcodeproj" && filepath.Ext(projectPath) != ".xcworkspace" {
-		return Config{}, fmt.Errorf("invalid project file (%s), extension should be (.xcodeproj/.xcworkspace)", projectPath)
+	fileExtension := filepath.Ext(projectPath)
+	if fileExtension != ".xcodeproj" && fileExtension != ".xcworkspace" && filepath.Base(projectPath) != "Package.swift" {
+		return Config{}, fmt.Errorf("invalid project path: should be an .xcodeproj/.xcworkspace or Package.swift file (actual: %s)", projectPath)
 	}
 
 	sim, err := s.getSimulatorForDestination(input.Destination)
@@ -413,7 +414,6 @@ func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 		return result, -1, fmt.Errorf("could not create test output temporary directory: %w", err)
 	}
 	xcresultPath := path.Join(tempDir, fmt.Sprintf("Test-%s.xcresult", cfg.Scheme))
-
 	var swiftPackagesPath string
 	if cfg.XcodeMajorVersion >= 11 {
 		var err error

@@ -52,11 +52,12 @@ inputs:
 - project_path: $BITRISE_PROJECT_PATH
   opts:
     title: Project path
-    summary: Xcode Project (`.xcodeproj`) or Workspace (`.xcworkspace`) path.
+    summary: Path of the Xcode Project (`.xcodeproj`), Workspace (`.xcworkspace`) or Swift package (`Package.swift`)
     description: |-
       Xcode Project (`.xcodeproj`) or Workspace (`.xcworkspace`) path.
-
       The input value sets xcodebuild's `-project` or `-workspace` option.
+
+      If this is a Swift package, this should be the path to the `Package.swift` file.
     is_required: true
 
 - scheme: $BITRISE_SCHEME
@@ -274,7 +275,8 @@ inputs:
 outputs:
 - BITRISE_XCODE_TEST_RESULT:
   opts:
-    title: Result of the tests. 'succeeded' or 'failed'.
+    title: Test result
+    description: Result of the tests. 'succeeded' or 'failed'.
     value_options:
     - succeeded
     - failed

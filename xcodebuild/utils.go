@@ -68,13 +68,14 @@ type TestParams struct {
 	AdditionalOptions              string
 }
 
-func (b *xcodebuild) runXcodebuildCmd(args ...string) (string, int, error) {
+func (b *xcodebuild) runXcodebuildCmd(workDir string, args ...string) (string, int, error) {
 	var outBuffer bytes.Buffer
 
 	cmd := b.commandFactory.Create("xcodebuild", args, &command.Opts{
 		Stdout: &outBuffer,
 		Stderr: &outBuffer,
 		Env:    xcodeCommandEnvs,
+		Dir:    workDir,
 	})
 
 	b.logger.Printf("$ %s", cmd.PrintableCommandArgs())
@@ -89,7 +90,7 @@ func (b *xcodebuild) runXcodebuildCmd(args ...string) (string, int, error) {
 	return outBuffer.String(), exitCode, err
 }
 
-func (b *xcodebuild) runPrettyXcodebuildCmd(useStdOut bool, xcprettyArgs []string, xcodebuildArgs []string) (string, int, error) {
+func (b *xcodebuild) runPrettyXcodebuildCmd(workDir string, xcprettyArgs []string, xcodebuildArgs []string) (string, int, error) {
 	// build outputs:
 	// - write it into a buffer
 	// - write it into the pipe, which will be fed into xcpretty
@@ -98,15 +99,13 @@ func (b *xcodebuild) runPrettyXcodebuildCmd(useStdOut bool, xcprettyArgs []strin
 	buildOutWriters := []io.Writer{pipeWriter}
 	buildOutWriter := CreateBufferedWriter(&buildOutBuffer, buildOutWriters...)
 	//
-	var prettyOutWriter io.Writer
-	if useStdOut {
-		prettyOutWriter = os.Stdout
-	}
+	prettyOutWriter := os.Stdout
 
 	buildCmd := b.commandFactory.Create("xcodebuild", xcodebuildArgs, &command.Opts{
 		Stdout: buildOutWriter,
 		Stderr: buildOutWriter,
 		Env:    xcodeCommandEnvs,
+		Dir:    workDir,
 	})
 
 	prettyCmd := b.commandFactory.Create("xcpretty", xcprettyArgs, &command.Opts{
@@ -147,11 +146,16 @@ func (b *xcodebuild) runPrettyXcodebuildCmd(useStdOut bool, xcprettyArgs []strin
 }
 
 func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, error) {
-	projectFlag := "-project"
-	if filepath.Ext(params.ProjectPath) == ".xcworkspace" {
-		projectFlag = "-workspace"
+	var xcodebuildArgs []string
+
+	fileExtension := filepath.Ext(params.ProjectPath)
+	if fileExtension == ".xcodeproj" {
+		xcodebuildArgs = append(xcodebuildArgs, "-project", params.ProjectPath)
+	} else if fileExtension == ".xcworkspace" {
+		xcodebuildArgs = append(xcodebuildArgs, "-workspace", params.ProjectPath)
 	}
-	xcodebuildArgs := []string{projectFlag, params.ProjectPath, "-scheme", params.Scheme}
+	xcodebuildArgs = append(xcodebuildArgs, "-scheme", params.Scheme)
+
 	if params.PerformCleanAction {
 		xcodebuildArgs = append(xcodebuildArgs, "clean")
 	}
@@ -243,8 +247,12 @@ func (b *xcodebuild) runTest(params TestRunParams) (string, int, error) {
 		return "", 1, err
 	}
 
-	b.logger.Infof("Running the tests...")
+	b.logger.Donef("Running the tests...")
 
+	// When the project path input is set to an SPM Package.swift file, we need to execute the xcodebuild command
+	// within the working directory of the project. This is optional for regular workspaces and projects,
+	// because we use the `-project` flag to point to the .xcproj/xcworkspace, but we do it for consistency.
+	workDir := filepath.Dir(params.TestParams.ProjectPath)
 	var rawOutput string
 	var exit int
 	var testErr error
@@ -253,13 +261,14 @@ func (b *xcodebuild) runTest(params TestRunParams) (string, int, error) {
 		if err != nil {
 			return "", 1, err
 		}
-
-		rawOutput, exit, testErr = b.runPrettyXcodebuildCmd(true, xcprettyArgs, xcodebuildArgs)
+		rawOutput, exit, testErr = b.runPrettyXcodebuildCmd(workDir, xcprettyArgs, xcodebuildArgs)
 	} else {
-		rawOutput, exit, testErr = b.runXcodebuildCmd(xcodebuildArgs...)
+		rawOutput, exit, testErr = b.runXcodebuildCmd(workDir, xcodebuildArgs...)
 	}
 
-	fmt.Println("exit: ", exit)
+	if exit != 0 {
+		fmt.Println("Exit code: ", exit)
+	}
 
 	if testErr != nil {
 		return b.handleTestRunError(params, testRunResult{xcodebuildLog: rawOutput, exitCode: exit, err: testErr})

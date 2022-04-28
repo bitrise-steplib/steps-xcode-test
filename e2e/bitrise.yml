@@ -2,6 +2,22 @@ format_version: "11"
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 workflows:
+  test_swift_package:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/swift-package-deckofplayingcards
+    - TEST_APP_BRANCH: main
+    - BITRISE_PROJECT_PATH: Package.swift
+    - BITRISE_SCHEME: DeckOfPlayingCards
+    - TEST_PLAN: ""
+    - DESTINATION: platform=iOS Simulator,name=iPhone 8,OS=latest
+    - LOG_FORMATTER: xcpretty
+    - RETRY_ON_FAILURE: "no"
+    - EXPECT_TEST_FAILURE: "false"
+    - CACHE_LEVEL: swift_packages
+    after_run:
+    - _run
+    - _check_outputs
+
   test_objc_xcpretty:
     envs:
     - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git

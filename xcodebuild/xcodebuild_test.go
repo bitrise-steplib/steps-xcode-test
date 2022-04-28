@@ -65,12 +65,21 @@ func Test_GivenXcodebuild_WhenInvoked_ThenUsesCorrectArguments(t *testing.T) {
 				return parameters
 			},
 		},
+		{
+			name: "Swift package",
+			input: func() TestRunParams {
+				parameters := runParameters()
+				parameters.TestParams.ProjectPath = "MyPackage/Package.swift"
+
+				return parameters
+			},
+		},
 	}
 
 	for _, test := range tests {
-		t.Log(test.name)
-
-		runArgumentsTest(t, test.input())
+		t.Run(test.name, func(t *testing.T) {
+			runArgumentsTest(t, test.input())
+		})
 	}
 }
 
@@ -266,7 +275,7 @@ func createXcodebuildAndMocks(stdoutProvider func() string) (Xcodebuild, testing
 
 func runParameters() TestRunParams {
 	testParams := TestParams{
-		ProjectPath:                    "ProjectPath",
+		ProjectPath:                    "ProjectPath.xcodeproj",
 		Scheme:                         "Scheme",
 		Destination:                    "Destination",
 		TestPlan:                       "TestPlan",
@@ -292,10 +301,13 @@ func runParameters() TestRunParams {
 }
 
 func argumentsFromRunParameters(parameters TestRunParams) []string {
-	arguments := []string{
-		"-project", parameters.TestParams.ProjectPath,
-		"-scheme", parameters.TestParams.Scheme,
+	var arguments []string
+
+	if !strings.HasSuffix(parameters.TestParams.ProjectPath, "Package.swift") {
+		arguments = append(arguments, "-project", parameters.TestParams.ProjectPath)
 	}
+
+	arguments = append(arguments, "-scheme", parameters.TestParams.Scheme)
 
 	if parameters.TestParams.PerformCleanAction {
 		arguments = append(arguments, "clean")
