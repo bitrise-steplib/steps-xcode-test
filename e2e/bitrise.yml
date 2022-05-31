@@ -74,7 +74,7 @@ workflows:
     - _check_outputs
     - _check_cache
 
-  test_xcconfig_path:
+  test_xcconfig_rel_path:
     envs:
     - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
     - TEST_APP_BRANCH: master
@@ -86,7 +86,7 @@ workflows:
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: none
-    - XCCONFIG_CONTENT: /tmp/p.xcconfig
+    - XCCONFIG_CONTENT: ./_tmp2/p.xcconfig
     before_run:
     - utility_create_xcconfig
     after_run:
@@ -103,7 +103,8 @@ workflows:
             #!/bin/env bash
             set -eox pipefail
 
-            echo "A=a" > /tmp/p.xcconfig
+            mkdir -p ./_tmp2
+            echo "A=a" > ./_tmp2/p.xcconfig
 
   _run:
     before_run:
