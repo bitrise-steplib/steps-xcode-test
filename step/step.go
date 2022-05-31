@@ -11,6 +11,7 @@ import (
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/retry"
+	"github.com/bitrise-io/go-utils/sliceutil"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-io/go-xcode/v2/destination"
@@ -19,6 +20,7 @@ import (
 	"github.com/bitrise-steplib/steps-xcode-test/simulator"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
 	"github.com/bitrise-steplib/steps-xcode-test/xcpretty"
+	"github.com/kballard/go-shellquote"
 )
 
 const (
@@ -86,7 +88,7 @@ type Config struct {
 
 	XCConfigContent    string
 	PerformCleanAction bool
-	XcodebuildOptions  string
+	XcodebuildOptions  []string
 
 	LogFormatter    string
 	XcprettyOptions string
@@ -175,7 +177,20 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 		return Config{}, errors.New("the 'Relaunch Tests for Each Repetition' (relaunch_tests_for_each_repetition) cannot be used if 'Test Repetition Mode' (test_repetition_mode) is 'none'")
 	}
 
-	return createConfig(input, projectPath, int(xcodebuildVersion.MajorVersion), sim), nil
+	additionalOptions, err := shellquote.Split(input.XcodebuildOptions)
+	if err != nil {
+		return Config{}, fmt.Errorf("provided XcodebuildOptions (%s) are not valid CLI parameters: %w", input.XcodebuildOptions, err)
+	}
+
+	if strings.TrimSpace(input.XCConfigContent) == "" {
+		input.XCConfigContent = ""
+	}
+	if sliceutil.IsStringInSlice("-xcconfig", additionalOptions) &&
+		input.XCConfigContent != "" {
+		return Config{}, fmt.Errorf("`-xcconfig` option found in XcodebuildOptions (`xcodebuild_options`), please clear Build settings (xcconfig) (`xcconfig_content`) input as only one can be set")
+	}
+
+	return createConfig(input, projectPath, int(xcodebuildVersion.MajorVersion), sim, additionalOptions), nil
 }
 
 // InstallDeps ...

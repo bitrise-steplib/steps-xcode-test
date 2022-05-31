@@ -32,7 +32,7 @@ If you have the Deploy to Bitrise.io step (after this step),
 that will attach the file to your build as an artifact!`))
 }
 
-func createConfig(input Input, projectPath string, xcodeMajorVersion int, sim simulator.Simulator) Config {
+func createConfig(input Input, projectPath string, xcodeMajorVersion int, sim simulator.Simulator, additionalOptions []string) Config {
 	return Config{
 		ProjectPath: projectPath,
 		Scheme:      input.Scheme,
@@ -50,7 +50,7 @@ func createConfig(input Input, projectPath string, xcodeMajorVersion int, sim si
 
 		XCConfigContent:    input.XCConfigContent,
 		PerformCleanAction: input.PerformCleanAction,
-		XcodebuildOptions:  input.XcodebuildOptions,
+		XcodebuildOptions:  additionalOptions,
 
 		LogFormatter:    input.LogFormatter,
 		XcprettyOptions: input.XcprettyOptions,

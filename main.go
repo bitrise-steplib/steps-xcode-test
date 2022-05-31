@@ -65,7 +65,7 @@ func createStep(logger log.Logger) step.XcodeTestRunner {
 	pathChecker := pathutil.NewPathChecker()
 	pathProvider := pathutil.NewPathProvider()
 	fileManager := fileutil.NewFileManager()
-	xcconfigWriter := xcconfig.NewWriter(pathProvider, fileManager)
+	xcconfigWriter := xcconfig.NewWriter(pathProvider, fileManager, pathChecker)
 	xcodebuilder := xcodebuild.NewXcodebuild(logger, commandFactory, pathChecker, fileManager, xcconfigWriter)
 	simulatorManager := simulator.NewManager(commandFactory)
 	swiftCache := cache.NewSwiftPackageCache()
