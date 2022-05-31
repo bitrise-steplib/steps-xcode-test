@@ -39,10 +39,10 @@ workflows:
         # Inputs with non-default value or using environment variables
         - project_path: ./_tmp/$BITRISE_PROJECT_PATH
         - scheme: $BITRISE_SCHEME
-        # - xcodebuild_test_options: -verbose
-        # - export_uitest_artifacts: "true"
-        # - verbose: "yes"
-        # - test_plan: UITests
+        - xcodebuild_test_options: -verbose
+        - export_uitest_artifacts: "true"
+        - verbose: "yes"
+        - test_plan: UITests
 
   generate_readme:
     steps:
