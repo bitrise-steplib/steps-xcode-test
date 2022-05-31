@@ -60,7 +60,7 @@ func run() int {
 func createStep(logger log.Logger) step.XcodeTestRunner {
 	envRepository := env.NewRepository()
 	inputParser := stepconf.NewInputParser(envRepository)
-	xcprettyInstaller := xcpretty.NewInstaller(goxcpretty.NewXcpretty())
+	xcprettyInstaller := xcpretty.NewInstaller(goxcpretty.NewXcpretty(logger))
 	commandFactory := command.NewFactory(envRepository)
 	pathChecker := pathutil.NewPathChecker()
 	pathProvider := pathutil.NewPathProvider()
