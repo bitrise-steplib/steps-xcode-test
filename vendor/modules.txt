@@ -38,7 +38,7 @@ github.com/bitrise-io/go-utils/v2/pathutil
 github.com/bitrise-io/go-xcode/models
 github.com/bitrise-io/go-xcode/simulator
 github.com/bitrise-io/go-xcode/utility
-# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.16
+# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.17
 ## explicit; go 1.16
 github.com/bitrise-io/go-xcode/v2/destination
 github.com/bitrise-io/go-xcode/v2/xcconfig
