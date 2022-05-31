@@ -23,6 +23,7 @@ github.com/bitrise-io/go-utils/pathutil
 github.com/bitrise-io/go-utils/pointers
 github.com/bitrise-io/go-utils/progress
 github.com/bitrise-io/go-utils/retry
+github.com/bitrise-io/go-utils/sliceutil
 github.com/bitrise-io/go-utils/stringutil
 github.com/bitrise-io/go-utils/ziputil
 # github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.2
@@ -32,12 +33,12 @@ github.com/bitrise-io/go-utils/v2/env
 github.com/bitrise-io/go-utils/v2/fileutil
 github.com/bitrise-io/go-utils/v2/log
 github.com/bitrise-io/go-utils/v2/pathutil
-# github.com/bitrise-io/go-xcode v1.0.2
+# github.com/bitrise-io/go-xcode v1.0.6
 ## explicit
 github.com/bitrise-io/go-xcode/models
 github.com/bitrise-io/go-xcode/simulator
 github.com/bitrise-io/go-xcode/utility
-# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.12
+# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.15
 ## explicit
 github.com/bitrise-io/go-xcode/v2/destination
 github.com/bitrise-io/go-xcode/v2/xcconfig
