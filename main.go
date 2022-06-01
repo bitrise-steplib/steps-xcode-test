@@ -60,19 +60,19 @@ func run() int {
 func createStep(logger log.Logger) step.XcodeTestRunner {
 	envRepository := env.NewRepository()
 	inputParser := stepconf.NewInputParser(envRepository)
-	xcprettyInstaller := xcpretty.NewInstaller(goxcpretty.NewXcpretty())
+	xcprettyInstaller := xcpretty.NewInstaller(goxcpretty.NewXcpretty(logger))
 	commandFactory := command.NewFactory(envRepository)
 	pathChecker := pathutil.NewPathChecker()
 	pathProvider := pathutil.NewPathProvider()
+	pathModifier := pathutil.NewPathModifier()
 	fileManager := fileutil.NewFileManager()
-	xcconfigWriter := xcconfig.NewWriter(pathProvider, fileManager)
+	xcconfigWriter := xcconfig.NewWriter(pathProvider, fileManager, pathChecker, pathModifier)
 	xcodebuilder := xcodebuild.NewXcodebuild(logger, commandFactory, pathChecker, fileManager, xcconfigWriter)
 	simulatorManager := simulator.NewManager(commandFactory)
 	swiftCache := cache.NewSwiftPackageCache()
 	testAddonExporter := testaddon.NewExporter()
 	stepenvRepository := stepenv.NewRepository(envRepository)
 	outputExporter := output.NewExporter(stepenvRepository, logger, testAddonExporter)
-	pathModifier := pathutil.NewPathModifier()
 
 	return step.NewXcodeTestRunner(inputParser, logger, xcprettyInstaller, xcodebuilder, simulatorManager, swiftCache, outputExporter, pathModifier, pathProvider)
 }

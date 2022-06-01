@@ -37,6 +37,45 @@ Add this step directly to your workflow in the [Bitrise Workflow Editor](https:/
 
 You can also run this step directly with [Bitrise CLI](https://github.com/bitrise-io/bitrise).
 
+### Examples
+
+Run the default Test Plan or Test Targets associated with a Scheme:
+```yaml
+- xcode-test:
+    inputs:
+    - project_path: ./ios-sample/ios-sample.xcodeproj
+    - scheme: ios-sample
+```
+
+
+Run tests in a specific Test Plan associated with a Scheme:
+```yaml
+- xcode-test:
+    inputs:
+    - project_path: ./ios-sample/ios-sample.xcodeproj
+    - scheme: ios-sample
+    - test_plan: UITests
+```
+
+Run tests with custom xcconfig content:
+```yaml
+- xcode-test:
+    inputs:
+    - project_path: ./ios-sample/ios-sample.xcodeproj
+    - scheme: ios-sample
+    - xcconfig_content: |
+        CODE_SIGN_IDENTITY = Apple Development
+```
+
+Run tests with custom xcconfig file path:
+```yaml
+- xcode-test:
+    inputs:
+    - project_path: ./ios-sample/ios-sample.xcodeproj
+    - scheme: ios-sample
+    - xcconfig_content: ./ios-sample/ios-sample/Configurations/Dev.xcconfig
+```
+
 ## ⚙️ Configuration
 
 <details>
@@ -52,9 +91,9 @@ You can also run this step directly with [Bitrise CLI](https://github.com/bitris
 | `maximum_test_repetitions` | The maximum number of times a test repeats based on the Test Repetition Mode (`test_repetition_mode`).  Should be more than 1 if the Test Repetition Mode is other than `none`.  The input value sets xcodebuild's `-test-iterations` option. | required | `3` |
 | `relaunch_tests_for_each_repetition` | If this input is set, tests will launch in a new process for each repetition.  By default, tests launch in the same process for each repetition.  The input value sets xcodebuild's `-test-repetition-relaunch-enabled` option. |  | `no` |
 | `should_retry_test_on_fail` | If this input is set, the Step will rerun the tests in the case of failed tests.  Note that all the tests will be rerun, not just the ones that failed.  This input is not available if you are using Xcode 13+. In that case, we recommend using the `retry_on_failure` Test Repetition Mode (`test_repetition_mode`). | required | `no` |
-| `xcconfig_content` | Build settings to override the project's build settings.  Build settings must be separated by newline character (`\n`).  Example:  ``` COMPILER_INDEX_STORE_ENABLE = NO ONLY_ACTIVE_ARCH[config=Debug][sdk=*][arch=*] = YES ```  The input value sets xcodebuild's `-xcconfig` option. |  | `COMPILER_INDEX_STORE_ENABLE = NO` |
+| `xcconfig_content` | Build settings to override the project's build settings, using xcodebuild's `-xcconfig` option.  You can't define `-xcconfig` option in `Additional options for the xcodebuild command` if this input is set.  If empty, no setting is changed. When set it can be either: 1.  Existing `.xcconfig` file path.      Example:      `./ios-sample/ios-sample/Configurations/Dev.xcconfig`  2.  The contents of a newly created temporary `.xcconfig` file. (This is the default.)      Build settings must be separated by newline character (`\n`).      Example:     ```     COMPILER_INDEX_STORE_ENABLE = NO     ONLY_ACTIVE_ARCH[config=Debug][sdk=*][arch=*] = YES     ``` |  | `COMPILER_INDEX_STORE_ENABLE = NO` |
 | `perform_clean_action` | If this input is set, `clean` xcodebuild action will be performed besides the `test` action. | required | `no` |
-| `xcodebuild_options` | Additional options to be added to the executed xcodebuild command. |  |  |
+| `xcodebuild_options` | Additional options to be added to the executed xcodebuild command.  Prefer using `Build settings (xcconfig)` input for specifying `-xcconfig` option. You can't use both. |  |  |
 | `log_formatter` | Defines how xcodebuild command's log is formatted.  Available options: - `xcpretty`: The xcodebuild command's output will be prettified by xcpretty. - `xcodebuild`: Only the last 20 lines of raw xcodebuild output will be visible in the build log.  The raw xcodebuild log will be exported in both cases. | required | `xcpretty` |
 | `xcpretty_options` | Additional options to be added to the executed xcpretty command. |  | `--color --report html --output "${BITRISE_DEPLOY_DIR}/xcode-test-results-${BITRISE_SCHEME}.html"` |
 | `cache_level` | Defines what cache content should be automatically collected.  Available options: - `none`: Disable collecting cache content. - `swift_packages`: Collect Swift PM packages added to the Xcode project. |  | `swift_packages` |

@@ -286,7 +286,7 @@ func runParameters() TestRunParams {
 		XCConfigContent:                "XCConfigContent",
 		PerformCleanAction:             false,
 		RetryTestsOnFailure:            false,
-		AdditionalOptions:              "AdditionalOptions",
+		AdditionalOptions:              []string{"AdditionalOptions"},
 	}
 
 	return TestRunParams{
@@ -340,9 +340,7 @@ func argumentsFromRunParameters(parameters TestRunParams) []string {
 		arguments = append(arguments, "-xcconfig", xcconfigPath)
 	}
 
-	if parameters.TestParams.AdditionalOptions != "" {
-		arguments = append(arguments, parameters.TestParams.AdditionalOptions)
-	}
+	arguments = append(arguments, parameters.TestParams.AdditionalOptions...)
 
 	return arguments
 }

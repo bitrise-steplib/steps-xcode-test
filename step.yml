@@ -27,8 +27,6 @@ description: |-
 website: https://github.com/bitrise-steplib/steps-xcode-test
 source_code_url: https://github.com/bitrise-steplib/steps-xcode-test
 support_url: https://github.com/bitrise-steplib/steps-xcode-test/issues
-host_os_tags:
-- osx-10.10
 project_type_tags:
 - ios
 - cordova
@@ -37,7 +35,6 @@ project_type_tags:
 - flutter
 type_tags:
 - test
-is_requires_admin_user: false
 is_always_run: false
 is_skippable: false
 deps:
@@ -164,20 +161,28 @@ inputs:
   opts:
     category: xcodebuild configuration
     title: Build settings (xcconfig)
-    summary: Build settings to override the project's build settings.
+    summary: Build settings to override the project's build settings, using xcodebuild's `-xcconfig` option.
     description: |-
-      Build settings to override the project's build settings.
+      Build settings to override the project's build settings, using xcodebuild's `-xcconfig` option.
 
-      Build settings must be separated by newline character (`\n`).
+      You can't define `-xcconfig` option in `Additional options for the xcodebuild command` if this input is set.
 
-      Example:
+      If empty, no setting is changed. When set it can be either:
+      1.  Existing `.xcconfig` file path.
 
-      ```
-      COMPILER_INDEX_STORE_ENABLE = NO
-      ONLY_ACTIVE_ARCH[config=Debug][sdk=*][arch=*] = YES
-      ```
+          Example:
 
-      The input value sets xcodebuild's `-xcconfig` option.
+          `./ios-sample/ios-sample/Configurations/Dev.xcconfig`
+
+      2.  The contents of a newly created temporary `.xcconfig` file. (This is the default.)
+
+          Build settings must be separated by newline character (`\n`).
+
+          Example:
+          ```
+          COMPILER_INDEX_STORE_ENABLE = NO
+          ONLY_ACTIVE_ARCH[config=Debug][sdk=*][arch=*] = YES
+          ```
 
 - perform_clean_action: "no"
   opts:
@@ -194,6 +199,10 @@ inputs:
     category: xcodebuild configuration
     title: Additional options for the xcodebuild command
     summary: Additional options to be added to the executed xcodebuild command.
+    description: |-
+      Additional options to be added to the executed xcodebuild command.
+
+      Prefer using `Build settings (xcconfig)` input for specifying `-xcconfig` option. You can't use both.
 
 # xcodebuild log formatting
 

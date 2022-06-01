@@ -65,7 +65,7 @@ type TestParams struct {
 	XCConfigContent                string
 	PerformCleanAction             bool
 	RetryTestsOnFailure            bool
-	AdditionalOptions              string
+	AdditionalOptions              []string
 }
 
 func (b *xcodebuild) runXcodebuildCmd(workDir string, args ...string) (string, int, error) {
@@ -189,13 +189,7 @@ func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, erro
 		xcodebuildArgs = append(xcodebuildArgs, "-xcconfig", xcconfigPath)
 	}
 
-	if params.AdditionalOptions != "" {
-		options, err := shellquote.Split(params.AdditionalOptions)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse additional options (%s): %w", params.AdditionalOptions, err)
-		}
-		xcodebuildArgs = append(xcodebuildArgs, options...)
-	}
+	xcodebuildArgs = append(xcodebuildArgs, params.AdditionalOptions...)
 
 	return xcodebuildArgs, nil
 }
