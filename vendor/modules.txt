@@ -4,10 +4,10 @@ github.com/bitrise-io/bitrise/configs
 # github.com/bitrise-io/go-steputils v1.0.2
 ## explicit; go 1.15
 github.com/bitrise-io/go-steputils/cache
-github.com/bitrise-io/go-steputils/output
 github.com/bitrise-io/go-steputils/tools
-# github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.2
+# github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.6
 ## explicit; go 1.16
+github.com/bitrise-io/go-steputils/v2/output
 github.com/bitrise-io/go-steputils/v2/ruby
 github.com/bitrise-io/go-steputils/v2/stepconf
 github.com/bitrise-io/go-steputils/v2/stepenv
