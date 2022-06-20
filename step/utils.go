@@ -6,13 +6,13 @@ import (
 	"github.com/bitrise-io/go-utils/colorstring"
 	"github.com/bitrise-io/go-utils/stringutil"
 	"github.com/bitrise-io/go-utils/v2/log"
-	"github.com/bitrise-steplib/steps-xcode-test/simulator"
+	"github.com/bitrise-io/go-xcode/v2/destination"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
 )
 
 type Utils interface {
 	PrintLastLinesOfXcodebuildTestLog(rawXcodebuildOutput string, isRunSuccess bool)
-	CreateConfig(input Input, projectPath string, xcodeMajorVersion int, sim simulator.Simulator, additionalOptions []string) Config
+	CreateConfig(input Input, projectPath string, xcodeMajorVersion int, sim destination.Deviec, additionalOptions []string) Config
 	CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath string) xcodebuild.TestRunParams
 }
 
@@ -49,7 +49,7 @@ that will attach the file to your build as an artifact!`))
 
 }
 
-func (u utils) CreateConfig(input Input, projectPath string, xcodeMajorVersion int, sim simulator.Simulator, additionalOptions []string) Config {
+func (u utils) CreateConfig(input Input, projectPath string, xcodeMajorVersion int, sim destination.Device, additionalOptions []string) Config {
 	return Config{
 		ProjectPath: projectPath,
 		Scheme:      input.Scheme,
