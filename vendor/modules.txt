@@ -33,14 +33,14 @@ github.com/bitrise-io/go-utils/v2/env
 github.com/bitrise-io/go-utils/v2/fileutil
 github.com/bitrise-io/go-utils/v2/log
 github.com/bitrise-io/go-utils/v2/pathutil
-# github.com/bitrise-io/go-xcode v1.0.8
+# github.com/bitrise-io/go-xcode v1.0.9
 ## explicit; go 1.15
 github.com/bitrise-io/go-xcode/models
-github.com/bitrise-io/go-xcode/simulator
 github.com/bitrise-io/go-xcode/utility
-# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.17
+# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.19
 ## explicit; go 1.16
 github.com/bitrise-io/go-xcode/v2/destination
+github.com/bitrise-io/go-xcode/v2/simulator
 github.com/bitrise-io/go-xcode/v2/xcconfig
 github.com/bitrise-io/go-xcode/v2/xcodebuild
 github.com/bitrise-io/go-xcode/v2/xcodecache
