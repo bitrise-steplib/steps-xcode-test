@@ -8,19 +8,35 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/env"
+	"github.com/bitrise-io/go-utils/v2/log"
 )
 
-// Replaces characters '/' and ':', which are unsupported in filnenames on macOS
-func replaceUnsupportedFilenameCharacters(s string) string {
+type TestAddon interface {
+	ReplaceUnsupportedFilenameCharacters(s string) string
+	CopyDirectory(sourceBundle string, targetDir string) error
+	SaveBundleMetadata(outputDir string, bundleName string) error
+}
+
+type testAddon struct {
+	logger log.Logger
+}
+
+func NewTestAddon(logger log.Logger) TestAddon {
+	return &testAddon{
+		logger: logger,
+	}
+}
+
+// ReplaceUnsupportedFilenameCharacters Replaces characters '/' and ':', which are unsupported in filnenames on macOS
+func (t testAddon) ReplaceUnsupportedFilenameCharacters(s string) string {
 	s = strings.Replace(s, "/", "-", -1)
 	s = strings.Replace(s, ":", "-", -1)
 	return s
 }
 
-func copyDirectory(sourceBundle string, targetDir string) error {
+func (t testAddon) CopyDirectory(sourceBundle string, targetDir string) error {
 	if err := os.MkdirAll(targetDir, 0700); err != nil {
 		return fmt.Errorf("failed to create directory (%s): %w", targetDir, err)
 	}
@@ -30,7 +46,7 @@ func copyDirectory(sourceBundle string, targetDir string) error {
 	cmd := command.NewFactory(env.NewRepository()).Create("cp", []string{"-a", sourceBundle, targetDir + "/"}, nil)
 	//cmd := command.New("cp", "-a", sourceBundle, targetDir+"/")
 	// TODO: migrate log
-	log.Donef("$ %s", cmd.PrintableCommandArgs())
+	t.logger.Donef("$ %s", cmd.PrintableCommandArgs())
 	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
 		return fmt.Errorf("copy failed: %w, output: %s", err, out)
 	}
@@ -38,7 +54,7 @@ func copyDirectory(sourceBundle string, targetDir string) error {
 	return nil
 }
 
-func saveBundleMetadata(outputDir string, bundleName string) error {
+func (t testAddon) SaveBundleMetadata(outputDir string, bundleName string) error {
 	// Save test bundle metadata
 	type testBundle struct {
 		BundleName string `json:"test-name"`
