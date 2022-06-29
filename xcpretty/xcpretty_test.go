@@ -1,6 +1,7 @@
 package xcpretty
 
 import (
+	"github.com/bitrise-io/go-utils/v2/log"
 	"testing"
 
 	gocommand "github.com/bitrise-io/go-utils/v2/command"
@@ -58,7 +59,7 @@ func createInstallerAndMocks(installed bool) (Installer, *version.Version, testi
 	mockxcpretty.On("Install").Return([]gocommand.Command{command}, nil)
 	mockxcpretty.On("Version").Return(version, nil)
 
-	installer := NewInstaller(mockxcpretty)
+	installer := NewInstaller(mockxcpretty, log.NewLogger())
 
 	return installer, version, testingMocks{
 		command:  command,
