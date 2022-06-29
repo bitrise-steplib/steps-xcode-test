@@ -7,7 +7,7 @@ import (
 
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
 	"github.com/bitrise-io/go-utils/v2/log"
-	"github.com/bitrise-steplib/steps-xcode-test/simulator"
+	"github.com/bitrise-io/go-xcode/v2/destination"
 	"github.com/bitrise-steplib/steps-xcode-test/step/mocks"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
 	"github.com/hashicorp/go-version"
@@ -19,7 +19,8 @@ import (
 type testingMocks struct {
 	installer        *mocks.Installer
 	xcodebuilder     *mocks.Xcodebuild
-	simulatorManager *mocks.Manager
+	deviceFinder     *mocks.DeviceFinder
+	simulatorManager *mocks.SimulatorManager
 	cache            *mocks.SwiftPackageCache
 	outputExporter   *mocks.Exporter
 	pathModifier     *mocks.PathModifier
@@ -112,7 +113,7 @@ func Test_GivenTestRepetitionModeIsNone_WhenRelaunchTestsForEachRepetitionIsSet_
 	path := strings.TrimPrefix(envValues["project_path"], ".")
 	mocks.pathModifier.On("AbsPath", mock.Anything).Return(path, nil)
 
-	mocks.simulatorManager.On("GetLatestSimulatorAndVersion", mock.Anything, mock.Anything).Return(defaultSimulator(), "15", nil)
+	mocks.deviceFinder.On("FindDevice", mock.Anything, mock.Anything).Return(defaultSimulator(), nil)
 
 	// When
 	_, err := step.ProcessConfig()
@@ -222,12 +223,11 @@ func defaultEnvValues() map[string]string {
 	}
 }
 
-func defaultSimulator() simulator.Simulator {
-	return simulator.Simulator{
-		Name:        "iPhone 8 Plus",
-		ID:          "E8C36A8B-543A-4477-BB91-699C0A9EA352",
-		Status:      "Shutdown",
-		StatusOther: "",
+func defaultSimulator() destination.Device {
+	return destination.Device{
+		Name:   "iPhone 8 Plus",
+		ID:     "E8C36A8B-543A-4477-BB91-699C0A9EA352",
+		Status: "Shutdown",
 	}
 }
 
@@ -255,17 +255,19 @@ func createStepAndMocks(envValues map[string]string) (XcodeTestRunner, testingMo
 	inputParser := stepconf.NewInputParser(envRepository)
 	installer := new(mocks.Installer)
 	xcodebuilder := new(mocks.Xcodebuild)
-	simulatorManager := new(mocks.Manager)
+	deviceFinder := new(mocks.DeviceFinder)
+	simulatorManager := new(mocks.SimulatorManager)
 	cache := new(mocks.SwiftPackageCache)
 	outputExporter := new(mocks.Exporter)
 	pathModifier := new(mocks.PathModifier)
 	pathProvider := new(mocks.PathProvider)
 	utils := NewUtils(logger)
 
-	step := NewXcodeTestRunner(inputParser, logger, installer, xcodebuilder, simulatorManager, cache, outputExporter, pathModifier, pathProvider, utils)
+	step := NewXcodeTestRunner(inputParser, logger, installer, xcodebuilder, deviceFinder, simulatorManager, cache, outputExporter, pathModifier, pathProvider, utils)
 	mocks := testingMocks{
 		installer:        installer,
 		xcodebuilder:     xcodebuilder,
+		deviceFinder:     deviceFinder,
 		simulatorManager: simulatorManager,
 		cache:            cache,
 		outputExporter:   outputExporter,
