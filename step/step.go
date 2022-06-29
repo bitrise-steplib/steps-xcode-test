@@ -290,10 +290,7 @@ func (s XcodeTestRunner) Export(result Result, testFailed bool) error {
 
 	// export simulator diagnostics log
 	if result.SimulatorDiagnosticsPath != "" {
-		diagnosticsName, err := s.simulatorManager.SimulatorDiagnosticsName()
-		if err != nil {
-			return fmt.Errorf("failed to get simulator diagnostics name: %w", err)
-		}
+		diagnosticsName := filepath.Base(result.SimulatorDiagnosticsPath)
 
 		if err := s.outputExporter.ExportSimulatorDiagnostics(result.DeployDir, result.SimulatorDiagnosticsPath, diagnosticsName); err != nil {
 			return fmt.Errorf("failed to export simulator diagnostics: %w", err)
@@ -362,10 +359,10 @@ func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simula
 	if enableSimulatorVerboseLog {
 		s.logger.Infof("Enabling Simulator verbose log for better diagnostics")
 		// Boot the simulator now, so verbose logging can be enabled, and it is kept booted after running tests.
-		if err := s.simulatorManager.SimulatorBoot(simulatorID); err != nil {
+		if err := s.simulatorManager.Boot(simulatorID); err != nil {
 			return fmt.Errorf("%v", err)
 		}
-		if err := s.simulatorManager.SimulatorEnableVerboseLog(simulatorID); err != nil {
+		if err := s.simulatorManager.EnableVerboseLog(simulatorID); err != nil {
 			return fmt.Errorf("%v", err)
 		}
 
@@ -375,7 +372,7 @@ func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simula
 	if launchSimulator {
 		s.logger.Infof("Booting simulator (%s)...", simulatorID)
 
-		if err := s.simulatorManager.LaunchSimulator(simulatorID); err != nil {
+		if err := s.simulatorManager.LaunchWithGUI(simulatorID); err != nil {
 			return fmt.Errorf("failed to boot simulator: %w", err)
 		}
 
@@ -431,7 +428,7 @@ func (s XcodeTestRunner) teardownSimulator(simulatorID string, simulatorDebug ex
 		s.logger.Println()
 		s.logger.Infof("Collecting Simulator diagnostics")
 
-		diagnosticsPath, err := s.simulatorManager.SimulatorCollectDiagnostics()
+		diagnosticsPath, err := s.simulatorManager.CollectDiagnostics()
 		if err != nil {
 			s.logger.Warnf(err.Error())
 		} else {
@@ -442,7 +439,7 @@ func (s XcodeTestRunner) teardownSimulator(simulatorID string, simulatorDebug ex
 
 	// Shut down the simulator if it was started by the step for diagnostic logs.
 	if !isSimulatorBooted && simulatorDebug != never {
-		if err := s.simulatorManager.SimulatorShutdown(simulatorID); err != nil {
+		if err := s.simulatorManager.Shutdown(simulatorID); err != nil {
 			s.logger.Warnf(err.Error())
 		}
 	}

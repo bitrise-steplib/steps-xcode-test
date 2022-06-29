@@ -2,6 +2,7 @@ package step
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -182,14 +183,13 @@ func Test_GivenStep_WhenExport_ThenExportsAllTestArtifacts(t *testing.T) {
 	// Given
 	step, mocks := createStepAndMocks(t, nil)
 	result := defaultResult()
-	simulatorName := "test-name"
+	diagnosticsName := filepath.Base(result.SimulatorDiagnosticsPath)
 
-	mocks.simulatorManager.On("SimulatorDiagnosticsName").Return(simulatorName, nil)
 	mocks.outputExporter.On("ExportTestRunResult", mock.Anything)
 	mocks.outputExporter.On("ExportXCResultBundle", result.DeployDir, result.XcresultPath, result.Scheme)
 	mocks.outputExporter.On("ExportXcodebuildBuildLog", result.DeployDir, result.XcodebuildBuildLog).Return(nil)
 	mocks.outputExporter.On("ExportXcodebuildTestLog", result.DeployDir, result.XcodebuildTestLog).Return(nil)
-	mocks.outputExporter.On("ExportSimulatorDiagnostics", result.DeployDir, result.SimulatorDiagnosticsPath, simulatorName).Return(nil)
+	mocks.outputExporter.On("ExportSimulatorDiagnostics", result.DeployDir, result.SimulatorDiagnosticsPath, diagnosticsName).Return(nil)
 
 	// When
 	err := step.Export(result, false)
@@ -200,7 +200,7 @@ func Test_GivenStep_WhenExport_ThenExportsAllTestArtifacts(t *testing.T) {
 	mocks.outputExporter.AssertCalled(t, "ExportXCResultBundle", result.DeployDir, result.XcresultPath, result.Scheme)
 	mocks.outputExporter.AssertCalled(t, "ExportXcodebuildBuildLog", result.DeployDir, result.XcodebuildBuildLog)
 	mocks.outputExporter.AssertCalled(t, "ExportXcodebuildTestLog", result.DeployDir, result.XcodebuildTestLog)
-	mocks.outputExporter.AssertCalled(t, "ExportSimulatorDiagnostics", result.DeployDir, result.SimulatorDiagnosticsPath, simulatorName)
+	mocks.outputExporter.AssertCalled(t, "ExportSimulatorDiagnostics", result.DeployDir, result.SimulatorDiagnosticsPath, diagnosticsName)
 }
 
 // Helpers
@@ -238,7 +238,7 @@ func defaultResult() Result {
 		XcresultPath:             "XcresultPath",
 		XcodebuildBuildLog:       "XcodebuildBuildLog",
 		XcodebuildTestLog:        "XcodebuildTestLog",
-		SimulatorDiagnosticsPath: "SimulatorDiagnosticsPath",
+		SimulatorDiagnosticsPath: "/testpath/SimulatorDiagnosticsPath",
 	}
 }
 
