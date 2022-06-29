@@ -334,7 +334,7 @@ func (s XcodeTestRunner) validateXcodeVersion(input *Input, xcodeMajorVersion in
 
 func (s XcodeTestRunner) getSimulatorForDestination(destinationSpecifier string) (destination.Device, error) {
 	simulatorDestination, err := destination.NewSimulator(destinationSpecifier)
-	if err != nil {
+	if err != nil || simulatorDestination == nil {
 		return destination.Device{}, fmt.Errorf("invalid destination specifier (%s): %w", destinationSpecifier, err)
 	}
 
@@ -343,7 +343,7 @@ func (s XcodeTestRunner) getSimulatorForDestination(destinationSpecifier string)
 		return destination.Device{}, fmt.Errorf("simulator UDID lookup failed: %w", err)
 	}
 
-	s.logger.Infof("Simulator infos")
+	s.logger.Infof("Simulator info")
 	s.logger.Printf("* simulator_name: %s, version: %s, UDID: %s, status: %s", device.Name, device.OS, device.ID, device.Status)
 
 	return device, nil
