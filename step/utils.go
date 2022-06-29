@@ -12,7 +12,7 @@ import (
 
 type Utils interface {
 	PrintLastLinesOfXcodebuildTestLog(rawXcodebuildOutput string, isRunSuccess bool)
-	CreateConfig(input Input, projectPath string, xcodeMajorVersion int, sim destination.Deviec, additionalOptions []string) Config
+	CreateConfig(input Input, projectPath string, xcodeMajorVersion int, sim destination.Device, additionalOptions []string) Config
 	CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath string) xcodebuild.TestRunParams
 }
 
