@@ -29,7 +29,7 @@ type testingMocks struct {
 
 func Test_GivenStep_WhenRuns_ThenXcodebuildGetsCalled(t *testing.T) {
 	// Given
-	step, mocks := createStepAndMocks(nil)
+	step, mocks := createStepAndMocks(t, nil)
 
 	mocks.xcodebuilder.On("RunTest", mock.Anything).Return("", 0, nil)
 	mocks.simulatorManager.On("ResetLaunchServices").Return(nil)
@@ -71,7 +71,7 @@ func Test_GivenXcode13OrNewer_WhenShouldRetryTestOnFailIsSet_ThenFails(t *testin
 	envValues := defaultEnvValues()
 	envValues["should_retry_test_on_fail"] = "yes"
 
-	step, mocks := createStepAndMocks(envValues)
+	step, mocks := createStepAndMocks(t, envValues)
 
 	ver := newVersion(13)
 	mocks.xcodebuilder.On("Version").Return(ver, nil)
@@ -88,7 +88,7 @@ func Test_GivenXcode12OrOlder_WhenTestRepetitionModeIsSet_ThenFails(t *testing.T
 	envValues := defaultEnvValues()
 	envValues["test_repetition_mode"] = "retry_on_failure"
 
-	step, mocks := createStepAndMocks(envValues)
+	step, mocks := createStepAndMocks(t, envValues)
 
 	ver := newVersion(12)
 	mocks.xcodebuilder.On("Version").Return(ver, nil)
@@ -105,7 +105,7 @@ func Test_GivenTestRepetitionModeIsNone_WhenRelaunchTestsForEachRepetitionIsSet_
 	envValues := defaultEnvValues()
 	envValues["relaunch_tests_for_each_repetition"] = "yes"
 
-	step, mocks := createStepAndMocks(envValues)
+	step, mocks := createStepAndMocks(t, envValues)
 
 	ver := newVersion(12)
 	mocks.xcodebuilder.On("Version").Return(ver, nil)
@@ -124,7 +124,7 @@ func Test_GivenTestRepetitionModeIsNone_WhenRelaunchTestsForEachRepetitionIsSet_
 
 func Test_GivenStep_WhenInstallXcpretty_ThenInstallIt(t *testing.T) {
 	// Given
-	step, mocks := createStepAndMocks(nil)
+	step, mocks := createStepAndMocks(t, nil)
 
 	ver, err := version.NewVersion("1.0")
 	if err != nil {
@@ -165,7 +165,7 @@ func Test_GivenStep_WhenExportsTestResult_ThenSetsCorrectly(t *testing.T) {
 
 func runExportTest(t *testing.T, testFailed bool) {
 	// Given
-	step, mocks := createStepAndMocks(nil)
+	step, mocks := createStepAndMocks(t, nil)
 
 	mocks.outputExporter.On("ExportTestRunResult", testFailed)
 
@@ -180,7 +180,7 @@ func runExportTest(t *testing.T, testFailed bool) {
 
 func Test_GivenStep_WhenExport_ThenExportsAllTestArtifacts(t *testing.T) {
 	// Given
-	step, mocks := createStepAndMocks(nil)
+	step, mocks := createStepAndMocks(t, nil)
 	result := defaultResult()
 	simulatorName := "test-name"
 
@@ -242,25 +242,28 @@ func defaultResult() Result {
 	}
 }
 
-func createStepAndMocks(envValues map[string]string) (XcodeTestRunner, testingMocks) {
-	envRepository := new(mocks.Repository)
-	call := envRepository.On("Get", mock.Anything)
-	call.RunFn = func(arguments mock.Arguments) {
-		key := arguments[0].(string)
-		value := envValues[key]
-		call.ReturnArguments = mock.Arguments{value, nil}
+func createStepAndMocks(t *testing.T, envValues map[string]string) (XcodeTestRunner, testingMocks) {
+	envRepository := mocks.NewRepository(t)
+
+	if envValues != nil {
+		call := envRepository.On("Get", mock.Anything)
+		call.RunFn = func(arguments mock.Arguments) {
+			key := arguments[0].(string)
+			value := envValues[key]
+			call.ReturnArguments = mock.Arguments{value, nil}
+		}
 	}
 
 	logger := log.NewLogger()
 	inputParser := stepconf.NewInputParser(envRepository)
-	installer := new(mocks.Installer)
-	xcodebuilder := new(mocks.Xcodebuild)
-	deviceFinder := new(mocks.DeviceFinder)
-	simulatorManager := new(mocks.SimulatorManager)
-	cache := new(mocks.SwiftPackageCache)
-	outputExporter := new(mocks.Exporter)
-	pathModifier := new(mocks.PathModifier)
-	pathProvider := new(mocks.PathProvider)
+	installer := mocks.NewInstaller(t)
+	xcodebuilder := mocks.NewXcodebuild(t)
+	deviceFinder := mocks.NewDeviceFinder(t)
+	simulatorManager := mocks.NewSimulatorManager(t)
+	cache := mocks.NewSwiftPackageCache(t)
+	outputExporter := mocks.NewExporter(t)
+	pathModifier := mocks.NewPathModifier(t)
+	pathProvider := mocks.NewPathProvider(t)
 	utils := NewUtils(logger)
 
 	step := NewXcodeTestRunner(inputParser, logger, installer, xcodebuilder, deviceFinder, simulatorManager, cache, outputExporter, pathModifier, pathProvider, utils)
