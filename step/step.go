@@ -334,8 +334,11 @@ func (s XcodeTestRunner) validateXcodeVersion(input *Input, xcodeMajorVersion in
 
 func (s XcodeTestRunner) getSimulatorForDestination(destinationSpecifier string) (destination.Device, error) {
 	simulatorDestination, err := destination.NewSimulator(destinationSpecifier)
-	if err != nil || simulatorDestination == nil {
+	if err != nil {
 		return destination.Device{}, fmt.Errorf("invalid destination specifier (%s): %w", destinationSpecifier, err)
+	}
+	if simulatorDestination == nil {
+		return destination.Device{}, fmt.Errorf("inconsistent state, destination should not be nil")
 	}
 
 	device, err := s.deviceFinder.FindDevice(*simulatorDestination)
