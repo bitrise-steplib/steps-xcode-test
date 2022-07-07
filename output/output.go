@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/bitrise-io/bitrise/configs"
-	"github.com/bitrise-io/go-steputils/output"
+	"github.com/bitrise-io/go-steputils/v2/output"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-utils/v2/log"
