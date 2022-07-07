@@ -6,34 +6,12 @@ import (
 
 	"github.com/bitrise-io/go-steputils/tools"
 	"github.com/bitrise-io/go-utils/command"
-	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/pathutil"
-	"github.com/bitrise-io/go-utils/stringutil"
 	"github.com/bitrise-io/go-utils/ziputil"
 )
 
-// ExportOutputDir ...
-func ExportOutputDir(sourceDir, destinationDir, envKey string) error {
-	absSourceDir, err := pathutil.AbsPath(sourceDir)
-	if err != nil {
-		return err
-	}
-
-	absDestinationDir, err := pathutil.AbsPath(destinationDir)
-	if err != nil {
-		return err
-	}
-
-	if absSourceDir != absDestinationDir {
-		if err := command.CopyDir(absSourceDir, absDestinationDir, true); err != nil {
-			return err
-		}
-	}
-	return tools.ExportEnvironmentWithEnvman(envKey, absDestinationDir)
-}
-
 // ExportOutputFile ...
-func ExportOutputFile(sourcePth, destinationPth, envKey string) error {
+func exportOutputFile(sourcePth, destinationPth, envKey string) error {
 	absSourcePth, err := pathutil.AbsPath(sourcePth)
 	if err != nil {
 		return err
@@ -50,28 +28,6 @@ func ExportOutputFile(sourcePth, destinationPth, envKey string) error {
 		}
 	}
 	return tools.ExportEnvironmentWithEnvman(envKey, absDestinationPth)
-}
-
-// ExportOutputFileContent ...
-func ExportOutputFileContent(content, destinationPth, envKey string) error {
-	if err := fileutil.WriteStringToFile(destinationPth, content); err != nil {
-		return err
-	}
-
-	return ExportOutputFile(destinationPth, destinationPth, envKey)
-}
-
-// ExportOutputFileContentAndReturnLastNLines ...
-func ExportOutputFileContentAndReturnLastNLines(content, destinationPath, envKey string, lines int) (string, error) {
-	if err := fileutil.WriteStringToFile(destinationPath, content); err != nil {
-		return "", err
-	}
-
-	if err := ExportOutputFile(destinationPath, destinationPath, envKey); err != nil {
-		return "", err
-	}
-
-	return stringutil.LastNLines(content, lines), nil
 }
 
 // ZipAndExportOutput ...
@@ -104,7 +60,7 @@ func ZipAndExportOutput(sourcePths []string, destinationZipPth, envKey string) e
 		return err
 	}
 
-	return ExportOutputFile(tmpZipFilePth, destinationZipPth, envKey)
+	return exportOutputFile(tmpZipFilePth, destinationZipPth, envKey)
 }
 
 func zipFilePath() (string, error) {
@@ -117,8 +73,8 @@ func zipFilePath() (string, error) {
 }
 
 const (
-	filesType = "files"
-	foldersType = "folders"
+	filesType              = "files"
+	foldersType            = "folders"
 	mixedFileAndFolderType = "mixed"
 )
 
