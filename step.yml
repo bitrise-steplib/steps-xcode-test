@@ -37,11 +37,6 @@ type_tags:
 - test
 is_always_run: false
 is_skippable: false
-deps:
-  check_only:
-  - name: xcode
-  brew:
-  - name: go
 toolkit:
   go:
     package_name: github.com/bitrise-steplib/steps-xcode-test
