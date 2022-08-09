@@ -3,7 +3,7 @@ package xcpretty
 import (
 	"fmt"
 
-	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-xcode/v2/xcpretty"
 	"github.com/hashicorp/go-version"
 )
@@ -15,27 +15,30 @@ type Installer interface {
 
 type installer struct {
 	xcpretty xcpretty.Xcpretty
+	logger   log.Logger
 }
 
 // NewInstaller ...
-func NewInstaller(xcpretty xcpretty.Xcpretty) Installer {
+func NewInstaller(xcpretty xcpretty.Xcpretty, logger log.Logger) Installer {
 	return &installer{
 		xcpretty: xcpretty,
+		logger:   logger,
 	}
 }
 
 // Install installs and gets xcpretty version
 func (i installer) Install() (*version.Version, error) {
 	fmt.Println()
-	log.Infof("Checking if output tool (xcpretty) is installed")
+
+	i.logger.Infof("Checking if output tool (xcpretty) is installed")
 
 	installed, err := i.xcpretty.IsInstalled()
 	if err != nil {
 		return nil, err
 	} else if !installed {
-		log.Warnf(`xcpretty is not installed`)
+		i.logger.Warnf(`xcpretty is not installed`)
 		fmt.Println()
-		log.Printf("Installing xcpretty")
+		i.logger.Printf("Installing xcpretty")
 
 		cmdModelSlice, err := i.xcpretty.Install()
 		if err != nil {

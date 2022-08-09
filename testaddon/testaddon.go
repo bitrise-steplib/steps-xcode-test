@@ -8,11 +8,14 @@ type Exporter interface {
 }
 
 type exporter struct {
+	testAddon TestAddon
 }
 
 // NewExporter ...
-func NewExporter() Exporter {
-	return &exporter{}
+func NewExporter(testAddon TestAddon) Exporter {
+	return &exporter{
+		testAddon: testAddon,
+	}
 }
 
 // AddonCopy ...
@@ -23,13 +26,13 @@ type AddonCopy struct {
 }
 
 func (e exporter) CopyAndSaveMetadata(info AddonCopy) error {
-	info.TargetAddonBundleName = replaceUnsupportedFilenameCharacters(info.TargetAddonBundleName)
+	info.TargetAddonBundleName = e.testAddon.ReplaceUnsupportedFilenameCharacters(info.TargetAddonBundleName)
 	addonPerStepOutputDir := filepath.Join(info.TargetAddonPath, info.TargetAddonBundleName)
 
-	if err := copyDirectory(info.SourceTestOutputDir, addonPerStepOutputDir); err != nil {
+	if err := e.testAddon.CopyDirectory(info.SourceTestOutputDir, addonPerStepOutputDir); err != nil {
 		return err
 	}
-	if err := saveBundleMetadata(addonPerStepOutputDir, info.TargetAddonBundleName); err != nil {
+	if err := e.testAddon.SaveBundleMetadata(addonPerStepOutputDir, info.TargetAddonBundleName); err != nil {
 		return err
 	}
 	return nil

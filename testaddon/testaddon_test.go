@@ -2,6 +2,7 @@ package testaddon
 
 import (
 	"encoding/json"
+	"github.com/bitrise-io/go-utils/v2/log"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -25,7 +26,7 @@ func runTest(t *testing.T, bundleName string, expectedBundleName string) {
 	// Given
 	resultDir, outputDir := prepareArtifacts(t)
 
-	exporter := NewExporter()
+	exporter := NewExporter(NewTestAddon(log.NewLogger()))
 
 	// When
 	err := exporter.CopyAndSaveMetadata(AddonCopy{

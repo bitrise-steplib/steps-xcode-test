@@ -112,10 +112,11 @@ type XcodeTestRunner struct {
 	outputExporter    output.Exporter
 	pathModifier      pathutil.PathModifier
 	pathProvider      pathutil.PathProvider
+	utils             Utils
 }
 
 // NewXcodeTestRunner ...
-func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, xcprettyInstaller xcpretty.Installer, xcodebuild xcodebuild.Xcodebuild, simulatorManager simulator.Manager, cache cache.SwiftPackageCache, outputExporter output.Exporter, pathModifier pathutil.PathModifier, pathProvider pathutil.PathProvider) XcodeTestRunner {
+func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, xcprettyInstaller xcpretty.Installer, xcodebuild xcodebuild.Xcodebuild, simulatorManager simulator.Manager, cache cache.SwiftPackageCache, outputExporter output.Exporter, pathModifier pathutil.PathModifier, pathProvider pathutil.PathProvider, utils Utils) XcodeTestRunner {
 	return XcodeTestRunner{
 		inputParser:       inputParser,
 		logger:            logger,
@@ -126,6 +127,7 @@ func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, xcp
 		outputExporter:    outputExporter,
 		pathModifier:      pathModifier,
 		pathProvider:      pathProvider,
+		utils:             utils,
 	}
 }
 
@@ -190,7 +192,7 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 		return Config{}, fmt.Errorf("`-xcconfig` option found in XcodebuildOptions (`xcodebuild_options`), please clear Build settings (xcconfig) (`xcconfig_content`) input as only one can be set")
 	}
 
-	return createConfig(input, projectPath, int(xcodebuildVersion.MajorVersion), sim, additionalOptions), nil
+	return s.utils.CreateConfig(input, projectPath, int(xcodebuildVersion.MajorVersion), sim, additionalOptions), nil
 }
 
 // InstallDeps ...
@@ -438,14 +440,14 @@ func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 		}
 	}
 
-	testParams := createTestParams(cfg, xcresultPath, swiftPackagesPath)
+	testParams := s.utils.CreateTestParams(cfg, xcresultPath, swiftPackagesPath)
 
 	testLog, exitCode, testErr := s.xcodebuild.RunTest(testParams)
 	result.XcresultPath = xcresultPath
 	result.XcodebuildTestLog = testLog
 
 	if testErr != nil || cfg.LogFormatter == xcodebuild.XcodebuildTool {
-		printLastLinesOfXcodebuildTestLog(testLog, testErr == nil)
+		s.utils.PrintLastLinesOfXcodebuildTestLog(testLog, testErr == nil)
 	}
 
 	return result, exitCode, testErr

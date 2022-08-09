@@ -251,6 +251,7 @@ func createStepAndMocks(envValues map[string]string) (XcodeTestRunner, testingMo
 		call.ReturnArguments = mock.Arguments{value, nil}
 	}
 
+	logger := log.NewLogger()
 	inputParser := stepconf.NewInputParser(envRepository)
 	installer := new(mocks.Installer)
 	xcodebuilder := new(mocks.Xcodebuild)
@@ -259,8 +260,9 @@ func createStepAndMocks(envValues map[string]string) (XcodeTestRunner, testingMo
 	outputExporter := new(mocks.Exporter)
 	pathModifier := new(mocks.PathModifier)
 	pathProvider := new(mocks.PathProvider)
+	utils := NewUtils(logger)
 
-	step := NewXcodeTestRunner(inputParser, log.NewLogger(), installer, xcodebuilder, simulatorManager, cache, outputExporter, pathModifier, pathProvider)
+	step := NewXcodeTestRunner(inputParser, logger, installer, xcodebuilder, simulatorManager, cache, outputExporter, pathModifier, pathProvider, utils)
 	mocks := testingMocks{
 		installer:        installer,
 		xcodebuilder:     xcodebuilder,

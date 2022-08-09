@@ -2,6 +2,7 @@ package simulator
 
 import (
 	"fmt"
+	"github.com/bitrise-io/go-utils/v2/log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -109,7 +110,7 @@ func Test_GivenSimulator_WhenShutdown_ThenShutsItDown(t *testing.T) {
 
 func createSimulatorAndMocks() (Manager, testingMocks) {
 	commandFactory := new(mockcommand.CommandFactory)
-	manager := NewManager(commandFactory)
+	manager := NewManager(commandFactory, log.NewLogger())
 
 	return manager, testingMocks{
 		commandFactory: commandFactory,
