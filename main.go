@@ -10,11 +10,12 @@ import (
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
+	"github.com/bitrise-io/go-xcode/v2/destination"
+	"github.com/bitrise-io/go-xcode/v2/simulator"
 	"github.com/bitrise-io/go-xcode/v2/xcconfig"
 	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
 	goxcpretty "github.com/bitrise-io/go-xcode/v2/xcpretty"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
-	"github.com/bitrise-steplib/steps-xcode-test/simulator"
 	"github.com/bitrise-steplib/steps-xcode-test/step"
 	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
@@ -68,12 +69,13 @@ func createStep(logger log.Logger) step.XcodeTestRunner {
 	fileManager := fileutil.NewFileManager()
 	xcconfigWriter := xcconfig.NewWriter(pathProvider, fileManager, pathChecker, pathModifier)
 	xcodebuilder := xcodebuild.NewXcodebuild(logger, commandFactory, pathChecker, fileManager, xcconfigWriter)
-	simulatorManager := simulator.NewManager(commandFactory, logger)
+	deviceFinder := destination.NewDeviceFinder(logger, commandFactory)
+	simulatorManager := simulator.NewManager(logger, commandFactory)
 	swiftCache := cache.NewSwiftPackageCache()
 	testAddonExporter := testaddon.NewExporter(testaddon.NewTestAddon(logger))
 	stepenvRepository := stepenv.NewRepository(envRepository)
 	outputExporter := output.NewExporter(stepenvRepository, logger, testAddonExporter)
 	utils := step.NewUtils(logger)
 
-	return step.NewXcodeTestRunner(inputParser, logger, xcprettyInstaller, xcodebuilder, simulatorManager, swiftCache, outputExporter, pathModifier, pathProvider, utils)
+	return step.NewXcodeTestRunner(inputParser, logger, xcprettyInstaller, xcodebuilder, deviceFinder, simulatorManager, swiftCache, outputExporter, pathModifier, pathProvider, utils)
 }

@@ -1,11 +1,11 @@
-# github.com/bitrise-io/bitrise v0.0.0-20220421074255-89ff3f0c5c77
+# github.com/bitrise-io/bitrise v0.0.0-20220808135808-3483087dd853
 ## explicit; go 1.16
 github.com/bitrise-io/bitrise/configs
-# github.com/bitrise-io/go-steputils v1.0.2
+# github.com/bitrise-io/go-steputils v1.0.3
 ## explicit; go 1.15
 github.com/bitrise-io/go-steputils/cache
 github.com/bitrise-io/go-steputils/tools
-# github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.6
+# github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.8
 ## explicit; go 1.16
 github.com/bitrise-io/go-steputils/v2/output
 github.com/bitrise-io/go-steputils/v2/ruby
@@ -26,21 +26,21 @@ github.com/bitrise-io/go-utils/retry
 github.com/bitrise-io/go-utils/sliceutil
 github.com/bitrise-io/go-utils/stringutil
 github.com/bitrise-io/go-utils/ziputil
-# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.7
+# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.11
 ## explicit; go 1.16
 github.com/bitrise-io/go-utils/v2/command
 github.com/bitrise-io/go-utils/v2/env
 github.com/bitrise-io/go-utils/v2/fileutil
 github.com/bitrise-io/go-utils/v2/log
 github.com/bitrise-io/go-utils/v2/pathutil
-# github.com/bitrise-io/go-xcode v1.0.8
+# github.com/bitrise-io/go-xcode v1.0.9
 ## explicit; go 1.15
 github.com/bitrise-io/go-xcode/models
-github.com/bitrise-io/go-xcode/simulator
 github.com/bitrise-io/go-xcode/utility
-# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.17
+# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.20
 ## explicit; go 1.16
 github.com/bitrise-io/go-xcode/v2/destination
+github.com/bitrise-io/go-xcode/v2/simulator
 github.com/bitrise-io/go-xcode/v2/xcconfig
 github.com/bitrise-io/go-xcode/v2/xcodebuild
 github.com/bitrise-io/go-xcode/v2/xcodecache
@@ -54,7 +54,7 @@ github.com/hashicorp/go-cleanhttp
 # github.com/hashicorp/go-retryablehttp v0.7.1
 ## explicit; go 1.13
 github.com/hashicorp/go-retryablehttp
-# github.com/hashicorp/go-version v1.5.0
+# github.com/hashicorp/go-version v1.6.0
 ## explicit
 github.com/hashicorp/go-version
 # github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
@@ -63,27 +63,27 @@ github.com/kballard/go-shellquote
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
-# github.com/sirupsen/logrus v1.8.1
+# github.com/sirupsen/logrus v1.9.0
 ## explicit; go 1.13
 github.com/sirupsen/logrus
 # github.com/stretchr/objx v0.4.0
 ## explicit; go 1.12
 github.com/stretchr/objx
-# github.com/stretchr/testify v1.7.1
+# github.com/stretchr/testify v1.8.0
 ## explicit; go 1.13
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/mock
 github.com/stretchr/testify/require
-# golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
+# golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa
 ## explicit; go 1.17
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a
+# golang.org/x/sys v0.0.0-20220808155132-1c4a2a72c664
 ## explicit; go 1.17
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.0.0-20220526004731-065cf7ba2467
+# golang.org/x/term v0.0.0-20220722155259-a9ba230a4035
 ## explicit; go 1.17
 golang.org/x/term
 # golang.org/x/text v0.3.7
