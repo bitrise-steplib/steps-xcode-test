@@ -64,6 +64,9 @@ func (f commandFactory) CreateGemInstall(gem, version string, enablePrerelease, 
 	if f.installType == RbenvRuby {
 		cmd := f.Create("rbenv", []string{"rehash"}, nil)
 		cmds = append(cmds, cmd)
+	} else if f.installType == ASDFRuby {
+		cmd := f.Create("asdf", []string{"reshim", "ruby"}, nil)
+		cmds = append(cmds, cmd)
 	}
 
 	return cmds
@@ -76,6 +79,9 @@ func (f commandFactory) CreateGemUpdate(gem string, opts *command.Opts) []comman
 
 	if f.installType == RbenvRuby {
 		cmd := f.Create("rbenv", []string{"rehash"}, nil)
+		cmds = append(cmds, cmd)
+	} else if f.installType == ASDFRuby {
+		cmd := f.Create("asdf", []string{"reshim", "ruby"}, nil)
 		cmds = append(cmds, cmd)
 	}
 
