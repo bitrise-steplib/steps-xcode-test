@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	minSupportedXcodeMajorVersion = 6
+	minSupportedXcodeMajorVersion = 11
 	simulatorShutdownState        = "Shutdown"
 )
 
@@ -253,7 +253,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 	}
 
 	// Cache swift PM
-	if cfg.XcodeMajorVersion >= 11 && cfg.CacheLevel == "swift_packages" {
+	if cfg.CacheLevel == "swift_packages" {
 		if err := s.cache.CollectSwiftPackages(cfg.ProjectPath); err != nil {
 			s.logger.Warnf("Failed to mark swift packages for caching: %s", err)
 		}
@@ -303,22 +303,6 @@ func (s XcodeTestRunner) Export(result Result, testFailed bool) error {
 func (s XcodeTestRunner) validateXcodeVersion(input *Input, xcodeMajorVersion int) error {
 	if xcodeMajorVersion < minSupportedXcodeMajorVersion {
 		return fmt.Errorf("invalid Xcode major version (%d), should not be less then min supported: %d", xcodeMajorVersion, minSupportedXcodeMajorVersion)
-	}
-
-	if xcodeMajorVersion < 11 && input.TestPlan != "" {
-		return fmt.Errorf("input Test Plan incompatible with Xcode %d, at least Xcode 11 required", xcodeMajorVersion)
-	}
-
-	// validate headless mode
-	if xcodeMajorVersion < 9 && input.HeadlessMode {
-		s.logger.Warnf("Headless mode is enabled but it's only available with Xcode 9.x or newer.")
-		input.HeadlessMode = false
-	}
-
-	// validate simulator diagnosis mode
-	if input.CollectSimulatorDiagnostics != never && xcodeMajorVersion < 10 {
-		s.logger.Warnf("Collecting Simulator diagnostics is not available below Xcode version 10, current Xcode version: %s", xcodeMajorVersion)
-		input.CollectSimulatorDiagnostics = never
 	}
 
 	if input.TestRepetitionMode != xcodebuild.TestRepetitionNone && xcodeMajorVersion < 13 {
@@ -402,13 +386,10 @@ func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 		return result, -1, fmt.Errorf("could not create test output temporary directory: %w", err)
 	}
 	xcresultPath := path.Join(tempDir, fmt.Sprintf("Test-%s.xcresult", cfg.Scheme))
-	var swiftPackagesPath string
-	if cfg.XcodeMajorVersion >= 11 {
-		var err error
-		swiftPackagesPath, err = s.cache.SwiftPackagesPath(cfg.ProjectPath)
-		if err != nil {
-			return result, -1, fmt.Errorf("failed to get Swift Packages path: %w", err)
-		}
+
+	swiftPackagesPath, err := s.cache.SwiftPackagesPath(cfg.ProjectPath)
+	if err != nil {
+		return result, -1, fmt.Errorf("failed to get Swift Packages path: %w", err)
 	}
 
 	testParams := s.utils.CreateTestParams(cfg, xcresultPath, swiftPackagesPath)
