@@ -37,6 +37,7 @@ func (c *rawXcodeCommand) Run(workDir string, args []string, _ []string) (Output
 		Dir:    workDir,
 	})
 
+	c.logger.Println()
 	c.logger.TInfof("$ %s", command.PrintableCommandArgs())
 
 	progress.SimpleProgress(".", time.Minute, func() {

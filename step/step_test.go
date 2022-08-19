@@ -1,6 +1,7 @@
 package step
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -10,6 +11,7 @@ import (
 	"github.com/bitrise-io/go-xcode/v2/destination"
 	"github.com/bitrise-steplib/steps-xcode-test/step/mocks"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodeversion"
+	"github.com/hashicorp/go-version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -22,12 +24,13 @@ type configParserMocks struct {
 }
 
 type stepMocks struct {
-	xcodebuilder     *mocks.Xcodebuild
-	simulatorManager *mocks.SimulatorManager
-	cache            *mocks.SwiftPackageCache
-	outputExporter   *mocks.Exporter
-	pathModifier     *mocks.PathModifier
-	pathProvider     *mocks.PathProvider
+	xcodeRunnerInstaller *mocks.RunnerDependencyInstaller
+	xcodebuilder         *mocks.Xcodebuild
+	simulatorManager     *mocks.SimulatorManager
+	cache                *mocks.SwiftPackageCache
+	outputExporter       *mocks.Exporter
+	pathModifier         *mocks.PathModifier
+	pathProvider         *mocks.PathProvider
 }
 
 func Test_GivenStep_WhenRuns_ThenXcodebuildGetsCalled(t *testing.T) {
@@ -124,7 +127,6 @@ func Test_GivenTestRepetitionModeIsNone_WhenRelaunchTestsForEachRepetitionIsSet_
 	require.Error(t, err)
 }
 
-/*
 func Test_GivenStep_WhenInstallXcpretty_ThenInstallIt(t *testing.T) {
 	// Given
 	step, mocks := createStepAndMocks(t)
@@ -133,7 +135,7 @@ func Test_GivenStep_WhenInstallXcpretty_ThenInstallIt(t *testing.T) {
 	if err != nil {
 		assert.Fail(t, fmt.Sprintf("%s", err))
 	}
-	mocks.installer.On("Install", mock.Anything).Return(ver, nil)
+	mocks.xcodeRunnerInstaller.On("Install", mock.Anything).Return(ver, nil)
 
 	// When
 	err = step.InstallDeps(true)
@@ -141,8 +143,8 @@ func Test_GivenStep_WhenInstallXcpretty_ThenInstallIt(t *testing.T) {
 	// Then
 	assert.NoError(t, err)
 
-	mocks.installer.AssertCalled(t, "Install")
-}*/
+	mocks.xcodeRunnerInstaller.AssertCalled(t, "Install")
+}
 
 func Test_GivenStep_WhenExportsTestResult_ThenSetsCorrectly(t *testing.T) {
 	tests := []struct {
@@ -275,6 +277,7 @@ func createConfigParser(t *testing.T, envValues map[string]string) (XcodeTestCon
 
 func createStepAndMocks(t *testing.T) (XcodeTestRunner, stepMocks) {
 	logger := log.NewLogger()
+	xcodeRunnerInstaller := mocks.NewRunnerDependencyInstaller(t)
 	xcodebuilder := mocks.NewXcodebuild(t)
 	simulatorManager := mocks.NewSimulatorManager(t)
 	cache := mocks.NewSwiftPackageCache(t)
@@ -283,14 +286,15 @@ func createStepAndMocks(t *testing.T) (XcodeTestRunner, stepMocks) {
 	pathProvider := mocks.NewPathProvider(t)
 	utils := NewUtils(logger)
 
-	step := NewXcodeTestRunner(logger, nil, xcodebuilder, simulatorManager, cache, outputExporter, pathModifier, pathProvider, utils)
+	step := NewXcodeTestRunner(logger, xcodeRunnerInstaller, xcodebuilder, simulatorManager, cache, outputExporter, pathModifier, pathProvider, utils)
 	mocks := stepMocks{
-		xcodebuilder:     xcodebuilder,
-		simulatorManager: simulatorManager,
-		cache:            cache,
-		outputExporter:   outputExporter,
-		pathModifier:     pathModifier,
-		pathProvider:     pathProvider,
+		xcodeRunnerInstaller: xcodeRunnerInstaller,
+		xcodebuilder:         xcodebuilder,
+		simulatorManager:     simulatorManager,
+		cache:                cache,
+		outputExporter:       outputExporter,
+		pathModifier:         pathModifier,
+		pathProvider:         pathProvider,
 	}
 
 	return step, mocks

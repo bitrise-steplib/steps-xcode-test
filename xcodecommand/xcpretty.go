@@ -15,10 +15,8 @@ import (
 )
 
 type xcprettyDependencyManager struct {
-	logger             log.Logger
-	commandFactory     command.Factory
-	rubyEnv            ruby.Environment
-	rubyCommandFactory ruby.CommandFactory
+	logger   log.Logger
+	xcpretty xcprettyManager
 }
 
 type xcprettyCommandRunner struct {
@@ -28,10 +26,12 @@ type xcprettyCommandRunner struct {
 
 func NewXcprettyDependencyManager(logger log.Logger, commandFactory command.Factory, rubyCommandFactory ruby.CommandFactory, rubyEnv ruby.Environment) DependencyInstaller {
 	return &xcprettyDependencyManager{
-		logger:             logger,
-		commandFactory:     commandFactory,
-		rubyEnv:            rubyEnv,
-		rubyCommandFactory: rubyCommandFactory,
+		logger: logger,
+		xcpretty: &xcpretty{
+			commandFactory:     commandFactory,
+			rubyEnv:            rubyEnv,
+			rubyCommandFactory: rubyCommandFactory,
+		},
 	}
 }
 
@@ -46,7 +46,7 @@ func (c *xcprettyDependencyManager) Install() (*version.Version, error) {
 	c.logger.Println()
 	c.logger.Infof("Checking if output tool (xcpretty) is installed")
 
-	installed, err := c.isDepInstalled()
+	installed, err := c.xcpretty.isDepInstalled()
 	if err != nil {
 		return nil, err
 	} else if !installed {
@@ -54,11 +54,7 @@ func (c *xcprettyDependencyManager) Install() (*version.Version, error) {
 		fmt.Println()
 		c.logger.Printf("Installing xcpretty")
 
-		cmdModelSlice, err := c.installDep()
-		if err != nil {
-			return nil, fmt.Errorf("failed to create xcpretty install commands: %w", err)
-		}
-
+		cmdModelSlice := c.xcpretty.installDep()
 		for _, cmd := range cmdModelSlice {
 			if err := cmd.Run(); err != nil {
 				return nil, fmt.Errorf("failed to run xcpretty install command (%s): %w", cmd.PrintableCommandArgs(), err)
@@ -66,32 +62,12 @@ func (c *xcprettyDependencyManager) Install() (*version.Version, error) {
 		}
 	}
 
-	xcprettyVersion, err := c.depVersion()
+	xcprettyVersion, err := c.xcpretty.depVersion()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get xcpretty version: %w", err)
 	}
 
 	return xcprettyVersion, nil
-}
-
-func (c *xcprettyDependencyManager) isDepInstalled() (bool, error) {
-	return c.rubyEnv.IsGemInstalled("xcpretty", "")
-}
-
-func (c *xcprettyDependencyManager) installDep() ([]command.Command, error) {
-	cmds := c.rubyCommandFactory.CreateGemInstall("xcpretty", "", false, false, nil)
-	return cmds, nil
-}
-
-func (c *xcprettyDependencyManager) depVersion() (*version.Version, error) {
-	cmd := c.commandFactory.Create("xcpretty", []string{"--version"}, nil)
-
-	versionOut, err := cmd.RunAndReturnTrimmedCombinedOutput()
-	if err != nil {
-		return nil, err
-	}
-
-	return version.NewVersion(versionOut)
 }
 
 func (c *xcprettyCommandRunner) Run(workDir string, xcodebuildArgs []string, xcprettyArgs []string) (Output, error) {
