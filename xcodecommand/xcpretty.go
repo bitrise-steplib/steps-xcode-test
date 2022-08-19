@@ -44,7 +44,7 @@ func (c *xcprettyCommandRunner) Run(workDir string, xcodebuildArgs []string, xcp
 		Stderr: prettyOutWriter,
 	})
 
-	c.logger.TInfof("$ set -o pipefail && %s | %v", buildCmd.PrintableCommandArgs(), prettyCmd.PrintableCommandArgs())
+	c.logger.TPrintf("$ set -o pipefail && %s | %v", buildCmd.PrintableCommandArgs(), prettyCmd.PrintableCommandArgs())
 
 	if err := buildCmd.Start(); err != nil {
 		return Output{
