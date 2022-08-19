@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/bitrise-io/go-steputils/v2/ruby"
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
 	"github.com/bitrise-io/go-steputils/v2/stepenv"
 	"github.com/bitrise-io/go-utils/v2/command"
@@ -14,12 +16,12 @@ import (
 	"github.com/bitrise-io/go-xcode/v2/simulator"
 	"github.com/bitrise-io/go-xcode/v2/xcconfig"
 	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
-	goxcpretty "github.com/bitrise-io/go-xcode/v2/xcpretty"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/step"
 	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
-	"github.com/bitrise-steplib/steps-xcode-test/xcpretty"
+	"github.com/bitrise-steplib/steps-xcode-test/xcodecommand"
+	"github.com/bitrise-steplib/steps-xcode-test/xcodeversion"
 )
 
 func main() {
@@ -28,12 +30,16 @@ func main() {
 
 func run() int {
 	logger := log.NewLogger()
-	xcodeTestRunner := createStep(logger)
-	config, err := xcodeTestRunner.ProcessConfig()
+	configParser := createConfigParser(logger)
+	config, err := configParser.ProcessConfig()
 	if err != nil {
 		logger.Errorf("Process config: %s", err)
 		return 1
+	}
 
+	xcodeTestRunner, err := createStep(logger, config.LogFormatter)
+	if err != nil {
+		logger.Errorf("Process conifg: %s", err)
 	}
 
 	if err := xcodeTestRunner.InstallDeps(config.LogFormatter == xcodebuild.XcprettyTool); err != nil {
@@ -58,18 +64,28 @@ func run() int {
 	return 0
 }
 
-func createStep(logger log.Logger) step.XcodeTestRunner {
+func createConfigParser(logger log.Logger) step.XcodeTestConfigParser {
 	envRepository := env.NewRepository()
+	commandFactory := command.NewFactory(envRepository)
 	inputParser := stepconf.NewInputParser(envRepository)
-	xcprettyInstaller := xcpretty.NewInstaller(goxcpretty.NewXcpretty(logger), logger)
+	xcodeVersionReader := xcodeversion.NewXcodeVersionReader()
+	pathModifier := pathutil.NewPathModifier()
+	deviceFinder := destination.NewDeviceFinder(logger, commandFactory)
+	utils := step.NewUtils(logger)
+
+	return step.NewXcodeTestConfigParser(inputParser, logger, xcodeVersionReader, deviceFinder, pathModifier, utils)
+}
+
+func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, error) {
+	envRepository := env.NewRepository()
 	commandFactory := command.NewFactory(envRepository)
 	pathChecker := pathutil.NewPathChecker()
 	pathProvider := pathutil.NewPathProvider()
 	pathModifier := pathutil.NewPathModifier()
 	fileManager := fileutil.NewFileManager()
 	xcconfigWriter := xcconfig.NewWriter(pathProvider, fileManager, pathChecker, pathModifier)
-	xcodebuilder := xcodebuild.NewXcodebuild(logger, commandFactory, pathChecker, fileManager, xcconfigWriter)
-	deviceFinder := destination.NewDeviceFinder(logger, commandFactory)
+	xcodeCommandRunner := xcodecommand.NewRawCommandRunner(logger, commandFactory)
+	xcodebuilder := xcodebuild.NewXcodebuild(logger, pathChecker, fileManager, xcconfigWriter, xcodeCommandRunner)
 	simulatorManager := simulator.NewManager(logger, commandFactory)
 	swiftCache := cache.NewSwiftPackageCache()
 	testAddonExporter := testaddon.NewExporter(testaddon.NewTestAddon(logger))
@@ -77,5 +93,16 @@ func createStep(logger log.Logger) step.XcodeTestRunner {
 	outputExporter := output.NewExporter(stepenvRepository, logger, testAddonExporter)
 	utils := step.NewUtils(logger)
 
-	return step.NewXcodeTestRunner(inputParser, logger, xcprettyInstaller, xcodebuilder, deviceFinder, simulatorManager, swiftCache, outputExporter, pathModifier, pathProvider, utils)
+	var xcodeRunnerDepInstaller xcodecommand.DependencyInstaller
+	if logFormatter == xcodebuild.XcprettyTool {
+		commandLocator := env.NewCommandLocator()
+		rubyComamndFactory, err := ruby.NewCommandFactory(commandFactory, commandLocator)
+		if err != nil {
+			return step.XcodeTestRunner{}, fmt.Errorf("failed to install xcpretty: %s", err)
+		}
+		rubyEnv := ruby.NewEnvironment(rubyComamndFactory, commandLocator, logger)
+		xcodeRunnerDepInstaller = xcodecommand.NewXcprettyDependencyManager(logger, commandFactory, rubyComamndFactory, rubyEnv)
+	}
+
+	return step.NewXcodeTestRunner(logger, xcodeRunnerDepInstaller, xcodebuilder, simulatorManager, swiftCache, outputExporter, pathModifier, pathProvider, utils), nil
 }
