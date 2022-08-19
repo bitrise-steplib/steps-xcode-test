@@ -84,8 +84,6 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 	pathModifier := pathutil.NewPathModifier()
 	fileManager := fileutil.NewFileManager()
 	xcconfigWriter := xcconfig.NewWriter(pathProvider, fileManager, pathChecker, pathModifier)
-	xcodeCommandRunner := xcodecommand.NewRawCommandRunner(logger, commandFactory)
-	xcodebuilder := xcodebuild.NewXcodebuild(logger, pathChecker, fileManager, xcconfigWriter, xcodeCommandRunner)
 	simulatorManager := simulator.NewManager(logger, commandFactory)
 	swiftCache := cache.NewSwiftPackageCache()
 	testAddonExporter := testaddon.NewExporter(testaddon.NewTestAddon(logger))
@@ -93,7 +91,8 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 	outputExporter := output.NewExporter(stepenvRepository, logger, testAddonExporter)
 	utils := step.NewUtils(logger)
 
-	var xcodeRunnerDepInstaller xcodecommand.DependencyInstaller
+	xcodeCommandRunner := xcodecommand.NewRawCommandRunner(logger, commandFactory)
+	xcodeRunnerDepInstaller := xcodecommand.DependencyInstaller(nil)
 	if logFormatter == xcodebuild.XcprettyTool {
 		commandLocator := env.NewCommandLocator()
 		rubyComamndFactory, err := ruby.NewCommandFactory(commandFactory, commandLocator)
@@ -101,8 +100,11 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 			return step.XcodeTestRunner{}, fmt.Errorf("failed to install xcpretty: %s", err)
 		}
 		rubyEnv := ruby.NewEnvironment(rubyComamndFactory, commandLocator, logger)
+
+		xcodeCommandRunner = xcodecommand.NewXcprettyCommandRunner(logger, commandFactory)
 		xcodeRunnerDepInstaller = xcodecommand.NewXcprettyDependencyManager(logger, commandFactory, rubyComamndFactory, rubyEnv)
 	}
+	xcodebuilder := xcodebuild.NewXcodebuild(logger, pathChecker, fileManager, xcconfigWriter, xcodeCommandRunner)
 
 	return step.NewXcodeTestRunner(logger, xcodeRunnerDepInstaller, xcodebuilder, simulatorManager, swiftCache, outputExporter, pathModifier, pathProvider, utils), nil
 }
