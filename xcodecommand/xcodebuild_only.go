@@ -45,8 +45,7 @@ func (c *rawXcodeCommand) Run(workDir string, args []string, _ []string) (Output
 	})
 
 	return Output{
-		RawOut:           outBuffer.Bytes(),
-		DidWriteToStdOut: false,
-		ExitCode:         exitCode,
+		RawOut:   outBuffer.Bytes(),
+		ExitCode: exitCode,
 	}, err
 }

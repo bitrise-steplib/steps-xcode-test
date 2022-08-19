@@ -96,16 +96,14 @@ func (c *xcprettyCommandRunner) Run(workDir string, xcodebuildArgs []string, xcp
 
 	if err := buildCmd.Start(); err != nil {
 		return Output{
-			RawOut:           buildOutBuffer.Bytes(),
-			DidWriteToStdOut: false,
-			ExitCode:         1,
+			RawOut:   buildOutBuffer.Bytes(),
+			ExitCode: 1,
 		}, err
 	}
 	if err := prettyCmd.Start(); err != nil {
 		return Output{
-			RawOut:           buildOutBuffer.Bytes(),
-			DidWriteToStdOut: false,
-			ExitCode:         1,
+			RawOut:   buildOutBuffer.Bytes(),
+			ExitCode: 1,
 		}, err
 	}
 
@@ -123,22 +121,19 @@ func (c *xcprettyCommandRunner) Run(workDir string, xcodebuildArgs []string, xcp
 		var exerr *exec.ExitError
 		if errors.As(err, &exerr) {
 			return Output{
-				RawOut:           buildOutBuffer.Bytes(),
-				DidWriteToStdOut: false,
-				ExitCode:         exerr.ExitCode(),
+				RawOut:   buildOutBuffer.Bytes(),
+				ExitCode: exerr.ExitCode(),
 			}, err
 		}
 
 		return Output{
-			RawOut:           buildOutBuffer.Bytes(),
-			DidWriteToStdOut: false,
-			ExitCode:         1,
+			RawOut:   buildOutBuffer.Bytes(),
+			ExitCode: 1,
 		}, err
 	}
 
 	return Output{
-		RawOut:           buildOutBuffer.Bytes(),
-		DidWriteToStdOut: false,
-		ExitCode:         0,
+		RawOut:   buildOutBuffer.Bytes(),
+		ExitCode: 0,
 	}, nil
 }

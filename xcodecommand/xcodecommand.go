@@ -5,9 +5,8 @@ import (
 )
 
 type Output struct {
-	RawOut           []byte
-	DidWriteToStdOut bool
-	ExitCode         int
+	RawOut   []byte
+	ExitCode int
 }
 
 type DependencyInstaller interface {
