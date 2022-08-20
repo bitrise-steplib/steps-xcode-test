@@ -42,7 +42,7 @@ func run() int {
 		logger.Errorf("Process conifg: %s", err)
 	}
 
-	if err := xcodeTestRunner.InstallDeps(config.LogFormatter == xcodebuild.XcprettyTool); err != nil {
+	if err := xcodeTestRunner.InstallDeps(); err != nil {
 		logger.Warnf("Install dependencies: %s", err)
 		logger.Printf("Switching to xcodebuild for output tool")
 		config.LogFormatter = xcodebuild.XcodebuildTool
@@ -93,7 +93,9 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 
 	xcodeCommandRunner := xcodecommand.NewRawCommandRunner(logger, commandFactory)
 	xcodeRunnerDepInstaller := xcodecommand.DependencyInstaller(nil)
-	if logFormatter == xcodebuild.XcprettyTool {
+
+	switch logFormatter {
+	case xcodebuild.XcprettyTool:
 		commandLocator := env.NewCommandLocator()
 		rubyComamndFactory, err := ruby.NewCommandFactory(commandFactory, commandLocator)
 		if err != nil {
@@ -103,7 +105,10 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 
 		xcodeCommandRunner = xcodecommand.NewXcprettyCommandRunner(logger, commandFactory)
 		xcodeRunnerDepInstaller = xcodecommand.NewXcprettyDependencyManager(logger, commandFactory, rubyComamndFactory, rubyEnv)
+	case xcodebuild.XcbeautifyTool:
+		xcodeCommandRunner = xcodecommand.NewXcbeautifyRunner(logger, commandFactory)
 	}
+
 	xcodebuilder := xcodebuild.NewXcodebuild(logger, pathChecker, fileManager, xcconfigWriter, xcodeCommandRunner)
 
 	return step.NewXcodeTestRunner(logger, xcodeRunnerDepInstaller, xcodebuilder, simulatorManager, swiftCache, outputExporter, pathModifier, pathProvider, utils), nil

@@ -47,7 +47,7 @@ type Input struct {
 	XcodebuildOptions  string `env:"xcodebuild_options"`
 
 	// xcodebuild log formatting
-	LogFormatter    string `env:"log_formatter,opt[xcpretty,xcodebuild]"`
+	LogFormatter    string `env:"log_formatter,opt[xcbeautify,xcpretty,xcodebuild]"`
 	XcprettyOptions string `env:"xcpretty_options"`
 
 	// Caching
@@ -214,8 +214,8 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 }
 
 // InstallDeps ...
-func (s XcodeTestRunner) InstallDeps(xcpretty bool) error {
-	if !xcpretty {
+func (s XcodeTestRunner) InstallDeps() error {
+	if s.xcodeRunnerInstaller == nil {
 		return nil
 	}
 

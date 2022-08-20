@@ -12,6 +12,7 @@ import (
 const (
 	XcodebuildTool = "xcodebuild"
 	XcprettyTool   = "xcpretty"
+	XcbeautifyTool = "xcbeautify"
 )
 
 // Test repetition modes ...
