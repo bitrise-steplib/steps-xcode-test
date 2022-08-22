@@ -31,11 +31,9 @@ func (c *xcprettyCommandRunner) Run(workDir string, xcodebuildArgs []string, xcp
 		prettyOutWriter        = os.Stdout
 	)
 
-	defer func() {
-		if err := pipeWriter.Close(); err != nil {
-			c.logger.Warnf("Failed to close xcodebuild-xcpretty pipe: %s", err)
-		}
-	}()
+	// defer func() {
+
+	// }()
 
 	buildCmd := c.commandFactory.Create("xcodebuild", xcodebuildArgs, &command.Opts{
 		Stdout: buildOutWriter,
@@ -49,6 +47,17 @@ func (c *xcprettyCommandRunner) Run(workDir string, xcodebuildArgs []string, xcp
 		Stdout: prettyOutWriter,
 		Stderr: prettyOutWriter,
 	})
+
+	defer func() {
+		// Close the pipe to xcpretty first, otherwise xcpretty will not exit
+		if err := pipeWriter.Close(); err != nil {
+			c.logger.Warnf("Failed to close xcodebuild-xcpretty pipe: %s", err)
+		}
+
+		if err := prettyCmd.Wait(); err != nil {
+			c.logger.Warnf("xcpretty command failed: %s", err)
+		}
+	}()
 
 	c.logger.TPrintf("$ set -o pipefail && %s | %v", buildCmd.PrintableCommandArgs(), prettyCmd.PrintableCommandArgs())
 
@@ -64,12 +73,6 @@ func (c *xcprettyCommandRunner) Run(workDir string, xcodebuildArgs []string, xcp
 			ExitCode: 1,
 		}, err
 	}
-
-	defer func() {
-		if err := prettyCmd.Wait(); err != nil {
-			c.logger.Warnf("xcpretty command failed: %s", err)
-		}
-	}()
 
 	if err := buildCmd.Wait(); err != nil {
 		var exerr *exec.ExitError
