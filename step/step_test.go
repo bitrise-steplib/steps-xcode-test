@@ -10,27 +10,32 @@ import (
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-xcode/v2/destination"
 	"github.com/bitrise-steplib/steps-xcode-test/step/mocks"
-	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
+	"github.com/bitrise-steplib/steps-xcode-test/xcodeversion"
 	"github.com/hashicorp/go-version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
-type testingMocks struct {
-	installer        *mocks.Installer
-	xcodebuilder     *mocks.Xcodebuild
-	deviceFinder     *mocks.DeviceFinder
-	simulatorManager *mocks.SimulatorManager
-	cache            *mocks.SwiftPackageCache
-	outputExporter   *mocks.Exporter
-	pathModifier     *mocks.PathModifier
-	pathProvider     *mocks.PathProvider
+type configParserMocks struct {
+	xcodeVersion *mocks.XcodeVersionReader
+	deviceFinder *mocks.DeviceFinder
+	pathModifier *mocks.PathModifier
+}
+
+type stepMocks struct {
+	xcodeRunnerInstaller *mocks.RunnerDependencyInstaller
+	xcodebuilder         *mocks.Xcodebuild
+	simulatorManager     *mocks.SimulatorManager
+	cache                *mocks.SwiftPackageCache
+	outputExporter       *mocks.Exporter
+	pathModifier         *mocks.PathModifier
+	pathProvider         *mocks.PathProvider
 }
 
 func Test_GivenStep_WhenRuns_ThenXcodebuildGetsCalled(t *testing.T) {
 	// Given
-	step, mocks := createStepAndMocks(t, nil)
+	step, mocks := createStepAndMocks(t)
 
 	mocks.xcodebuilder.On("RunTest", mock.Anything).Return("", 0, nil)
 	mocks.simulatorManager.On("ResetLaunchServices").Return(nil)
@@ -72,13 +77,13 @@ func Test_GivenXcode13OrNewer_WhenShouldRetryTestOnFailIsSet_ThenFails(t *testin
 	envValues := defaultEnvValues()
 	envValues["should_retry_test_on_fail"] = "yes"
 
-	step, mocks := createStepAndMocks(t, envValues)
+	configParser, mocks := createConfigParser(t, envValues)
 
 	ver := newVersion(13)
-	mocks.xcodebuilder.On("Version").Return(ver, nil)
+	mocks.xcodeVersion.On("Version").Return(ver, nil)
 
 	// When
-	_, err := step.ProcessConfig()
+	_, err := configParser.ProcessConfig()
 
 	// Then
 	require.Error(t, err)
@@ -89,13 +94,13 @@ func Test_GivenXcode12OrOlder_WhenTestRepetitionModeIsSet_ThenFails(t *testing.T
 	envValues := defaultEnvValues()
 	envValues["test_repetition_mode"] = "retry_on_failure"
 
-	step, mocks := createStepAndMocks(t, envValues)
+	configParser, mocks := createConfigParser(t, envValues)
 
 	ver := newVersion(12)
-	mocks.xcodebuilder.On("Version").Return(ver, nil)
+	mocks.xcodeVersion.On("Version").Return(ver, nil)
 
 	// When
-	_, err := step.ProcessConfig()
+	_, err := configParser.ProcessConfig()
 
 	// Then
 	require.Error(t, err)
@@ -106,18 +111,17 @@ func Test_GivenTestRepetitionModeIsNone_WhenRelaunchTestsForEachRepetitionIsSet_
 	envValues := defaultEnvValues()
 	envValues["relaunch_tests_for_each_repetition"] = "yes"
 
-	step, mocks := createStepAndMocks(t, envValues)
+	configParser, mocks := createConfigParser(t, envValues)
 
 	ver := newVersion(12)
-	mocks.xcodebuilder.On("Version").Return(ver, nil)
+	mocks.xcodeVersion.On("Version").Return(ver, nil)
 
 	path := strings.TrimPrefix(envValues["project_path"], ".")
 	mocks.pathModifier.On("AbsPath", mock.Anything).Return(path, nil)
-
 	mocks.deviceFinder.On("FindDevice", mock.Anything, mock.Anything).Return(defaultSimulator(), nil)
 
 	// When
-	_, err := step.ProcessConfig()
+	_, err := configParser.ProcessConfig()
 
 	// Then
 	require.Error(t, err)
@@ -125,13 +129,13 @@ func Test_GivenTestRepetitionModeIsNone_WhenRelaunchTestsForEachRepetitionIsSet_
 
 func Test_GivenStep_WhenInstallXcpretty_ThenInstallIt(t *testing.T) {
 	// Given
-	step, mocks := createStepAndMocks(t, nil)
+	step, mocks := createStepAndMocks(t)
 
 	ver, err := version.NewVersion("1.0")
 	if err != nil {
 		assert.Fail(t, fmt.Sprintf("%s", err))
 	}
-	mocks.installer.On("Install", mock.Anything).Return(ver, nil)
+	mocks.xcodeRunnerInstaller.On("Install", mock.Anything).Return(ver, nil)
 
 	// When
 	err = step.InstallDeps(true)
@@ -139,7 +143,7 @@ func Test_GivenStep_WhenInstallXcpretty_ThenInstallIt(t *testing.T) {
 	// Then
 	assert.NoError(t, err)
 
-	mocks.installer.AssertCalled(t, "Install")
+	mocks.xcodeRunnerInstaller.AssertCalled(t, "Install")
 }
 
 func Test_GivenStep_WhenExportsTestResult_ThenSetsCorrectly(t *testing.T) {
@@ -166,7 +170,7 @@ func Test_GivenStep_WhenExportsTestResult_ThenSetsCorrectly(t *testing.T) {
 
 func runExportTest(t *testing.T, testFailed bool) {
 	// Given
-	step, mocks := createStepAndMocks(t, nil)
+	step, mocks := createStepAndMocks(t)
 
 	mocks.outputExporter.On("ExportTestRunResult", testFailed)
 
@@ -181,7 +185,7 @@ func runExportTest(t *testing.T, testFailed bool) {
 
 func Test_GivenStep_WhenExport_ThenExportsAllTestArtifacts(t *testing.T) {
 	// Given
-	step, mocks := createStepAndMocks(t, nil)
+	step, mocks := createStepAndMocks(t)
 	result := defaultResult()
 	diagnosticsName := filepath.Base(result.SimulatorDiagnosticsPath)
 
@@ -242,7 +246,7 @@ func defaultResult() Result {
 	}
 }
 
-func createStepAndMocks(t *testing.T, envValues map[string]string) (XcodeTestRunner, testingMocks) {
+func createConfigParser(t *testing.T, envValues map[string]string) (XcodeTestConfigParser, configParserMocks) {
 	envRepository := mocks.NewRepository(t)
 
 	if envValues != nil {
@@ -256,9 +260,25 @@ func createStepAndMocks(t *testing.T, envValues map[string]string) (XcodeTestRun
 
 	logger := log.NewLogger()
 	inputParser := stepconf.NewInputParser(envRepository)
-	installer := mocks.NewInstaller(t)
-	xcodebuilder := mocks.NewXcodebuild(t)
+	xcodeVersionReader := mocks.NewXcodeVersionReader(t)
 	deviceFinder := mocks.NewDeviceFinder(t)
+	pathModifier := mocks.NewPathModifier(t)
+	utils := NewUtils(logger)
+
+	configParser := NewXcodeTestConfigParser(inputParser, logger, xcodeVersionReader, deviceFinder, pathModifier, utils)
+	mocks := configParserMocks{
+		xcodeVersion: xcodeVersionReader,
+		deviceFinder: deviceFinder,
+		pathModifier: pathModifier,
+	}
+
+	return configParser, mocks
+}
+
+func createStepAndMocks(t *testing.T) (XcodeTestRunner, stepMocks) {
+	logger := log.NewLogger()
+	xcodeRunnerInstaller := mocks.NewRunnerDependencyInstaller(t)
+	xcodebuilder := mocks.NewXcodebuild(t)
 	simulatorManager := mocks.NewSimulatorManager(t)
 	cache := mocks.NewSwiftPackageCache(t)
 	outputExporter := mocks.NewExporter(t)
@@ -266,23 +286,22 @@ func createStepAndMocks(t *testing.T, envValues map[string]string) (XcodeTestRun
 	pathProvider := mocks.NewPathProvider(t)
 	utils := NewUtils(logger)
 
-	step := NewXcodeTestRunner(inputParser, logger, installer, xcodebuilder, deviceFinder, simulatorManager, cache, outputExporter, pathModifier, pathProvider, utils)
-	mocks := testingMocks{
-		installer:        installer,
-		xcodebuilder:     xcodebuilder,
-		deviceFinder:     deviceFinder,
-		simulatorManager: simulatorManager,
-		cache:            cache,
-		outputExporter:   outputExporter,
-		pathModifier:     pathModifier,
-		pathProvider:     pathProvider,
+	step := NewXcodeTestRunner(logger, xcodeRunnerInstaller, xcodebuilder, simulatorManager, cache, outputExporter, pathModifier, pathProvider, utils)
+	mocks := stepMocks{
+		xcodeRunnerInstaller: xcodeRunnerInstaller,
+		xcodebuilder:         xcodebuilder,
+		simulatorManager:     simulatorManager,
+		cache:                cache,
+		outputExporter:       outputExporter,
+		pathModifier:         pathModifier,
+		pathProvider:         pathProvider,
 	}
 
 	return step, mocks
 }
 
-func newVersion(major int64) xcodebuild.Version {
-	return xcodebuild.Version{
+func newVersion(major int64) xcodeversion.Version {
+	return xcodeversion.Version{
 		Version:      "test-version",
 		BuildVersion: "test-build",
 		MajorVersion: major,

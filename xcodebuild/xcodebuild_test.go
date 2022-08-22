@@ -3,26 +3,23 @@ package xcodebuild
 import (
 	"errors"
 	"fmt"
-	"io"
 	"strconv"
 	"strings"
 	"testing"
 
-	realcommand "github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/log"
-	mockcommand "github.com/bitrise-steplib/steps-xcode-test/mocks"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild/mocks"
+	"github.com/bitrise-steplib/steps-xcode-test/xcodecommand"
 	"github.com/stretchr/testify/mock"
 )
 
 const xcconfigPath = "xcconfigPath"
 
 type testingMocks struct {
-	command        *mockcommand.Command
-	commandFactory *mockcommand.CommandFactory
-	pathChecker    *mocks.PathChecker
-	fileManager    *mocks.FileManager
-	xcconfigWriter *mocks.XcconfigWriter
+	pathChecker        *mocks.PathChecker
+	fileManager        *mocks.FileManager
+	xcconfigWriter     *mocks.XcconfigWriter
+	xcodeCommandRunner *mocks.XcodeCommandRunner
 }
 
 func Test_GivenXcodebuild_WhenInvoked_ThenUsesCorrectArguments(t *testing.T) {
@@ -85,27 +82,30 @@ func Test_GivenXcodebuild_WhenInvoked_ThenUsesCorrectArguments(t *testing.T) {
 
 func runArgumentsTest(t *testing.T, input TestRunParams) {
 	// Given
-	xcodebuild, mocks := createXcodebuildAndMocks(nil)
+	xcodebuild, mocks := createXcodebuildAndMocks(t)
 
-	mocks.command.On("RunAndReturnExitCode").Return(0, nil)
+	arguments := argumentsFromRunParameters(input)
+	mocks.xcodeCommandRunner.On("Run", mock.Anything, arguments, []string(nil)).
+		Return(xcodecommand.Output{}, nil)
 
 	// When
 	_, _, _ = xcodebuild.RunTest(input)
 
 	// Then
-	arguments := argumentsFromRunParameters(input)
-	mocks.commandFactory.AssertCalled(t, "Create", "xcodebuild", arguments, mock.Anything)
+	mocks.xcodeCommandRunner.AssertExpectations(t)
 }
 
 func Test_GivenTestRunError_WhenSwiftPackageError_ThenRetries(t *testing.T) {
 	// Given
+	const swiftPMErrMsg = "Could not resolve package dependencies:"
 	parameters := runParameters()
-	stdoutProvider := func() string {
-		return "Could not resolve package dependencies:"
-	}
-	xcodebuild, mocks := createXcodebuildAndMocks(stdoutProvider)
+	xcodebuild, mocks := createXcodebuildAndMocks(t)
 
-	mocks.command.On("RunAndReturnExitCode").Return(1, errors.New("some error"))
+	mocks.xcodeCommandRunner.On("Run", ".", mock.Anything, mock.Anything).
+		Return(xcodecommand.Output{
+			ExitCode: 1,
+			RawOut:   []byte(swiftPMErrMsg),
+		}, errors.New("some error"))
 
 	mocks.fileManager.On("RemoveAll", parameters.SwiftPackagesPath).Return(nil)
 	mocks.fileManager.On("RemoveAll", parameters.TestParams.TestOutputDir).Return(nil)
@@ -114,7 +114,7 @@ func Test_GivenTestRunError_WhenSwiftPackageError_ThenRetries(t *testing.T) {
 	_, _, _ = xcodebuild.RunTest(parameters)
 
 	// Then
-	mocks.commandFactory.AssertNumberOfCalls(t, "Create", 2)
+	mocks.xcodeCommandRunner.AssertNumberOfCalls(t, "Run", 2)
 	mocks.fileManager.AssertNumberOfCalls(t, "RemoveAll", 2)
 }
 
@@ -153,17 +153,14 @@ func Test_GivenTestRunError_WhenOneOfTheNamedErrorsHappened_ThenActsBasedOnTheCo
 		for _, errorString := range test.errors {
 			t.Logf("Testing: %s", errorString)
 
-			runRunnerErrorTests(t, test.numberOfCalls, test.parameters(), func() string {
-				return errorString
-			})
+			runRunnerErrorTests(t, test.numberOfCalls, test.parameters(), errorString)
 		}
 	}
 }
 
 func Test_GivenTestRunError_WhenAnUnknownErrorHappened_ThenActsBasedOnTheConfig(t *testing.T) {
-	stdoutProvider := func() string {
-		return "unknown error: we are definitely not prepared for this"
-	}
+	const xcodeOutput = "unknown error: we are definitely not prepared for this"
+
 	tests := []struct {
 		name          string
 		numberOfCalls int
@@ -191,23 +188,27 @@ func Test_GivenTestRunError_WhenAnUnknownErrorHappened_ThenActsBasedOnTheConfig(
 	for _, test := range tests {
 		t.Logf(test.name)
 
-		runRunnerErrorTests(t, test.numberOfCalls, test.parameters(), stdoutProvider)
+		runRunnerErrorTests(t, test.numberOfCalls, test.parameters(), xcodeOutput)
 	}
 }
 
-func runRunnerErrorTests(t *testing.T, expectedNumberOfCreateCalls int, parameters TestRunParams, stdoutProvider func() string) {
+func runRunnerErrorTests(t *testing.T, expectedNumberOfCreateCalls int, parameters TestRunParams, xcodeOutput string) {
 	// Given
-	xcodebuild, mocks := createXcodebuildAndMocks(stdoutProvider)
+	xcodebuild, mocks := createXcodebuildAndMocks(t)
 
-	mocks.command.On("RunAndReturnExitCode").Return(1, errors.New("some error"))
+	mocks.xcodeCommandRunner.On("Run", ".", mock.Anything, mock.Anything).
+		Return(xcodecommand.Output{
+			ExitCode: 1,
+			RawOut:   []byte(xcodeOutput),
+		}, errors.New("some error"))
 	mocks.fileManager.On("RemoveAll", parameters.TestParams.TestOutputDir).Return(nil)
 
 	// When
 	_, _, _ = xcodebuild.RunTest(parameters)
 
 	// Then
-	mocks.commandFactory.AssertNumberOfCalls(t, "Create", expectedNumberOfCreateCalls)
-	mocks.command.AssertNumberOfCalls(t, "RunAndReturnExitCode", expectedNumberOfCreateCalls)
+	mocks.xcodeCommandRunner.AssertNumberOfCalls(t, "Run", expectedNumberOfCreateCalls)
+	mocks.xcodeCommandRunner.AssertExpectations(t)
 }
 
 func Test_GivenXcprettyFormatter_WhenEnabled_ThenUsesCorrectArguments(t *testing.T) {
@@ -218,58 +219,41 @@ func Test_GivenXcprettyFormatter_WhenEnabled_ThenUsesCorrectArguments(t *testing
 	parameters.LogFormatter = "xcpretty"
 	parameters.XcprettyOptions = fmt.Sprintf("--color --report html --output %s", outputPath)
 
-	xcodebuild, mocks := createXcodebuildAndMocks(nil)
+	xcodebuild, mocks := createXcodebuildAndMocks(t)
 
-	mocks.command.On("Start").Return(nil)
-	mocks.command.On("Wait").Return(nil)
-	mocks.command.On("Close").Return(nil)
 	mocks.pathChecker.On("IsPathExists", outputPath).Return(true, nil)
 	mocks.fileManager.On("Remove", outputPath).Return(nil)
+
+	mocks.xcodeCommandRunner.On("Run", ".", mock.Anything, strings.Fields(parameters.XcprettyOptions)).
+		Return(xcodecommand.Output{}, nil)
 
 	// When
 	_, _, _ = xcodebuild.RunTest(parameters)
 
 	// Then
-	mocks.commandFactory.AssertCalled(t, "Create", "xcpretty", strings.Fields(parameters.XcprettyOptions), mock.Anything)
+	mocks.xcodeCommandRunner.AssertExpectations(t)
+	mocks.pathChecker.AssertExpectations(t)
+	mocks.fileManager.AssertExpectations(t)
 }
 
 // Helpers
 
-func createXcodebuildAndMocks(stdoutProvider func() string) (Xcodebuild, testingMocks) {
-	command := new(mockcommand.Command)
-	commandFactory := new(mockcommand.CommandFactory)
+func createXcodebuildAndMocks(t *testing.T) (Xcodebuild, testingMocks) {
+	logger := log.NewLogger()
 	pathChecker := new(mocks.PathChecker)
 	fileManager := new(mocks.FileManager)
 	xcconfigWriter := new(mocks.XcconfigWriter)
-
-	command.On("PrintableCommandArgs").Return("Test")
-
-	call := commandFactory.On("Create", mock.Anything, mock.Anything, mock.Anything)
-
-	if stdoutProvider != nil {
-		call.RunFn = func(args mock.Arguments) {
-			if stdoutProvider != nil && args[2] != nil {
-				opts := args[2].(*realcommand.Opts)
-
-				_, _ = io.WriteString(opts.Stdout, stdoutProvider())
-			}
-
-			call.ReturnArguments = mock.Arguments{command, nil}
-		}
-	} else {
-		call.Return(command)
-	}
+	xcodeCommandRunner := mocks.NewXcodeCommandRunner(t)
 
 	xcconfigWriter.On("Write", mock.Anything).Return(xcconfigPath, nil)
 
-	xcodebuild := NewXcodebuild(log.NewLogger(), commandFactory, pathChecker, fileManager, xcconfigWriter)
+	xcodebuild := NewXcodebuild(logger, pathChecker, fileManager, xcconfigWriter, xcodeCommandRunner)
 
 	return xcodebuild, testingMocks{
-		command:        command,
-		commandFactory: commandFactory,
-		pathChecker:    pathChecker,
-		fileManager:    fileManager,
-		xcconfigWriter: xcconfigWriter,
+		pathChecker:        pathChecker,
+		fileManager:        fileManager,
+		xcconfigWriter:     xcconfigWriter,
+		xcodeCommandRunner: xcodeCommandRunner,
 	}
 }
 

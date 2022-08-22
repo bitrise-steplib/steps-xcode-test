@@ -18,7 +18,8 @@ import (
 	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
-	"github.com/bitrise-steplib/steps-xcode-test/xcpretty"
+	"github.com/bitrise-steplib/steps-xcode-test/xcodecommand"
+	"github.com/bitrise-steplib/steps-xcode-test/xcodeversion"
 	"github.com/kballard/go-shellquote"
 )
 
@@ -100,40 +101,56 @@ type Config struct {
 	DeployDir string
 }
 
+type XcodeTestConfigParser struct {
+	logger             log.Logger
+	inputParser        stepconf.InputParser
+	xcodeVersionReader xcodeversion.Reader
+	deviceFinder       destination.DeviceFinder
+	pathModifier       pathutil.PathModifier
+	utils              Utils
+}
+
+func NewXcodeTestConfigParser(inputParser stepconf.InputParser, logger log.Logger, xcodeVersionReader xcodeversion.Reader, deviceFinder destination.DeviceFinder, pathModifier pathutil.PathModifier, utils Utils) XcodeTestConfigParser {
+	return XcodeTestConfigParser{
+		logger:             logger,
+		inputParser:        inputParser,
+		xcodeVersionReader: xcodeVersionReader,
+		deviceFinder:       deviceFinder,
+		pathModifier:       pathModifier,
+		utils:              utils,
+	}
+}
+
 // XcodeTestRunner ...
 type XcodeTestRunner struct {
-	inputParser       stepconf.InputParser
-	logger            log.Logger
-	xcprettyInstaller xcpretty.Installer
-	xcodebuild        xcodebuild.Xcodebuild
-	deviceFinder      destination.DeviceFinder
-	simulatorManager  simulator.Manager
-	cache             cache.SwiftPackageCache
-	outputExporter    output.Exporter
-	pathModifier      pathutil.PathModifier
-	pathProvider      pathutil.PathProvider
-	utils             Utils
+	logger               log.Logger
+	xcodeRunnerInstaller xcodecommand.DependencyInstaller
+	xcodebuild           xcodebuild.Xcodebuild
+	simulatorManager     simulator.Manager
+	cache                cache.SwiftPackageCache
+	outputExporter       output.Exporter
+	pathModifier         pathutil.PathModifier
+	pathProvider         pathutil.PathProvider
+	utils                Utils
 }
 
 // NewXcodeTestRunner ...
-func NewXcodeTestRunner(inputParser stepconf.InputParser, logger log.Logger, xcprettyInstaller xcpretty.Installer, xcodebuild xcodebuild.Xcodebuild, deviceFinder destination.DeviceFinder, simulatorManager simulator.Manager, cache cache.SwiftPackageCache, outputExporter output.Exporter, pathModifier pathutil.PathModifier, pathProvider pathutil.PathProvider, utils Utils) XcodeTestRunner {
+func NewXcodeTestRunner(logger log.Logger, xcodeRunnerInstaller xcodecommand.DependencyInstaller, xcodebuild xcodebuild.Xcodebuild, simulatorManager simulator.Manager, cache cache.SwiftPackageCache, outputExporter output.Exporter, pathModifier pathutil.PathModifier, pathProvider pathutil.PathProvider, utils Utils) XcodeTestRunner {
 	return XcodeTestRunner{
-		inputParser:       inputParser,
-		logger:            logger,
-		xcprettyInstaller: xcprettyInstaller,
-		xcodebuild:        xcodebuild,
-		deviceFinder:      deviceFinder,
-		simulatorManager:  simulatorManager,
-		cache:             cache,
-		outputExporter:    outputExporter,
-		pathModifier:      pathModifier,
-		pathProvider:      pathProvider,
-		utils:             utils,
+		logger:               logger,
+		xcodeRunnerInstaller: xcodeRunnerInstaller,
+		xcodebuild:           xcodebuild,
+		simulatorManager:     simulatorManager,
+		cache:                cache,
+		outputExporter:       outputExporter,
+		pathModifier:         pathModifier,
+		pathProvider:         pathProvider,
+		utils:                utils,
 	}
 }
 
 // ProcessConfig ...
-func (s XcodeTestRunner) ProcessConfig() (Config, error) {
+func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 	var input Input
 	err := s.inputParser.Parse(&input)
 	if err != nil {
@@ -146,7 +163,7 @@ func (s XcodeTestRunner) ProcessConfig() (Config, error) {
 	s.logger.EnableDebugLog(input.VerboseLog)
 
 	// validate Xcode version
-	xcodebuildVersion, err := s.xcodebuild.Version()
+	xcodebuildVersion, err := s.xcodeVersionReader.Version()
 	if err != nil {
 		return Config{}, fmt.Errorf("failed to determine Xcode version: %w", err)
 	}
@@ -202,7 +219,7 @@ func (s XcodeTestRunner) InstallDeps(xcpretty bool) error {
 		return nil
 	}
 
-	xcprettyVersion, err := s.xcprettyInstaller.Install()
+	xcprettyVersion, err := s.xcodeRunnerInstaller.Install()
 	if err != nil {
 		return fmt.Errorf("installing xcpretty: %w", err)
 	}
@@ -300,7 +317,7 @@ func (s XcodeTestRunner) Export(result Result, testFailed bool) error {
 	return nil
 }
 
-func (s XcodeTestRunner) validateXcodeVersion(input *Input, xcodeMajorVersion int) error {
+func (s XcodeTestConfigParser) validateXcodeVersion(input *Input, xcodeMajorVersion int) error {
 	if xcodeMajorVersion < minSupportedXcodeMajorVersion {
 		return fmt.Errorf("invalid Xcode major version (%d), should not be less then min supported: %d", xcodeMajorVersion, minSupportedXcodeMajorVersion)
 	}
@@ -316,7 +333,7 @@ func (s XcodeTestRunner) validateXcodeVersion(input *Input, xcodeMajorVersion in
 	return nil
 }
 
-func (s XcodeTestRunner) getSimulatorForDestination(destinationSpecifier string) (destination.Device, error) {
+func (s XcodeTestConfigParser) getSimulatorForDestination(destinationSpecifier string) (destination.Device, error) {
 	simulatorDestination, err := destination.NewSimulator(destinationSpecifier)
 	if err != nil {
 		return destination.Device{}, fmt.Errorf("invalid destination specifier (%s): %w", destinationSpecifier, err)

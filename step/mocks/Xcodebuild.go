@@ -40,27 +40,6 @@ func (_m *Xcodebuild) RunTest(params xcodebuild.TestRunParams) (string, int, err
 	return r0, r1, r2
 }
 
-// Version provides a mock function with given fields:
-func (_m *Xcodebuild) Version() (xcodebuild.Version, error) {
-	ret := _m.Called()
-
-	var r0 xcodebuild.Version
-	if rf, ok := ret.Get(0).(func() xcodebuild.Version); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(xcodebuild.Version)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 type mockConstructorTestingTNewXcodebuild interface {
 	mock.TestingT
 	Cleanup(func())

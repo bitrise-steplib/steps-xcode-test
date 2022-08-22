@@ -42,9 +42,7 @@ github.com/bitrise-io/go-xcode/utility
 github.com/bitrise-io/go-xcode/v2/destination
 github.com/bitrise-io/go-xcode/v2/simulator
 github.com/bitrise-io/go-xcode/v2/xcconfig
-github.com/bitrise-io/go-xcode/v2/xcodebuild
 github.com/bitrise-io/go-xcode/v2/xcodecache
-github.com/bitrise-io/go-xcode/v2/xcpretty
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew

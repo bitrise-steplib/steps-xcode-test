@@ -1,18 +1,10 @@
 package xcodebuild
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
-	"io"
-	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
-	"time"
 
-	"github.com/bitrise-io/go-utils/progress"
-	"github.com/bitrise-io/go-utils/v2/command"
 	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
 	"github.com/kballard/go-shellquote"
 )
@@ -34,8 +26,6 @@ const (
 	testRunnerNeverBeganExecuting            = `Test runner never began executing tests after launching.`
 	failedToOpenTestRunner                   = `Error Domain=FBSOpenApplicationServiceErrorDomain Code=1 "The request to open.*NSLocalizedFailureReason=The request was denied by service delegate \(SBMainWorkspace\)\.`
 )
-
-var xcodeCommandEnvs = []string{"NSUnbufferedIO=YES"}
 
 var testRunnerErrorPatterns = []string{
 	timeOutMessageIPhoneSimulator,
@@ -65,83 +55,6 @@ type TestParams struct {
 	PerformCleanAction             bool
 	RetryTestsOnFailure            bool
 	AdditionalOptions              []string
-}
-
-func (b *xcodebuild) runXcodebuildCmd(workDir string, args ...string) (string, int, error) {
-	var outBuffer bytes.Buffer
-
-	cmd := b.commandFactory.Create("xcodebuild", args, &command.Opts{
-		Stdout: &outBuffer,
-		Stderr: &outBuffer,
-		Env:    xcodeCommandEnvs,
-		Dir:    workDir,
-	})
-
-	b.logger.Printf("$ %s", cmd.PrintableCommandArgs())
-	b.logger.Println()
-
-	var err error
-	var exitCode int
-	progress.SimpleProgress(".", time.Minute, func() {
-		exitCode, err = cmd.RunAndReturnExitCode()
-	})
-
-	return outBuffer.String(), exitCode, err
-}
-
-func (b *xcodebuild) runPrettyXcodebuildCmd(workDir string, xcprettyArgs []string, xcodebuildArgs []string) (string, int, error) {
-	// build outputs:
-	// - write it into a buffer
-	// - write it into the pipe, which will be fed into xcpretty
-	var buildOutBuffer bytes.Buffer
-	pipeReader, pipeWriter := io.Pipe()
-	buildOutWriters := []io.Writer{pipeWriter}
-	buildOutWriter := CreateBufferedWriter(&buildOutBuffer, buildOutWriters...)
-	//
-	prettyOutWriter := os.Stdout
-
-	buildCmd := b.commandFactory.Create("xcodebuild", xcodebuildArgs, &command.Opts{
-		Stdout: buildOutWriter,
-		Stderr: buildOutWriter,
-		Env:    xcodeCommandEnvs,
-		Dir:    workDir,
-	})
-
-	prettyCmd := b.commandFactory.Create("xcpretty", xcprettyArgs, &command.Opts{
-		Stdin:  pipeReader,
-		Stdout: prettyOutWriter,
-		Stderr: prettyOutWriter,
-	})
-
-	b.logger.Printf("$ set -o pipefail && %s | %v", buildCmd.PrintableCommandArgs(), prettyCmd.PrintableCommandArgs())
-	b.logger.Println()
-
-	if err := buildCmd.Start(); err != nil {
-		return buildOutBuffer.String(), 1, err
-	}
-	if err := prettyCmd.Start(); err != nil {
-		return buildOutBuffer.String(), 1, err
-	}
-
-	defer func() {
-		if err := pipeWriter.Close(); err != nil {
-			b.logger.Warnf("Failed to close xcodebuild-xcpretty pipe: %s", err)
-		}
-
-		if err := prettyCmd.Wait(); err != nil {
-			b.logger.Warnf("xcpretty command failed: %s", err)
-		}
-	}()
-
-	if err := buildCmd.Wait(); err != nil {
-		var exerr *exec.ExitError
-		if errors.As(err, &exerr) {
-			return buildOutBuffer.String(), exerr.ExitCode(), err
-		}
-		return buildOutBuffer.String(), 1, err
-	}
-
-	return buildOutBuffer.String(), 0, nil
 }
 
 func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, error) {
@@ -246,28 +159,27 @@ func (b *xcodebuild) runTest(params TestRunParams) (string, int, error) {
 	// within the working directory of the project. This is optional for regular workspaces and projects,
 	// because we use the `-project` flag to point to the .xcproj/xcworkspace, but we do it for consistency.
 	workDir := filepath.Dir(params.TestParams.ProjectPath)
-	var rawOutput string
-	var exit int
-	var testErr error
+
+	var xcodeRunnerArgs []string
 	if params.LogFormatter == XcprettyTool {
 		xcprettyArgs, err := b.createXCPrettyArgs(params.XcprettyOptions)
 		if err != nil {
 			return "", 1, err
 		}
-		rawOutput, exit, testErr = b.runPrettyXcodebuildCmd(workDir, xcprettyArgs, xcodebuildArgs)
-	} else {
-		rawOutput, exit, testErr = b.runXcodebuildCmd(workDir, xcodebuildArgs...)
+		xcodeRunnerArgs = xcprettyArgs
 	}
 
-	if exit != 0 {
-		fmt.Println("Exit code: ", exit)
+	output, testErr := b.xcodeCommandRunner.Run(workDir, xcodebuildArgs, xcodeRunnerArgs)
+
+	if output.ExitCode != 0 {
+		fmt.Println("Exit code: ", output.ExitCode)
 	}
 
 	if testErr != nil {
-		return b.handleTestRunError(params, testRunResult{xcodebuildLog: rawOutput, exitCode: exit, err: testErr})
+		return b.handleTestRunError(params, testRunResult{xcodebuildLog: string(output.RawOut), exitCode: output.ExitCode, err: testErr})
 	}
 
-	return rawOutput, exit, nil
+	return string(output.RawOut), output.ExitCode, nil
 }
 
 type testRunResult struct {
@@ -322,13 +234,4 @@ func (b *xcodebuild) handleTestRunError(prevRunParams TestRunParams, prevRunResu
 	}
 
 	return prevRunResult.xcodebuildLog, prevRunResult.exitCode, prevRunResult.err
-}
-
-// CreateBufferedWriter ...
-func CreateBufferedWriter(buff *bytes.Buffer, writers ...io.Writer) io.Writer {
-	if len(writers) > 0 {
-		allWriters := append([]io.Writer{buff}, writers...)
-		return io.MultiWriter(allWriters...)
-	}
-	return io.Writer(buff)
 }

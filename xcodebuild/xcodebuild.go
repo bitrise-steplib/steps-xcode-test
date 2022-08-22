@@ -1,13 +1,11 @@
 package xcodebuild
 
 import (
-	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
-	"github.com/bitrise-io/go-xcode/models"
-	"github.com/bitrise-io/go-xcode/utility"
 	"github.com/bitrise-io/go-xcode/v2/xcconfig"
+	"github.com/bitrise-steplib/steps-xcode-test/xcodecommand"
 )
 
 // Output tools ...
@@ -26,34 +24,25 @@ const (
 // Xcodebuild ....
 type Xcodebuild interface {
 	RunTest(params TestRunParams) (string, int, error)
-	Version() (Version, error)
 }
 
 type xcodebuild struct {
-	logger         log.Logger
-	commandFactory command.Factory
-	pathChecker    pathutil.PathChecker
-	fileManager    fileutil.FileManager
-	xcconfigWriter xcconfig.Writer
+	logger             log.Logger
+	pathChecker        pathutil.PathChecker
+	fileManager        fileutil.FileManager
+	xcconfigWriter     xcconfig.Writer
+	xcodeCommandRunner xcodecommand.Runner
 }
 
 // NewXcodebuild ...
-func NewXcodebuild(logger log.Logger, commandFactory command.Factory, pathChecker pathutil.PathChecker, fileManager fileutil.FileManager, xcconfigWriter xcconfig.Writer) Xcodebuild {
+func NewXcodebuild(logger log.Logger, pathChecker pathutil.PathChecker, fileManager fileutil.FileManager, xcconfigWriter xcconfig.Writer, xcodeCommandRunner xcodecommand.Runner) Xcodebuild {
 	return &xcodebuild{
-		logger:         logger,
-		commandFactory: commandFactory,
-		pathChecker:    pathChecker,
-		fileManager:    fileManager,
-		xcconfigWriter: xcconfigWriter,
+		logger:             logger,
+		pathChecker:        pathChecker,
+		fileManager:        fileManager,
+		xcconfigWriter:     xcconfigWriter,
+		xcodeCommandRunner: xcodeCommandRunner,
 	}
-}
-
-// Version ...
-type Version models.XcodebuildVersionModel
-
-func (b *xcodebuild) Version() (Version, error) {
-	version, err := utility.GetXcodeVersion()
-	return Version(version), err
 }
 
 // TestRunParams ...
