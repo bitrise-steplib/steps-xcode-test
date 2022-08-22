@@ -23,8 +23,6 @@ func NewXcbeautifyRunner(logger log.Logger, commandFactory command.Factory) Runn
 	}
 }
 
-// set -o pipefail && xcodebuild [flags] | xcbeautify
-// NSUnbufferedIO=YES xcodebuild [flags] 2>&1 | xcbeautify
 func (c xcbeautifyRunner) Run(workDir string, xcodebuildArgs []string, _ []string) (Output, error) {
 	var (
 		buildOutBuffer         bytes.Buffer
@@ -47,7 +45,17 @@ func (c xcbeautifyRunner) Run(workDir string, xcodebuildArgs []string, _ []strin
 		Stderr: os.Stderr,
 	})
 
-	c.logger.TPrintf("$ set -o pipefail && %s | %v", buildCmd.PrintableCommandArgs(), beautifyCmd.PrintableCommandArgs())
+	defer func() {
+		if err := pipeWriter.Close(); err != nil {
+			c.logger.Warnf("Failed to close xcodebuild-xcbeautify pipe: %s", err)
+		}
+
+		if err := beautifyCmd.Wait(); err != nil {
+			c.logger.Warnf("xcbeautify command failed: %s", err)
+		}
+	}()
+
+	c.logger.TPrintf("$ set -o pipefail && %s | %s", buildCmd.PrintableCommandArgs(), beautifyCmd.PrintableCommandArgs())
 
 	if err := buildCmd.Start(); err != nil {
 		return Output{
@@ -61,16 +69,6 @@ func (c xcbeautifyRunner) Run(workDir string, xcodebuildArgs []string, _ []strin
 			ExitCode: 1,
 		}, err
 	}
-
-	defer func() {
-		if err := pipeWriter.Close(); err != nil {
-			c.logger.Warnf("Failed to close xcodebuild-xcbeautify pipe: %s", err)
-		}
-
-		if err := beautifyCmd.Wait(); err != nil {
-			c.logger.Warnf("xcbeautify command failed: %s", err)
-		}
-	}()
 
 	if err := buildCmd.Wait(); err != nil {
 		var exerr *exec.ExitError

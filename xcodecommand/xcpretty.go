@@ -31,10 +31,6 @@ func (c *xcprettyCommandRunner) Run(workDir string, xcodebuildArgs []string, xcp
 		prettyOutWriter        = os.Stdout
 	)
 
-	// defer func() {
-
-	// }()
-
 	buildCmd := c.commandFactory.Create("xcodebuild", xcodebuildArgs, &command.Opts{
 		Stdout: buildOutWriter,
 		Stderr: buildOutWriter,
@@ -59,7 +55,7 @@ func (c *xcprettyCommandRunner) Run(workDir string, xcodebuildArgs []string, xcp
 		}
 	}()
 
-	c.logger.TPrintf("$ set -o pipefail && %s | %v", buildCmd.PrintableCommandArgs(), prettyCmd.PrintableCommandArgs())
+	c.logger.TPrintf("$ set -o pipefail && %s | %s", buildCmd.PrintableCommandArgs(), prettyCmd.PrintableCommandArgs())
 
 	if err := buildCmd.Start(); err != nil {
 		return Output{
