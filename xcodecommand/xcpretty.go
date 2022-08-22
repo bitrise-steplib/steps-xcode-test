@@ -31,6 +31,12 @@ func (c *xcprettyCommandRunner) Run(workDir string, xcodebuildArgs []string, xcp
 		prettyOutWriter        = os.Stdout
 	)
 
+	defer func() {
+		if err := pipeWriter.Close(); err != nil {
+			c.logger.Warnf("Failed to close xcodebuild-xcpretty pipe: %s", err)
+		}
+	}()
+
 	buildCmd := c.commandFactory.Create("xcodebuild", xcodebuildArgs, &command.Opts{
 		Stdout: buildOutWriter,
 		Stderr: buildOutWriter,
@@ -60,10 +66,6 @@ func (c *xcprettyCommandRunner) Run(workDir string, xcodebuildArgs []string, xcp
 	}
 
 	defer func() {
-		if err := pipeWriter.Close(); err != nil {
-			c.logger.Warnf("Failed to close xcodebuild-xcpretty pipe: %s", err)
-		}
-
 		if err := prettyCmd.Wait(); err != nil {
 			c.logger.Warnf("xcpretty command failed: %s", err)
 		}
