@@ -2,7 +2,6 @@ package xcodebuild
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -216,11 +215,11 @@ func Test_GivenXcprettyFormatter_WhenEnabled_ThenUsesCorrectArguments(t *testing
 
 	parameters := runParameters()
 	parameters.LogFormatter = "xcpretty"
-	parameters.LogFormatterOptions = fmt.Sprintf("--color --report html --output %s", outputPath)
+	parameters.LogFormatterOptions = []string{"--color", "--report", "html", "--output", outputPath}
 
 	xcodebuild, mocks := createXcodebuildAndMocks(t)
 
-	mocks.xcodeCommandRunner.On("Run", ".", mock.Anything, strings.Fields(parameters.LogFormatterOptions)).
+	mocks.xcodeCommandRunner.On("Run", ".", mock.Anything, parameters.LogFormatterOptions).
 		Return(xcodecommand.Output{}, nil)
 
 	// When
@@ -268,7 +267,7 @@ func runParameters() TestRunParams {
 	return TestRunParams{
 		TestParams:                         testParams,
 		LogFormatter:                       "xcodebuild",
-		LogFormatterOptions:                "",
+		LogFormatterOptions:                []string{},
 		RetryOnTestRunnerError:             true,
 		RetryOnSwiftPackageResolutionError: true,
 		SwiftPackagesPath:                  "SwiftPackagesPath",
