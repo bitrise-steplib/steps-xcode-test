@@ -50,7 +50,7 @@ func NewXcodebuild(logger log.Logger, pathChecker pathutil.PathChecker, fileMana
 type TestRunParams struct {
 	TestParams                         TestParams
 	LogFormatter                       string
-	XcprettyOptions                    string
+	LogFormatterOptions                string
 	RetryOnTestRunnerError             bool
 	RetryOnSwiftPackageResolutionError bool
 	SwiftPackagesPath                  string

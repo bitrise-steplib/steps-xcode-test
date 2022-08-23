@@ -106,7 +106,7 @@ func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, erro
 	return xcodebuildArgs, nil
 }
 
-func (b *xcodebuild) createXCPrettyArgs(options string) ([]string, error) {
+func (b *xcodebuild) createLogFormatterArgs(options string) ([]string, error) {
 	var args []string
 
 	if options == "" {
@@ -160,16 +160,16 @@ func (b *xcodebuild) runTest(params TestRunParams) (string, int, error) {
 	// because we use the `-project` flag to point to the .xcproj/xcworkspace, but we do it for consistency.
 	workDir := filepath.Dir(params.TestParams.ProjectPath)
 
-	var xcodeRunnerArgs []string
-	if params.LogFormatter == XcprettyTool {
-		xcprettyArgs, err := b.createXCPrettyArgs(params.XcprettyOptions)
+	var logFormatterArgs []string
+	if params.LogFormatter != XcodebuildTool {
+		args, err := b.createLogFormatterArgs(params.LogFormatterOptions)
 		if err != nil {
 			return "", 1, err
 		}
-		xcodeRunnerArgs = xcprettyArgs
+		logFormatterArgs = args
 	}
 
-	output, testErr := b.xcodeCommandRunner.Run(workDir, xcodebuildArgs, xcodeRunnerArgs)
+	output, testErr := b.xcodeCommandRunner.Run(workDir, xcodebuildArgs, logFormatterArgs)
 
 	if output.ExitCode != 0 {
 		fmt.Println("Exit code: ", output.ExitCode)

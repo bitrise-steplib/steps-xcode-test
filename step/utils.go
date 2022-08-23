@@ -2,6 +2,7 @@ package step
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bitrise-io/go-utils/colorstring"
 	"github.com/bitrise-io/go-utils/stringutil"
@@ -50,6 +51,11 @@ that will attach the file to your build as an artifact!`))
 }
 
 func (u utils) CreateConfig(input Input, projectPath string, xcodeMajorVersion int, sim destination.Device, additionalOptions []string) Config {
+	logFormatterOptions := input.LogFormatterOptions
+	if input.LogFormatter == xcodebuild.XcprettyTool && strings.TrimSpace(input.XcprettyOptions) != "" {
+		logFormatterOptions = input.XcprettyOptions
+	}
+
 	return Config{
 		ProjectPath: projectPath,
 		Scheme:      input.Scheme,
@@ -69,8 +75,8 @@ func (u utils) CreateConfig(input Input, projectPath string, xcodeMajorVersion i
 		PerformCleanAction: input.PerformCleanAction,
 		XcodebuildOptions:  additionalOptions,
 
-		LogFormatter:    input.LogFormatter,
-		XcprettyOptions: input.XcprettyOptions,
+		LogFormatter:        input.LogFormatter,
+		LogFormatterOptions: logFormatterOptions,
 
 		CacheLevel: input.CacheLevel,
 
@@ -100,7 +106,7 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 	return xcodebuild.TestRunParams{
 		TestParams:                         testParams,
 		LogFormatter:                       cfg.LogFormatter,
-		XcprettyOptions:                    cfg.XcprettyOptions,
+		LogFormatterOptions:                cfg.LogFormatterOptions,
 		RetryOnTestRunnerError:             true,
 		RetryOnSwiftPackageResolutionError: true,
 		SwiftPackagesPath:                  swiftPackagesPath,

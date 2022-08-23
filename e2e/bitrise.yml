@@ -45,7 +45,7 @@ workflows:
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: UnitTests
     - DESTINATION: platform=iOS Simulator,name=iPhone 12,OS=latest
-    - LOG_FORMATTER: xcodebuild
+    - LOG_FORMATTER: xcbeautify
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: swift_packages

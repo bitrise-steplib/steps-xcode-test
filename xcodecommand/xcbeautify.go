@@ -23,7 +23,7 @@ func NewXcbeautifyRunner(logger log.Logger, commandFactory command.Factory) Runn
 	}
 }
 
-func (c xcbeautifyRunner) Run(workDir string, xcodebuildArgs []string, _ []string) (Output, error) {
+func (c xcbeautifyRunner) Run(workDir string, xcodebuildArgs []string, xcbeautifyArgs []string) (Output, error) {
 	var (
 		buildOutBuffer         bytes.Buffer
 		pipeReader, pipeWriter = io.Pipe()
@@ -39,7 +39,7 @@ func (c xcbeautifyRunner) Run(workDir string, xcodebuildArgs []string, _ []strin
 		Dir:    workDir,
 	})
 
-	beautifyCmd := c.commandFactory.Create("xcbeautify", []string{}, &command.Opts{
+	beautifyCmd := c.commandFactory.Create("xcbeautify", xcbeautifyArgs, &command.Opts{
 		Stdin:  pipeReader,
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,

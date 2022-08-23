@@ -47,8 +47,9 @@ type Input struct {
 	XcodebuildOptions  string `env:"xcodebuild_options"`
 
 	// xcodebuild log formatting
-	LogFormatter    string `env:"log_formatter,opt[xcbeautify,xcpretty,xcodebuild]"`
-	XcprettyOptions string `env:"xcpretty_options"`
+	LogFormatter        string `env:"log_formatter,opt[xcbeautify,xcpretty,xcodebuild]"`
+	XcprettyOptions     string `env:"xcpretty_options"`
+	LogFormatterOptions string `env:"log_formatter_options"`
 
 	// Caching
 	CacheLevel string `env:"cache_level,opt[none,swift_packages]"`
@@ -90,8 +91,8 @@ type Config struct {
 	PerformCleanAction bool
 	XcodebuildOptions  []string
 
-	LogFormatter    string
-	XcprettyOptions string
+	LogFormatter        string
+	LogFormatterOptions string
 
 	CacheLevel string
 

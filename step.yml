@@ -226,6 +226,12 @@ inputs:
     category: xcodebuild log formatting
     title: Additional options for the xcpretty command
     summary: Additional options to be added to the executed xcpretty command.
+  
+- log_formatter_options: 
+  opts:
+    category: xcodebuild log formatting
+    title: Additional options for the xcbeautify command
+    summary: Additional options to be added to the executed xcbeautify command.
 
 # Caching
 
