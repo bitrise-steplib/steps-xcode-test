@@ -83,7 +83,7 @@ func runArgumentsTest(t *testing.T, input TestRunParams) {
 	xcodebuild, mocks := createXcodebuildAndMocks(t)
 
 	arguments := argumentsFromRunParameters(input)
-	mocks.xcodeCommandRunner.On("Run", mock.Anything, arguments, []string(nil)).
+	mocks.xcodeCommandRunner.On("Run", mock.Anything, arguments, []string{}).
 		Return(xcodecommand.Output{}, nil)
 
 	// When
