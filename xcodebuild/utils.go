@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
-	"github.com/kballard/go-shellquote"
 )
 
 // On performance limited OS X hosts (ex: VMs) the iPhone/iOS Simulator might time out
@@ -118,18 +117,7 @@ func (b *xcodebuild) runTest(params TestRunParams) (string, int, error) {
 	// within the working directory of the project. This is optional for regular workspaces and projects,
 	// because we use the `-project` flag to point to the .xcproj/xcworkspace, but we do it for consistency.
 	workDir := filepath.Dir(params.TestParams.ProjectPath)
-
-	var logFormatterArgs []string
-	if params.LogFormatter != XcodebuildTool {
-		args, err := shellquote.Split(params.LogFormatterOptions)
-		if err != nil {
-			return "", 1, fmt.Errorf("failed to parse additional options (%s): %w", params.LogFormatterOptions, err)
-		}
-
-		logFormatterArgs = args
-	}
-
-	output, testErr := b.xcodeCommandRunner.Run(workDir, xcodebuildArgs, logFormatterArgs)
+	output, testErr := b.xcodeCommandRunner.Run(workDir, xcodebuildArgs, params.LogFormatterOptions)
 
 	if output.ExitCode != 0 {
 		fmt.Println("Exit code: ", output.ExitCode)

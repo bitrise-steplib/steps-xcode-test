@@ -7,13 +7,6 @@ import (
 	"github.com/bitrise-steplib/steps-xcode-test/xcodecommand"
 )
 
-// Output tools ...
-const (
-	XcodebuildTool = "xcodebuild"
-	XcprettyTool   = "xcpretty"
-	XcbeautifyTool = "xcbeautify"
-)
-
 // Test repetition modes ...
 const (
 	TestRepetitionNone           = "none"
@@ -47,7 +40,7 @@ func NewXcodebuild(logger log.Logger, fileManager fileutil.FileManager, xcconfig
 type TestRunParams struct {
 	TestParams                         TestParams
 	LogFormatter                       string
-	LogFormatterOptions                string
+	LogFormatterOptions                []string
 	RetryOnTestRunnerError             bool
 	RetryOnSwiftPackageResolutionError bool
 	SwiftPackagesPath                  string

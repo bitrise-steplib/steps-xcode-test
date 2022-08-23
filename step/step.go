@@ -47,7 +47,7 @@ type Input struct {
 	XcodebuildOptions  string `env:"xcodebuild_options"`
 
 	// xcodebuild log formatting
-	LogFormatter        string `env:"log_formatter,opt[xcbeautify,xcpretty,xcodebuild]"`
+	LogFormatter        string `env:"log_formatter,opt[xcbeautify,xcodebuild,xcpretty]"`
 	XcprettyOptions     string `env:"xcpretty_options"`
 	LogFormatterOptions string `env:"log_formatter_options"`
 
@@ -71,6 +71,13 @@ const (
 	onFailure = "on_failure"
 )
 
+// Output tools ...
+const (
+	XcbeautifyTool = "xcbeautify"
+	XcodebuildTool = "xcodebuild"
+	XcprettyTool   = "xcpretty"
+)
+
 // Config ...
 type Config struct {
 	ProjectPath string
@@ -92,7 +99,7 @@ type Config struct {
 	XcodebuildOptions  []string
 
 	LogFormatter        string
-	LogFormatterOptions string
+	LogFormatterOptions []string
 
 	CacheLevel string
 
@@ -200,7 +207,12 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 
 	additionalOptions, err := shellquote.Split(input.XcodebuildOptions)
 	if err != nil {
-		return Config{}, fmt.Errorf("provided XcodebuildOptions (%s) are not valid CLI parameters: %w", input.XcodebuildOptions, err)
+		return Config{}, fmt.Errorf("provided 'Additional options for the xcodebuild command' (xcodebuild_options) (%s) are not valid CLI parameters: %w", input.XcodebuildOptions, err)
+	}
+
+	additionalLogFormatterOptions, err := s.parseAdditionalLogFormatterOptions(input.LogFormatter, input.XcprettyOptions, input.LogFormatterOptions)
+	if err != nil {
+		return Config{}, nil
 	}
 
 	if strings.TrimSpace(input.XCConfigContent) == "" {
@@ -208,10 +220,10 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 	}
 	if sliceutil.IsStringInSlice("-xcconfig", additionalOptions) &&
 		input.XCConfigContent != "" {
-		return Config{}, fmt.Errorf("`-xcconfig` option found in XcodebuildOptions (`xcodebuild_options`), please clear Build settings (xcconfig) (`xcconfig_content`) input as only one can be set")
+		return Config{}, fmt.Errorf("`-xcconfig` option found in 'Additional options for the xcodebuild command' (xcodebuild_options), please clear 'Build settings (xcconfig)' (`xcconfig_content`) input as only one can be set")
 	}
 
-	return s.utils.CreateConfig(input, projectPath, int(xcodebuildVersion.MajorVersion), sim, additionalOptions), nil
+	return s.utils.CreateConfig(input, projectPath, int(xcodebuildVersion.MajorVersion), sim, additionalOptions, additionalLogFormatterOptions), nil
 }
 
 // InstallDeps ...
@@ -318,6 +330,39 @@ func (s XcodeTestRunner) Export(result Result, testFailed bool) error {
 	return nil
 }
 
+func (s XcodeTestConfigParser) parseAdditionalLogFormatterOptions(logFormatter, xcprettyOpts, logFormatterOpts string) ([]string, error) {
+	opts := logFormatterOpts
+	if logFormatter == XcprettyTool && strings.TrimSpace(xcprettyOpts) != "" {
+		opts = xcprettyOpts
+	}
+
+	switch logFormatter {
+	case XcodebuildTool:
+		return []string{}, nil
+	case XcprettyTool:
+		opts := logFormatterOpts
+		if strings.TrimSpace(xcprettyOpts) != "" {
+			opts = xcprettyOpts
+		}
+
+		parsedOpts, err := shellquote.Split(opts)
+		if err != nil {
+			return []string{}, fmt.Errorf("provided 'Additional options for the xcpretty command' (xcpretty_options) (%s) are not valid CLI parameters: %w", opts, err)
+		}
+
+		return parsedOpts, nil
+	case XcbeautifyTool:
+		parsedOpts, err := shellquote.Split(opts)
+		if err != nil {
+			return []string{}, fmt.Errorf("provided 'Additional options for the xcbeautify command' (log_formatter_options) (%s) are not valid CLI parameters: %w", opts, err)
+		}
+
+		return parsedOpts, nil
+	}
+
+	return []string{}, nil
+}
+
 func (s XcodeTestConfigParser) validateXcodeVersion(input *Input, xcodeMajorVersion int) error {
 	if xcodeMajorVersion < minSupportedXcodeMajorVersion {
 		return fmt.Errorf("invalid Xcode major version (%d), should not be less then min supported: %d", xcodeMajorVersion, minSupportedXcodeMajorVersion)
@@ -416,7 +461,7 @@ func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 	result.XcresultPath = xcresultPath
 	result.XcodebuildTestLog = testLog
 
-	if testErr != nil || cfg.LogFormatter == xcodebuild.XcodebuildTool {
+	if testErr != nil || cfg.LogFormatter == XcodebuildTool {
 		s.utils.PrintLastLinesOfXcodebuildTestLog(testLog, testErr == nil)
 	}
 

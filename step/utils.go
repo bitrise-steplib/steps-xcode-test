@@ -2,7 +2,6 @@ package step
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/bitrise-io/go-utils/colorstring"
 	"github.com/bitrise-io/go-utils/stringutil"
@@ -13,7 +12,7 @@ import (
 
 type Utils interface {
 	PrintLastLinesOfXcodebuildTestLog(rawXcodebuildOutput string, isRunSuccess bool)
-	CreateConfig(input Input, projectPath string, xcodeMajorVersion int, sim destination.Device, additionalOptions []string) Config
+	CreateConfig(input Input, projectPath string, xcodeMajorVersion int, sim destination.Device, additionalOptions, additionalLogFormatterOptions []string) Config
 	CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath string) xcodebuild.TestRunParams
 }
 
@@ -50,12 +49,11 @@ that will attach the file to your build as an artifact!`))
 
 }
 
-func (u utils) CreateConfig(input Input, projectPath string, xcodeMajorVersion int, sim destination.Device, additionalOptions []string) Config {
-	logFormatterOptions := input.LogFormatterOptions
-	if input.LogFormatter == xcodebuild.XcprettyTool && strings.TrimSpace(input.XcprettyOptions) != "" {
-		logFormatterOptions = input.XcprettyOptions
-	}
-
+func (u utils) CreateConfig(input Input,
+	projectPath string,
+	xcodeMajorVersion int,
+	sim destination.Device,
+	additionalOptions, additionalLogFormatterOptions []string) Config {
 	return Config{
 		ProjectPath: projectPath,
 		Scheme:      input.Scheme,
@@ -76,7 +74,7 @@ func (u utils) CreateConfig(input Input, projectPath string, xcodeMajorVersion i
 		XcodebuildOptions:  additionalOptions,
 
 		LogFormatter:        input.LogFormatter,
-		LogFormatterOptions: logFormatterOptions,
+		LogFormatterOptions: additionalLogFormatterOptions,
 
 		CacheLevel: input.CacheLevel,
 
