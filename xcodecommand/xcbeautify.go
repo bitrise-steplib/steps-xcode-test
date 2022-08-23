@@ -3,15 +3,25 @@ package xcodecommand
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
 
+	"github.com/bitrise-io/go-utils/errorutil"
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/log"
+	version "github.com/hashicorp/go-version"
 )
 
+const xcbeautify = "xcbeautify"
+
 type xcbeautifyRunner struct {
+	logger         log.Logger
+	commandFactory command.Factory
+}
+
+type xcbeautifyInstallChecker struct {
 	logger         log.Logger
 	commandFactory command.Factory
 }
@@ -23,7 +33,7 @@ func NewXcbeautifyRunner(logger log.Logger, commandFactory command.Factory) Runn
 	}
 }
 
-func (c xcbeautifyRunner) Run(workDir string, xcodebuildArgs []string, xcbeautifyArgs []string) (Output, error) {
+func (c *xcbeautifyRunner) Run(workDir string, xcodebuildArgs []string, xcbeautifyArgs []string) (Output, error) {
 	var (
 		buildOutBuffer         bytes.Buffer
 		pipeReader, pipeWriter = io.Pipe()
@@ -39,7 +49,7 @@ func (c xcbeautifyRunner) Run(workDir string, xcodebuildArgs []string, xcbeautif
 		Dir:    workDir,
 	})
 
-	beautifyCmd := c.commandFactory.Create("xcbeautify", xcbeautifyArgs, &command.Opts{
+	beautifyCmd := c.commandFactory.Create(xcbeautify, xcbeautifyArgs, &command.Opts{
 		Stdin:  pipeReader,
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
@@ -89,4 +99,29 @@ func (c xcbeautifyRunner) Run(workDir string, xcodebuildArgs []string, xcbeautif
 		RawOut:   buildOutBuffer.Bytes(),
 		ExitCode: 0,
 	}, nil
+}
+
+func NewXcbeautifyInstallChecker(logger log.Logger, commandFactory command.Factory) DependencyInstaller {
+	return &xcbeautifyInstallChecker{
+		logger:         logger,
+		commandFactory: commandFactory,
+	}
+}
+
+func (c *xcbeautifyInstallChecker) Install() (*version.Version, error) {
+	c.logger.Println()
+	c.logger.Infof("Checking log formatter (xcbeautify) version")
+
+	versionCmd := c.commandFactory.Create(xcbeautify, []string{"--version"}, nil)
+
+	out, err := versionCmd.RunAndReturnTrimmedOutput()
+	if err != nil {
+		if errorutil.IsExitStatusError(err) {
+			return nil, fmt.Errorf("xcbeautify version command failed: %w", err)
+		}
+
+		return nil, fmt.Errorf("failed to run xcbeautify command: %w", err)
+	}
+
+	return version.NewVersion(out)
 }

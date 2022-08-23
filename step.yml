@@ -37,6 +37,9 @@ type_tags:
 - test
 is_always_run: false
 is_skippable: false
+deps:
+  brew:
+  - name: xcbeautify
 toolkit:
   go:
     package_name: github.com/bitrise-steplib/steps-xcode-test

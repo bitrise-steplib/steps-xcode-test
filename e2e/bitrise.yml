@@ -10,7 +10,7 @@ workflows:
     - BITRISE_SCHEME: DeckOfPlayingCards
     - TEST_PLAN: ""
     - DESTINATION: platform=iOS Simulator,name=iPhone 8,OS=latest
-    - LOG_FORMATTER: xcpretty
+    - LOG_FORMATTER: xcbeautify
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: swift_packages
@@ -62,7 +62,7 @@ workflows:
     - BITRISE_SCHEME: ios-simple-objc
     - TEST_PLAN: ""
     - DESTINATION: platform=iOS Simulator,name=iPhone 8,OS=latest
-    - LOG_FORMATTER: xcpretty
+    - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: none
@@ -73,7 +73,6 @@ workflows:
     - _run
     - _check_outputs
     - _check_exported_artifacts
-    - _check_xcpretty_html_report
 
   utility_create_xcconfig:
     steps:

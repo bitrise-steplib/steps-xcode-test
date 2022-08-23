@@ -92,13 +92,14 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 	utils := step.NewUtils(logger)
 
 	xcodeCommandRunner := xcodecommand.Runner(nil)
-	xcodeRunnerDepInstaller := xcodecommand.DependencyInstaller(nil)
+	logFormatterInstaller := xcodecommand.DependencyInstaller(nil)
 
 	switch logFormatter {
-	case step.XcbeautifyTool:
-		xcodeCommandRunner = xcodecommand.NewXcbeautifyRunner(logger, commandFactory)
 	case step.XcodebuildTool:
 		xcodeCommandRunner = xcodecommand.NewRawCommandRunner(logger, commandFactory)
+	case step.XcbeautifyTool:
+		xcodeCommandRunner = xcodecommand.NewXcbeautifyRunner(logger, commandFactory)
+		logFormatterInstaller = xcodecommand.NewXcbeautifyInstallChecker(logger, commandFactory)
 	case step.XcprettyTool:
 		commandLocator := env.NewCommandLocator()
 		rubyComamndFactory, err := ruby.NewCommandFactory(commandFactory, commandLocator)
@@ -108,10 +109,10 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 		rubyEnv := ruby.NewEnvironment(rubyComamndFactory, commandLocator, logger)
 
 		xcodeCommandRunner = xcodecommand.NewXcprettyCommandRunner(logger, commandFactory, pathChecker, fileManager)
-		xcodeRunnerDepInstaller = xcodecommand.NewXcprettyDependencyManager(logger, commandFactory, rubyComamndFactory, rubyEnv)
+		logFormatterInstaller = xcodecommand.NewXcprettyDependencyManager(logger, commandFactory, rubyComamndFactory, rubyEnv)
 	}
 
 	xcodebuilder := xcodebuild.NewXcodebuild(logger, fileManager, xcconfigWriter, xcodeCommandRunner)
 
-	return step.NewXcodeTestRunner(logger, xcodeRunnerDepInstaller, xcodebuilder, simulatorManager, swiftCache, outputExporter, pathModifier, pathProvider, utils), nil
+	return step.NewXcodeTestRunner(logger, logFormatterInstaller, xcodebuilder, simulatorManager, swiftCache, outputExporter, pathModifier, pathProvider, utils), nil
 }
