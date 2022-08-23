@@ -8,18 +8,24 @@ import (
 	"os/exec"
 
 	"github.com/bitrise-io/go-utils/v2/command"
+	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/pathutil"
 )
 
 type xcprettyCommandRunner struct {
 	logger         log.Logger
 	commandFactory command.Factory
+	pathChecker    pathutil.PathChecker
+	fileManager    fileutil.FileManager
 }
 
-func NewXcprettyCommandRunner(logger log.Logger, commandFactory command.Factory) Runner {
+func NewXcprettyCommandRunner(logger log.Logger, commandFactory command.Factory, pathChecker pathutil.PathChecker, fileManager fileutil.FileManager) Runner {
 	return &xcprettyCommandRunner{
 		logger:         logger,
 		commandFactory: commandFactory,
+		pathChecker:    pathChecker,
+		fileManager:    fileManager,
 	}
 }
 
@@ -30,6 +36,8 @@ func (c *xcprettyCommandRunner) Run(workDir string, xcodebuildArgs []string, xcp
 		buildOutWriter         = io.MultiWriter(&buildOutBuffer, pipeWriter)
 		prettyOutWriter        = os.Stdout
 	)
+
+	c.cleanOutputFile(xcprettyArgs)
 
 	buildCmd := c.commandFactory.Create("xcodebuild", xcodebuildArgs, &command.Opts{
 		Stdout: buildOutWriter,
@@ -89,4 +97,30 @@ func (c *xcprettyCommandRunner) Run(workDir string, xcodebuildArgs []string, xcp
 		RawOut:   buildOutBuffer.Bytes(),
 		ExitCode: 0,
 	}, nil
+}
+
+func (c *xcprettyCommandRunner) cleanOutputFile(xcprettyArgs []string) {
+	// get and delete the xcpretty output file, if exists
+	xcprettyOutputFilePath := ""
+	isNextOptOutputPth := false
+	for _, aOpt := range xcprettyArgs {
+		if isNextOptOutputPth {
+			xcprettyOutputFilePath = aOpt
+			break
+		}
+		if aOpt == "--output" {
+			isNextOptOutputPth = true
+			continue
+		}
+	}
+	if xcprettyOutputFilePath != "" {
+		if isExist, err := c.pathChecker.IsPathExists(xcprettyOutputFilePath); err != nil {
+			c.logger.Errorf("Failed to check xcpretty output file status (path: %s): %s", xcprettyOutputFilePath, err)
+		} else if isExist {
+			c.logger.Warnf("=> Deleting existing xcpretty output: %s", xcprettyOutputFilePath)
+			if err := c.fileManager.Remove(xcprettyOutputFilePath); err != nil {
+				c.logger.Errorf("Failed to delete xcpretty output file (path: %s): %w", xcprettyOutputFilePath, err)
+			}
+		}
+	}
 }

@@ -103,13 +103,13 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 		}
 		rubyEnv := ruby.NewEnvironment(rubyComamndFactory, commandLocator, logger)
 
-		xcodeCommandRunner = xcodecommand.NewXcprettyCommandRunner(logger, commandFactory)
+		xcodeCommandRunner = xcodecommand.NewXcprettyCommandRunner(logger, commandFactory, pathChecker, fileManager)
 		xcodeRunnerDepInstaller = xcodecommand.NewXcprettyDependencyManager(logger, commandFactory, rubyComamndFactory, rubyEnv)
 	case xcodebuild.XcbeautifyTool:
 		xcodeCommandRunner = xcodecommand.NewXcbeautifyRunner(logger, commandFactory)
 	}
 
-	xcodebuilder := xcodebuild.NewXcodebuild(logger, pathChecker, fileManager, xcconfigWriter, xcodeCommandRunner)
+	xcodebuilder := xcodebuild.NewXcodebuild(logger, fileManager, xcconfigWriter, xcodeCommandRunner)
 
 	return step.NewXcodeTestRunner(logger, xcodeRunnerDepInstaller, xcodebuilder, simulatorManager, swiftCache, outputExporter, pathModifier, pathProvider, utils), nil
 }

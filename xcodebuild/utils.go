@@ -106,47 +106,6 @@ func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, erro
 	return xcodebuildArgs, nil
 }
 
-func (b *xcodebuild) createLogFormatterArgs(options string) ([]string, error) {
-	var args []string
-
-	if options == "" {
-		return args, nil
-	}
-
-	opts, err := shellquote.Split(options)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse additional options (%s): %w", options, err)
-	}
-
-	// get and delete the xcpretty output file, if exists
-	xcprettyOutputFilePath := ""
-	isNextOptOutputPth := false
-	for _, aOpt := range opts {
-		if isNextOptOutputPth {
-			xcprettyOutputFilePath = aOpt
-			break
-		}
-		if aOpt == "--output" {
-			isNextOptOutputPth = true
-			continue
-		}
-	}
-	if xcprettyOutputFilePath != "" {
-		if isExist, err := b.pathChecker.IsPathExists(xcprettyOutputFilePath); err != nil {
-			b.logger.Errorf("Failed to check xcpretty output file status (path: %s): %s", xcprettyOutputFilePath, err)
-		} else if isExist {
-			b.logger.Warnf("=> Deleting existing xcpretty output: %s", xcprettyOutputFilePath)
-			if err := b.fileManager.Remove(xcprettyOutputFilePath); err != nil {
-				b.logger.Errorf("Failed to delete xcpretty output file (path: %s): %w", xcprettyOutputFilePath, err)
-			}
-		}
-	}
-
-	args = append(args, opts...)
-
-	return args, nil
-}
-
 func (b *xcodebuild) runTest(params TestRunParams) (string, int, error) {
 	xcodebuildArgs, err := b.createXcodebuildTestArgs(params.TestParams)
 	if err != nil {
@@ -162,10 +121,11 @@ func (b *xcodebuild) runTest(params TestRunParams) (string, int, error) {
 
 	var logFormatterArgs []string
 	if params.LogFormatter != XcodebuildTool {
-		args, err := b.createLogFormatterArgs(params.LogFormatterOptions)
+		args, err := shellquote.Split(params.LogFormatterOptions)
 		if err != nil {
-			return "", 1, err
+			return "", 1, fmt.Errorf("failed to parse additional options (%s): %w", params.LogFormatterOptions, err)
 		}
+
 		logFormatterArgs = args
 	}
 

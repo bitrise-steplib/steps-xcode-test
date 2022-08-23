@@ -16,7 +16,6 @@ import (
 const xcconfigPath = "xcconfigPath"
 
 type testingMocks struct {
-	pathChecker        *mocks.PathChecker
 	fileManager        *mocks.FileManager
 	xcconfigWriter     *mocks.XcconfigWriter
 	xcodeCommandRunner *mocks.XcodeCommandRunner
@@ -221,9 +220,6 @@ func Test_GivenXcprettyFormatter_WhenEnabled_ThenUsesCorrectArguments(t *testing
 
 	xcodebuild, mocks := createXcodebuildAndMocks(t)
 
-	mocks.pathChecker.On("IsPathExists", outputPath).Return(true, nil)
-	mocks.fileManager.On("Remove", outputPath).Return(nil)
-
 	mocks.xcodeCommandRunner.On("Run", ".", mock.Anything, strings.Fields(parameters.LogFormatterOptions)).
 		Return(xcodecommand.Output{}, nil)
 
@@ -232,25 +228,21 @@ func Test_GivenXcprettyFormatter_WhenEnabled_ThenUsesCorrectArguments(t *testing
 
 	// Then
 	mocks.xcodeCommandRunner.AssertExpectations(t)
-	mocks.pathChecker.AssertExpectations(t)
-	mocks.fileManager.AssertExpectations(t)
 }
 
 // Helpers
 
 func createXcodebuildAndMocks(t *testing.T) (Xcodebuild, testingMocks) {
 	logger := log.NewLogger()
-	pathChecker := new(mocks.PathChecker)
 	fileManager := new(mocks.FileManager)
 	xcconfigWriter := new(mocks.XcconfigWriter)
 	xcodeCommandRunner := mocks.NewXcodeCommandRunner(t)
 
 	xcconfigWriter.On("Write", mock.Anything).Return(xcconfigPath, nil)
 
-	xcodebuild := NewXcodebuild(logger, pathChecker, fileManager, xcconfigWriter, xcodeCommandRunner)
+	xcodebuild := NewXcodebuild(logger, fileManager, xcconfigWriter, xcodeCommandRunner)
 
 	return xcodebuild, testingMocks{
-		pathChecker:        pathChecker,
 		fileManager:        fileManager,
 		xcconfigWriter:     xcconfigWriter,
 		xcodeCommandRunner: xcodeCommandRunner,
