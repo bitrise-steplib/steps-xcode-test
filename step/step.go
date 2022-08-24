@@ -331,11 +331,6 @@ func (s XcodeTestRunner) Export(result Result, testFailed bool) error {
 }
 
 func (s XcodeTestConfigParser) parseAdditionalLogFormatterOptions(logFormatter, xcprettyOpts, logFormatterOpts string) ([]string, error) {
-	opts := logFormatterOpts
-	if logFormatter == XcprettyTool && strings.TrimSpace(xcprettyOpts) != "" {
-		opts = xcprettyOpts
-	}
-
 	switch logFormatter {
 	case XcodebuildTool:
 		return []string{}, nil
@@ -352,15 +347,15 @@ func (s XcodeTestConfigParser) parseAdditionalLogFormatterOptions(logFormatter, 
 
 		return parsedOpts, nil
 	case XcbeautifyTool:
-		parsedOpts, err := shellquote.Split(opts)
+		parsedOpts, err := shellquote.Split(logFormatterOpts)
 		if err != nil {
 			return []string{}, fmt.Errorf("provided 'Additional options for the xcbeautify command' (log_formatter_options) (%s) are not valid CLI parameters: %w", opts, err)
 		}
 
 		return parsedOpts, nil
+	default:
+		panic(fmt.Sprintf("Unknown log formatter: %s", logFormatter))
 	}
-
-	panic(fmt.Sprintf("Unknown log formatter: %s", logFormatter))
 }
 
 func (s XcodeTestConfigParser) validateXcodeVersion(input *Input, xcodeMajorVersion int) error {

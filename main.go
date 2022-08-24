@@ -110,6 +110,8 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 
 		xcodeCommandRunner = xcodecommand.NewXcprettyCommandRunner(logger, commandFactory, pathChecker, fileManager)
 		logFormatterInstaller = xcodecommand.NewXcprettyDependencyManager(logger, commandFactory, rubyComamndFactory, rubyEnv)
+	default:
+		panic(fmt.Sprintf("Unknown log formatter: %s", logFormatter))
 	}
 
 	xcodebuilder := xcodebuild.NewXcodebuild(logger, fileManager, xcconfigWriter, xcodeCommandRunner)
