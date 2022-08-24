@@ -349,7 +349,7 @@ func (s XcodeTestConfigParser) parseAdditionalLogFormatterOptions(logFormatter, 
 	case XcbeautifyTool:
 		parsedOpts, err := shellquote.Split(logFormatterOpts)
 		if err != nil {
-			return []string{}, fmt.Errorf("provided 'Additional options for the xcbeautify command' (log_formatter_options) (%s) are not valid CLI parameters: %w", opts, err)
+			return []string{}, fmt.Errorf("provided 'Additional options for the xcbeautify command' (log_formatter_options) (%s) are not valid CLI parameters: %w", logFormatterOpts, err)
 		}
 
 		return parsedOpts, nil
