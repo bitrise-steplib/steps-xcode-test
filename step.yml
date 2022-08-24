@@ -213,15 +213,15 @@ inputs:
       Defines how xcodebuild command's log is formatted.
 
       Available options:
-      - `xcbeautify`: The xcodebuild command's output will be prettified by xcbeautify.
-      - `xcpretty`: The xcodebuild command's output will be prettified by xcpretty.
+      - `xcbeautify`: The xcodebuild command's output will be beautified by xcbeautify.
       - `xcodebuild`: Only the last 20 lines of raw xcodebuild output will be visible in the build log.
+      - `xcpretty`: The xcodebuild command's output will be prettified by xcpretty.
 
       The raw xcodebuild log will be exported in both cases.
     value_options:
     - xcbeautify
-    - xcpretty
     - xcodebuild
+    - xcpretty
     is_required: true
 
 - xcpretty_options: --color --report html --output "${BITRISE_DEPLOY_DIR}/xcode-test-results-${BITRISE_SCHEME}.html"

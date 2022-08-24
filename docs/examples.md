@@ -18,6 +18,15 @@ Run tests in a specific Test Plan associated with a Scheme:
     - test_plan: UITests
 ```
 
+Use xcbeautify to beautify xcodebuild logs:
+```yaml
+- xcode-test:
+    inputs:
+    - project_path: ./ios-sample/ios-sample.xcodeproj
+    - scheme: ios-sample
+    - log_formatter: xcbeautify
+```
+
 Run tests with custom xcconfig content:
 ```yaml
 - xcode-test:
@@ -36,3 +45,4 @@ Run tests with custom xcconfig file path:
     - scheme: ios-sample
     - xcconfig_content: ./ios-sample/ios-sample/Configurations/Dev.xcconfig
 ```
+

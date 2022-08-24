@@ -360,7 +360,7 @@ func (s XcodeTestConfigParser) parseAdditionalLogFormatterOptions(logFormatter, 
 		return parsedOpts, nil
 	}
 
-	return []string{}, nil
+	panic(fmt.Sprintf("Unknown log formatter: %s", logFormatter))
 }
 
 func (s XcodeTestConfigParser) validateXcodeVersion(input *Input, xcodeMajorVersion int) error {
