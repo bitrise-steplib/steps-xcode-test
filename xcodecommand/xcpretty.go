@@ -65,38 +65,28 @@ func (c *xcprettyCommandRunner) Run(workDir string, xcodebuildArgs []string, xcp
 
 	c.logger.TPrintf("$ set -o pipefail && %s | %s", buildCmd.PrintableCommandArgs(), prettyCmd.PrintableCommandArgs())
 
-	if err := buildCmd.Start(); err != nil {
-		return Output{
-			RawOut:   buildOutBuffer.Bytes(),
-			ExitCode: 1,
-		}, err
+	err := buildCmd.Start()
+	if err == nil {
+		err = prettyCmd.Start()
 	}
-	if err := prettyCmd.Start(); err != nil {
-		return Output{
-			RawOut:   buildOutBuffer.Bytes(),
-			ExitCode: 1,
-		}, err
+	if err == nil {
+		err = buildCmd.Wait()
 	}
 
-	if err := buildCmd.Wait(); err != nil {
+	exitCode := 0
+	if err != nil {
+		exitCode = -1
+
 		var exerr *exec.ExitError
 		if errors.As(err, &exerr) {
-			return Output{
-				RawOut:   buildOutBuffer.Bytes(),
-				ExitCode: exerr.ExitCode(),
-			}, err
+			exitCode = exerr.ExitCode()
 		}
-
-		return Output{
-			RawOut:   buildOutBuffer.Bytes(),
-			ExitCode: 1,
-		}, err
 	}
 
 	return Output{
 		RawOut:   buildOutBuffer.Bytes(),
-		ExitCode: 0,
-	}, nil
+		ExitCode: exitCode,
+	}, err
 }
 
 func (c *xcprettyCommandRunner) cleanOutputFile(xcprettyArgs []string) {
