@@ -13,7 +13,7 @@ type RunnerDependencyInstaller struct {
 }
 
 // Install provides a mock function with given fields:
-func (_m *RunnerDependencyInstaller) Install() (*version.Version, error) {
+func (_m *RunnerDependencyInstaller) CheckInstall() (*version.Version, error) {
 	ret := _m.Called()
 
 	var r0 *version.Version

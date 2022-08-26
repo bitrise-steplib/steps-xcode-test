@@ -98,7 +98,7 @@ func NewXcbeautifyInstallChecker(logger log.Logger, commandFactory command.Facto
 	}
 }
 
-func (c *xcbeautifyInstallChecker) Install() (*version.Version, error) {
+func (c *xcbeautifyInstallChecker) CheckInstall() (*version.Version, error) {
 	c.logger.Println()
 	c.logger.Infof("Checking log formatter (xcbeautify) version")
 

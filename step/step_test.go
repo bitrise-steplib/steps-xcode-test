@@ -135,21 +135,21 @@ func Test_GivenStep_WhenInstallXcpretty_ThenInstallIt(t *testing.T) {
 		assert.Fail(t, fmt.Sprintf("%s", err))
 	}
 
-	mocks.xcodeRunnerInstaller.On("Install", mock.Anything).Return(ver, nil)
+	mocks.xcodeRunnerInstaller.On("CheckInstall", mock.Anything).Return(ver, nil)
 
 	// When
 	err = step.InstallDeps()
 
 	// Then
 	assert.NoError(t, err)
-	mocks.xcodeRunnerInstaller.AssertCalled(t, "Install")
+	mocks.xcodeRunnerInstaller.AssertExpectations(t)
 }
 
 func Test_GivenLogFormatterIsXcbeautify_WhenParsesConfig_ThenAdditionalOptionsWork(t *testing.T) {
 	// Given
 	envValues := defaultEnvValues()
 	envValues["log_formatter"] = "xcbeautify"
-	envValues["log_formatter_options"] = "'--is-ci' '-q'"
+	envValues["xcbeautify_options"] = "'--is-ci' '-q'"
 
 	configParser, mocks := createConfigParser(t, envValues)
 

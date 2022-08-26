@@ -20,7 +20,7 @@ func Test_GivenNotInstalled_WhenInstall_ThenInstallsIt(t *testing.T) {
 	installer, version, mocks := createInstallerAndMocks(t, false)
 
 	// When
-	installedVersion, err := installer.Install()
+	installedVersion, err := installer.CheckInstall()
 
 	// Then
 	assert.NoError(t, err)
@@ -36,7 +36,7 @@ func Test_GivenInstalled_WhenInstall_OnlyReturnsVersion(t *testing.T) {
 	installer, version, mocks := createInstallerAndMocks(t, true)
 
 	// When
-	installedVersion, err := installer.Install()
+	installedVersion, err := installer.CheckInstall()
 
 	// Then
 	assert.NoError(t, err)
