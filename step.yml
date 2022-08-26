@@ -37,9 +37,6 @@ type_tags:
 - test
 is_always_run: false
 is_skippable: false
-deps:
-  brew:
-  - name: xcbeautify
 toolkit:
   go:
     package_name: github.com/bitrise-steplib/steps-xcode-test
@@ -230,7 +227,7 @@ inputs:
     title: Additional options for the xcpretty command
     summary: Additional options to be added to the executed xcpretty command.
 
-- log_formatter_options:
+- xcbeautify_options:
   opts:
     category: xcodebuild log formatting
     title: Additional options for the xcbeautify command

@@ -47,9 +47,9 @@ type Input struct {
 	XcodebuildOptions  string `env:"xcodebuild_options"`
 
 	// xcodebuild log formatting
-	LogFormatter        string `env:"log_formatter,opt[xcbeautify,xcodebuild,xcpretty]"`
-	XcprettyOptions     string `env:"xcpretty_options"`
-	LogFormatterOptions string `env:"log_formatter_options"`
+	LogFormatter      string `env:"log_formatter,opt[xcbeautify,xcodebuild,xcpretty]"`
+	XcprettyOptions   string `env:"xcpretty_options"`
+	XcbeautifyOptions string `env:"xcbeautify_options"`
 
 	// Caching
 	CacheLevel string `env:"cache_level,opt[none,swift_packages]"`
@@ -71,7 +71,7 @@ const (
 	onFailure = "on_failure"
 )
 
-// Output tools ...
+// Output tools
 const (
 	XcbeautifyTool = "xcbeautify"
 	XcodebuildTool = "xcodebuild"
@@ -210,7 +210,7 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 		return Config{}, fmt.Errorf("provided 'Additional options for the xcodebuild command' (xcodebuild_options) (%s) are not valid CLI parameters: %w", input.XcodebuildOptions, err)
 	}
 
-	additionalLogFormatterOptions, err := s.parseAdditionalLogFormatterOptions(input.LogFormatter, input.XcprettyOptions, input.LogFormatterOptions)
+	additionalLogFormatterOptions, err := s.parseAdditionalLogFormatterOptions(input.LogFormatter, input.XcprettyOptions, input.XcbeautifyOptions)
 	if err != nil {
 		return Config{}, nil
 	}
@@ -330,26 +330,21 @@ func (s XcodeTestRunner) Export(result Result, testFailed bool) error {
 	return nil
 }
 
-func (s XcodeTestConfigParser) parseAdditionalLogFormatterOptions(logFormatter, xcprettyOpts, logFormatterOpts string) ([]string, error) {
+func (s XcodeTestConfigParser) parseAdditionalLogFormatterOptions(logFormatter, xcprettyOpts, xcbeautifyOpts string) ([]string, error) {
 	switch logFormatter {
 	case XcodebuildTool:
 		return []string{}, nil
 	case XcprettyTool:
-		opts := logFormatterOpts
-		if strings.TrimSpace(xcprettyOpts) != "" {
-			opts = xcprettyOpts
-		}
-
-		parsedOpts, err := shellquote.Split(opts)
+		parsedOpts, err := shellquote.Split(xcprettyOpts)
 		if err != nil {
-			return []string{}, fmt.Errorf("provided 'Additional options for the xcpretty command' (xcpretty_options) (%s) are not valid CLI parameters: %w", opts, err)
+			return []string{}, fmt.Errorf("provided 'Additional options for the xcpretty command' (xcpretty_options) (%s) are not valid CLI parameters: %w", xcprettyOpts, err)
 		}
 
 		return parsedOpts, nil
 	case XcbeautifyTool:
-		parsedOpts, err := shellquote.Split(logFormatterOpts)
+		parsedOpts, err := shellquote.Split(xcbeautifyOpts)
 		if err != nil {
-			return []string{}, fmt.Errorf("provided 'Additional options for the xcbeautify command' (log_formatter_options) (%s) are not valid CLI parameters: %w", logFormatterOpts, err)
+			return []string{}, fmt.Errorf("provided 'Additional options for the xcbeautify command' (xcbeautify_options) (%s) are not valid CLI parameters: %w", xcbeautifyOpts, err)
 		}
 
 		return parsedOpts, nil
