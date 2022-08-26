@@ -130,20 +130,67 @@ func Test_GivenTestRepetitionModeIsNone_WhenRelaunchTestsForEachRepetitionIsSet_
 func Test_GivenStep_WhenInstallXcpretty_ThenInstallIt(t *testing.T) {
 	// Given
 	step, mocks := createStepAndMocks(t)
-
 	ver, err := version.NewVersion("1.0")
 	if err != nil {
 		assert.Fail(t, fmt.Sprintf("%s", err))
 	}
-	mocks.xcodeRunnerInstaller.On("Install", mock.Anything).Return(ver, nil)
+
+	mocks.xcodeRunnerInstaller.On("CheckInstall", mock.Anything).Return(ver, nil)
 
 	// When
-	err = step.InstallDeps(true)
+	err = step.InstallDeps()
 
 	// Then
 	assert.NoError(t, err)
+	mocks.xcodeRunnerInstaller.AssertExpectations(t)
+}
 
-	mocks.xcodeRunnerInstaller.AssertCalled(t, "Install")
+func Test_GivenLogFormatterIsXcbeautify_WhenParsesConfig_ThenAdditionalOptionsWork(t *testing.T) {
+	// Given
+	envValues := defaultEnvValues()
+	envValues["log_formatter"] = "xcbeautify"
+	envValues["xcbeautify_options"] = "'--is-ci' '-q'"
+
+	configParser, mocks := createConfigParser(t, envValues)
+
+	mocks.xcodeVersion.On("Version").Return(newVersion(13), nil)
+	path := strings.TrimPrefix(envValues["project_path"], ".")
+	mocks.pathModifier.On("AbsPath", mock.Anything).Return(path, nil)
+	device := defaultSimulator()
+	mocks.deviceFinder.On("FindDevice", mock.Anything, mock.Anything).Return(device, nil)
+
+	// When
+	actualConfig, err := configParser.ProcessConfig()
+
+	// Then
+	require.NoError(t, err)
+
+	expectedConfig := Config{
+		ProjectPath: "/_tmp/BullsEye.xcworkspace",
+		Scheme:      "BullsEye",
+
+		SimulatorID:       device.ID,
+		IsSimulatorBooted: false,
+
+		XcodeMajorVersion: 13,
+
+		TestRepetitionMode:            "none",
+		MaximumTestRepetitions:        3,
+		RelaunchTestForEachRepetition: false,
+		RetryTestsOnFailure:           false,
+
+		XcodebuildOptions: []string{},
+
+		LogFormatter:        "xcbeautify",
+		LogFormatterOptions: []string{"--is-ci", "-q"},
+		PerformCleanAction:  false,
+
+		CacheLevel: "swift_packages",
+
+		CollectSimulatorDiagnostics: never,
+		HeadlessMode:                true,
+	}
+	require.Equal(t, expectedConfig, actualConfig)
 }
 
 func Test_GivenStep_WhenExportsTestResult_ThenSetsCorrectly(t *testing.T) {

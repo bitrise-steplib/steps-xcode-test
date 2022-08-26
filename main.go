@@ -42,10 +42,10 @@ func run() int {
 		logger.Errorf("Process conifg: %s", err)
 	}
 
-	if err := xcodeTestRunner.InstallDeps(config.LogFormatter == xcodebuild.XcprettyTool); err != nil {
+	if err := xcodeTestRunner.InstallDeps(); err != nil {
 		logger.Warnf("Install dependencies: %s", err)
 		logger.Printf("Switching to xcodebuild for output tool")
-		config.LogFormatter = xcodebuild.XcodebuildTool
+		config.LogFormatter = step.XcodebuildTool
 	}
 
 	res, runErr := xcodeTestRunner.Run(config)
@@ -91,9 +91,16 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 	outputExporter := output.NewExporter(stepenvRepository, logger, testAddonExporter)
 	utils := step.NewUtils(logger)
 
-	xcodeCommandRunner := xcodecommand.NewRawCommandRunner(logger, commandFactory)
-	xcodeRunnerDepInstaller := xcodecommand.DependencyInstaller(nil)
-	if logFormatter == xcodebuild.XcprettyTool {
+	xcodeCommandRunner := xcodecommand.Runner(nil)
+	logFormatterInstaller := xcodecommand.DependencyInstaller(nil)
+
+	switch logFormatter {
+	case step.XcodebuildTool:
+		xcodeCommandRunner = xcodecommand.NewRawCommandRunner(logger, commandFactory)
+	case step.XcbeautifyTool:
+		xcodeCommandRunner = xcodecommand.NewXcbeautifyRunner(logger, commandFactory)
+		logFormatterInstaller = xcodecommand.NewXcbeautifyInstallChecker(logger, commandFactory)
+	case step.XcprettyTool:
 		commandLocator := env.NewCommandLocator()
 		rubyComamndFactory, err := ruby.NewCommandFactory(commandFactory, commandLocator)
 		if err != nil {
@@ -101,10 +108,13 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 		}
 		rubyEnv := ruby.NewEnvironment(rubyComamndFactory, commandLocator, logger)
 
-		xcodeCommandRunner = xcodecommand.NewXcprettyCommandRunner(logger, commandFactory)
-		xcodeRunnerDepInstaller = xcodecommand.NewXcprettyDependencyManager(logger, commandFactory, rubyComamndFactory, rubyEnv)
+		xcodeCommandRunner = xcodecommand.NewXcprettyCommandRunner(logger, commandFactory, pathChecker, fileManager)
+		logFormatterInstaller = xcodecommand.NewXcprettyDependencyManager(logger, commandFactory, rubyComamndFactory, rubyEnv)
+	default:
+		panic(fmt.Sprintf("Unknown log formatter: %s", logFormatter))
 	}
-	xcodebuilder := xcodebuild.NewXcodebuild(logger, pathChecker, fileManager, xcconfigWriter, xcodeCommandRunner)
 
-	return step.NewXcodeTestRunner(logger, xcodeRunnerDepInstaller, xcodebuilder, simulatorManager, swiftCache, outputExporter, pathModifier, pathProvider, utils), nil
+	xcodebuilder := xcodebuild.NewXcodebuild(logger, fileManager, xcconfigWriter, xcodeCommandRunner)
+
+	return step.NewXcodeTestRunner(logger, logFormatterInstaller, xcodebuilder, simulatorManager, swiftCache, outputExporter, pathModifier, pathProvider, utils), nil
 }

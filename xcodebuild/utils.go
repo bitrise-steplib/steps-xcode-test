@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
-	"github.com/kballard/go-shellquote"
 )
 
 // On performance limited OS X hosts (ex: VMs) the iPhone/iOS Simulator might time out
@@ -106,47 +105,6 @@ func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, erro
 	return xcodebuildArgs, nil
 }
 
-func (b *xcodebuild) createXCPrettyArgs(options string) ([]string, error) {
-	var args []string
-
-	if options == "" {
-		return args, nil
-	}
-
-	opts, err := shellquote.Split(options)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse additional options (%s): %w", options, err)
-	}
-
-	// get and delete the xcpretty output file, if exists
-	xcprettyOutputFilePath := ""
-	isNextOptOutputPth := false
-	for _, aOpt := range opts {
-		if isNextOptOutputPth {
-			xcprettyOutputFilePath = aOpt
-			break
-		}
-		if aOpt == "--output" {
-			isNextOptOutputPth = true
-			continue
-		}
-	}
-	if xcprettyOutputFilePath != "" {
-		if isExist, err := b.pathChecker.IsPathExists(xcprettyOutputFilePath); err != nil {
-			b.logger.Errorf("Failed to check xcpretty output file status (path: %s): %s", xcprettyOutputFilePath, err)
-		} else if isExist {
-			b.logger.Warnf("=> Deleting existing xcpretty output: %s", xcprettyOutputFilePath)
-			if err := b.fileManager.Remove(xcprettyOutputFilePath); err != nil {
-				b.logger.Errorf("Failed to delete xcpretty output file (path: %s): %w", xcprettyOutputFilePath, err)
-			}
-		}
-	}
-
-	args = append(args, opts...)
-
-	return args, nil
-}
-
 func (b *xcodebuild) runTest(params TestRunParams) (string, int, error) {
 	xcodebuildArgs, err := b.createXcodebuildTestArgs(params.TestParams)
 	if err != nil {
@@ -159,17 +117,7 @@ func (b *xcodebuild) runTest(params TestRunParams) (string, int, error) {
 	// within the working directory of the project. This is optional for regular workspaces and projects,
 	// because we use the `-project` flag to point to the .xcproj/xcworkspace, but we do it for consistency.
 	workDir := filepath.Dir(params.TestParams.ProjectPath)
-
-	var xcodeRunnerArgs []string
-	if params.LogFormatter == XcprettyTool {
-		xcprettyArgs, err := b.createXCPrettyArgs(params.XcprettyOptions)
-		if err != nil {
-			return "", 1, err
-		}
-		xcodeRunnerArgs = xcprettyArgs
-	}
-
-	output, testErr := b.xcodeCommandRunner.Run(workDir, xcodebuildArgs, xcodeRunnerArgs)
+	output, testErr := b.xcodeCommandRunner.Run(workDir, xcodebuildArgs, params.LogFormatterOptions)
 
 	if output.ExitCode != 0 {
 		fmt.Println("Exit code: ", output.ExitCode)

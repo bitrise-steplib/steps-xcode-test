@@ -2,7 +2,6 @@ package xcodebuild
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -16,7 +15,6 @@ import (
 const xcconfigPath = "xcconfigPath"
 
 type testingMocks struct {
-	pathChecker        *mocks.PathChecker
 	fileManager        *mocks.FileManager
 	xcconfigWriter     *mocks.XcconfigWriter
 	xcodeCommandRunner *mocks.XcodeCommandRunner
@@ -85,7 +83,7 @@ func runArgumentsTest(t *testing.T, input TestRunParams) {
 	xcodebuild, mocks := createXcodebuildAndMocks(t)
 
 	arguments := argumentsFromRunParameters(input)
-	mocks.xcodeCommandRunner.On("Run", mock.Anything, arguments, []string(nil)).
+	mocks.xcodeCommandRunner.On("Run", mock.Anything, arguments, []string{}).
 		Return(xcodecommand.Output{}, nil)
 
 	// When
@@ -217,14 +215,11 @@ func Test_GivenXcprettyFormatter_WhenEnabled_ThenUsesCorrectArguments(t *testing
 
 	parameters := runParameters()
 	parameters.LogFormatter = "xcpretty"
-	parameters.XcprettyOptions = fmt.Sprintf("--color --report html --output %s", outputPath)
+	parameters.LogFormatterOptions = []string{"--color", "--report", "html", "--output", outputPath}
 
 	xcodebuild, mocks := createXcodebuildAndMocks(t)
 
-	mocks.pathChecker.On("IsPathExists", outputPath).Return(true, nil)
-	mocks.fileManager.On("Remove", outputPath).Return(nil)
-
-	mocks.xcodeCommandRunner.On("Run", ".", mock.Anything, strings.Fields(parameters.XcprettyOptions)).
+	mocks.xcodeCommandRunner.On("Run", ".", mock.Anything, parameters.LogFormatterOptions).
 		Return(xcodecommand.Output{}, nil)
 
 	// When
@@ -232,25 +227,21 @@ func Test_GivenXcprettyFormatter_WhenEnabled_ThenUsesCorrectArguments(t *testing
 
 	// Then
 	mocks.xcodeCommandRunner.AssertExpectations(t)
-	mocks.pathChecker.AssertExpectations(t)
-	mocks.fileManager.AssertExpectations(t)
 }
 
 // Helpers
 
 func createXcodebuildAndMocks(t *testing.T) (Xcodebuild, testingMocks) {
 	logger := log.NewLogger()
-	pathChecker := new(mocks.PathChecker)
 	fileManager := new(mocks.FileManager)
 	xcconfigWriter := new(mocks.XcconfigWriter)
 	xcodeCommandRunner := mocks.NewXcodeCommandRunner(t)
 
 	xcconfigWriter.On("Write", mock.Anything).Return(xcconfigPath, nil)
 
-	xcodebuild := NewXcodebuild(logger, pathChecker, fileManager, xcconfigWriter, xcodeCommandRunner)
+	xcodebuild := NewXcodebuild(logger, fileManager, xcconfigWriter, xcodeCommandRunner)
 
 	return xcodebuild, testingMocks{
-		pathChecker:        pathChecker,
 		fileManager:        fileManager,
 		xcconfigWriter:     xcconfigWriter,
 		xcodeCommandRunner: xcodeCommandRunner,
@@ -276,7 +267,7 @@ func runParameters() TestRunParams {
 	return TestRunParams{
 		TestParams:                         testParams,
 		LogFormatter:                       "xcodebuild",
-		XcprettyOptions:                    "",
+		LogFormatterOptions:                []string{},
 		RetryOnTestRunnerError:             true,
 		RetryOnSwiftPackageResolutionError: true,
 		SwiftPackagesPath:                  "SwiftPackagesPath",

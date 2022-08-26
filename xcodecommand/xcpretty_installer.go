@@ -37,9 +37,9 @@ func NewXcprettyDependencyManager(logger log.Logger, commandFactory command.Fact
 	}
 }
 
-func (c *xcprettyDependencyManager) Install() (*version.Version, error) {
+func (c *xcprettyDependencyManager) CheckInstall() (*version.Version, error) {
 	c.logger.Println()
-	c.logger.Infof("Checking if output tool (xcpretty) is installed")
+	c.logger.Infof("Checking if log formatter (xcpretty) is installed")
 
 	installed, err := c.xcpretty.isDepInstalled()
 	if err != nil {

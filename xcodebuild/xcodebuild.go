@@ -3,15 +3,8 @@ package xcodebuild
 import (
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
-	"github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-io/go-xcode/v2/xcconfig"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodecommand"
-)
-
-// Output tools ...
-const (
-	XcodebuildTool = "xcodebuild"
-	XcprettyTool   = "xcpretty"
 )
 
 // Test repetition modes ...
@@ -28,17 +21,15 @@ type Xcodebuild interface {
 
 type xcodebuild struct {
 	logger             log.Logger
-	pathChecker        pathutil.PathChecker
 	fileManager        fileutil.FileManager
 	xcconfigWriter     xcconfig.Writer
 	xcodeCommandRunner xcodecommand.Runner
 }
 
 // NewXcodebuild ...
-func NewXcodebuild(logger log.Logger, pathChecker pathutil.PathChecker, fileManager fileutil.FileManager, xcconfigWriter xcconfig.Writer, xcodeCommandRunner xcodecommand.Runner) Xcodebuild {
+func NewXcodebuild(logger log.Logger, fileManager fileutil.FileManager, xcconfigWriter xcconfig.Writer, xcodeCommandRunner xcodecommand.Runner) Xcodebuild {
 	return &xcodebuild{
 		logger:             logger,
-		pathChecker:        pathChecker,
 		fileManager:        fileManager,
 		xcconfigWriter:     xcconfigWriter,
 		xcodeCommandRunner: xcodeCommandRunner,
@@ -49,7 +40,7 @@ func NewXcodebuild(logger log.Logger, pathChecker pathutil.PathChecker, fileMana
 type TestRunParams struct {
 	TestParams                         TestParams
 	LogFormatter                       string
-	XcprettyOptions                    string
+	LogFormatterOptions                []string
 	RetryOnTestRunnerError             bool
 	RetryOnSwiftPackageResolutionError bool
 	SwiftPackagesPath                  string

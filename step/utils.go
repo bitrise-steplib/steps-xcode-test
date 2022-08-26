@@ -12,7 +12,7 @@ import (
 
 type Utils interface {
 	PrintLastLinesOfXcodebuildTestLog(rawXcodebuildOutput string, isRunSuccess bool)
-	CreateConfig(input Input, projectPath string, xcodeMajorVersion int, sim destination.Device, additionalOptions []string) Config
+	CreateConfig(input Input, projectPath string, xcodeMajorVersion int, sim destination.Device, additionalOptions, additionalLogFormatterOptions []string) Config
 	CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath string) xcodebuild.TestRunParams
 }
 
@@ -49,7 +49,11 @@ that will attach the file to your build as an artifact!`))
 
 }
 
-func (u utils) CreateConfig(input Input, projectPath string, xcodeMajorVersion int, sim destination.Device, additionalOptions []string) Config {
+func (u utils) CreateConfig(input Input,
+	projectPath string,
+	xcodeMajorVersion int,
+	sim destination.Device,
+	additionalOptions, additionalLogFormatterOptions []string) Config {
 	return Config{
 		ProjectPath: projectPath,
 		Scheme:      input.Scheme,
@@ -69,8 +73,8 @@ func (u utils) CreateConfig(input Input, projectPath string, xcodeMajorVersion i
 		PerformCleanAction: input.PerformCleanAction,
 		XcodebuildOptions:  additionalOptions,
 
-		LogFormatter:    input.LogFormatter,
-		XcprettyOptions: input.XcprettyOptions,
+		LogFormatter:        input.LogFormatter,
+		LogFormatterOptions: additionalLogFormatterOptions,
 
 		CacheLevel: input.CacheLevel,
 
@@ -100,7 +104,7 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 	return xcodebuild.TestRunParams{
 		TestParams:                         testParams,
 		LogFormatter:                       cfg.LogFormatter,
-		XcprettyOptions:                    cfg.XcprettyOptions,
+		LogFormatterOptions:                cfg.LogFormatterOptions,
 		RetryOnTestRunnerError:             true,
 		RetryOnSwiftPackageResolutionError: true,
 		SwiftPackagesPath:                  swiftPackagesPath,
