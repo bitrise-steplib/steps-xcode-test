@@ -45,7 +45,7 @@ func run() int {
 	}
 
 	if err := xcodeTestRunner.InstallDeps(); err != nil {
-		logger.Warnf("Failed to install dependencies: %s", err)
+		logger.Warnf(errorutil.FormattedError(fmt.Errorf("Failed to install Step dependencies: %w", err)))
 		logger.Printf("Switching to xcodebuild for output tool")
 		config.LogFormatter = step.XcodebuildTool
 	}
@@ -54,7 +54,7 @@ func run() int {
 	exportErr := xcodeTestRunner.Export(res, runErr != nil)
 
 	if runErr != nil {
-		logger.Errorf(errorutil.FormattedError(fmt.Errorf("Failed to execute Step main logic: %w", runErr)))
+		logger.Errorf(errorutil.FormattedError(fmt.Errorf("Failed to execute Step: %w", runErr)))
 		return 1
 	}
 
