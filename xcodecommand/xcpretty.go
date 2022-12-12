@@ -11,6 +11,7 @@ import (
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
+	"github.com/bitrise-io/go-xcode/v2/errorfinder"
 )
 
 type xcprettyCommandRunner struct {
@@ -40,10 +41,11 @@ func (c *xcprettyCommandRunner) Run(workDir string, xcodebuildArgs []string, xcp
 	c.cleanOutputFile(xcprettyArgs)
 
 	buildCmd := c.commandFactory.Create("xcodebuild", xcodebuildArgs, &command.Opts{
-		Stdout: buildOutWriter,
-		Stderr: buildOutWriter,
-		Env:    xcodeCommandEnvs,
-		Dir:    workDir,
+		Stdout:      buildOutWriter,
+		Stderr:      buildOutWriter,
+		Env:         xcodeCommandEnvs,
+		Dir:         workDir,
+		ErrorFinder: errorfinder.FindXcodebuildErrors,
 	})
 
 	prettyCmd := c.commandFactory.Create("xcpretty", xcprettyArgs, &command.Opts{

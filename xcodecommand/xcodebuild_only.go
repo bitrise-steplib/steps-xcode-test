@@ -7,6 +7,7 @@ import (
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-xcode/v2/errorfinder"
 )
 
 var xcodeCommandEnvs = []string{"NSUnbufferedIO=YES"}
@@ -31,10 +32,11 @@ func (c *rawXcodeCommand) Run(workDir string, args []string, _ []string) (Output
 	)
 
 	command := c.commandFactory.Create("xcodebuild", args, &command.Opts{
-		Stdout: &outBuffer,
-		Stderr: &outBuffer,
-		Env:    xcodeCommandEnvs,
-		Dir:    workDir,
+		Stdout:      &outBuffer,
+		Stderr:      &outBuffer,
+		Env:         xcodeCommandEnvs,
+		Dir:         workDir,
+		ErrorFinder: errorfinder.FindXcodebuildErrors,
 	})
 
 	c.logger.TPrintf("$ %s", command.PrintableCommandArgs())

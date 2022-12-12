@@ -9,6 +9,7 @@ import (
 	"github.com/bitrise-io/go-steputils/v2/stepenv"
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/env"
+	"github.com/bitrise-io/go-utils/v2/errorutil"
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
@@ -33,17 +34,18 @@ func run() int {
 	configParser := createConfigParser(logger)
 	config, err := configParser.ProcessConfig()
 	if err != nil {
-		logger.Errorf("Process config: %s", err)
+		logger.Errorf(errorutil.FormattedError(fmt.Errorf("Failed to process Step inputs: %w", err)))
 		return 1
 	}
 
 	xcodeTestRunner, err := createStep(logger, config.LogFormatter)
 	if err != nil {
-		logger.Errorf("Process conifg: %s", err)
+		logger.Errorf(errorutil.FormattedError(fmt.Errorf("Failed to process Step inputs: %w", err)))
+		return 1
 	}
 
 	if err := xcodeTestRunner.InstallDeps(); err != nil {
-		logger.Warnf("Install dependencies: %s", err)
+		logger.Warnf(errorutil.FormattedError(fmt.Errorf("Failed to install Step dependencies: %w", err)))
 		logger.Printf("Switching to xcodebuild for output tool")
 		config.LogFormatter = step.XcodebuildTool
 	}
@@ -52,12 +54,12 @@ func run() int {
 	exportErr := xcodeTestRunner.Export(res, runErr != nil)
 
 	if runErr != nil {
-		logger.Errorf("Run: %s", runErr)
+		logger.Errorf(errorutil.FormattedError(fmt.Errorf("Failed to execute Step: %w", runErr)))
 		return 1
 	}
 
 	if exportErr != nil {
-		logger.Errorf("Export outputs: %s", err)
+		logger.Errorf(errorutil.FormattedError(fmt.Errorf("Failed to export Step outputs: %w", err)))
 		return 1
 	}
 
