@@ -312,7 +312,7 @@ func createConfigParser(t *testing.T, envValues map[string]string) (XcodeTestCon
 	pathModifier := mocks.NewPathModifier(t)
 	utils := NewUtils(logger)
 
-	configParser := NewXcodeTestConfigParser(inputParser, logger, xcodeVersionReader, deviceFinder, pathModifier, utils)
+	configParser := NewXcodeTestConfigParser(inputParser, logger, xcodeVersionReader, deviceFinder, pathModifier, utils, envRepository)
 	mocks := configParserMocks{
 		xcodeVersion: xcodeVersionReader,
 		deviceFinder: deviceFinder,

@@ -75,7 +75,7 @@ func createConfigParser(logger log.Logger) step.XcodeTestConfigParser {
 	deviceFinder := destination.NewDeviceFinder(logger, commandFactory)
 	utils := step.NewUtils(logger)
 
-	return step.NewXcodeTestConfigParser(inputParser, logger, xcodeVersionReader, deviceFinder, pathModifier, utils)
+	return step.NewXcodeTestConfigParser(inputParser, logger, xcodeVersionReader, deviceFinder, pathModifier, utils, envRepository)
 }
 
 func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, error) {

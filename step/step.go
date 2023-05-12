@@ -11,6 +11,7 @@ import (
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/sliceutil"
+	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-io/go-xcode/v2/destination"
@@ -78,6 +79,8 @@ const (
 	XcprettyTool   = "xcpretty"
 )
 
+const SimulatorArchCompatKey = "BITRISEIO_SIMULATOR_ARCH_COMPAT"
+
 // Config ...
 type Config struct {
 	ProjectPath string
@@ -116,9 +119,10 @@ type XcodeTestConfigParser struct {
 	deviceFinder       destination.DeviceFinder
 	pathModifier       pathutil.PathModifier
 	utils              Utils
+	envRepo            env.Repository
 }
 
-func NewXcodeTestConfigParser(inputParser stepconf.InputParser, logger log.Logger, xcodeVersionReader xcodeversion.Reader, deviceFinder destination.DeviceFinder, pathModifier pathutil.PathModifier, utils Utils) XcodeTestConfigParser {
+func NewXcodeTestConfigParser(inputParser stepconf.InputParser, logger log.Logger, xcodeVersionReader xcodeversion.Reader, deviceFinder destination.DeviceFinder, pathModifier pathutil.PathModifier, utils Utils, envRepo env.Repository) XcodeTestConfigParser {
 	return XcodeTestConfigParser{
 		logger:             logger,
 		inputParser:        inputParser,
@@ -126,6 +130,7 @@ func NewXcodeTestConfigParser(inputParser stepconf.InputParser, logger log.Logge
 		deviceFinder:       deviceFinder,
 		pathModifier:       pathModifier,
 		utils:              utils,
+		envRepo:            envRepo,
 	}
 }
 
@@ -208,6 +213,20 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 	additionalOptions, err := shellquote.Split(input.XcodebuildOptions)
 	if err != nil {
 		return Config{}, fmt.Errorf("provided 'Additional options for the xcodebuild command' (xcodebuild_options) (%s) are not valid CLI parameters: %w", input.XcodebuildOptions, err)
+	}
+
+	if s.envRepo.Get(SimulatorArchCompatKey) == "true" {
+		var ecxludedArchsDefined = false
+		for _, opt := range additionalOptions {
+			if strings.HasPrefix(opt, "EXCLUDED_ARCHS") {
+				ecxludedArchsDefined = true
+				break
+			}
+		}
+		if !ecxludedArchsDefined {
+			s.logger.Infof("Step is running in Apple Silicon compatibility mode, adding EXCLUDED_ARCHS=arm64 to the xcodebuild command")
+			additionalOptions = append(additionalOptions, "EXCLUDED_ARCHS=arm64")
+		}
 	}
 
 	additionalLogFormatterOptions, err := s.parseAdditionalLogFormatterOptions(input.LogFormatter, input.XcprettyOptions, input.XcbeautifyOptions)
