@@ -25,14 +25,16 @@ type Exporter interface {
 type exporter struct {
 	envRepository     env.Repository
 	logger            log.Logger
+	outputExporter    export.Exporter
 	testAddonExporter testaddon.Exporter
 }
 
 // NewExporter ...
-func NewExporter(envRepository env.Repository, logger log.Logger, testAddonExporter testaddon.Exporter) Exporter {
+func NewExporter(envRepository env.Repository, logger log.Logger, outputExporter export.Exporter, testAddonExporter testaddon.Exporter) Exporter {
 	return &exporter{
 		envRepository:     envRepository,
 		logger:            logger,
+		outputExporter:    outputExporter,
 		testAddonExporter: testAddonExporter,
 	}
 }
@@ -54,7 +56,7 @@ func (e exporter) ExportXCResultBundle(deployDir, xcResultPath, scheme string) {
 	}
 
 	xcresultZipPath := filepath.Join(deployDir, filepath.Base(xcResultPath)+".zip")
-	if err := export.ExportOutputFilesZip("BITRISE_XCRESULT_ZIP_PATH", []string{xcResultPath}, xcresultZipPath); err != nil {
+	if err := e.outputExporter.ExportOutputFilesZip("BITRISE_XCRESULT_ZIP_PATH", []string{xcResultPath}, xcresultZipPath); err != nil {
 		e.logger.Warnf("Failed to export: BITRISE_XCRESULT_ZIP_PATH: %s", err)
 	}
 
