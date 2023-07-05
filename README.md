@@ -18,7 +18,7 @@ The **Scheme** input field must be marked as Shared in Xcode.
 ### Troubleshooting
 If the **Deploy to Bitrise.io** Step is missing from your Workflow, then the **Xcode Test for iOS** Step will not be able to export the test results on the Test Reports page and you won't be able to view them either.
 The xcpretty output tool does not support parallel tests.
-If parallel tests are enabled in your project, go to the Step's Debug section and set the **Log formatter** input's value to xcodebuild.
+If parallel tests are enabled in your project, go to the Step's **xcodebuild log formatting** section and set the **Log formatter** input's value to `xcodebuild` or `xcbeautify`.
 If the Xcode test fails with the error `Unable to find a destination matching the provided destination specifier`, then check our [system reports](https://github.com/bitrise-io/bitrise.io/tree/master/system_reports) to see if the requested simulator is on the stack or not.
 If it is not, then pick a simulator that is on the stack.
 
@@ -96,7 +96,7 @@ Run tests with custom xcconfig file path:
 | --- | --- | --- | --- |
 | `project_path` | Xcode Project (`.xcodeproj`) or Workspace (`.xcworkspace`) path. The input value sets xcodebuild's `-project` or `-workspace` option.  If this is a Swift package, this should be the path to the `Package.swift` file. | required | `$BITRISE_PROJECT_PATH` |
 | `scheme` | Xcode Scheme name.  The input value sets xcodebuild's `-scheme` option. | required | `$BITRISE_SCHEME` |
-| `destination` | Destination specifier describes the device to use as a destination.  The input value sets xcodebuild's `-destination` option. | required | `platform=iOS Simulator,name=iPhone 8 Plus,OS=latest` |
+| `destination` | Destination specifier describes the device to use as a destination.  The input value sets xcodebuild's `-destination` option. | required | `platform=iOS Simulator,name=iPhone 11,OS=latest` |
 | `test_plan` | Run tests in a specific Test Plan associated with the Scheme.  Leave this input empty to run the default Test Plan or Test Targets associated with the Scheme.  The input value sets xcodebuild's `-testPlan` option. |  |  |
 | `test_repetition_mode` | Determines how the tests will repeat.  Available options: - `none`: Tests will never repeat. - `until_failure`: Tests will repeat until failure or up to maximum repetitions. - `retry_on_failure`: Only failed tests will repeat up to maximum repetitions. - `up_until_maximum_repetitions`: Tests will repeat up until maximum repetitions.  The input value together with Maximum Test Repetitions (`maximum_test_repetitions`) input sets xcodebuild's `-run-tests-until-failure` / `-retry-tests-on-failure` or `-test-iterations` option. |  | `none` |
 | `maximum_test_repetitions` | The maximum number of times a test repeats based on the Test Repetition Mode (`test_repetition_mode`).  Should be more than 1 if the Test Repetition Mode is other than `none`.  The input value sets xcodebuild's `-test-iterations` option. | required | `3` |
