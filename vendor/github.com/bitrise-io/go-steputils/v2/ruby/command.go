@@ -35,6 +35,7 @@ func NewCommandFactory(cmdFactory command.Factory, cmdLocator env.CommandLocator
 	}, nil
 }
 
+// Create ...
 func (f commandFactory) Create(name string, args []string, opts *command.Opts) command.Command {
 	s := append([]string{name}, args...)
 	if sudoNeeded(f.installType, s...) {

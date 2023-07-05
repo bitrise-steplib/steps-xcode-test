@@ -33,9 +33,6 @@ var (
 	IsSecretFiltering = false
 	// IsSecretEnvsFiltering ...
 	IsSecretEnvsFiltering = false
-
-	// NoOutputTimeout is the timeout after Steps are aborted, when no output is received
-	NoOutputTimeout time.Duration
 )
 
 // ---------------------------
@@ -50,8 +47,6 @@ const (
 	PullRequestIDEnvKey = "PULL_REQUEST_ID"
 	// DebugModeEnvKey ...
 	DebugModeEnvKey = "DEBUG"
-	// LogLevelEnvKey ...
-	LogLevelEnvKey = "LOGLEVEL"
 	// IsSecretFilteringKey ...
 	IsSecretFilteringKey = "BITRISE_SECRET_FILTERING"
 	// IsSecretEnvsFilteringKey ...
