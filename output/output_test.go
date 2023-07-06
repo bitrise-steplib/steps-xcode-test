@@ -5,9 +5,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/bitrise-io/go-steputils/v2/export"
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
+	commonMocks "github.com/bitrise-steplib/steps-xcode-test/mocks"
 	"github.com/bitrise-steplib/steps-xcode-test/output/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -110,10 +112,11 @@ func Test_GivenSimulatorDiagnostics_WhenExporting_ThenCopiesItAndSetsEnvVariable
 // Helpers
 
 func createSutAndMocks() (Exporter, testingMocks) {
+	commandFactory := new(commonMocks.CommandFactory)
 	envRepository := new(mocks.Repository)
 	envRepository.On("Set", mock.Anything, mock.Anything).Return(nil)
 
-	exporter := NewExporter(envRepository, log.NewLogger(), nil)
+	exporter := NewExporter(envRepository, log.NewLogger(), export.NewExporter(commandFactory), nil)
 
 	return exporter, testingMocks{
 		envRepository: envRepository,

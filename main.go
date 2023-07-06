@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/bitrise-io/go-steputils/v2/export"
 	"github.com/bitrise-io/go-steputils/v2/ruby"
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
 	"github.com/bitrise-io/go-steputils/v2/stepenv"
@@ -88,9 +89,10 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 	xcconfigWriter := xcconfig.NewWriter(pathProvider, fileManager, pathChecker, pathModifier)
 	simulatorManager := simulator.NewManager(logger, commandFactory)
 	swiftCache := cache.NewSwiftPackageCache()
+	outputExporter := export.NewExporter(commandFactory)
 	testAddonExporter := testaddon.NewExporter(testaddon.NewTestAddon(logger))
 	stepenvRepository := stepenv.NewRepository(envRepository)
-	outputExporter := output.NewExporter(stepenvRepository, logger, testAddonExporter)
+	exporter := output.NewExporter(stepenvRepository, logger, outputExporter, testAddonExporter)
 	utils := step.NewUtils(logger)
 
 	xcodeCommandRunner := xcodecommand.Runner(nil)
@@ -118,5 +120,5 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 
 	xcodebuilder := xcodebuild.NewXcodebuild(logger, fileManager, xcconfigWriter, xcodeCommandRunner)
 
-	return step.NewXcodeTestRunner(logger, logFormatterInstaller, xcodebuilder, simulatorManager, swiftCache, outputExporter, pathModifier, pathProvider, utils), nil
+	return step.NewXcodeTestRunner(logger, logFormatterInstaller, xcodebuilder, simulatorManager, swiftCache, exporter, pathModifier, pathProvider, utils), nil
 }

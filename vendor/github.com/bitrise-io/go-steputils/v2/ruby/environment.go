@@ -7,10 +7,10 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/pathutil"
 )
 
 const (
@@ -94,6 +94,7 @@ func rubyInstallType(cmdLocator env.CommandLocator) InstallType {
 	return installType
 }
 
+// IsGemInstalled returns true if the specified gem version is installed
 func (m environment) IsGemInstalled(gem, version string) (bool, error) {
 	cmd := m.factory.Create("gem", []string{"list"}, nil)
 
@@ -115,7 +116,7 @@ func (m environment) IsGemInstalled(gem, version string) (bool, error) {
 // 4. The global ~/.rbenv/version file. You can modify this file using the rbenv global command.
 // src: https://github.com/rbenv/rbenv#choosing-the-ruby-version
 func (m environment) IsSpecifiedRbenvRubyInstalled(workdir string) (bool, string, error) {
-	absWorkdir, err := pathutil.AbsPath(workdir)
+	absWorkdir, err := pathutil.NewPathModifier().AbsPath(workdir)
 	if err != nil {
 		return false, "", fmt.Errorf("failed to get absolute path for ( %s ), error: %s", workdir, err)
 	}
@@ -146,7 +147,7 @@ func isSpecifiedRbenvRubyInstalled(message string) (bool, string, error) {
 
 	//
 	// Installed
-	reg, err = regexp.Compile(".* \\(set by")
+	reg, err = regexp.Compile(`.* \(set by`)
 	if err != nil {
 		return false, "", fmt.Errorf("failed to parse regex ( %s ) on the error message, error: %s", ".* \\(set by", err)
 	}
@@ -159,8 +160,9 @@ func isSpecifiedRbenvRubyInstalled(message string) (bool, string, error) {
 	return false, version, nil
 }
 
+// IsSpecifiedASDFRubyInstalled ...
 func (m environment) IsSpecifiedASDFRubyInstalled(workdir string) (isInstalled bool, versionInstalled string, error error) {
-	absWorkdir, err := pathutil.AbsPath(workdir)
+	absWorkdir, err := pathutil.NewPathModifier().AbsPath(workdir)
 	if err != nil {
 		return false, "", fmt.Errorf("failed to get absolute path for ( %s ), error: %s", workdir, err)
 	}

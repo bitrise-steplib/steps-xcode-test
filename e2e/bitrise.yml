@@ -9,7 +9,7 @@ workflows:
     - BITRISE_PROJECT_PATH: Package.swift
     - BITRISE_SCHEME: DeckOfPlayingCards
     - TEST_PLAN: ""
-    - DESTINATION: platform=iOS Simulator,name=iPhone 8,OS=latest
+    - DESTINATION: platform=iOS Simulator,name=Bitrise iOS default,OS=latest
     - LOG_FORMATTER: xcbeautify
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
@@ -25,7 +25,7 @@ workflows:
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
     - TEST_PLAN: ""
-    - DESTINATION: platform=iOS Simulator,name=iPhone 8,OS=latest
+    - DESTINATION: platform=iOS Simulator,name=Bitrise iOS default,OS=latest
     - LOG_FORMATTER: xcpretty
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
@@ -61,7 +61,7 @@ workflows:
     - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
     - BITRISE_SCHEME: ios-simple-objc
     - TEST_PLAN: ""
-    - DESTINATION: platform=iOS Simulator,name=iPhone 8,OS=latest
+    - DESTINATION: platform=iOS Simulator,name=Bitrise iOS default,OS=latest
     - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
