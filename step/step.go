@@ -84,7 +84,7 @@ type Config struct {
 	Scheme      string
 	TestPlan    string
 
-	SimulatorID       string
+	Simulator         destination.Device
 	IsSimulatorBooted bool
 
 	XcodeMajorVersion int
@@ -257,7 +257,7 @@ type Result struct {
 func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 	enableSimulatorVerboseLog := cfg.CollectSimulatorDiagnostics != never
 	launchSimulator := !cfg.IsSimulatorBooted && !cfg.HeadlessMode
-	if err := s.prepareSimulator(enableSimulatorVerboseLog, cfg.SimulatorID, launchSimulator); err != nil {
+	if err := s.prepareSimulator(enableSimulatorVerboseLog, cfg.Simulator.ID, launchSimulator); err != nil {
 		return Result{}, err
 	}
 
@@ -273,7 +273,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 		testExitCode = code
 	}
 
-	result.SimulatorDiagnosticsPath = s.teardownSimulator(cfg.SimulatorID, cfg.CollectSimulatorDiagnostics, cfg.IsSimulatorBooted, testErr)
+	result.SimulatorDiagnosticsPath = s.teardownSimulator(cfg.Simulator.ID, cfg.CollectSimulatorDiagnostics, cfg.IsSimulatorBooted, testErr)
 
 	if testErr != nil {
 		s.logger.Println()

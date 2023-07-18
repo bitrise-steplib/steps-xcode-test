@@ -2,6 +2,7 @@ package destination
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/bitrise-io/go-utils/v2/command"
@@ -13,10 +14,14 @@ const defaultDeviceName = "Bitrise iOS default"
 
 // Device is an available device
 type Device struct {
-	Name   string
-	ID     string
+	Platform string
+	Name     string
+	OS       string
+	Arch     string
+
+	ID string
+
 	Status string
-	OS     string
 }
 
 // DeviceFinder is an interface that find a matching device for a given destination
@@ -29,6 +34,14 @@ type deviceFinder struct {
 	commandFactory command.Factory
 
 	list *deviceList
+}
+
+func (d Device) Destination() string {
+	if d.Arch == "" {
+		return fmt.Sprintf("id=%s", d.ID)
+	}
+
+	return fmt.Sprintf("platform=%s,name=%s,OS=%s,arch=%s", d.Platform, d.Name, d.OS, d.Arch)
 }
 
 // NewDeviceFinder retruns the default implementation of DeviceFinder

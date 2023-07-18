@@ -38,6 +38,7 @@ workflows:
         inputs:
         # Inputs with non-default value or using environment variables
         - project_path: ./_tmp/$BITRISE_PROJECT_PATH
+        - destination: platform=iOS Simulator,name=iPhone 11,OS=latest
         - scheme: $BITRISE_SCHEME
         - xcodebuild_test_options: -verbose
         - export_uitest_artifacts: "true"

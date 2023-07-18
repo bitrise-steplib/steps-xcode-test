@@ -10,6 +10,7 @@ const (
 	platformKey        = "platform"
 	nameKey            = "name"
 	osKey              = "OS"
+	archKey            = "arch"
 )
 
 // Platform ...
@@ -69,4 +70,8 @@ func (s Specifier) Name() string {
 // OS ...
 func (s Specifier) OS() string {
 	return s[osKey]
+}
+
+func (s Specifier) Arch() string {
+	return s[archKey]
 }
