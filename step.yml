@@ -62,7 +62,7 @@ inputs:
       The input value sets xcodebuild's `-scheme` option.
     is_required: true
 
-- destination: platform=iOS Simulator,name=iPhone 11,OS=latest
+- destination: platform=iOS Simulator,name=iPhone 8 Plus,OS=latest
   opts:
     title: Device destination specifier
     summary: Destination specifier describes the device to use as a destination.
