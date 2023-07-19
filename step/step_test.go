@@ -47,7 +47,7 @@ func Test_GivenStep_WhenRuns_ThenXcodebuildGetsCalled(t *testing.T) {
 		Scheme:      "Project",
 
 		XcodeMajorVersion: 13,
-		SimulatorID:       "1234",
+		Simulator:         destination.Device{ID: "1234"},
 		IsSimulatorBooted: true,
 
 		TestRepetitionMode:            "none",
@@ -169,7 +169,7 @@ func Test_GivenLogFormatterIsXcbeautify_WhenParsesConfig_ThenAdditionalOptionsWo
 		ProjectPath: "/_tmp/BullsEye.xcworkspace",
 		Scheme:      "BullsEye",
 
-		SimulatorID:       device.ID,
+		Simulator:         destination.Device{ID: device.ID},
 		IsSimulatorBooted: false,
 
 		XcodeMajorVersion: 13,
