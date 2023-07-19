@@ -25,7 +25,7 @@ workflows:
     - BITRISE_PROJECT_PATH: Bitrise-iOS-x86-Framework-Sample.xcworkspace
     - BITRISE_SCHEME: Bitrise-iOS-x86-Framework-Sample
     - TEST_PLAN: ""
-    - DESTINATION: platform=iOS Simulator,name=Bitrise iOS default,OS=latest,arch=x86_64
+    - DESTINATION: platform=iOS Simulator,name=iPhone 11,OS=latest,arch=x86_64
     - LOG_FORMATTER: xcodebuild
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
