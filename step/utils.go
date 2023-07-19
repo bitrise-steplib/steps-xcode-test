@@ -89,7 +89,7 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 	testParams := xcodebuild.TestParams{
 		ProjectPath:                    cfg.ProjectPath,
 		Scheme:                         cfg.Scheme,
-		Destination:                    cfg.Simulator.Destination(),
+		Destination:                    cfg.Simulator.XcodebuildDestination(),
 		TestPlan:                       cfg.TestPlan,
 		TestOutputDir:                  xcresultPath,
 		TestRepetitionMode:             cfg.TestRepetitionMode,
