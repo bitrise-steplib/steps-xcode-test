@@ -169,7 +169,7 @@ func Test_GivenLogFormatterIsXcbeautify_WhenParsesConfig_ThenAdditionalOptionsWo
 		ProjectPath: "/_tmp/BullsEye.xcworkspace",
 		Scheme:      "BullsEye",
 
-		Simulator:         destination.Device{ID: device.ID},
+		Simulator:         device,
 		IsSimulatorBooted: false,
 
 		XcodeMajorVersion: 13,
