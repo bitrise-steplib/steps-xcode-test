@@ -26,9 +26,26 @@ workflows:
     - BITRISE_SCHEME: Bitrise-iOS-x86-Framework-Sample
     - TEST_PLAN: ""
     - DESTINATION: platform=iOS Simulator,name=iPhone 11,OS=latest,arch=x86_64
-    - LOG_FORMATTER: xcodebuild
+    - LOG_FORMATTER: xcbeautify
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
+    - CACHE_LEVEL: none
+    - COLLECT_SIM_DIAGNOSTICS: never
+    after_run:
+    - _run
+    - _check_outputs
+
+  test_rosetta_simulator_failure:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/Bitrise-iOS-x86-Framework-Sample.git
+    - TEST_APP_BRANCH: main
+    - BITRISE_PROJECT_PATH: Bitrise-iOS-x86-Framework-Sample.xcworkspace
+    - BITRISE_SCHEME: Bitrise-iOS-x86-Framework-Sample
+    - TEST_PLAN: ""
+    - DESTINATION: platform=iOS Simulator,name=iPhone 11,OS=latest
+    - LOG_FORMATTER: xcbeautify
+    - RETRY_ON_FAILURE: "no"
+    - EXPECT_TEST_FAILURE: "true"
     - CACHE_LEVEL: none
     - COLLECT_SIM_DIAGNOSTICS: never
     after_run:
