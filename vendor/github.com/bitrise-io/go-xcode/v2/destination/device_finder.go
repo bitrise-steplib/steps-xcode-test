@@ -14,14 +14,11 @@ const defaultDeviceName = "Bitrise iOS default"
 
 // Device is an available device
 type Device struct {
-	Platform string
-	Name     string
-	OS       string
-	Arch     string
-
-	ID string
-
+	ID     string
+	Arch   string
 	Status string
+	Name   string
+	OS     string
 }
 
 // DeviceFinder is an interface that find a matching device for a given destination
@@ -34,14 +31,6 @@ type deviceFinder struct {
 	commandFactory command.Factory
 
 	list *deviceList
-}
-
-func (d Device) Destination() string {
-	if d.Arch == "" {
-		return fmt.Sprintf("id=%s", d.ID)
-	}
-
-	return fmt.Sprintf("platform=%s,name=%s,OS=%s,arch=%s", d.Platform, d.Name, d.OS, d.Arch)
 }
 
 // NewDeviceFinder retruns the default implementation of DeviceFinder
@@ -95,4 +84,13 @@ func (d deviceFinder) FindDevice(destination Simulator) (Device, error) {
 	}
 
 	return device, err
+}
+
+// XcodebuildDestination returns the required xcodebuild -destination flag value for a device
+func (d Device) XcodebuildDestination() string {
+	if d.Arch == "" {
+		return fmt.Sprintf("id=%s", d.ID)
+	}
+
+	return fmt.Sprintf("id=%s,arch=%s", d.ID, d.Arch)
 }

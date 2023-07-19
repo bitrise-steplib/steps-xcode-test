@@ -72,6 +72,7 @@ func (s Specifier) OS() string {
 	return s[osKey]
 }
 
+// Arch ...
 func (s Specifier) Arch() string {
 	return s[archKey]
 }
