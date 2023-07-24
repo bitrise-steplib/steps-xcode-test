@@ -59,7 +59,7 @@ func (u utils) CreateConfig(input Input,
 		Scheme:      input.Scheme,
 		TestPlan:    input.TestPlan,
 
-		SimulatorID:       sim.ID,
+		Simulator:         sim,
 		IsSimulatorBooted: sim.Status != simulatorShutdownState,
 
 		XcodeMajorVersion: xcodeMajorVersion,
@@ -89,7 +89,7 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 	testParams := xcodebuild.TestParams{
 		ProjectPath:                    cfg.ProjectPath,
 		Scheme:                         cfg.Scheme,
-		Destination:                    fmt.Sprintf("id=%s", cfg.SimulatorID),
+		Destination:                    cfg.Simulator.XcodebuildDestination(),
 		TestPlan:                       cfg.TestPlan,
 		TestOutputDir:                  xcresultPath,
 		TestRepetitionMode:             cfg.TestRepetitionMode,

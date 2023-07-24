@@ -48,7 +48,7 @@ github.com/bitrise-io/go-utils/v2/pathutil
 ## explicit; go 1.15
 github.com/bitrise-io/go-xcode/models
 github.com/bitrise-io/go-xcode/utility
-# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.26
+# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.27
 ## explicit; go 1.16
 github.com/bitrise-io/go-xcode/v2/destination
 github.com/bitrise-io/go-xcode/v2/errorfinder

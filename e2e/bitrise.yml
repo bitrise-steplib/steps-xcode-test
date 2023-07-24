@@ -18,6 +18,61 @@ workflows:
     - _run
     - _check_outputs
 
+  test_rosetta_simulator:
+    description: Rosetta Simulator requires Xcode 14.3+.
+    steps:
+    - bitrise-run:
+        run_if: |-
+          {{ or (enveq "IS_LATEST_STACK_XCODE" "true") (not .IsCI) }}
+        inputs:
+        - workflow_id: utility_test_rosetta_simulator
+        - bitrise_config_path: ./e2e/bitrise.yml
+
+  utility_test_rosetta_simulator:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/Bitrise-iOS-x86-Framework-Sample.git
+    - TEST_APP_BRANCH: main
+    - BITRISE_PROJECT_PATH: Bitrise-iOS-x86-Framework-Sample.xcworkspace
+    - BITRISE_SCHEME: Bitrise-iOS-x86-Framework-Sample
+    - TEST_PLAN: ""
+    - DESTINATION: platform=iOS Simulator,name=iPhone 11,OS=latest,arch=x86_64
+    - LOG_FORMATTER: xcbeautify
+    - RETRY_ON_FAILURE: "no"
+    - EXPECT_TEST_FAILURE: "false"
+    - CACHE_LEVEL: none
+    - COLLECT_SIM_DIAGNOSTICS: never
+    after_run:
+    - _run
+    - _check_outputs
+
+  test_rosetta_simulator_failure:
+    description: Rosetta Simulator requires Xcode 14.3+.
+    steps:
+    - bitrise-run:
+        run_if: |-
+          {{ or (enveq "IS_LATEST_STACK_XCODE" "true") (not .IsCI) }}
+        is_skippable: true
+        inputs:
+        - workflow_id: utility_test_rosetta_simulator_failure
+        - bitrise_config_path: ./e2e/bitrise.yml
+
+  utility_test_rosetta_simulator_failure:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/Bitrise-iOS-x86-Framework-Sample.git
+    - TEST_APP_BRANCH: main
+    - BITRISE_PROJECT_PATH: Bitrise-iOS-x86-Framework-Sample.xcworkspace
+    - BITRISE_SCHEME: Bitrise-iOS-x86-Framework-Sample
+    - TEST_PLAN: ""
+    - DESTINATION: platform=iOS Simulator,name=iPhone 11,OS=latest
+    - LOG_FORMATTER: xcbeautify
+    - RETRY_ON_FAILURE: "no"
+    - EXPECT_TEST_FAILURE: "true"
+    - CACHE_LEVEL: none
+    - COLLECT_SIM_DIAGNOSTICS: never
+    after_run:
+    - _run
+    - _check_outputs
+
   test_objc_xcpretty:
     envs:
     - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
@@ -107,11 +162,11 @@ workflows:
         - content: |-
             #!/bin/env bash
             set -ex
-            COLLECT_SIM_DIAGNOSTICS="on_failure"
+            COLLECT_SIM_DIAGNOSTICS_DEFAULT="on_failure"
             if [[ "$EXPECT_TEST_FAILURE" == "true" ]]; then
-              COLLECT_SIM_DIAGNOSTICS="never"
+              COLLECT_SIM_DIAGNOSTICS_DEFAULT="never"
             fi
-            envman add --key COLLECT_SIM_DIAGNOSTICS --value $COLLECT_SIM_DIAGNOSTICS
+            envman add --key COLLECT_SIM_DIAGNOSTICS --value ${COLLECT_SIM_DIAGNOSTICS-$COLLECT_SIM_DIAGNOSTICS_DEFAULT}
     - script:
         title: Set TEST_REPETITION_MODE to 'none' if not set
         inputs:
