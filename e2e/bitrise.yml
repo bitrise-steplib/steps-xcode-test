@@ -51,6 +51,7 @@ workflows:
     - bitrise-run:
         run_if: |-
           {{ or (enveq "IS_LATEST_STACK_XCODE" "true") (not .IsCI) }}
+        is_skippable: true
         inputs:
         - workflow_id: utility_test_rosetta_simulator_failure
         - bitrise_config_path: ./e2e/bitrise.yml
