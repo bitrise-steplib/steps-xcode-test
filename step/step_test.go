@@ -76,7 +76,8 @@ func Test_GivenXcode13OrNewer_WhenShouldRetryTestOnFailIsSet_ThenFails(t *testin
 	envValues := defaultEnvValues()
 	envValues["should_retry_test_on_fail"] = "yes"
 
-	configParser, _ := createConfigParser(t, envValues, newVersion(13))
+	xcodeVersion := newVersion(13)
+	configParser, _ := createConfigParser(t, envValues, xcodeVersion)
 
 	// When
 	_, err := configParser.ProcessConfig()
@@ -105,8 +106,8 @@ func Test_GivenTestRepetitionModeIsNone_WhenRelaunchTestsForEachRepetitionIsSet_
 	envValues := defaultEnvValues()
 	envValues["relaunch_tests_for_each_repetition"] = "yes"
 
-	ver := newVersion(12)
-	configParser, mocks := createConfigParser(t, envValues, ver)
+	xcodeVersion := newVersion(12)
+	configParser, mocks := createConfigParser(t, envValues, xcodeVersion)
 
 	path := strings.TrimPrefix(envValues["project_path"], ".")
 	mocks.pathModifier.On("AbsPath", mock.Anything).Return(path, nil)
@@ -143,8 +144,8 @@ func Test_GivenLogFormatterIsXcbeautify_WhenParsesConfig_ThenAdditionalOptionsWo
 	envValues["log_formatter"] = "xcbeautify"
 	envValues["xcbeautify_options"] = "'--is-ci' '-q'"
 
-	ver := newVersion(13)
-	configParser, mocks := createConfigParser(t, envValues, ver)
+	xcodeVersion := newVersion(13)
+	configParser, mocks := createConfigParser(t, envValues, xcodeVersion)
 
 	path := strings.TrimPrefix(envValues["project_path"], ".")
 	mocks.pathModifier.On("AbsPath", mock.Anything).Return(path, nil)

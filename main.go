@@ -73,7 +73,7 @@ func createConfigParser(logger log.Logger) step.XcodeTestConfigParser {
 	inputParser := stepconf.NewInputParser(envRepository)
 	xcodeVersionProvider := xcodeversion.NewXcodeVersionProvider(commandFactory)
 	xcodeVersion, err := xcodeVersionProvider.GetVersion()
-	if err != nil {
+	if err != nil { // Not a fatal error, continuing with empty version
 		logger.Errorf("failed to read Xcode version: %w", err)
 	}
 	pathModifier := pathutil.NewPathModifier()
