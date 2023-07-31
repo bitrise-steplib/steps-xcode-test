@@ -44,7 +44,6 @@ type TestRunParams struct {
 	RetryOnTestRunnerError             bool
 	RetryOnSwiftPackageResolutionError bool
 	SwiftPackagesPath                  string
-	XcodeMajorVersion                  int
 }
 
 // RunTest ...

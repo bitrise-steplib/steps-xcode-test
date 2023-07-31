@@ -108,6 +108,5 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 		RetryOnTestRunnerError:             true,
 		RetryOnSwiftPackageResolutionError: true,
 		SwiftPackagesPath:                  swiftPackagesPath,
-		XcodeMajorVersion:                  cfg.XcodeMajorVersion,
 	}
 }

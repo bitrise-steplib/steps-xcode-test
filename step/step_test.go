@@ -9,8 +9,8 @@ import (
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-xcode/v2/destination"
+	"github.com/bitrise-io/go-xcode/v2/xcodeversion"
 	"github.com/bitrise-steplib/steps-xcode-test/step/mocks"
-	"github.com/bitrise-steplib/steps-xcode-test/xcodeversion"
 	"github.com/hashicorp/go-version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -18,7 +18,6 @@ import (
 )
 
 type configParserMocks struct {
-	xcodeVersion *mocks.XcodeVersionReader
 	deviceFinder *mocks.DeviceFinder
 	pathModifier *mocks.PathModifier
 }
@@ -77,10 +76,7 @@ func Test_GivenXcode13OrNewer_WhenShouldRetryTestOnFailIsSet_ThenFails(t *testin
 	envValues := defaultEnvValues()
 	envValues["should_retry_test_on_fail"] = "yes"
 
-	configParser, mocks := createConfigParser(t, envValues)
-
-	ver := newVersion(13)
-	mocks.xcodeVersion.On("Version").Return(ver, nil)
+	configParser, _ := createConfigParser(t, envValues, newVersion(13))
 
 	// When
 	_, err := configParser.ProcessConfig()
@@ -94,10 +90,8 @@ func Test_GivenXcode12OrOlder_WhenTestRepetitionModeIsSet_ThenFails(t *testing.T
 	envValues := defaultEnvValues()
 	envValues["test_repetition_mode"] = "retry_on_failure"
 
-	configParser, mocks := createConfigParser(t, envValues)
-
 	ver := newVersion(12)
-	mocks.xcodeVersion.On("Version").Return(ver, nil)
+	configParser, _ := createConfigParser(t, envValues, ver)
 
 	// When
 	_, err := configParser.ProcessConfig()
@@ -111,10 +105,8 @@ func Test_GivenTestRepetitionModeIsNone_WhenRelaunchTestsForEachRepetitionIsSet_
 	envValues := defaultEnvValues()
 	envValues["relaunch_tests_for_each_repetition"] = "yes"
 
-	configParser, mocks := createConfigParser(t, envValues)
-
 	ver := newVersion(12)
-	mocks.xcodeVersion.On("Version").Return(ver, nil)
+	configParser, mocks := createConfigParser(t, envValues, ver)
 
 	path := strings.TrimPrefix(envValues["project_path"], ".")
 	mocks.pathModifier.On("AbsPath", mock.Anything).Return(path, nil)
@@ -151,9 +143,9 @@ func Test_GivenLogFormatterIsXcbeautify_WhenParsesConfig_ThenAdditionalOptionsWo
 	envValues["log_formatter"] = "xcbeautify"
 	envValues["xcbeautify_options"] = "'--is-ci' '-q'"
 
-	configParser, mocks := createConfigParser(t, envValues)
+	ver := newVersion(13)
+	configParser, mocks := createConfigParser(t, envValues, ver)
 
-	mocks.xcodeVersion.On("Version").Return(newVersion(13), nil)
 	path := strings.TrimPrefix(envValues["project_path"], ".")
 	mocks.pathModifier.On("AbsPath", mock.Anything).Return(path, nil)
 	device := defaultSimulator()
@@ -293,7 +285,7 @@ func defaultResult() Result {
 	}
 }
 
-func createConfigParser(t *testing.T, envValues map[string]string) (XcodeTestConfigParser, configParserMocks) {
+func createConfigParser(t *testing.T, envValues map[string]string, xcodeVersion xcodeversion.Version) (XcodeTestConfigParser, configParserMocks) {
 	envRepository := mocks.NewRepository(t)
 
 	if envValues != nil {
@@ -307,14 +299,12 @@ func createConfigParser(t *testing.T, envValues map[string]string) (XcodeTestCon
 
 	logger := log.NewLogger()
 	inputParser := stepconf.NewInputParser(envRepository)
-	xcodeVersionReader := mocks.NewXcodeVersionReader(t)
 	deviceFinder := mocks.NewDeviceFinder(t)
 	pathModifier := mocks.NewPathModifier(t)
 	utils := NewUtils(logger)
 
-	configParser := NewXcodeTestConfigParser(inputParser, logger, xcodeVersionReader, deviceFinder, pathModifier, utils)
+	configParser := NewXcodeTestConfigParser(inputParser, logger, xcodeVersion, deviceFinder, pathModifier, utils)
 	mocks := configParserMocks{
-		xcodeVersion: xcodeVersionReader,
 		deviceFinder: deviceFinder,
 		pathModifier: pathModifier,
 	}

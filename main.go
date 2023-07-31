@@ -18,12 +18,12 @@ import (
 	"github.com/bitrise-io/go-xcode/v2/simulator"
 	"github.com/bitrise-io/go-xcode/v2/xcconfig"
 	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
+	"github.com/bitrise-io/go-xcode/v2/xcodeversion"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/step"
 	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodecommand"
-	"github.com/bitrise-steplib/steps-xcode-test/xcodeversion"
 )
 
 func main() {
@@ -71,12 +71,16 @@ func createConfigParser(logger log.Logger) step.XcodeTestConfigParser {
 	envRepository := env.NewRepository()
 	commandFactory := command.NewFactory(envRepository)
 	inputParser := stepconf.NewInputParser(envRepository)
-	xcodeVersionReader := xcodeversion.NewXcodeVersionReader()
+	xcodeVersionProvider := xcodeversion.NewXcodeVersionProvider(commandFactory)
+	xcodeVersion, err := xcodeVersionProvider.GetVersion()
+	if err != nil {
+		logger.Errorf("failed to read Xcode version: %w", err)
+	}
 	pathModifier := pathutil.NewPathModifier()
-	deviceFinder := destination.NewDeviceFinder(logger, commandFactory)
+	deviceFinder := destination.NewDeviceFinder(logger, commandFactory, xcodeVersion)
 	utils := step.NewUtils(logger)
 
-	return step.NewXcodeTestConfigParser(inputParser, logger, xcodeVersionReader, deviceFinder, pathModifier, utils)
+	return step.NewXcodeTestConfigParser(inputParser, logger, xcodeVersion, deviceFinder, pathModifier, utils)
 }
 
 func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, error) {

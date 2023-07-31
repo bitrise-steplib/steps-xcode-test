@@ -16,10 +16,10 @@ import (
 	"github.com/bitrise-io/go-xcode/v2/destination"
 	"github.com/bitrise-io/go-xcode/v2/simulator"
 	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
+	"github.com/bitrise-io/go-xcode/v2/xcodeversion"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodecommand"
-	"github.com/bitrise-steplib/steps-xcode-test/xcodeversion"
 	"github.com/kballard/go-shellquote"
 )
 
@@ -110,22 +110,22 @@ type Config struct {
 }
 
 type XcodeTestConfigParser struct {
-	logger             log.Logger
-	inputParser        stepconf.InputParser
-	xcodeVersionReader xcodeversion.Reader
-	deviceFinder       destination.DeviceFinder
-	pathModifier       pathutil.PathModifier
-	utils              Utils
+	logger       log.Logger
+	inputParser  stepconf.InputParser
+	xcodeVersion xcodeversion.Version
+	deviceFinder destination.DeviceFinder
+	pathModifier pathutil.PathModifier
+	utils        Utils
 }
 
-func NewXcodeTestConfigParser(inputParser stepconf.InputParser, logger log.Logger, xcodeVersionReader xcodeversion.Reader, deviceFinder destination.DeviceFinder, pathModifier pathutil.PathModifier, utils Utils) XcodeTestConfigParser {
+func NewXcodeTestConfigParser(inputParser stepconf.InputParser, logger log.Logger, xcodeVersion xcodeversion.Version, deviceFinder destination.DeviceFinder, pathModifier pathutil.PathModifier, utils Utils) XcodeTestConfigParser {
 	return XcodeTestConfigParser{
-		logger:             logger,
-		inputParser:        inputParser,
-		xcodeVersionReader: xcodeVersionReader,
-		deviceFinder:       deviceFinder,
-		pathModifier:       pathModifier,
-		utils:              utils,
+		logger:       logger,
+		inputParser:  inputParser,
+		xcodeVersion: xcodeVersion,
+		deviceFinder: deviceFinder,
+		pathModifier: pathModifier,
+		utils:        utils,
 	}
 }
 
@@ -170,14 +170,8 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 
 	s.logger.EnableDebugLog(input.VerboseLog)
 
-	// validate Xcode version
-	xcodebuildVersion, err := s.xcodeVersionReader.Version()
-	if err != nil {
-		return Config{}, fmt.Errorf("failed to determine Xcode version: %w", err)
-	}
-	s.logger.Printf("- xcodebuildVersion: %s (%s)", xcodebuildVersion.Version, xcodebuildVersion.BuildVersion)
-
-	if err := s.validateXcodeVersion(&input, int(xcodebuildVersion.MajorVersion)); err != nil {
+	s.logger.Printf("- xcodebuild_version: %s (%s)", s.xcodeVersion.Version, s.xcodeVersion.BuildVersion)
+	if err := s.validateXcodeVersion(&input, int(s.xcodeVersion.MajorVersion)); err != nil {
 		return Config{}, err
 	}
 
@@ -223,7 +217,7 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 		return Config{}, fmt.Errorf("`-xcconfig` option found in 'Additional options for the xcodebuild command' (xcodebuild_options), please clear 'Build settings (xcconfig)' (`xcconfig_content`) input as only one can be set")
 	}
 
-	return s.utils.CreateConfig(input, projectPath, int(xcodebuildVersion.MajorVersion), sim, additionalOptions, additionalLogFormatterOptions), nil
+	return s.utils.CreateConfig(input, projectPath, int(s.xcodeVersion.MajorVersion), sim, additionalOptions, additionalLogFormatterOptions), nil
 }
 
 // InstallDeps ...
@@ -257,7 +251,7 @@ type Result struct {
 func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 	enableSimulatorVerboseLog := cfg.CollectSimulatorDiagnostics != never
 	launchSimulator := !cfg.IsSimulatorBooted && !cfg.HeadlessMode
-	if err := s.prepareSimulator(enableSimulatorVerboseLog, cfg.Simulator.ID, launchSimulator); err != nil {
+	if err := s.prepareSimulator(enableSimulatorVerboseLog, cfg.Simulator, launchSimulator); err != nil {
 		return Result{}, err
 	}
 
@@ -354,6 +348,10 @@ func (s XcodeTestConfigParser) parseAdditionalLogFormatterOptions(logFormatter, 
 }
 
 func (s XcodeTestConfigParser) validateXcodeVersion(input *Input, xcodeMajorVersion int) error {
+	if xcodeMajorVersion == 0 {
+		s.logger.Printf("Skipping Xcode major version check as it is not available.")
+	}
+
 	if xcodeMajorVersion < minSupportedXcodeMajorVersion {
 		return fmt.Errorf("invalid Xcode major version (%d), should not be less then min supported: %d", xcodeMajorVersion, minSupportedXcodeMajorVersion)
 	}
@@ -389,7 +387,7 @@ func (s XcodeTestConfigParser) getSimulatorForDestination(destinationSpecifier s
 	return device, nil
 }
 
-func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simulatorID string, launchSimulator bool) error {
+func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simulator destination.Device, launchSimulator bool) error {
 	err := s.simulatorManager.ResetLaunchServices()
 	if err != nil {
 		s.logger.Warnf("Failed to apply simulator boot workaround: %s", err)
@@ -399,10 +397,10 @@ func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simula
 	if enableSimulatorVerboseLog {
 		s.logger.Infof("Enabling Simulator verbose log for better diagnostics")
 		// Boot the simulator now, so verbose logging can be enabled, and it is kept booted after running tests.
-		if err := s.simulatorManager.Boot(simulatorID); err != nil {
+		if err := s.simulatorManager.Boot(simulator); err != nil {
 			return fmt.Errorf("%v", err)
 		}
-		if err := s.simulatorManager.EnableVerboseLog(simulatorID); err != nil {
+		if err := s.simulatorManager.EnableVerboseLog(simulator.ID); err != nil {
 			return fmt.Errorf("%v", err)
 		}
 
@@ -410,9 +408,9 @@ func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simula
 	}
 
 	if launchSimulator {
-		s.logger.Infof("Booting simulator (%s)...", simulatorID)
+		s.logger.Infof("Booting simulator (%s)...", simulator.ID)
 
-		if err := s.simulatorManager.LaunchWithGUI(simulatorID); err != nil {
+		if err := s.simulatorManager.LaunchWithGUI(simulator.ID); err != nil {
 			return fmt.Errorf("failed to boot simulator: %w", err)
 		}
 
