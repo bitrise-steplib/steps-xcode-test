@@ -71,6 +71,23 @@ func Test_GivenStep_WhenRuns_ThenXcodebuildGetsCalled(t *testing.T) {
 	mocks.xcodebuilder.AssertCalled(t, "RunTest", mock.Anything)
 }
 
+func Test_GivenStep_WhenXcodeVersionUnreadable_ThenSuccess(t *testing.T) {
+	// Given
+	envValues := defaultEnvValues()
+
+	xcodeVersion := xcodeversion.Version{}
+	configParser, mocks := createConfigParser(t, envValues, xcodeVersion)
+	path := strings.TrimPrefix(envValues["project_path"], ".")
+	mocks.pathModifier.On("AbsPath", mock.Anything).Return(path, nil)
+	mocks.deviceFinder.On("FindDevice", mock.Anything, mock.Anything).Return(defaultSimulator(), nil)
+
+	// When
+	_, err := configParser.ProcessConfig()
+
+	// Then
+	require.NoError(t, err)
+}
+
 func Test_GivenXcode13OrNewer_WhenShouldRetryTestOnFailIsSet_ThenFails(t *testing.T) {
 	// Given
 	envValues := defaultEnvValues()

@@ -350,6 +350,7 @@ func (s XcodeTestConfigParser) parseAdditionalLogFormatterOptions(logFormatter, 
 func (s XcodeTestConfigParser) validateXcodeVersion(input *Input, xcodeMajorVersion int) error {
 	if xcodeMajorVersion == 0 {
 		s.logger.Printf("Skipping Xcode major version check as it is not available.")
+		return nil
 	}
 
 	if xcodeMajorVersion < minSupportedXcodeMajorVersion {
