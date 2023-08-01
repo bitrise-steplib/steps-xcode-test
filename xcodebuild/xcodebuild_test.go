@@ -271,7 +271,6 @@ func runParameters() TestRunParams {
 		RetryOnTestRunnerError:             true,
 		RetryOnSwiftPackageResolutionError: true,
 		SwiftPackagesPath:                  "SwiftPackagesPath",
-		XcodeMajorVersion:                  13,
 	}
 }
 

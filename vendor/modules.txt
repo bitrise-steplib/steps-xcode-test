@@ -1,4 +1,4 @@
-# github.com/bitrise-io/bitrise v0.0.0-20230704133514-4c3c1429a139
+# github.com/bitrise-io/bitrise v0.0.0-20230707121919-a5b9e2d27ea9
 ## explicit; go 1.17
 github.com/bitrise-io/bitrise/configs
 github.com/bitrise-io/bitrise/exitcode
@@ -7,8 +7,8 @@ github.com/bitrise-io/bitrise/log/corelog
 github.com/bitrise-io/bitrise/models
 github.com/bitrise-io/bitrise/utils
 github.com/bitrise-io/bitrise/version
-# github.com/bitrise-io/envman v0.0.0-20230330151556-11e5bde91b36
-## explicit; go 1.16
+# github.com/bitrise-io/envman v0.0.0-20230721122944-6b164ed0c2f8
+## explicit; go 1.18
 github.com/bitrise-io/envman/models
 # github.com/bitrise-io/go-steputils v1.0.5
 ## explicit; go 1.15
@@ -20,7 +20,7 @@ github.com/bitrise-io/go-steputils/v2/export
 github.com/bitrise-io/go-steputils/v2/ruby
 github.com/bitrise-io/go-steputils/v2/stepconf
 github.com/bitrise-io/go-steputils/v2/stepenv
-# github.com/bitrise-io/go-utils v1.0.8
+# github.com/bitrise-io/go-utils v1.0.9
 ## explicit; go 1.13
 github.com/bitrise-io/go-utils/colorstring
 github.com/bitrise-io/go-utils/command
@@ -44,19 +44,20 @@ github.com/bitrise-io/go-utils/v2/fileutil
 github.com/bitrise-io/go-utils/v2/log
 github.com/bitrise-io/go-utils/v2/log/colorstring
 github.com/bitrise-io/go-utils/v2/pathutil
-# github.com/bitrise-io/go-xcode v1.0.11
+# github.com/bitrise-io/go-xcode v1.0.13
 ## explicit; go 1.15
 github.com/bitrise-io/go-xcode/models
 github.com/bitrise-io/go-xcode/utility
-# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.27
+# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.29
 ## explicit; go 1.16
 github.com/bitrise-io/go-xcode/v2/destination
 github.com/bitrise-io/go-xcode/v2/errorfinder
 github.com/bitrise-io/go-xcode/v2/simulator
 github.com/bitrise-io/go-xcode/v2/xcconfig
 github.com/bitrise-io/go-xcode/v2/xcodecache
-# github.com/bitrise-io/stepman v0.0.0-20221010110437-a88e9a915b58
-## explicit; go 1.16
+github.com/bitrise-io/go-xcode/v2/xcodeversion
+# github.com/bitrise-io/stepman v0.0.0-20230728094915-939f0fe5c19a
+## explicit; go 1.18
 github.com/bitrise-io/stepman/models
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
@@ -87,7 +88,7 @@ github.com/stretchr/objx
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/mock
 github.com/stretchr/testify/require
-# golang.org/x/crypto v0.10.0
+# golang.org/x/crypto v0.11.0
 ## explicit; go 1.17
 golang.org/x/crypto/ssh/terminal
 # golang.org/x/sys v0.10.0
