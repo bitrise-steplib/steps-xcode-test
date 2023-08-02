@@ -149,6 +149,12 @@ workflows:
         - content: |-
             #!/bin/env bash
             set -ex
+
+            rm -rf /Applications/Xcode-15.0.app || true
+            xcrun simctl delete unavailable
+
+            xcode-select -p
+
             rm -rf ./_tmp
     - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git:
         inputs:
