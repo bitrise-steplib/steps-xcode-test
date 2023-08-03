@@ -10,7 +10,7 @@ workflows:
     - BITRISE_SCHEME: DeckOfPlayingCards
     - TEST_PLAN: ""
     - DESTINATION: platform=iOS Simulator,name=Bitrise iOS default,OS=latest
-    - LOG_FORMATTER: xcbeautify
+    - LOG_FORMATTER: xcpretty
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: swift_packages
@@ -100,7 +100,7 @@ workflows:
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: UnitTests
     - DESTINATION: platform=iOS Simulator,name=iPhone 12,OS=latest
-    - LOG_FORMATTER: xcbeautify
+    - LOG_FORMATTER: xcpretty
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: swift_packages
