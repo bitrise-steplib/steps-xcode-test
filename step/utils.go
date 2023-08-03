@@ -103,7 +103,6 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 
 	return xcodebuild.TestRunParams{
 		TestParams:                         testParams,
-		LogFormatter:                       cfg.LogFormatter,
 		LogFormatterOptions:                cfg.LogFormatterOptions,
 		RetryOnTestRunnerError:             true,
 		RetryOnSwiftPackageResolutionError: true,
