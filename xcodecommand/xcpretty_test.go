@@ -5,7 +5,7 @@ import (
 
 	gocommand "github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/log"
-	mockcommand "github.com/bitrise-steplib/steps-xcode-test/mocks"
+	mockcommand "github.com/bitrise-steplib/steps-xcode-test/xcodecommand/mocks"
 	"github.com/hashicorp/go-version"
 	"github.com/stretchr/testify/assert"
 )

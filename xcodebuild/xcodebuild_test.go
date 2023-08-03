@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/bitrise-io/go-utils/v2/log"
+	commonMocks "github.com/bitrise-steplib/steps-xcode-test/mocks"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild/mocks"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodecommand"
 	"github.com/stretchr/testify/mock"
@@ -17,7 +18,7 @@ const xcconfigPath = "xcconfigPath"
 type testingMocks struct {
 	fileManager        *mocks.FileManager
 	xcconfigWriter     *mocks.XcconfigWriter
-	xcodeCommandRunner *mocks.XcodeCommandRunner
+	xcodeCommandRunner *commonMocks.XcodeCommandRunner
 }
 
 func Test_GivenXcodebuild_WhenInvoked_ThenUsesCorrectArguments(t *testing.T) {
@@ -235,7 +236,7 @@ func createXcodebuildAndMocks(t *testing.T) (Xcodebuild, testingMocks) {
 	logger := log.NewLogger()
 	fileManager := new(mocks.FileManager)
 	xcconfigWriter := new(mocks.XcconfigWriter)
-	xcodeCommandRunner := mocks.NewXcodeCommandRunner(t)
+	xcodeCommandRunner := commonMocks.NewXcodeCommandRunner(t)
 
 	xcconfigWriter.On("Write", mock.Anything).Return(xcconfigPath, nil)
 
