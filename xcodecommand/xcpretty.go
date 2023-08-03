@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/bitrise-io/go-steputils/v2/ruby"
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
@@ -19,14 +20,20 @@ type xcprettyCommandRunner struct {
 	commandFactory command.Factory
 	pathChecker    pathutil.PathChecker
 	fileManager    fileutil.FileManager
+	xcpretty       xcprettyManager // used by CheckInstall
 }
 
-func NewXcprettyCommandRunner(logger log.Logger, commandFactory command.Factory, pathChecker pathutil.PathChecker, fileManager fileutil.FileManager) Runner {
+func NewXcprettyCommandRunner(logger log.Logger, commandFactory command.Factory, pathChecker pathutil.PathChecker, fileManager fileutil.FileManager, rubyCommandFactory ruby.CommandFactory, rubyEnv ruby.Environment) Runner {
 	return &xcprettyCommandRunner{
 		logger:         logger,
 		commandFactory: commandFactory,
 		pathChecker:    pathChecker,
 		fileManager:    fileManager,
+		xcpretty: &xcpretty{
+			commandFactory:     commandFactory,
+			rubyEnv:            rubyEnv,
+			rubyCommandFactory: rubyCommandFactory,
+		},
 	}
 }
 

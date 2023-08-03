@@ -132,7 +132,7 @@ func NewXcodeTestConfigParser(inputParser stepconf.InputParser, logger log.Logge
 // XcodeTestRunner ...
 type XcodeTestRunner struct {
 	logger                log.Logger
-	logFormatterInstaller xcodecommand.DependencyInstaller
+	logFormatterInstaller xcodecommand.Runner
 	xcodebuild            xcodebuild.Xcodebuild
 	simulatorManager      simulator.Manager
 	cache                 cache.SwiftPackageCache
@@ -143,7 +143,7 @@ type XcodeTestRunner struct {
 }
 
 // NewXcodeTestRunner ...
-func NewXcodeTestRunner(logger log.Logger, logFormatterInstaller xcodecommand.DependencyInstaller, xcodebuild xcodebuild.Xcodebuild, simulatorManager simulator.Manager, cache cache.SwiftPackageCache, outputExporter output.Exporter, pathModifier pathutil.PathModifier, pathProvider pathutil.PathProvider, utils Utils) XcodeTestRunner {
+func NewXcodeTestRunner(logger log.Logger, logFormatterInstaller xcodecommand.Runner, xcodebuild xcodebuild.Xcodebuild, simulatorManager simulator.Manager, cache cache.SwiftPackageCache, outputExporter output.Exporter, pathModifier pathutil.PathModifier, pathProvider pathutil.PathProvider, utils Utils) XcodeTestRunner {
 	return XcodeTestRunner{
 		logger:                logger,
 		logFormatterInstaller: logFormatterInstaller,

@@ -5,14 +5,8 @@ import (
 
 	"github.com/bitrise-io/go-steputils/v2/ruby"
 	command "github.com/bitrise-io/go-utils/v2/command"
-	"github.com/bitrise-io/go-utils/v2/log"
 	version "github.com/hashicorp/go-version"
 )
-
-type xcprettyDependencyManager struct {
-	logger   log.Logger
-	xcpretty xcprettyManager
-}
 
 type xcprettyManager interface {
 	isDepInstalled() (bool, error)
@@ -26,18 +20,7 @@ type xcpretty struct {
 	rubyCommandFactory ruby.CommandFactory
 }
 
-func NewXcprettyDependencyManager(logger log.Logger, commandFactory command.Factory, rubyCommandFactory ruby.CommandFactory, rubyEnv ruby.Environment) DependencyInstaller {
-	return &xcprettyDependencyManager{
-		logger: logger,
-		xcpretty: &xcpretty{
-			commandFactory:     commandFactory,
-			rubyEnv:            rubyEnv,
-			rubyCommandFactory: rubyCommandFactory,
-		},
-	}
-}
-
-func (c *xcprettyDependencyManager) CheckInstall() (*version.Version, error) {
+func (c *xcprettyCommandRunner) CheckInstall() (*version.Version, error) {
 	c.logger.Println()
 	c.logger.Infof("Checking if log formatter (xcpretty) is installed")
 

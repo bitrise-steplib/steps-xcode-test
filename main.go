@@ -100,14 +100,12 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 	utils := step.NewUtils(logger)
 
 	xcodeCommandRunner := xcodecommand.Runner(nil)
-	logFormatterInstaller := xcodecommand.DependencyInstaller(nil)
 
 	switch logFormatter {
 	case step.XcodebuildTool:
 		xcodeCommandRunner = xcodecommand.NewRawCommandRunner(logger, commandFactory)
 	case step.XcbeautifyTool:
 		xcodeCommandRunner = xcodecommand.NewXcbeautifyRunner(logger, commandFactory)
-		logFormatterInstaller = xcodecommand.NewXcbeautifyInstallChecker(logger, commandFactory)
 	case step.XcprettyTool:
 		commandLocator := env.NewCommandLocator()
 		rubyComamndFactory, err := ruby.NewCommandFactory(commandFactory, commandLocator)
@@ -116,15 +114,13 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 		}
 		rubyEnv := ruby.NewEnvironment(rubyComamndFactory, commandLocator, logger)
 
-		xcodeCommandRunner = xcodecommand.NewXcprettyCommandRunner(logger, commandFactory, pathChecker, fileManager)
-		logFormatterInstaller = xcodecommand.NewXcprettyDependencyManager(logger, commandFactory, rubyComamndFactory, rubyEnv)
+		xcodeCommandRunner = xcodecommand.NewXcprettyCommandRunner(logger, commandFactory, pathChecker, fileManager, rubyComamndFactory, rubyEnv)
 	default:
 		panic(fmt.Sprintf("Unknown log formatter: %s", logFormatter))
 	}
 
-	xcodeCommandRunner2 := xcodecommand.NewFallbackRunner(xcodeCommandRunner, logFormatterInstaller, logger, commandFactory)
+	fallbackRunner := xcodecommand.NewFallbackRunner(xcodeCommandRunner, logger, commandFactory)
+	xcodebuilder := xcodebuild.NewXcodebuild(logger, fileManager, xcconfigWriter, fallbackRunner)
 
-	xcodebuilder := xcodebuild.NewXcodebuild(logger, fileManager, xcconfigWriter, xcodeCommandRunner2)
-
-	return step.NewXcodeTestRunner(logger, xcodeCommandRunner2, xcodebuilder, simulatorManager, swiftCache, exporter, pathModifier, pathProvider, utils), nil
+	return step.NewXcodeTestRunner(logger, fallbackRunner, xcodebuilder, simulatorManager, swiftCache, exporter, pathModifier, pathProvider, utils), nil
 }

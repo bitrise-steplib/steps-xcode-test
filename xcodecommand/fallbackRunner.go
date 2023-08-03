@@ -6,37 +6,22 @@ import (
 	version "github.com/hashicorp/go-version"
 )
 
-type xcodecommandRunner struct {
-	installer DependencyInstaller
-	runner    Runner
-}
-
 type FallbackRunner struct {
-	runner         xcodecommandRunner
-	fallbackRunner xcodecommandRunner
+	runner         Runner
+	fallbackRunner Runner
 	logger         log.Logger
 }
 
-func NewFallbackRunner(runner Runner, installer DependencyInstaller, logger log.Logger, commandFactory command.Factory) *FallbackRunner {
+func NewFallbackRunner(runner Runner, logger log.Logger, commandFactory command.Factory) *FallbackRunner {
 	return &FallbackRunner{
-		runner: xcodecommandRunner{
-			runner:    runner,
-			installer: installer,
-		},
-		fallbackRunner: xcodecommandRunner{
-			runner:    NewRawCommandRunner(logger, commandFactory),
-			installer: nil,
-		},
-		logger: logger,
+		runner:         runner,
+		fallbackRunner: NewRawCommandRunner(logger, commandFactory),
+		logger:         logger,
 	}
 }
 
 func (sel *FallbackRunner) CheckInstall() (*version.Version, error) {
-	if sel.runner.installer == nil {
-		return nil, nil
-	}
-
-	ver, err := sel.runner.installer.CheckInstall()
+	ver, err := sel.runner.CheckInstall()
 	if err == nil {
 		return ver, nil
 	}
@@ -45,12 +30,9 @@ func (sel *FallbackRunner) CheckInstall() (*version.Version, error) {
 	sel.logger.Infof("Falling back to xcodebuild log formatter")
 	sel.runner = sel.fallbackRunner
 
-	if sel.runner.installer == nil {
-		return nil, nil
-	}
-	return sel.runner.installer.CheckInstall()
+	return sel.runner.CheckInstall()
 }
 
 func (sel *FallbackRunner) Run(workDir string, xcodebuildArgs []string, xcbeautifyArgs []string) (Output, error) {
-	return sel.runner.runner.Run(workDir, xcodebuildArgs, xcbeautifyArgs)
+	return sel.runner.Run(workDir, xcodebuildArgs, xcbeautifyArgs)
 }
