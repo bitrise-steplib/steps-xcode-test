@@ -122,7 +122,9 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 		panic(fmt.Sprintf("Unknown log formatter: %s", logFormatter))
 	}
 
-	xcodebuilder := xcodebuild.NewXcodebuild(logger, fileManager, xcconfigWriter, xcodeCommandRunner)
+	xcodeCommandRunner2 := xcodecommand.NewFallbackRunner(xcodeCommandRunner, logFormatterInstaller, logger, commandFactory)
 
-	return step.NewXcodeTestRunner(logger, logFormatterInstaller, xcodebuilder, simulatorManager, swiftCache, exporter, pathModifier, pathProvider, utils), nil
+	xcodebuilder := xcodebuild.NewXcodebuild(logger, fileManager, xcconfigWriter, xcodeCommandRunner2)
+
+	return step.NewXcodeTestRunner(logger, xcodeCommandRunner2, xcodebuilder, simulatorManager, swiftCache, exporter, pathModifier, pathProvider, utils), nil
 }

@@ -230,7 +230,10 @@ func (s XcodeTestRunner) InstallDeps() error {
 	if err != nil {
 		return fmt.Errorf("installing log formatter failed: %w", err)
 	}
-	s.logger.Printf("- log formatter version: %s", logFormatterVersion.String())
+
+	if logFormatterVersion != nil {
+		s.logger.Printf("- log formatter version: %s", logFormatterVersion.String())
+	}
 	s.logger.Println()
 
 	return nil
