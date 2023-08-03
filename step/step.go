@@ -166,11 +166,10 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 	}
 
 	stepconf.Print(input)
-	s.logger.Println()
-
 	s.logger.EnableDebugLog(input.VerboseLog)
 
 	s.logger.Printf("- xcodebuild_version: %s (%s)", s.xcodeVersion.Version, s.xcodeVersion.BuildVersion)
+	s.logger.Println()
 	if err := s.validateXcodeVersion(&input, int(s.xcodeVersion.MajorVersion)); err != nil {
 		return Config{}, err
 	}
