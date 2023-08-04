@@ -71,7 +71,8 @@ func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, erro
 		xcodebuildArgs = append(xcodebuildArgs, "clean")
 	}
 
-	xcodebuildArgs = append(xcodebuildArgs, "test", "-destination", params.Destination)
+	xcodebuildArgs = append(xcodebuildArgs, "test")
+	//xcodebuildArgs = append(xcodebuildArgs, "-destination", params.Destination)
 	if params.TestPlan != "" {
 		xcodebuildArgs = append(xcodebuildArgs, "-testPlan", params.TestPlan)
 	}
