@@ -9,7 +9,7 @@ import (
 )
 
 // On performance limited OS X hosts (ex: VMs) the iPhone/iOS Simulator might time out
-//  while booting. So far it seems that a simple retry solves these issues.
+// while booting. So far it seems that a simple retry solves these issues.
 const (
 	// This boot timeout can happen when running Unit Tests with Xcode Command Line `xcodebuild`.
 	timeOutMessageIPhoneSimulator = "iPhoneSimulator: Timed out waiting"

@@ -99,10 +99,11 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 	utils := step.NewUtils(logger)
 
 	xcodeCommandRunner := xcodecommand.Runner(nil)
+	rawXcodeRunner := xcodecommand.NewRawCommandRunner(logger, commandFactory)
 
 	switch logFormatter {
 	case step.XcodebuildTool:
-		xcodeCommandRunner = xcodecommand.NewRawCommandRunner(logger, commandFactory)
+		xcodeCommandRunner = rawXcodeRunner
 	case step.XcbeautifyTool:
 		xcodeCommandRunner = xcodecommand.NewXcbeautifyRunner(logger, commandFactory)
 	case step.XcprettyTool:
@@ -118,8 +119,7 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 		panic(fmt.Sprintf("Unknown log formatter: %s", logFormatter))
 	}
 
-	fallbackRunner := xcodecommand.NewFallbackRunner(xcodeCommandRunner, logger, commandFactory)
-	xcodebuilder := xcodebuild.NewXcodebuild(logger, fileManager, xcconfigWriter, fallbackRunner)
+	xcodebuilder := xcodebuild.NewXcodebuild(logger, fileManager, xcconfigWriter, xcodeCommandRunner)
 
-	return step.NewXcodeTestRunner(logger, fallbackRunner, xcodebuilder, simulatorManager, swiftCache, exporter, pathModifier, pathProvider, utils), nil
+	return step.NewXcodeTestRunner(logger, rawXcodeRunner, xcodebuilder, simulatorManager, swiftCache, exporter, pathModifier, pathProvider, utils), nil
 }

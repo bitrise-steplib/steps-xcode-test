@@ -131,29 +131,29 @@ func NewXcodeTestConfigParser(inputParser stepconf.InputParser, logger log.Logge
 
 // XcodeTestRunner ...
 type XcodeTestRunner struct {
-	logger                log.Logger
-	logFormatterInstaller xcodecommand.Runner
-	xcodebuild            xcodebuild.Xcodebuild
-	simulatorManager      simulator.Manager
-	cache                 cache.SwiftPackageCache
-	outputExporter        output.Exporter
-	pathModifier          pathutil.PathModifier
-	pathProvider          pathutil.PathProvider
-	utils                 Utils
+	logger                     log.Logger
+	rawXcodebuildCommandRunner xcodecommand.Runner
+	xcodebuild                 xcodebuild.Xcodebuild
+	simulatorManager           simulator.Manager
+	cache                      cache.SwiftPackageCache
+	outputExporter             output.Exporter
+	pathModifier               pathutil.PathModifier
+	pathProvider               pathutil.PathProvider
+	utils                      Utils
 }
 
 // NewXcodeTestRunner ...
-func NewXcodeTestRunner(logger log.Logger, logFormatterInstaller xcodecommand.Runner, xcodebuild xcodebuild.Xcodebuild, simulatorManager simulator.Manager, cache cache.SwiftPackageCache, outputExporter output.Exporter, pathModifier pathutil.PathModifier, pathProvider pathutil.PathProvider, utils Utils) XcodeTestRunner {
+func NewXcodeTestRunner(logger log.Logger, rawXcodebuildCommandRunner xcodecommand.Runner, xcodebuild xcodebuild.Xcodebuild, simulatorManager simulator.Manager, cache cache.SwiftPackageCache, outputExporter output.Exporter, pathModifier pathutil.PathModifier, pathProvider pathutil.PathProvider, utils Utils) XcodeTestRunner {
 	return XcodeTestRunner{
-		logger:                logger,
-		logFormatterInstaller: logFormatterInstaller,
-		xcodebuild:            xcodebuild,
-		simulatorManager:      simulatorManager,
-		cache:                 cache,
-		outputExporter:        outputExporter,
-		pathModifier:          pathModifier,
-		pathProvider:          pathProvider,
-		utils:                 utils,
+		logger:                     logger,
+		rawXcodebuildCommandRunner: rawXcodebuildCommandRunner,
+		xcodebuild:                 xcodebuild,
+		simulatorManager:           simulatorManager,
+		cache:                      cache,
+		outputExporter:             outputExporter,
+		pathModifier:               pathModifier,
+		pathProvider:               pathProvider,
+		utils:                      utils,
 	}
 }
 
@@ -221,16 +221,16 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 
 // InstallDeps ...
 func (s XcodeTestRunner) InstallDeps() error {
-	if s.logFormatterInstaller == nil {
+	logFormatterVersion, err := s.xcodebuild.GetXcodeCommadRunner().CheckInstall()
+	if err != nil {
+		s.logger.Errorf("Checking log formatter failed: %s", err)
+		s.logger.Infof("Switching back to xcodebuild log formatter")
+		s.xcodebuild.SetXcodeCommandRunner(s.rawXcodebuildCommandRunner)
+
 		return nil
 	}
 
-	logFormatterVersion, err := s.logFormatterInstaller.CheckInstall()
-	if err != nil {
-		return fmt.Errorf("installing log formatter failed: %w", err)
-	}
-
-	if logFormatterVersion != nil {
+	if logFormatterVersion != nil { // returns nil for raw xcodebuilld runner
 		s.logger.Printf("- log formatter version: %s", logFormatterVersion.String())
 	}
 	s.logger.Println()

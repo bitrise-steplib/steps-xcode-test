@@ -17,6 +17,8 @@ const (
 // Xcodebuild ....
 type Xcodebuild interface {
 	RunTest(params TestRunParams) (string, int, error)
+	GetXcodeCommadRunner() xcodecommand.Runner
+	SetXcodeCommandRunner(runner xcodecommand.Runner)
 }
 
 type xcodebuild struct {
@@ -48,4 +50,12 @@ type TestRunParams struct {
 // RunTest ...
 func (b *xcodebuild) RunTest(params TestRunParams) (string, int, error) {
 	return b.runTest(params)
+}
+
+func (b *xcodebuild) GetXcodeCommadRunner() xcodecommand.Runner {
+	return b.xcodeCommandRunner
+}
+
+func (b *xcodebuild) SetXcodeCommandRunner(runner xcodecommand.Runner) {
+	b.xcodeCommandRunner = runner
 }

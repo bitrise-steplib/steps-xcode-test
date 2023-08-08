@@ -24,13 +24,13 @@ type configParserMocks struct {
 }
 
 type stepMocks struct {
-	xcodeRunnerInstaller *commonMocks.XcodeCommandRunner
-	xcodebuilder         *mocks.Xcodebuild
-	simulatorManager     *mocks.SimulatorManager
-	cache                *mocks.SwiftPackageCache
-	outputExporter       *mocks.Exporter
-	pathModifier         *mocks.PathModifier
-	pathProvider         *mocks.PathProvider
+	xcodeRunner      *commonMocks.XcodeCommandRunner
+	xcodebuilder     *mocks.Xcodebuild
+	simulatorManager *mocks.SimulatorManager
+	cache            *mocks.SwiftPackageCache
+	outputExporter   *mocks.Exporter
+	pathModifier     *mocks.PathModifier
+	pathProvider     *mocks.PathProvider
 }
 
 func Test_GivenStep_WhenRuns_ThenXcodebuildGetsCalled(t *testing.T) {
@@ -146,14 +146,15 @@ func Test_GivenStep_WhenInstallXcpretty_ThenInstallIt(t *testing.T) {
 		assert.Fail(t, fmt.Sprintf("%s", err))
 	}
 
-	mocks.xcodeRunnerInstaller.On("CheckInstall", mock.Anything).Return(ver, nil)
+	mocks.xcodebuilder.On("GetXcodeCommadRunner").Return(mocks.xcodeRunner).Once()
+	mocks.xcodeRunner.On("CheckInstall", mock.Anything).Return(ver, nil).Once()
 
 	// When
 	err = step.InstallDeps()
 
 	// Then
 	assert.NoError(t, err)
-	mocks.xcodeRunnerInstaller.AssertExpectations(t)
+	mocks.xcodeRunner.AssertCalled(t, "CheckInstall")
 }
 
 func Test_GivenLogFormatterIsXcbeautify_WhenParsesConfig_ThenAdditionalOptionsWork(t *testing.T) {
@@ -333,7 +334,7 @@ func createConfigParser(t *testing.T, envValues map[string]string, xcodeVersion 
 
 func createStepAndMocks(t *testing.T) (XcodeTestRunner, stepMocks) {
 	logger := log.NewLogger()
-	xcodeRunnerInstaller := commonMocks.NewXcodeCommandRunner(t)
+	xcodeRunner := commonMocks.NewXcodeCommandRunner(t)
 	xcodebuilder := mocks.NewXcodebuild(t)
 	simulatorManager := mocks.NewSimulatorManager(t)
 	cache := mocks.NewSwiftPackageCache(t)
@@ -342,15 +343,15 @@ func createStepAndMocks(t *testing.T) (XcodeTestRunner, stepMocks) {
 	pathProvider := mocks.NewPathProvider(t)
 	utils := NewUtils(logger)
 
-	step := NewXcodeTestRunner(logger, xcodeRunnerInstaller, xcodebuilder, simulatorManager, cache, outputExporter, pathModifier, pathProvider, utils)
+	step := NewXcodeTestRunner(logger, xcodeRunner, xcodebuilder, simulatorManager, cache, outputExporter, pathModifier, pathProvider, utils)
 	mocks := stepMocks{
-		xcodeRunnerInstaller: xcodeRunnerInstaller,
-		xcodebuilder:         xcodebuilder,
-		simulatorManager:     simulatorManager,
-		cache:                cache,
-		outputExporter:       outputExporter,
-		pathModifier:         pathModifier,
-		pathProvider:         pathProvider,
+		xcodeRunner:      xcodeRunner,
+		xcodebuilder:     xcodebuilder,
+		simulatorManager: simulatorManager,
+		cache:            cache,
+		outputExporter:   outputExporter,
+		pathModifier:     pathModifier,
+		pathProvider:     pathProvider,
 	}
 
 	return step, mocks
