@@ -223,8 +223,8 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 func (s XcodeTestRunner) InstallDeps() error {
 	logFormatterVersion, err := s.xcodebuild.GetXcodeCommadRunner().CheckInstall()
 	if err != nil {
-		s.logger.Errorf("Checking log formatter failed: %s", err)
-		s.logger.Infof("Switching back to xcodebuild log formatter")
+		s.logger.Errorf("Selected log formatter is unavailable:: %s", err)
+		s.logger.Infof("Switching back to xcodebuild log formatter.")
 		s.xcodebuild.SetXcodeCommandRunner(s.rawXcodebuildCommandRunner)
 
 		return nil
