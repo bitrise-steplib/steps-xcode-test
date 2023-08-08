@@ -11,6 +11,7 @@ import (
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/sliceutil"
+	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-io/go-xcode/v2/destination"
@@ -131,29 +132,29 @@ func NewXcodeTestConfigParser(inputParser stepconf.InputParser, logger log.Logge
 
 // XcodeTestRunner ...
 type XcodeTestRunner struct {
-	logger                     log.Logger
-	rawXcodebuildCommandRunner xcodecommand.Runner
-	xcodebuild                 xcodebuild.Xcodebuild
-	simulatorManager           simulator.Manager
-	cache                      cache.SwiftPackageCache
-	outputExporter             output.Exporter
-	pathModifier               pathutil.PathModifier
-	pathProvider               pathutil.PathProvider
-	utils                      Utils
+	logger           log.Logger
+	commandFactory   command.Factory
+	xcodebuild       xcodebuild.Xcodebuild
+	simulatorManager simulator.Manager
+	cache            cache.SwiftPackageCache
+	outputExporter   output.Exporter
+	pathModifier     pathutil.PathModifier
+	pathProvider     pathutil.PathProvider
+	utils            Utils
 }
 
 // NewXcodeTestRunner ...
-func NewXcodeTestRunner(logger log.Logger, rawXcodebuildCommandRunner xcodecommand.Runner, xcodebuild xcodebuild.Xcodebuild, simulatorManager simulator.Manager, cache cache.SwiftPackageCache, outputExporter output.Exporter, pathModifier pathutil.PathModifier, pathProvider pathutil.PathProvider, utils Utils) XcodeTestRunner {
+func NewXcodeTestRunner(logger log.Logger, commandFactory command.Factory, xcodebuild xcodebuild.Xcodebuild, simulatorManager simulator.Manager, cache cache.SwiftPackageCache, outputExporter output.Exporter, pathModifier pathutil.PathModifier, pathProvider pathutil.PathProvider, utils Utils) XcodeTestRunner {
 	return XcodeTestRunner{
-		logger:                     logger,
-		rawXcodebuildCommandRunner: rawXcodebuildCommandRunner,
-		xcodebuild:                 xcodebuild,
-		simulatorManager:           simulatorManager,
-		cache:                      cache,
-		outputExporter:             outputExporter,
-		pathModifier:               pathModifier,
-		pathProvider:               pathProvider,
-		utils:                      utils,
+		logger:           logger,
+		commandFactory:   commandFactory,
+		xcodebuild:       xcodebuild,
+		simulatorManager: simulatorManager,
+		cache:            cache,
+		outputExporter:   outputExporter,
+		pathModifier:     pathModifier,
+		pathProvider:     pathProvider,
+		utils:            utils,
 	}
 }
 
@@ -225,7 +226,7 @@ func (s XcodeTestRunner) InstallDeps() error {
 	if err != nil {
 		s.logger.Errorf("Selected log formatter is unavailable:: %s", err)
 		s.logger.Infof("Switching back to xcodebuild log formatter.")
-		s.xcodebuild.SetXcodeCommandRunner(s.rawXcodebuildCommandRunner)
+		s.xcodebuild.SetXcodeCommandRunner(xcodecommand.NewRawCommandRunner(s.logger, s.commandFactory))
 
 		return nil
 	}

@@ -24,7 +24,7 @@ type configParserMocks struct {
 }
 
 type stepMocks struct {
-	xcodeRunner      *commonMocks.XcodeCommandRunner
+	commandFactory   *commonMocks.CommandFactory
 	xcodebuilder     *mocks.Xcodebuild
 	simulatorManager *mocks.SimulatorManager
 	cache            *mocks.SwiftPackageCache
@@ -146,15 +146,16 @@ func Test_GivenStep_WhenInstallXcpretty_ThenInstallIt(t *testing.T) {
 		assert.Fail(t, fmt.Sprintf("%s", err))
 	}
 
-	mocks.xcodebuilder.On("GetXcodeCommadRunner").Return(mocks.xcodeRunner).Once()
-	mocks.xcodeRunner.On("CheckInstall", mock.Anything).Return(ver, nil).Once()
+	xcodeRunner := commonMocks.NewXcodeCommandRunner(t)
+	mocks.xcodebuilder.On("GetXcodeCommadRunner").Return(xcodeRunner).Once()
+	xcodeRunner.On("CheckInstall", mock.Anything).Return(ver, nil).Once()
 
 	// When
 	err = step.InstallDeps()
 
 	// Then
 	assert.NoError(t, err)
-	mocks.xcodeRunner.AssertCalled(t, "CheckInstall")
+	xcodeRunner.AssertCalled(t, "CheckInstall")
 }
 
 func Test_GivenLogFormatterIsXcbeautify_WhenParsesConfig_ThenAdditionalOptionsWork(t *testing.T) {
@@ -334,7 +335,7 @@ func createConfigParser(t *testing.T, envValues map[string]string, xcodeVersion 
 
 func createStepAndMocks(t *testing.T) (XcodeTestRunner, stepMocks) {
 	logger := log.NewLogger()
-	xcodeRunner := commonMocks.NewXcodeCommandRunner(t)
+	commandFactory := new(commonMocks.CommandFactory)
 	xcodebuilder := mocks.NewXcodebuild(t)
 	simulatorManager := mocks.NewSimulatorManager(t)
 	cache := mocks.NewSwiftPackageCache(t)
@@ -343,9 +344,9 @@ func createStepAndMocks(t *testing.T) (XcodeTestRunner, stepMocks) {
 	pathProvider := mocks.NewPathProvider(t)
 	utils := NewUtils(logger)
 
-	step := NewXcodeTestRunner(logger, xcodeRunner, xcodebuilder, simulatorManager, cache, outputExporter, pathModifier, pathProvider, utils)
+	step := NewXcodeTestRunner(logger, commandFactory, xcodebuilder, simulatorManager, cache, outputExporter, pathModifier, pathProvider, utils)
 	mocks := stepMocks{
-		xcodeRunner:      xcodeRunner,
+		commandFactory:   commandFactory,
 		xcodebuilder:     xcodebuilder,
 		simulatorManager: simulatorManager,
 		cache:            cache,

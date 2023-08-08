@@ -121,5 +121,5 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 
 	xcodebuilder := xcodebuild.NewXcodebuild(logger, fileManager, xcconfigWriter, xcodeCommandRunner)
 
-	return step.NewXcodeTestRunner(logger, rawXcodeRunner, xcodebuilder, simulatorManager, swiftCache, exporter, pathModifier, pathProvider, utils), nil
+	return step.NewXcodeTestRunner(logger, commandFactory, xcodebuilder, simulatorManager, swiftCache, exporter, pathModifier, pathProvider, utils), nil
 }
