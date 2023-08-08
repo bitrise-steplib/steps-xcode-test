@@ -5,7 +5,7 @@ import (
 
 	gocommand "github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/log"
-	mockcommand "github.com/bitrise-steplib/steps-xcode-test/mocks"
+	mockcommand "github.com/bitrise-steplib/steps-xcode-test/xcodecommand/mocks"
 	"github.com/hashicorp/go-version"
 	"github.com/stretchr/testify/assert"
 )
@@ -47,7 +47,7 @@ func Test_GivenInstalled_WhenInstall_OnlyReturnsVersion(t *testing.T) {
 	mocks.command.AssertNotCalled(t, "Run")
 }
 
-func createInstallerAndMocks(t *testing.T, installed bool) (DependencyInstaller, *version.Version, testingMocks) {
+func createInstallerAndMocks(t *testing.T, installed bool) (Runner, *version.Version, testingMocks) {
 	command := new(mockcommand.Command)
 	command.On("Run").Return(nil)
 
@@ -60,7 +60,7 @@ func createInstallerAndMocks(t *testing.T, installed bool) (DependencyInstaller,
 	}
 	mockxcpretty.On("depVersion").Return(version, nil)
 
-	installer := &xcprettyDependencyManager{
+	installer := &xcprettyCommandRunner{
 		logger:   log.NewLogger(),
 		xcpretty: mockxcpretty,
 	}

@@ -46,9 +46,8 @@ func run() int {
 	}
 
 	if err := xcodeTestRunner.InstallDeps(); err != nil {
-		logger.Warnf(errorutil.FormattedError(fmt.Errorf("Failed to install Step dependencies: %w", err)))
-		logger.Printf("Switching to xcodebuild for output tool")
-		config.LogFormatter = step.XcodebuildTool
+		logger.Errorf(errorutil.FormattedError(fmt.Errorf("Failed to install Step dependencies: %w", err)))
+		return 1
 	}
 
 	res, runErr := xcodeTestRunner.Run(config)
@@ -100,14 +99,12 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 	utils := step.NewUtils(logger)
 
 	xcodeCommandRunner := xcodecommand.Runner(nil)
-	logFormatterInstaller := xcodecommand.DependencyInstaller(nil)
 
 	switch logFormatter {
 	case step.XcodebuildTool:
 		xcodeCommandRunner = xcodecommand.NewRawCommandRunner(logger, commandFactory)
 	case step.XcbeautifyTool:
 		xcodeCommandRunner = xcodecommand.NewXcbeautifyRunner(logger, commandFactory)
-		logFormatterInstaller = xcodecommand.NewXcbeautifyInstallChecker(logger, commandFactory)
 	case step.XcprettyTool:
 		commandLocator := env.NewCommandLocator()
 		rubyComamndFactory, err := ruby.NewCommandFactory(commandFactory, commandLocator)
@@ -116,13 +113,13 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 		}
 		rubyEnv := ruby.NewEnvironment(rubyComamndFactory, commandLocator, logger)
 
-		xcodeCommandRunner = xcodecommand.NewXcprettyCommandRunner(logger, commandFactory, pathChecker, fileManager)
-		logFormatterInstaller = xcodecommand.NewXcprettyDependencyManager(logger, commandFactory, rubyComamndFactory, rubyEnv)
+		xcodeCommandRunner = xcodecommand.NewXcprettyCommandRunner(logger, commandFactory, pathChecker, fileManager, rubyComamndFactory, rubyEnv)
 	default:
 		panic(fmt.Sprintf("Unknown log formatter: %s", logFormatter))
 	}
 
-	xcodebuilder := xcodebuild.NewXcodebuild(logger, fileManager, xcconfigWriter, xcodeCommandRunner)
+	fallbackRunner := xcodecommand.NewFallbackRunner(xcodeCommandRunner, logger, commandFactory)
+	xcodebuilder := xcodebuild.NewXcodebuild(logger, fileManager, xcconfigWriter, fallbackRunner)
 
-	return step.NewXcodeTestRunner(logger, logFormatterInstaller, xcodebuilder, simulatorManager, swiftCache, exporter, pathModifier, pathProvider, utils), nil
+	return step.NewXcodeTestRunner(logger, fallbackRunner, xcodebuilder, simulatorManager, swiftCache, exporter, pathModifier, pathProvider, utils), nil
 }

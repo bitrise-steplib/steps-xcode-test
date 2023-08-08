@@ -22,11 +22,6 @@ type xcbeautifyRunner struct {
 	commandFactory command.Factory
 }
 
-type xcbeautifyInstallChecker struct {
-	logger         log.Logger
-	commandFactory command.Factory
-}
-
 func NewXcbeautifyRunner(logger log.Logger, commandFactory command.Factory) Runner {
 	return &xcbeautifyRunner{
 		logger:         logger,
@@ -93,14 +88,7 @@ func (c *xcbeautifyRunner) Run(workDir string, xcodebuildArgs []string, xcbeauti
 	}, err
 }
 
-func NewXcbeautifyInstallChecker(logger log.Logger, commandFactory command.Factory) DependencyInstaller {
-	return &xcbeautifyInstallChecker{
-		logger:         logger,
-		commandFactory: commandFactory,
-	}
-}
-
-func (c *xcbeautifyInstallChecker) CheckInstall() (*version.Version, error) {
+func (c *xcbeautifyRunner) CheckInstall() (*version.Version, error) {
 	c.logger.Println()
 	c.logger.Infof("Checking log formatter (xcbeautify) version")
 

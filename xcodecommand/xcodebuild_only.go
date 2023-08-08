@@ -8,6 +8,7 @@ import (
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-xcode/v2/errorfinder"
+	version "github.com/hashicorp/go-version"
 )
 
 var xcodeCommandEnvs = []string{"NSUnbufferedIO=YES"}
@@ -49,4 +50,8 @@ func (c *rawXcodeCommand) Run(workDir string, args []string, _ []string) (Output
 		RawOut:   outBuffer.Bytes(),
 		ExitCode: exitCode,
 	}, err
+}
+
+func (c *rawXcodeCommand) CheckInstall() (*version.Version, error) {
+	return nil, nil
 }

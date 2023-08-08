@@ -132,7 +132,7 @@ func NewXcodeTestConfigParser(inputParser stepconf.InputParser, logger log.Logge
 // XcodeTestRunner ...
 type XcodeTestRunner struct {
 	logger                log.Logger
-	logFormatterInstaller xcodecommand.DependencyInstaller
+	logFormatterInstaller xcodecommand.Runner
 	xcodebuild            xcodebuild.Xcodebuild
 	simulatorManager      simulator.Manager
 	cache                 cache.SwiftPackageCache
@@ -143,7 +143,7 @@ type XcodeTestRunner struct {
 }
 
 // NewXcodeTestRunner ...
-func NewXcodeTestRunner(logger log.Logger, logFormatterInstaller xcodecommand.DependencyInstaller, xcodebuild xcodebuild.Xcodebuild, simulatorManager simulator.Manager, cache cache.SwiftPackageCache, outputExporter output.Exporter, pathModifier pathutil.PathModifier, pathProvider pathutil.PathProvider, utils Utils) XcodeTestRunner {
+func NewXcodeTestRunner(logger log.Logger, logFormatterInstaller xcodecommand.Runner, xcodebuild xcodebuild.Xcodebuild, simulatorManager simulator.Manager, cache cache.SwiftPackageCache, outputExporter output.Exporter, pathModifier pathutil.PathModifier, pathProvider pathutil.PathProvider, utils Utils) XcodeTestRunner {
 	return XcodeTestRunner{
 		logger:                logger,
 		logFormatterInstaller: logFormatterInstaller,
@@ -166,11 +166,10 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 	}
 
 	stepconf.Print(input)
-	s.logger.Println()
-
 	s.logger.EnableDebugLog(input.VerboseLog)
 
 	s.logger.Printf("- xcodebuild_version: %s (%s)", s.xcodeVersion.Version, s.xcodeVersion.BuildVersion)
+	s.logger.Println()
 	if err := s.validateXcodeVersion(&input, int(s.xcodeVersion.MajorVersion)); err != nil {
 		return Config{}, err
 	}
@@ -230,7 +229,10 @@ func (s XcodeTestRunner) InstallDeps() error {
 	if err != nil {
 		return fmt.Errorf("installing log formatter failed: %w", err)
 	}
-	s.logger.Printf("- log formatter version: %s", logFormatterVersion.String())
+
+	if logFormatterVersion != nil {
+		s.logger.Printf("- log formatter version: %s", logFormatterVersion.String())
+	}
 	s.logger.Println()
 
 	return nil

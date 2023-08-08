@@ -39,7 +39,6 @@ func NewXcodebuild(logger log.Logger, fileManager fileutil.FileManager, xcconfig
 // TestRunParams ...
 type TestRunParams struct {
 	TestParams                         TestParams
-	LogFormatter                       string
 	LogFormatterOptions                []string
 	RetryOnTestRunnerError             bool
 	RetryOnSwiftPackageResolutionError bool

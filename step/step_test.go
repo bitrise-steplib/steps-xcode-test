@@ -10,6 +10,7 @@ import (
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-xcode/v2/destination"
 	"github.com/bitrise-io/go-xcode/v2/xcodeversion"
+	commonMocks "github.com/bitrise-steplib/steps-xcode-test/mocks"
 	"github.com/bitrise-steplib/steps-xcode-test/step/mocks"
 	"github.com/hashicorp/go-version"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +24,7 @@ type configParserMocks struct {
 }
 
 type stepMocks struct {
-	xcodeRunnerInstaller *mocks.RunnerDependencyInstaller
+	xcodeRunnerInstaller *commonMocks.XcodeCommandRunner
 	xcodebuilder         *mocks.Xcodebuild
 	simulatorManager     *mocks.SimulatorManager
 	cache                *mocks.SwiftPackageCache
@@ -332,7 +333,7 @@ func createConfigParser(t *testing.T, envValues map[string]string, xcodeVersion 
 
 func createStepAndMocks(t *testing.T) (XcodeTestRunner, stepMocks) {
 	logger := log.NewLogger()
-	xcodeRunnerInstaller := mocks.NewRunnerDependencyInstaller(t)
+	xcodeRunnerInstaller := commonMocks.NewXcodeCommandRunner(t)
 	xcodebuilder := mocks.NewXcodebuild(t)
 	simulatorManager := mocks.NewSimulatorManager(t)
 	cache := mocks.NewSwiftPackageCache(t)

@@ -9,10 +9,7 @@ type Output struct {
 	ExitCode int
 }
 
-type DependencyInstaller interface {
-	CheckInstall() (*version.Version, error)
-}
-
 type Runner interface {
+	CheckInstall() (*version.Version, error)
 	Run(workDir string, xcodebuildOpts []string, logFormatterOpts []string) (Output, error)
 }
