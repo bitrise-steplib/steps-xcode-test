@@ -374,17 +374,14 @@ func (s XcodeTestConfigParser) getSimulatorForDestination(destinationSpecifier s
 	if err != nil {
 		return destination.Device{}, fmt.Errorf("invalid destination specifier (%s): %w", destinationSpecifier, err)
 	}
-	if simulatorDestination == nil {
-		return destination.Device{}, fmt.Errorf("inconsistent state, destination should not be nil")
-	}
 
 	device, err := s.deviceFinder.FindDevice(*simulatorDestination)
 	if err != nil {
-		return destination.Device{}, fmt.Errorf("simulator UDID lookup failed: %w", err)
+		return destination.Device{}, fmt.Errorf("destination simulator lookup failed: %w", err)
 	}
 
-	s.logger.Infof("Simulator info")
-	s.logger.Printf("* simulator_name: %s, version: %s, UDID: %s, status: %s", device.Name, device.OS, device.ID, device.Status)
+	s.logger.Infof("Destination simulator:")
+	s.logger.Printf("* Name: %s, type: %s, version: %s, UDID: %s, status: %s", device.Name, device.Type, device.OS, device.ID, device.Status)
 
 	return device, nil
 }
