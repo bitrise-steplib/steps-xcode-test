@@ -234,8 +234,6 @@ func (s XcodeTestRunner) InstallDeps() {
 	if logFormatterVersion != nil { // raw xcodebuild runner returns nil
 		s.logger.Printf("- log formatter version: %s", logFormatterVersion.String())
 	}
-
-	return
 }
 
 // Result ...
