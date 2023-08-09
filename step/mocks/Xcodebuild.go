@@ -4,7 +4,7 @@ package mocks
 
 import (
 	xcodebuild "github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
-	xcodecommand "github.com/bitrise-steplib/steps-xcode-test/xcodecommand"
+	xcodecommand "github.com/bitrise-io/go-xcode/v2/xcodecommand"
 	mock "github.com/stretchr/testify/mock"
 )
 

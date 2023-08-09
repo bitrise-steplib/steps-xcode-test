@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-xcode/v2/xcodecommand"
 	commonMocks "github.com/bitrise-steplib/steps-xcode-test/mocks"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild/mocks"
-	"github.com/bitrise-steplib/steps-xcode-test/xcodecommand"
 	"github.com/stretchr/testify/mock"
 )
 

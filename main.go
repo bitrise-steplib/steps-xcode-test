@@ -18,12 +18,12 @@ import (
 	"github.com/bitrise-io/go-xcode/v2/simulator"
 	"github.com/bitrise-io/go-xcode/v2/xcconfig"
 	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
+	"github.com/bitrise-io/go-xcode/v2/xcodecommand"
 	"github.com/bitrise-io/go-xcode/v2/xcodeversion"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/step"
 	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
-	"github.com/bitrise-steplib/steps-xcode-test/xcodecommand"
 )
 
 func main() {

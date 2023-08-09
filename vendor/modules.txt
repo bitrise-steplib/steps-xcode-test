@@ -44,17 +44,14 @@ github.com/bitrise-io/go-utils/v2/fileutil
 github.com/bitrise-io/go-utils/v2/log
 github.com/bitrise-io/go-utils/v2/log/colorstring
 github.com/bitrise-io/go-utils/v2/pathutil
-# github.com/bitrise-io/go-xcode v1.0.13
-## explicit; go 1.15
-github.com/bitrise-io/go-xcode/models
-github.com/bitrise-io/go-xcode/utility
-# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.29
-## explicit; go 1.16
+# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.29.0.20230809135209-7458685b4b28
+## explicit; go 1.18
 github.com/bitrise-io/go-xcode/v2/destination
 github.com/bitrise-io/go-xcode/v2/errorfinder
 github.com/bitrise-io/go-xcode/v2/simulator
 github.com/bitrise-io/go-xcode/v2/xcconfig
 github.com/bitrise-io/go-xcode/v2/xcodecache
+github.com/bitrise-io/go-xcode/v2/xcodecommand
 github.com/bitrise-io/go-xcode/v2/xcodeversion
 # github.com/bitrise-io/stepman v0.0.0-20230728094915-939f0fe5c19a
 ## explicit; go 1.18
@@ -104,6 +101,8 @@ golang.org/x/term
 ## explicit; go 1.17
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
+# gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
+## explicit; go 1.11
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3

@@ -17,10 +17,10 @@ import (
 	"github.com/bitrise-io/go-xcode/v2/destination"
 	"github.com/bitrise-io/go-xcode/v2/simulator"
 	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
+	"github.com/bitrise-io/go-xcode/v2/xcodecommand"
 	"github.com/bitrise-io/go-xcode/v2/xcodeversion"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
-	"github.com/bitrise-steplib/steps-xcode-test/xcodecommand"
 	"github.com/kballard/go-shellquote"
 )
 
