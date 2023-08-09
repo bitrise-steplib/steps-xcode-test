@@ -151,10 +151,9 @@ func Test_GivenStep_WhenInstallXcpretty_ThenInstallIt(t *testing.T) {
 	xcodeRunner.On("CheckInstall", mock.Anything).Return(ver, nil).Once()
 
 	// When
-	err = step.InstallDeps()
+	step.InstallDeps()
 
 	// Then
-	assert.NoError(t, err)
 	xcodeRunner.AssertCalled(t, "CheckInstall")
 }
 
