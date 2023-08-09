@@ -201,7 +201,7 @@ inputs:
 
 # xcodebuild log formatting
 
-- log_formatter: xcpretty
+- log_formatter: xcbeautify
   opts:
     category: xcodebuild log formatting
     title: Log formatter
