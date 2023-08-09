@@ -44,7 +44,7 @@ github.com/bitrise-io/go-utils/v2/fileutil
 github.com/bitrise-io/go-utils/v2/log
 github.com/bitrise-io/go-utils/v2/log/colorstring
 github.com/bitrise-io/go-utils/v2/pathutil
-# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.29.0.20230809135209-7458685b4b28
+# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.30
 ## explicit; go 1.18
 github.com/bitrise-io/go-xcode/v2/destination
 github.com/bitrise-io/go-xcode/v2/errorfinder
