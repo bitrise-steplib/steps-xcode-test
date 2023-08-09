@@ -45,10 +45,7 @@ func run() int {
 		return 1
 	}
 
-	if err := xcodeTestRunner.InstallDeps(); err != nil {
-		logger.Errorf(errorutil.FormattedError(fmt.Errorf("Failed to install Step dependencies: %w", err)))
-		return 1
-	}
+	xcodeTestRunner.InstallDeps()
 
 	res, runErr := xcodeTestRunner.Run(config)
 	exportErr := xcodeTestRunner.Export(res, runErr != nil)
@@ -99,11 +96,9 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 	utils := step.NewUtils(logger)
 
 	xcodeCommandRunner := xcodecommand.Runner(nil)
-	rawXcodeRunner := xcodecommand.NewRawCommandRunner(logger, commandFactory)
-
 	switch logFormatter {
 	case step.XcodebuildTool:
-		xcodeCommandRunner = rawXcodeRunner
+		xcodeCommandRunner = xcodecommand.NewRawCommandRunner(logger, commandFactory)
 	case step.XcbeautifyTool:
 		xcodeCommandRunner = xcodecommand.NewXcbeautifyRunner(logger, commandFactory)
 	case step.XcprettyTool:
