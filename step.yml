@@ -69,7 +69,7 @@ inputs:
     description: |-
       Destination specifier describes the device to use as a destination.
 
-      The input value sets xcodebuild's `-destination` option.  
+      The input value sets xcodebuild's `-destination` option.
 
       In a CI environment, a Simulator device called `Bitrise iOS default` is already created.
       It is a compatible device with the selected Simulator runtime, pre-warmed for better performance
