@@ -235,17 +235,21 @@ inputs:
 
 # Caching
 
-- cache_level: swift_packages
+- cache_level: none
   opts:
-    category: Caching
-    title: Enable collecting cache content
-    summary: Defines what cache content should be automatically collected.
+    category: Branch-based (legacy) caching
+    title: Enable collecting cache content 
+    summary: "Defines what cache content should be automatically collected. Use key-based caching instead for better performance."
     description: |-
-      Defines what cache content should be automatically collected.
+      Defines what cache content should be automatically collected. Use key-based caching instead for better performance.
 
       Available options:
       - `none`: Disable collecting cache content.
       - `swift_packages`: Collect Swift PM packages added to the Xcode project.
+      
+      Branch-based caching is still functional but deprecated.  
+      With key-based caching, you only need the Restore SPM cache and the Save SPM cache Steps to cache your Swift packages.  
+      [See devcenter for more information.](https://devcenter.bitrise.io/en/dependencies-and-caching/managing-dependencies-for-ios-apps/managing-dependencies-with-spm.html#caching-swift-packages)
     value_options:
     - none
     - swift_packages
