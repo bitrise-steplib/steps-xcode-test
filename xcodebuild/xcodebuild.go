@@ -4,7 +4,7 @@ import (
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-xcode/v2/xcconfig"
-	"github.com/bitrise-steplib/steps-xcode-test/xcodecommand"
+	"github.com/bitrise-io/go-xcode/v2/xcodecommand"
 )
 
 // Test repetition modes ...
