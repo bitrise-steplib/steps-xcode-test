@@ -377,7 +377,7 @@ func (s XcodeTestConfigParser) getSimulatorForDestination(destinationSpecifier s
 
 	device, err := s.deviceFinder.FindDevice(*simulatorDestination)
 	if err != nil {
-		return destination.Device{}, fmt.Errorf("destination simulator lookup failed: %w", err)
+		return destination.Device{}, fmt.Errorf("simulator UDID lookup failed: %w", err)
 	}
 
 	s.logger.Infof("Destination simulator:")
