@@ -7,7 +7,7 @@ require (
 	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.18
 	github.com/bitrise-io/go-utils v1.0.9
 	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.19
-	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.30
+	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.34
 	github.com/hashicorp/go-version v1.6.0
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/stretchr/testify v1.8.4
@@ -22,11 +22,11 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.4 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
-	github.com/stretchr/objx v0.5.0 // indirect
-	golang.org/x/crypto v0.11.0 // indirect
-	golang.org/x/sys v0.10.0 // indirect
-	golang.org/x/term v0.10.0 // indirect
-	golang.org/x/text v0.11.0 // indirect
+	github.com/stretchr/objx v0.5.1 // indirect
+	golang.org/x/crypto v0.12.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
+	golang.org/x/term v0.11.0 // indirect
+	golang.org/x/text v0.12.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
