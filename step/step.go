@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
+	"github.com/bitrise-io/go-utils/colorstring"
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/sliceutil"
 	"github.com/bitrise-io/go-utils/v2/command"
@@ -24,12 +25,8 @@ import (
 	"github.com/kballard/go-shellquote"
 )
 
-const (
-	minSupportedXcodeMajorVersion = 11
-	simulatorShutdownState        = "Shutdown"
-)
+const simulatorShutdownState = "Shutdown"
 
-// Input ...
 type Input struct {
 	ProjectPath string `env:"project_path,required"`
 	Scheme      string `env:"scheme,required"`
@@ -354,10 +351,6 @@ func (s XcodeTestConfigParser) validateXcodeVersion(input *Input, xcodeMajorVers
 		return nil
 	}
 
-	if xcodeMajorVersion < minSupportedXcodeMajorVersion {
-		return fmt.Errorf("invalid Xcode major version (%d), should not be less then min supported: %d", xcodeMajorVersion, minSupportedXcodeMajorVersion)
-	}
-
 	if input.TestRepetitionMode != xcodebuild.TestRepetitionNone && xcodeMajorVersion < 13 {
 		return errors.New("Test Repetition Mode (test_repetition_mode) is not available below Xcode 13")
 	}
@@ -377,11 +370,23 @@ func (s XcodeTestConfigParser) getSimulatorForDestination(destinationSpecifier s
 
 	device, err := s.deviceFinder.FindDevice(*simulatorDestination)
 	if err != nil {
-		return destination.Device{}, fmt.Errorf("simulator UDID lookup failed: %w", err)
+		destinationLabel := fmt.Sprintf("%s %s on %s", simulatorDestination.Platform, simulatorDestination.OS, simulatorDestination.Name)
+		return destination.Device{}, fmt.Errorf(
+			"no matching device is available for the provided destination (%s): %w",
+			colorstring.Cyan(destinationLabel),
+			err,
+		)
 	}
 
+	s.logger.Println()
 	s.logger.Infof("Destination simulator:")
-	s.logger.Printf("* Name: %s, type: %s, version: %s, UDID: %s, status: %s", device.Name, device.Type, device.OS, device.ID, device.Status)
+	s.logger.Printf("Name: %s", colorstring.Cyan(device.Name))
+	if device.Name != device.Type {
+		s.logger.Printf("Device type: %s", colorstring.Cyan(device.Type))
+	}
+	s.logger.Printf("OS: %s %s", colorstring.Cyan(device.Platform), colorstring.Cyan(device.OS))
+	s.logger.Printf("UDID: %s", colorstring.Cyan(device.ID))
+	s.logger.Printf("Status: %s", colorstring.Cyan(device.Status))
 
 	return device, nil
 }
