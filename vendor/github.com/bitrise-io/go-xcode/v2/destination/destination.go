@@ -25,7 +25,9 @@ const (
 	WatchOSSimulator Platform = "watchOS Simulator"
 	TvOS             Platform = "tvOS"
 	TvOSSimulator    Platform = "tvOS Simulator"
-	DriverKit        Platform = "DriverKit"
+	// VisionOS          Platform = "visionOS"
+	// VisionOSSimulator Platform = "visionOS Simulator"
+	DriverKit Platform = "DriverKit"
 )
 
 // Specifier ...

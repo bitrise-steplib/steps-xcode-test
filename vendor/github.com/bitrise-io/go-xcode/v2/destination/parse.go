@@ -307,6 +307,20 @@ func (d deviceFinder) runtimeForPlatformVersion(wantedPlatform, wantedVersion st
 			continue
 		}
 
+		// workaround for visionOS (needed as of Xcode 15 beta 8)
+		/* {
+			"platform" : "xrOS",
+			"identifier" : "com.apple.CoreSimulator.SimRuntime.xrOS-1-0",
+			"version" : "1.0",
+			"name" : "visionOS 1.0",
+			[...]
+		},*/
+		if runtime.Platform != "" && wantedPlatform == "visionOS" && runtime.Platform == "xrOS" {
+			runtimesOfPlatform = append(runtimesOfPlatform, runtime)
+
+			continue
+		}
+
 		// using HasPrefix to ignore version in the name added by Xcode 11
 		/*{
 			"bundlePath" : "\/Library\/Developer\/CoreSimulator\/Profiles\/Runtimes\/iOS 13.1.simruntime",

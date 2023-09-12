@@ -140,6 +140,23 @@ workflows:
             mkdir -p ./_tmp2
             echo "A=a" > ./_tmp2/p.xcconfig
 
+  test_visionOS:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-visionOS-HelloWorld.git
+    - TEST_APP_BRANCH: main
+    - BITRISE_PROJECT_PATH: World.xcodeproj
+    - BITRISE_SCHEME: World
+    - TEST_PLAN: ""
+    - DESTINATION: platform=visionOS Simulator,name=Apple Vision Pro
+    - LOG_FORMATTER: xcbeautify
+    - RETRY_ON_FAILURE: "no"
+    - EXPECT_TEST_FAILURE: "false"
+    - CACHE_LEVEL: none
+    after_run:
+    - _run
+    - _check_outputs
+    - _check_exported_artifacts
+
   _run:
     before_run:
     - _clear_outputs
