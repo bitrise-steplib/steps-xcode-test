@@ -1,5 +1,6 @@
 github.com/bitrise-io/bitrise v0.0.0-20230707121919-a5b9e2d27ea9 h1:WMaMm6qwwEoAGTrp0yAVk5tE8CMu0pkL9aD6XatVeFw=
 github.com/bitrise-io/bitrise v0.0.0-20230707121919-a5b9e2d27ea9/go.mod h1:WcWeEnuP6x54mUVw9L9pGUmllo67aqtXGr+pBIWv+4A=
+github.com/bitrise-io/colorstring v0.0.0-20180614154802-a8cd70115192/go.mod h1:CIHVcxZUvsG99XUJV6JlR7okNsMMGY81jMvPC20W+O0=
 github.com/bitrise-io/envman v0.0.0-20230721122944-6b164ed0c2f8 h1:tBhRcS1lxkFrPpnYHbeeQE3DzEVEbs8CMs2y2ppVPB0=
 github.com/bitrise-io/envman v0.0.0-20230721122944-6b164ed0c2f8/go.mod h1:eZDEXpkF4BguvTERmhij3Vwf7Y2qvnJBBW/61hQRip4=
 github.com/bitrise-io/go-steputils v1.0.5 h1:OBH7CPXeqIWFWJw6BOUMQnUb8guspwKr2RhYBhM9tfc=
@@ -13,6 +14,8 @@ github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.19 h1:55as5Iv0N4btuRP3YwRzN+BCMtK
 github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.19/go.mod h1:Laih4ji980SQkRgdnMCH0g4u2GZI/5nnbqmYT9UfKFQ=
 github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.34.0.20230912125801-e1c4b68a3e73 h1:qn+NGcIYFEUW+4YNZwui2quTJvGbAldlpHFuK3ECuW0=
 github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.34.0.20230912125801-e1c4b68a3e73/go.mod h1:LzUnQjIUOZ18XggzZNZgyoETxpX637T646lyc0h6oDQ=
+github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.34.0.20230912132921-b4777891ed48 h1:XvQ9CX+igmS7xMjRC8+Y3XpsXVMQ+GpMYMtlKs5s7gg=
+github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.34.0.20230912132921-b4777891ed48/go.mod h1:LzUnQjIUOZ18XggzZNZgyoETxpX637T646lyc0h6oDQ=
 github.com/bitrise-io/stepman v0.0.0-20230728094915-939f0fe5c19a h1:XM2PrNSUjpI4pIOZ1TcZdD4kh7KYN2D+yC6WYy22hoo=
 github.com/bitrise-io/stepman v0.0.0-20230728094915-939f0fe5c19a/go.mod h1:Z46oQnRMHlbuiV0mCJBigT2bWO5j3TPQncKaL3jCwsk=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -38,6 +41,7 @@ github.com/kr/text v0.1.0 h1:45sCR5RtlFHMR4UwH9sdQ5TC8v0qDQCHnXt+kaKSTVE=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/ryanuber/go-glob v1.0.0 h1:iQh3xXAumdQ+4Ufa5b25cRpC5TYKlno6hsv6Cb3pkBk=
 github.com/ryanuber/go-glob v1.0.0/go.mod h1:807d1WSdnB0XRJzKNil9Om6lcp/3a0v4qIHxIXzX/Yc=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
