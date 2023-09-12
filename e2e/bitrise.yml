@@ -141,6 +141,7 @@ workflows:
             echo "A=a" > ./_tmp2/p.xcconfig
 
   test_visionOS:
+    description: visionOS requires Xcode >= 15
     before_run:
     - _expose_xcode_version
     steps:
@@ -149,7 +150,7 @@ workflows:
         - content: |-
             #!/bin/env bash
             set -e
-            if [[ "$XCODE_MAJOR_VERSION" -lt 15 ]]; then 
+            if [[ "$XCODE_MAJOR_VERSION" -lt 15 ]]; then
               echo "This test case requires Xcode >= 15, skipping..."
               exit 0
             fi
