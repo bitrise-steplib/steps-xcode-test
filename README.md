@@ -19,7 +19,7 @@ The **Scheme** input field must be marked as Shared in Xcode.
 If the **Deploy to Bitrise.io** Step is missing from your Workflow, then the **Xcode Test for iOS** Step will not be able to export the test results on the Test Reports page and you won't be able to view them either.
 The xcpretty output tool does not support parallel tests.
 If parallel tests are enabled in your project, go to the Step's **xcodebuild log formatting** section and set the **Log formatter** input's value to `xcodebuild` or `xcbeautify`.
-If the Xcode test fails with the error `Unable to find a destination matching the provided destination specifier`, then check our [system reports](https://github.com/bitrise-io/bitrise.io/tree/master/system_reports) to see if the requested simulator is on the stack or not.
+If the Xcode test fails with the error `Unable to find a destination matching the provided destination specifier`, then check our [system reports](https://stacks.bitrise.io) to see if the requested simulator is on the stack or not.
 If it is not, then pick a simulator that is on the stack.
 
 ### Useful links
