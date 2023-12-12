@@ -158,13 +158,12 @@ workflows:
     - certificate-and-profile-installer: { }
     - script:
         inputs:
-          - content: |-
-            inputs:
-              #!/bin/env bash
-              set -ex
+        - content: |-
+            #!/bin/env bash
+            set -ex
 
-              xcrun simctl delete all
-              xcrun simctl create "iPhone 15" com.apple.CoreSimulator.SimDeviceType.iPhone-15 com.apple.CoreSimulator.SimRuntime.iOS-17-0
+            xcrun simctl delete all
+            xcrun simctl create "iPhone 15" com.apple.CoreSimulator.SimDeviceType.iPhone-15 com.apple.CoreSimulator.SimRuntime.iOS-17-0
     - script:
         title: Set 'collect_simulator_diagnostics' input
         inputs:
