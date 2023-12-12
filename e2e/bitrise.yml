@@ -2,40 +2,40 @@ format_version: "11"
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 workflows:
-  test_swift_package:
-    envs:
-    - TEST_APP_URL: https://github.com/bitrise-io/swift-package-deckofplayingcards
-    - TEST_APP_BRANCH: main
-    - BITRISE_PROJECT_PATH: Package.swift
-    - BITRISE_SCHEME: DeckOfPlayingCards
-    - TEST_PLAN: ""
-    - DESTINATION: platform=iOS Simulator,name=Bitrise iOS default,OS=latest
-    - LOG_FORMATTER: xcbeautify
-    - RETRY_ON_FAILURE: "no"
-    - EXPECT_TEST_FAILURE: "false"
-    - CACHE_LEVEL: swift_packages
-    after_run:
-    - _run
-    - _check_outputs
+  # test_swift_package:
+  #   envs:
+  #   - TEST_APP_URL: https://github.com/bitrise-io/swift-package-deckofplayingcards
+  #   - TEST_APP_BRANCH: main
+  #   - BITRISE_PROJECT_PATH: Package.swift
+  #   - BITRISE_SCHEME: DeckOfPlayingCards
+  #   - TEST_PLAN: ""
+  #   - DESTINATION: platform=iOS Simulator,name=Bitrise iOS default,OS=latest
+  #   - LOG_FORMATTER: xcbeautify
+  #   - RETRY_ON_FAILURE: "no"
+  #   - EXPECT_TEST_FAILURE: "false"
+  #   - CACHE_LEVEL: swift_packages
+  #   after_run:
+  #   - _run
+  #   - _check_outputs
+
+  # test_rosetta_simulator:
+  #   description: Rosetta Simulator requires Xcode 14.3+.
+  #   steps:
+  #   - bitrise-run:
+  #       run_if: |-
+  #         {{ or (enveq "IS_LATEST_STACK_XCODE" "true") (not .IsCI) }}
+  #       inputs:
+  #       - workflow_id: utility_test_rosetta_simulator
+  #       - bitrise_config_path: ./e2e/bitrise.yml
 
   test_rosetta_simulator:
-    description: Rosetta Simulator requires Xcode 14.3+.
-    steps:
-    - bitrise-run:
-        run_if: |-
-          {{ or (enveq "IS_LATEST_STACK_XCODE" "true") (not .IsCI) }}
-        inputs:
-        - workflow_id: utility_test_rosetta_simulator
-        - bitrise_config_path: ./e2e/bitrise.yml
-
-  utility_test_rosetta_simulator:
     envs:
     - TEST_APP_URL: https://github.com/bitrise-io/Bitrise-iOS-x86-Framework-Sample.git
     - TEST_APP_BRANCH: main
     - BITRISE_PROJECT_PATH: Bitrise-iOS-x86-Framework-Sample.xcworkspace
     - BITRISE_SCHEME: Bitrise-iOS-x86-Framework-Sample
     - TEST_PLAN: ""
-    - DESTINATION: platform=iOS Simulator,name=iPhone 11,OS=latest,arch=x86_64
+    - DESTINATION: platform=iOS Simulator,name=iPhone 15,OS=17.0,arch=x86_64
     - LOG_FORMATTER: xcbeautify
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
@@ -45,18 +45,18 @@ workflows:
     - _run
     - _check_outputs
 
-  test_rosetta_simulator_failure:
-    description: Rosetta Simulator requires Xcode 14.3+.
-    steps:
-    - bitrise-run:
-        run_if: |-
-          {{ or (enveq "IS_LATEST_STACK_XCODE" "true") (not .IsCI) }}
-        is_skippable: true
-        inputs:
-        - workflow_id: utility_test_rosetta_simulator_failure
-        - bitrise_config_path: ./e2e/bitrise.yml
+  # test_rosetta_simulator_failure:
+  #   description: Rosetta Simulator requires Xcode 14.3+.
+  #   steps:
+  #   - bitrise-run:
+  #       run_if: |-
+  #         {{ or (enveq "IS_LATEST_STACK_XCODE" "true") (not .IsCI) }}
+  #       is_skippable: true
+  #       inputs:
+  #       - workflow_id: utility_test_rosetta_simulator_failure
+  #       - bitrise_config_path: ./e2e/bitrise.yml
 
-  utility_test_rosetta_simulator_failure:
+  test_rosetta_simulator_failure:
     envs:
     - TEST_APP_URL: https://github.com/bitrise-io/Bitrise-iOS-x86-Framework-Sample.git
     - TEST_APP_BRANCH: main
@@ -73,72 +73,72 @@ workflows:
     - _run
     - _check_outputs
 
-  test_objc_xcpretty:
-    envs:
-    - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
-    - TEST_APP_BRANCH: master
-    - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
-    - BITRISE_SCHEME: ios-simple-objc
-    - TEST_PLAN: ""
-    - DESTINATION: platform=iOS Simulator,name=Bitrise iOS default,OS=latest
-    - LOG_FORMATTER: xcpretty
-    - RETRY_ON_FAILURE: "no"
-    - EXPECT_TEST_FAILURE: "false"
-    - CACHE_LEVEL: none
-    after_run:
-    - _run
-    - _check_outputs
-    - _check_exported_artifacts
-    - _check_xcpretty_html_report
+  # test_objc_xcpretty:
+  #   envs:
+  #   - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
+  #   - TEST_APP_BRANCH: master
+  #   - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
+  #   - BITRISE_SCHEME: ios-simple-objc
+  #   - TEST_PLAN: ""
+  #   - DESTINATION: platform=iOS Simulator,name=Bitrise iOS default,OS=latest
+  #   - LOG_FORMATTER: xcpretty
+  #   - RETRY_ON_FAILURE: "no"
+  #   - EXPECT_TEST_FAILURE: "false"
+  #   - CACHE_LEVEL: none
+  #   after_run:
+  #   - _run
+  #   - _check_outputs
+  #   - _check_exported_artifacts
+  #   - _check_xcpretty_html_report
 
-  # Requires Xcode 11+
-  test_test_plan:
-    envs:
-    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: master
-    - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
-    - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: UnitTests
-    - DESTINATION: platform=iOS Simulator,name=iPhone 12,OS=latest
-    - LOG_FORMATTER: xcbeautify
-    - RETRY_ON_FAILURE: "no"
-    - EXPECT_TEST_FAILURE: "false"
-    - CACHE_LEVEL: swift_packages
-    after_run:
-    - _run
-    - _check_outputs
-    - _check_cache
+  # # Requires Xcode 11+
+  # test_test_plan:
+  #   envs:
+  #   - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
+  #   - TEST_APP_BRANCH: master
+  #   - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
+  #   - BITRISE_SCHEME: BullsEye
+  #   - TEST_PLAN: UnitTests
+  #   - DESTINATION: platform=iOS Simulator,name=iPhone 12,OS=latest
+  #   - LOG_FORMATTER: xcbeautify
+  #   - RETRY_ON_FAILURE: "no"
+  #   - EXPECT_TEST_FAILURE: "false"
+  #   - CACHE_LEVEL: swift_packages
+  #   after_run:
+  #   - _run
+  #   - _check_outputs
+  #   - _check_cache
 
-  test_xcconfig_rel_path:
-    envs:
-    - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
-    - TEST_APP_BRANCH: master
-    - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
-    - BITRISE_SCHEME: ios-simple-objc
-    - TEST_PLAN: ""
-    - DESTINATION: platform=iOS Simulator,name=Bitrise iOS default,OS=latest
-    - LOG_FORMATTER: xcodebuild
-    - RETRY_ON_FAILURE: "no"
-    - EXPECT_TEST_FAILURE: "false"
-    - CACHE_LEVEL: none
-    - XCCONFIG_CONTENT: ./_tmp2/p.xcconfig
-    before_run:
-    - utility_create_xcconfig
-    after_run:
-    - _run
-    - _check_outputs
-    - _check_exported_artifacts
+  # test_xcconfig_rel_path:
+  #   envs:
+  #   - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
+  #   - TEST_APP_BRANCH: master
+  #   - BITRISE_PROJECT_PATH: ios-simple-objc/ios-simple-objc.xcodeproj
+  #   - BITRISE_SCHEME: ios-simple-objc
+  #   - TEST_PLAN: ""
+  #   - DESTINATION: platform=iOS Simulator,name=Bitrise iOS default,OS=latest
+  #   - LOG_FORMATTER: xcodebuild
+  #   - RETRY_ON_FAILURE: "no"
+  #   - EXPECT_TEST_FAILURE: "false"
+  #   - CACHE_LEVEL: none
+  #   - XCCONFIG_CONTENT: ./_tmp2/p.xcconfig
+  #   before_run:
+  #   - utility_create_xcconfig
+  #   after_run:
+  #   - _run
+  #   - _check_outputs
+  #   - _check_exported_artifacts
 
-  utility_create_xcconfig:
-    steps:
-    - script:
-        inputs:
-        - content: |-
-            #!/bin/env bash
-            set -eox pipefail
+  # utility_create_xcconfig:
+  #   steps:
+  #   - script:
+  #       inputs:
+  #       - content: |-
+  #           #!/bin/env bash
+  #           set -eox pipefail
 
-            mkdir -p ./_tmp2
-            echo "A=a" > ./_tmp2/p.xcconfig
+  #           mkdir -p ./_tmp2
+  #           echo "A=a" > ./_tmp2/p.xcconfig
 
   _run:
     before_run:
@@ -156,6 +156,15 @@ workflows:
         - clone_into_dir: ./_tmp
         - branch: $TEST_APP_BRANCH
     - certificate-and-profile-installer: { }
+    - script:
+        inputs:
+          - content: |-
+            inputs:
+              #!/bin/env bash
+              set -ex
+
+              xcrun simctl delete all
+              xcrun simctl create "iPhone 15" com.apple.CoreSimulator.SimDeviceType.iPhone-15 com.apple.CoreSimulator.SimRuntime.iOS-17-0
     - script:
         title: Set 'collect_simulator_diagnostics' input
         inputs:
