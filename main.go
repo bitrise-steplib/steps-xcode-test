@@ -56,7 +56,7 @@ func run() int {
 	}
 
 	if exportErr != nil {
-		logger.Errorf(errorutil.FormattedError(fmt.Errorf("Failed to export Step outputs: %w", err)))
+		logger.Errorf(errorutil.FormattedError(fmt.Errorf("Failed to export Step outputs: %w", exportErr)))
 		return 1
 	}
 
