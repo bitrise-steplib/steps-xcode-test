@@ -1,7 +1,10 @@
 package output
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/bitrise-io/bitrise/configs"
@@ -27,6 +30,29 @@ type exporter struct {
 	logger            log.Logger
 	outputExporter    export.Exporter
 	testAddonExporter testaddon.Exporter
+}
+
+type TestSummary struct {
+	Actions []struct {
+		ActionResult struct {
+			TestsRef struct {
+				Id struct {
+					Value string `json:"_value"`
+				} `json:"id"`
+			} `json:"testsRef"`
+		} `json:"actionResult"`
+	} `json:"actions"`
+}
+
+type TestResults struct {
+	Summary struct {
+		TestsPassedCount struct {
+			Value int `json:"_value"`
+		} `json:"testsPassedCount"`
+		TestsFailedCount struct {
+			Value int `json:"_value"`
+		} `json:"testsFailedCount"`
+	} `json:"summary"`
 }
 
 // NewExporter ...
@@ -73,6 +99,11 @@ func (e exporter) ExportXCResultBundle(deployDir, xcResultPath, scheme string) {
 			e.logger.Warnf("Failed to export test results: %s", err)
 		}
 	}
+
+	// Parse the test results and set the environment variables
+	if err := e.ExportTestResults(xcResultPath); err != nil {
+		e.logger.Warnf("Failed to export test results: %s", err)
+	}
 }
 
 func (e exporter) ExportXcodebuildBuildLog(deployDir, xcodebuildBuildLog string) error {
@@ -116,6 +147,55 @@ func (e exporter) ExportSimulatorDiagnostics(deployDir, pth, name string) error 
 	if err := ziputil.ZipDir(pth, outputPath, true); err != nil {
 		return fmt.Errorf("failed to compress simulator diagnostics result: %w", err)
 	}
+
+	return nil
+}
+
+func (e exporter) ExportTestResults(xcResultPath string) error {
+	// Convert xcresult to JSON
+	cmd := exec.Command("xcrun", "xcresulttool", "get", "--path", xcResultPath, "--format", "json")
+	output, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("error running xcresulttool: %w", err)
+	}
+
+	// Parse JSON output to get the test summary ID
+	var summary TestSummary
+	err = json.Unmarshal(output, &summary)
+	if err != nil {
+		return fmt.Errorf("error parsing JSON: %w", err)
+	}
+
+	testSummaryId := summary.Actions[0].ActionResult.TestsRef.Id.Value
+
+	// Get test results using the test summary ID
+	cmd = exec.Command("xcrun", "xcresulttool", "get", "--path", xcResultPath, "--id", testSummaryId, "--format", "json")
+	output, err = cmd.Output()
+	if err != nil {
+		return fmt.Errorf("error running xcresulttool for test results: %w", err)
+	}
+
+	// Parse JSON output to get the test results
+	var results TestResults
+	err = json.Unmarshal(output, &results)
+	if err != nil {
+		return fmt.Errorf("error parsing JSON: %w", err)
+	}
+
+	// Set environment variables for the number of tests passed and failed
+	passedCount := results.Summary.TestsPassedCount.Value
+	failedCount := results.Summary.TestsFailedCount.Value
+
+	if err := e.envRepository.Set("BITRISE_XCODE_TESTS_PASSED_COUNT", fmt.Sprintf("%d", passedCount)); err != nil {
+		e.logger.Warnf("Failed to export: BITRISE_XCODE_TESTS_PASSED_COUNT: %s", err)
+	}
+
+	if err := e.envRepository.Set("BITRISE_XCODE_TESTS_FAILED_COUNT", fmt.Sprintf("%d", failedCount)); err != nil {
+		e.logger.Warnf("Failed to export: BITRISE_XCODE_TESTS_FAILED_COUNT: %s", err)
+	}
+
+	e.logger.Printf("Number of tests passed: %d", passedCount)
+	e.logger.Printf("Number of tests failed: %d", failedCount)
 
 	return nil
 }
