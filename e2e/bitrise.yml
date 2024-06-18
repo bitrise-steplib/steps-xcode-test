@@ -23,7 +23,7 @@ workflows:
     steps:
     - bitrise-run:
         run_if: |-
-          {{ or (enveq "IS_LATEST_STACK_XCODE" "true") (not .IsCI) }}
+          {{ or (enveq "XCODE_MAJOR_VERSION" "15") (not .IsCI) }}
         inputs:
         - workflow_id: utility_test_rosetta_simulator
         - bitrise_config_path: ./e2e/bitrise.yml
@@ -164,7 +164,7 @@ workflows:
 
   utility_test_visionOS:
     envs:
-    - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-visionOS-HelloWorld.git
+    - TEST_APP_URL: https://github.com/bitrise-io/visionOS-HelloWorld.git
     - TEST_APP_BRANCH: main
     - BITRISE_PROJECT_PATH: World.xcodeproj
     - BITRISE_SCHEME: World
