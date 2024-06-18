@@ -141,7 +141,7 @@ workflows:
             echo "A=a" > ./_tmp2/p.xcconfig
 
   test_visionOS:
-    description: visionOS requires Xcode >= 15
+    description: visionOS requires Xcode >= 15.1
     before_run:
     - _expose_xcode_version
     steps:
@@ -151,20 +151,24 @@ workflows:
             #!/bin/env bash
             set -e
             if [[ "$XCODE_MAJOR_VERSION" -lt 15 ]]; then
-              echo "This test case requires Xcode >= 15, skipping..."
+              echo "This test case requires Xcode >= 15.1, skipping..."
               exit 0
             fi
-            envman add --key XCODE_MAJOR_VERSION_AT_LEAST_15 --value true
+            if [[ "$XCODE_MINOR_VERSION" -lt 1 ]]; then
+              echo "This test case requires Xcode >= 15.1, skipping..."
+              exit 0
+            fi
+            envman add --key XCODE_VERSION_AT_LEAST_15_1 --value true
     - bitrise-run:
         run_if: |-
-          {{ or (enveq "XCODE_MAJOR_VERSION_AT_LEAST_15" "true") (not .IsCI) }}
+          {{ or (enveq "XCODE_VERSION_AT_LEAST_15_1" "true") (not .IsCI) }}
         inputs:
         - workflow_id: utility_test_visionOS
         - bitrise_config_path: ./e2e/bitrise.yml
 
   utility_test_visionOS:
     envs:
-    - TEST_APP_URL: https://github.com/bitrise-io/visionOS-HelloWorld.git
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-visionOS-HelloWorld.git
     - TEST_APP_BRANCH: main
     - BITRISE_PROJECT_PATH: World.xcodeproj
     - BITRISE_SCHEME: World
@@ -269,6 +273,10 @@ workflows:
             xcode_major_version=${BASH_REMATCH[1]}
             echo "Xcode major version: $xcode_major_version"
             envman add --key XCODE_MAJOR_VERSION --value $xcode_major_version
+
+            xcode_minor_version=${BASH_REMATCH[2]}
+            echo "Xcode minor version: $xcode_minor_version"
+            envman add --key XCODE_MINOR_VERSION --value $xcode_minor_version
 
   _clear_outputs:
     steps:
