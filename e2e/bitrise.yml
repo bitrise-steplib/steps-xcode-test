@@ -264,7 +264,7 @@ workflows:
             fi
 
             version=`xcodebuild -version`
-            regex="Xcode ([0-9]*)."
+            regex="Xcode ([0-9]*).([0-9]*)"
             if [[ ! $version =~ $regex ]]; then
               echo "Failed to determine Xcode major version"
               exit 1
