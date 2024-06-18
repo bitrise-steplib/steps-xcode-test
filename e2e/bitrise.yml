@@ -140,6 +140,45 @@ workflows:
             mkdir -p ./_tmp2
             echo "A=a" > ./_tmp2/p.xcconfig
 
+  test_visionOS:
+    description: visionOS requires Xcode >= 15
+    before_run:
+    - _expose_xcode_version
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+            if [[ "$XCODE_MAJOR_VERSION" -lt 15 ]]; then
+              echo "This test case requires Xcode >= 15, skipping..."
+              exit 0
+            fi
+            envman add --key XCODE_MAJOR_VERSION_AT_LEAST_15 --value true
+    - bitrise-run:
+        run_if: |-
+          {{ or (enveq "XCODE_MAJOR_VERSION_AT_LEAST_15" "true") (not .IsCI) }}
+        inputs:
+        - workflow_id: utility_test_visionOS
+        - bitrise_config_path: ./e2e/bitrise.yml
+
+  utility_test_visionOS:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-visionOS-HelloWorld.git
+    - TEST_APP_BRANCH: main
+    - BITRISE_PROJECT_PATH: World.xcodeproj
+    - BITRISE_SCHEME: World
+    - TEST_PLAN: ""
+    - DESTINATION: platform=visionOS Simulator,name=Apple Vision Pro
+    - LOG_FORMATTER: xcbeautify
+    - RETRY_ON_FAILURE: "no"
+    - EXPECT_TEST_FAILURE: "false"
+    - CACHE_LEVEL: none
+    after_run:
+    - _run
+    - _check_outputs
+    - _check_exported_artifacts
+
   _run:
     before_run:
     - _clear_outputs
