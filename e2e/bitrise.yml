@@ -178,6 +178,7 @@ workflows:
     - RETRY_ON_FAILURE: "no"
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: none
+    - COLLECT_SIM_DIAGNOSTICS: never
     after_run:
     - _run
     - _check_outputs
@@ -244,7 +245,7 @@ workflows:
         - log_formatter: $LOG_FORMATTER
         - perform_clean_action: "yes"
         - xcodebuild_options: -verbose
-        - verbose_log: "yes"
+        - verbose_log: "no"
         - should_retry_test_on_fail: $RETRY_ON_FAILURE
         - cache_level: $CACHE_LEVEL
         - collect_simulator_diagnostics: $COLLECT_SIM_DIAGNOSTICS
