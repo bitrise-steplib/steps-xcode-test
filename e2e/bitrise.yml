@@ -141,7 +141,7 @@ workflows:
             echo "A=a" > ./_tmp2/p.xcconfig
 
   test_visionOS:
-    description: visionOS requires Xcode >= 15.1
+    description: visionOS requires Xcode >= 15.2
     before_run:
     - _expose_xcode_version
     steps:
@@ -150,18 +150,18 @@ workflows:
         - content: |-
             #!/bin/env bash
             set -e
-            if [[ "$XCODE_MAJOR_VERSION" -lt 15 ]]; then
-              echo "This test case requires Xcode >= 15.1, skipping..."
+            if [[ "$XCODE_MAJOR_VERSION" -lt 16 ]]; then
+              echo "This test case requires Xcode >= 16.0, skipping..."
               exit 0
             fi
-            if [[ "$XCODE_MINOR_VERSION" -lt 1 ]]; then
-              echo "This test case requires Xcode >= 15.1, skipping..."
+            if [[ "$XCODE_MINOR_VERSION" -lt 0 ]]; then
+              echo "This test case requires Xcode >= 16.0, skipping..."
               exit 0
             fi
-            envman add --key XCODE_VERSION_AT_LEAST_15_1 --value true
+            envman add --key XCODE_VERSION_AT_LEAST_16_0 --value true
     - bitrise-run:
         run_if: |-
-          {{ or (enveq "XCODE_VERSION_AT_LEAST_15_1" "true") (not .IsCI) }}
+          {{ or (enveq "XCODE_VERSION_AT_LEAST_16_0" "true") (not .IsCI) }}
         inputs:
         - workflow_id: utility_test_visionOS
         - bitrise_config_path: ./e2e/bitrise.yml
