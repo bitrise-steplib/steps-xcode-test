@@ -5,9 +5,9 @@ go 1.18
 require (
 	github.com/bitrise-io/bitrise v0.0.0-20230707121919-a5b9e2d27ea9
 	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.18
-	github.com/bitrise-io/go-utils v1.0.9
+	github.com/bitrise-io/go-utils v1.0.12
 	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.19
-	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.36
+	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.45
 	github.com/hashicorp/go-version v1.6.0
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/stretchr/testify v1.8.4
