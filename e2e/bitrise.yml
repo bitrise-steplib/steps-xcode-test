@@ -150,6 +150,16 @@ workflows:
             #!/bin/env bash
             set -ex
             rm -rf ./_tmp
+
+            echo "127.0.0.1 api.smoot.apple.com" | sudo tee -a /etc/hosts
+            echo "127.0.0.1 bag.itunes.apple.com" | sudo tee -a /etc/hosts
+            echo "127.0.0.1 cdn.smoot.apple.com" |  sudo tee -a /etc/hosts
+            echo "127.0.0.1 gateway.icloud.com"  | sudo tee  -a /etc/hosts
+            echo "127.0.0.1 gdmf.apple.com" |  sudo tee -a /etc/hosts
+            echo "127.0.0.1 mesu.apple.com"  | sudo tee -a /etc/hosts
+            echo "127.0.0.1 updates.cdn-apple.com" |  sudo tee -a /etc/hosts
+            echo "127.0.0.1 updates-http.cdn-apple.com" | sudo tee -a /etc/hosts
+            echo "127.0.0.1 uts-api.itunes.apple.com" | sudo tee -a /etc/hosts
     - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git:
         inputs:
         - repository_url: $TEST_APP_URL
