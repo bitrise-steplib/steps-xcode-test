@@ -286,11 +286,3 @@ func createStepAndMocks(t *testing.T) (XcodeTestRunner, stepMocks) {
 
 	return step, mocks
 }
-
-func newVersion(major int64) xcodeversion.Version {
-	return xcodeversion.Version{
-		Version:      "test-version",
-		BuildVersion: "test-build",
-		MajorVersion: major,
-	}
-}
