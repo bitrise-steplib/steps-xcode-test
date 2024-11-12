@@ -36,7 +36,6 @@ type Input struct {
 	TestRepetitionMode             string `env:"test_repetition_mode,opt[none,until_failure,retry_on_failure,up_until_maximum_repetitions]"`
 	MaximumTestRepetitions         int    `env:"maximum_test_repetitions,required"`
 	RelaunchTestsForEachRepetition bool   `env:"relaunch_tests_for_each_repetition,opt[yes,no]"`
-	RetryTestsOnFailure            bool   `env:"should_retry_test_on_fail,opt[yes,no]"`
 
 	// xcodebuild configuration
 	XCConfigContent    string `env:"xcconfig_content"`
@@ -86,7 +85,6 @@ type Config struct {
 	TestRepetitionMode            string
 	MaximumTestRepetitions        int
 	RelaunchTestForEachRepetition bool
-	RetryTestsOnFailure           bool
 
 	XCConfigContent    string
 	PerformCleanAction bool

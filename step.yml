@@ -139,23 +139,6 @@ inputs:
     - "yes"
     - "no"
 
-# TODO: should be removed
-- should_retry_test_on_fail: "no"
-  opts:
-    category: Test Repetition
-    title: Should retry tests on failure? (Not available in Xcode 13+)
-    summary: If set, the Step will rerun the tests in the case of failed tests.
-    description: |-
-      If this input is set, the Step will rerun the tests in the case of failed tests.
-
-      Note that all the tests will be rerun, not just the ones that failed.
-
-      This input is not available if you are using Xcode 13+. In that case, we recommend using the `retry_on_failure` Test Repetition Mode (`test_repetition_mode`).
-    value_options:
-    - "yes"
-    - "no"
-    is_required: true
-
 # xcodebuild configuration
 
 - xcconfig_content: COMPILER_INDEX_STORE_ENABLE = NO

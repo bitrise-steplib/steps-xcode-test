@@ -52,7 +52,6 @@ type TestParams struct {
 	RelaunchTestsForEachRepetition bool
 	XCConfigContent                string
 	PerformCleanAction             bool
-	RetryTestsOnFailure            bool
 	AdditionalOptions              []string
 }
 
@@ -162,7 +161,6 @@ func (b *xcodebuild) handleTestRunError(prevRunParams TestRunParams, prevRunResu
 			if prevRunParams.RetryOnTestRunnerError {
 				b.logger.Printf("Automatic retry is enabled - retrying...")
 
-				prevRunParams.TestParams.RetryTestsOnFailure = false
 				prevRunParams.RetryOnTestRunnerError = false
 				return b.cleanOutputDirAndRerunTest(prevRunParams)
 			}
@@ -170,15 +168,6 @@ func (b *xcodebuild) handleTestRunError(prevRunParams TestRunParams, prevRunResu
 			b.logger.Errorf("Automatic retry is disabled, no more retry, stopping the test!")
 			return prevRunResult.xcodebuildLog, prevRunResult.exitCode, prevRunResult.err
 		}
-	}
-
-	if prevRunParams.TestParams.RetryTestsOnFailure {
-		b.logger.Warnf("Test run failed")
-		b.logger.Printf("'Should retry tests on failure?' (should_retry_test_on_fail) is enabled - retrying...")
-
-		prevRunParams.TestParams.RetryTestsOnFailure = false
-		prevRunParams.RetryOnTestRunnerError = false
-		return b.cleanOutputDirAndRerunTest(prevRunParams)
 	}
 
 	return prevRunResult.xcodebuildLog, prevRunResult.exitCode, prevRunResult.err

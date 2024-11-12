@@ -64,7 +64,6 @@ func (u utils) CreateConfig(input Input,
 		TestRepetitionMode:            input.TestRepetitionMode,
 		MaximumTestRepetitions:        input.MaximumTestRepetitions,
 		RelaunchTestForEachRepetition: input.RelaunchTestsForEachRepetition,
-		RetryTestsOnFailure:           input.RetryTestsOnFailure,
 
 		XCConfigContent:    input.XCConfigContent,
 		PerformCleanAction: input.PerformCleanAction,
@@ -94,7 +93,6 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 		RelaunchTestsForEachRepetition: cfg.RelaunchTestForEachRepetition,
 		XCConfigContent:                cfg.XCConfigContent,
 		PerformCleanAction:             cfg.PerformCleanAction,
-		RetryTestsOnFailure:            cfg.RetryTestsOnFailure,
 		AdditionalOptions:              cfg.XcodebuildOptions,
 	}
 

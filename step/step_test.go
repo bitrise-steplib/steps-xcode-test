@@ -9,7 +9,6 @@ import (
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-xcode/v2/destination"
-	"github.com/bitrise-io/go-xcode/v2/xcodeversion"
 	commonMocks "github.com/bitrise-steplib/steps-xcode-test/mocks"
 	"github.com/bitrise-steplib/steps-xcode-test/step/mocks"
 	"github.com/hashicorp/go-version"
@@ -52,7 +51,6 @@ func Test_GivenStep_WhenRuns_ThenXcodebuildGetsCalled(t *testing.T) {
 		TestRepetitionMode:            "none",
 		MaximumTestRepetitions:        0,
 		RelaunchTestForEachRepetition: true,
-		RetryTestsOnFailure:           false,
 
 		LogFormatter:       "xcodebuild",
 		PerformCleanAction: false,
@@ -119,7 +117,6 @@ func Test_GivenLogFormatterIsXcbeautify_WhenParsesConfig_ThenAdditionalOptionsWo
 		TestRepetitionMode:            "none",
 		MaximumTestRepetitions:        3,
 		RelaunchTestForEachRepetition: false,
-		RetryTestsOnFailure:           false,
 
 		XcodebuildOptions: []string{},
 
