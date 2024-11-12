@@ -46,7 +46,6 @@ func Test_GivenStep_WhenRuns_ThenXcodebuildGetsCalled(t *testing.T) {
 		ProjectPath: "./project.xcodeproj",
 		Scheme:      "Project",
 
-		XcodeMajorVersion: 13,
 		Simulator:         destination.Device{ID: "1234"},
 		IsSimulatorBooted: true,
 
@@ -183,8 +182,6 @@ func Test_GivenLogFormatterIsXcbeautify_WhenParsesConfig_ThenAdditionalOptionsWo
 
 		Simulator:         device,
 		IsSimulatorBooted: false,
-
-		XcodeMajorVersion: 13,
 
 		TestRepetitionMode:            "none",
 		MaximumTestRepetitions:        3,

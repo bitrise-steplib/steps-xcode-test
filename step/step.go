@@ -19,7 +19,6 @@ import (
 	"github.com/bitrise-io/go-xcode/v2/simulator"
 	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
 	"github.com/bitrise-io/go-xcode/v2/xcodecommand"
-	"github.com/bitrise-io/go-xcode/v2/xcodeversion"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
 	"github.com/kballard/go-shellquote"
@@ -76,7 +75,6 @@ const (
 	XcprettyTool   = "xcpretty"
 )
 
-// Config ...
 type Config struct {
 	ProjectPath string
 	Scheme      string
@@ -84,8 +82,6 @@ type Config struct {
 
 	Simulator         destination.Device
 	IsSimulatorBooted bool
-
-	XcodeMajorVersion int
 
 	TestRepetitionMode            string
 	MaximumTestRepetitions        int
@@ -110,24 +106,21 @@ type Config struct {
 type XcodeTestConfigParser struct {
 	logger       log.Logger
 	inputParser  stepconf.InputParser
-	xcodeVersion xcodeversion.Version
 	deviceFinder destination.DeviceFinder
 	pathModifier pathutil.PathModifier
 	utils        Utils
 }
 
-func NewXcodeTestConfigParser(inputParser stepconf.InputParser, logger log.Logger, xcodeVersion xcodeversion.Version, deviceFinder destination.DeviceFinder, pathModifier pathutil.PathModifier, utils Utils) XcodeTestConfigParser {
+func NewXcodeTestConfigParser(inputParser stepconf.InputParser, logger log.Logger, deviceFinder destination.DeviceFinder, pathModifier pathutil.PathModifier, utils Utils) XcodeTestConfigParser {
 	return XcodeTestConfigParser{
 		logger:       logger,
 		inputParser:  inputParser,
-		xcodeVersion: xcodeVersion,
 		deviceFinder: deviceFinder,
 		pathModifier: pathModifier,
 		utils:        utils,
 	}
 }
 
-// XcodeTestRunner ...
 type XcodeTestRunner struct {
 	logger           log.Logger
 	commandFactory   command.Factory
@@ -140,7 +133,6 @@ type XcodeTestRunner struct {
 	utils            Utils
 }
 
-// NewXcodeTestRunner ...
 func NewXcodeTestRunner(logger log.Logger, commandFactory command.Factory, xcodebuild xcodebuild.Xcodebuild, simulatorManager simulator.Manager, cache cache.SwiftPackageCache, outputExporter output.Exporter, pathModifier pathutil.PathModifier, pathProvider pathutil.PathProvider, utils Utils) XcodeTestRunner {
 	return XcodeTestRunner{
 		logger:           logger,
@@ -155,7 +147,6 @@ func NewXcodeTestRunner(logger log.Logger, commandFactory command.Factory, xcode
 	}
 }
 
-// ProcessConfig ...
 func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 	var input Input
 	err := s.inputParser.Parse(&input)
@@ -165,12 +156,6 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 
 	stepconf.Print(input)
 	s.logger.EnableDebugLog(input.VerboseLog)
-
-	s.logger.Printf("- xcodebuild_version: %s (%s)", s.xcodeVersion.Version, s.xcodeVersion.BuildVersion)
-	s.logger.Println()
-	if err := s.validateXcodeVersion(&input, int(s.xcodeVersion.MajorVersion)); err != nil {
-		return Config{}, err
-	}
 
 	// validate project path
 	projectPath, err := s.pathModifier.AbsPath(input.ProjectPath)
@@ -214,10 +199,9 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 		return Config{}, fmt.Errorf("`-xcconfig` option found in 'Additional options for the xcodebuild command' (xcodebuild_options), please clear 'Build settings (xcconfig)' (`xcconfig_content`) input as only one can be set")
 	}
 
-	return s.utils.CreateConfig(input, projectPath, int(s.xcodeVersion.MajorVersion), sim, additionalOptions, additionalLogFormatterOptions), nil
+	return s.utils.CreateConfig(input, projectPath, sim, additionalOptions, additionalLogFormatterOptions), nil
 }
 
-// InstallDeps ...
 func (s XcodeTestRunner) InstallDeps() {
 	logFormatterVersion, err := s.xcodebuild.GetXcodeCommadRunner().CheckInstall()
 	if err != nil {
@@ -233,7 +217,6 @@ func (s XcodeTestRunner) InstallDeps() {
 	}
 }
 
-// Result ...
 type Result struct {
 	Scheme    string
 	DeployDir string
@@ -244,7 +227,6 @@ type Result struct {
 	SimulatorDiagnosticsPath string
 }
 
-// Run ...
 func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 	enableSimulatorVerboseLog := cfg.CollectSimulatorDiagnostics != never
 	launchSimulator := !cfg.IsSimulatorBooted && !cfg.HeadlessMode
@@ -287,7 +269,6 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 	return result, nil
 }
 
-// Export ...
 func (s XcodeTestRunner) Export(result Result, testFailed bool) error {
 	// export test run status
 	s.outputExporter.ExportTestRunResult(testFailed)
@@ -343,23 +324,6 @@ func (s XcodeTestConfigParser) parseAdditionalLogFormatterOptions(logFormatter, 
 	default:
 		panic(fmt.Sprintf("Unknown log formatter: %s", logFormatter))
 	}
-}
-
-func (s XcodeTestConfigParser) validateXcodeVersion(input *Input, xcodeMajorVersion int) error {
-	if xcodeMajorVersion == 0 {
-		s.logger.Printf("Skipping Xcode major version check as it is not available.")
-		return nil
-	}
-
-	if input.TestRepetitionMode != xcodebuild.TestRepetitionNone && xcodeMajorVersion < 13 {
-		return errors.New("Test Repetition Mode (test_repetition_mode) is not available below Xcode 13")
-	}
-
-	if input.RetryTestsOnFailure && xcodeMajorVersion > 12 {
-		return errors.New("Should retry tests on failure? (should_retry_test_on_fail) is not available above Xcode 12; use test_repetition_mode=retry_on_failure instead")
-	}
-
-	return nil
 }
 
 func (s XcodeTestConfigParser) getSimulatorForDestination(destinationSpecifier string) (destination.Device, error) {
