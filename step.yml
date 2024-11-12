@@ -93,7 +93,7 @@ inputs:
 - test_repetition_mode: none
   opts:
     category: Test Repetition
-    title: Test Repetition Mode 
+    title: Test Repetition Mode
     summary: Determines how the tests will repeat.
     description: |-
       Determines how the tests will repeat.
