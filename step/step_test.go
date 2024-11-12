@@ -71,72 +71,6 @@ func Test_GivenStep_WhenRuns_ThenXcodebuildGetsCalled(t *testing.T) {
 	mocks.xcodebuilder.AssertCalled(t, "RunTest", mock.Anything)
 }
 
-func Test_GivenStep_WhenXcodeVersionUnreadable_ThenSuccess(t *testing.T) {
-	// Given
-	envValues := defaultEnvValues()
-
-	xcodeVersion := xcodeversion.Version{}
-	configParser, mocks := createConfigParser(t, envValues, xcodeVersion)
-	path := strings.TrimPrefix(envValues["project_path"], ".")
-	mocks.pathModifier.On("AbsPath", mock.Anything).Return(path, nil)
-	mocks.deviceFinder.On("FindDevice", mock.Anything, mock.Anything).Return(defaultSimulator(), nil)
-
-	// When
-	_, err := configParser.ProcessConfig()
-
-	// Then
-	require.NoError(t, err)
-}
-
-func Test_GivenXcode13OrNewer_WhenShouldRetryTestOnFailIsSet_ThenFails(t *testing.T) {
-	// Given
-	envValues := defaultEnvValues()
-	envValues["should_retry_test_on_fail"] = "yes"
-
-	xcodeVersion := newVersion(13)
-	configParser, _ := createConfigParser(t, envValues, xcodeVersion)
-
-	// When
-	_, err := configParser.ProcessConfig()
-
-	// Then
-	require.Error(t, err)
-}
-
-func Test_GivenXcode12OrOlder_WhenTestRepetitionModeIsSet_ThenFails(t *testing.T) {
-	// Given
-	envValues := defaultEnvValues()
-	envValues["test_repetition_mode"] = "retry_on_failure"
-
-	ver := newVersion(12)
-	configParser, _ := createConfigParser(t, envValues, ver)
-
-	// When
-	_, err := configParser.ProcessConfig()
-
-	// Then
-	require.Error(t, err)
-}
-
-func Test_GivenTestRepetitionModeIsNone_WhenRelaunchTestsForEachRepetitionIsSet_ThenFails(t *testing.T) {
-	// Given
-	envValues := defaultEnvValues()
-	envValues["relaunch_tests_for_each_repetition"] = "yes"
-
-	xcodeVersion := newVersion(12)
-	configParser, mocks := createConfigParser(t, envValues, xcodeVersion)
-
-	path := strings.TrimPrefix(envValues["project_path"], ".")
-	mocks.pathModifier.On("AbsPath", mock.Anything).Return(path, nil)
-	mocks.deviceFinder.On("FindDevice", mock.Anything, mock.Anything).Return(defaultSimulator(), nil)
-
-	// When
-	_, err := configParser.ProcessConfig()
-
-	// Then
-	require.Error(t, err)
-}
-
 func Test_GivenStep_WhenInstallXcpretty_ThenInstallIt(t *testing.T) {
 	// Given
 	step, mocks := createStepAndMocks(t)
@@ -162,8 +96,7 @@ func Test_GivenLogFormatterIsXcbeautify_WhenParsesConfig_ThenAdditionalOptionsWo
 	envValues["log_formatter"] = "xcbeautify"
 	envValues["xcbeautify_options"] = "'--is-ci' '-q'"
 
-	xcodeVersion := newVersion(13)
-	configParser, mocks := createConfigParser(t, envValues, xcodeVersion)
+	configParser, mocks := createConfigParser(t, envValues)
 
 	path := strings.TrimPrefix(envValues["project_path"], ".")
 	mocks.pathModifier.On("AbsPath", mock.Anything).Return(path, nil)
@@ -302,7 +235,7 @@ func defaultResult() Result {
 	}
 }
 
-func createConfigParser(t *testing.T, envValues map[string]string, xcodeVersion xcodeversion.Version) (XcodeTestConfigParser, configParserMocks) {
+func createConfigParser(t *testing.T, envValues map[string]string) (XcodeTestConfigParser, configParserMocks) {
 	envRepository := mocks.NewRepository(t)
 
 	if envValues != nil {
@@ -320,7 +253,7 @@ func createConfigParser(t *testing.T, envValues map[string]string, xcodeVersion 
 	pathModifier := mocks.NewPathModifier(t)
 	utils := NewUtils(logger)
 
-	configParser := NewXcodeTestConfigParser(inputParser, logger, xcodeVersion, deviceFinder, pathModifier, utils)
+	configParser := NewXcodeTestConfigParser(inputParser, logger, deviceFinder, pathModifier, utils)
 	mocks := configParserMocks{
 		deviceFinder: deviceFinder,
 		pathModifier: pathModifier,
