@@ -94,29 +94,6 @@ func runArgumentsTest(t *testing.T, input TestRunParams) {
 	mocks.xcodeCommandRunner.AssertExpectations(t)
 }
 
-func Test_GivenTestRunError_WhenSwiftPackageError_ThenRetries(t *testing.T) {
-	// Given
-	const swiftPMErrMsg = "Could not resolve package dependencies:"
-	parameters := runParameters()
-	xcodebuild, mocks := createXcodebuildAndMocks(t)
-
-	mocks.xcodeCommandRunner.On("Run", ".", mock.Anything, mock.Anything).
-		Return(xcodecommand.Output{
-			ExitCode: 1,
-			RawOut:   []byte(swiftPMErrMsg),
-		}, errors.New("some error"))
-
-	mocks.fileManager.On("RemoveAll", parameters.SwiftPackagesPath).Return(nil)
-	mocks.fileManager.On("RemoveAll", parameters.TestParams.TestOutputDir).Return(nil)
-
-	// When
-	_, _, _ = xcodebuild.RunTest(parameters)
-
-	// Then
-	mocks.xcodeCommandRunner.AssertNumberOfCalls(t, "Run", 2)
-	mocks.fileManager.AssertNumberOfCalls(t, "RemoveAll", 2)
-}
-
 func Test_GivenTestRunError_WhenOneOfTheNamedErrorsHappened_ThenActsBasedOnTheConfig(t *testing.T) {
 	errors := errorsToBeRetried()
 	tests := []struct {
@@ -257,8 +234,6 @@ func runParameters() TestRunParams {
 		TestParams:                         testParams,
 		LogFormatterOptions:                []string{},
 		RetryOnTestRunnerError:             true,
-		RetryOnSwiftPackageResolutionError: true,
-		SwiftPackagesPath:                  "SwiftPackagesPath",
 	}
 }
 

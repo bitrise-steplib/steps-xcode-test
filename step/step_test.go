@@ -26,7 +26,6 @@ type stepMocks struct {
 	commandFactory   *commonMocks.CommandFactory
 	xcodebuilder     *mocks.Xcodebuild
 	simulatorManager *mocks.SimulatorManager
-	cache            *mocks.SwiftPackageCache
 	outputExporter   *mocks.Exporter
 	pathModifier     *mocks.PathModifier
 	pathProvider     *mocks.PathProvider
@@ -38,7 +37,6 @@ func Test_GivenStep_WhenRuns_ThenXcodebuildGetsCalled(t *testing.T) {
 
 	mocks.xcodebuilder.On("RunTest", mock.Anything).Return("", 0, nil)
 	mocks.simulatorManager.On("ResetLaunchServices").Return(nil)
-	mocks.cache.On("SwiftPackagesPath", mock.Anything).Return("", nil)
 	mocks.pathProvider.On("CreateTempDir", mock.Anything).Return("tmp_dir", nil)
 
 	config := Config{
@@ -54,8 +52,6 @@ func Test_GivenStep_WhenRuns_ThenXcodebuildGetsCalled(t *testing.T) {
 
 		LogFormatter:       "xcodebuild",
 		PerformCleanAction: false,
-
-		CacheLevel: "",
 
 		CollectSimulatorDiagnostics: never,
 		HeadlessMode:                true,
@@ -123,8 +119,6 @@ func Test_GivenLogFormatterIsXcbeautify_WhenParsesConfig_ThenAdditionalOptionsWo
 		LogFormatter:        "xcbeautify",
 		LogFormatterOptions: []string{"--is-ci", "-q"},
 		PerformCleanAction:  false,
-
-		CacheLevel: "swift_packages",
 
 		CollectSimulatorDiagnostics: never,
 		HeadlessMode:                true,
@@ -206,7 +200,6 @@ func defaultEnvValues() map[string]string {
 		"should_retry_test_on_fail":          "no",
 		"perform_clean_action":               "no",
 		"log_formatter":                      "xcpretty",
-		"cache_level":                        "swift_packages",
 		"verbose_log":                        "no",
 		"collect_simulator_diagnostics":      "never",
 		"headless_mode":                      "yes",
@@ -264,18 +257,16 @@ func createStepAndMocks(t *testing.T) (XcodeTestRunner, stepMocks) {
 	commandFactory := new(commonMocks.CommandFactory)
 	xcodebuilder := mocks.NewXcodebuild(t)
 	simulatorManager := mocks.NewSimulatorManager(t)
-	cache := mocks.NewSwiftPackageCache(t)
 	outputExporter := mocks.NewExporter(t)
 	pathModifier := mocks.NewPathModifier(t)
 	pathProvider := mocks.NewPathProvider(t)
 	utils := NewUtils(logger)
 
-	step := NewXcodeTestRunner(logger, commandFactory, xcodebuilder, simulatorManager, cache, outputExporter, pathModifier, pathProvider, utils)
+	step := NewXcodeTestRunner(logger, commandFactory, xcodebuilder, simulatorManager, outputExporter, pathModifier, pathProvider, utils)
 	mocks := stepMocks{
 		commandFactory:   commandFactory,
 		xcodebuilder:     xcodebuilder,
 		simulatorManager: simulatorManager,
-		cache:            cache,
 		outputExporter:   outputExporter,
 		pathModifier:     pathModifier,
 		pathProvider:     pathProvider,

@@ -7,14 +7,12 @@ import (
 	"github.com/bitrise-io/go-xcode/v2/xcodecommand"
 )
 
-// Test repetition modes ...
 const (
 	TestRepetitionNone           = "none"
 	TestRepetitionUntilFailure   = "until_failure"
 	TestRepetitionRetryOnFailure = "retry_on_failure"
 )
 
-// Xcodebuild ....
 type Xcodebuild interface {
 	RunTest(params TestRunParams) (string, int, error)
 	GetXcodeCommadRunner() xcodecommand.Runner
@@ -28,7 +26,6 @@ type xcodebuild struct {
 	xcodeCommandRunner xcodecommand.Runner
 }
 
-// NewXcodebuild ...
 func NewXcodebuild(logger log.Logger, fileManager fileutil.FileManager, xcconfigWriter xcconfig.Writer, xcodeCommandRunner xcodecommand.Runner) Xcodebuild {
 	return &xcodebuild{
 		logger:             logger,
@@ -38,16 +35,12 @@ func NewXcodebuild(logger log.Logger, fileManager fileutil.FileManager, xcconfig
 	}
 }
 
-// TestRunParams ...
 type TestRunParams struct {
 	TestParams                         TestParams
 	LogFormatterOptions                []string
 	RetryOnTestRunnerError             bool
-	RetryOnSwiftPackageResolutionError bool
-	SwiftPackagesPath                  string
 }
 
-// RunTest ...
 func (b *xcodebuild) RunTest(params TestRunParams) (string, int, error) {
 	return b.runTest(params)
 }

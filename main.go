@@ -17,7 +17,6 @@ import (
 	"github.com/bitrise-io/go-xcode/v2/destination"
 	"github.com/bitrise-io/go-xcode/v2/simulator"
 	"github.com/bitrise-io/go-xcode/v2/xcconfig"
-	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
 	"github.com/bitrise-io/go-xcode/v2/xcodecommand"
 	"github.com/bitrise-io/go-xcode/v2/xcodeversion"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
@@ -88,7 +87,6 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 	fileManager := fileutil.NewFileManager()
 	xcconfigWriter := xcconfig.NewWriter(pathProvider, fileManager, pathChecker, pathModifier)
 	simulatorManager := simulator.NewManager(logger, commandFactory)
-	swiftCache := cache.NewSwiftPackageCache()
 	outputExporter := export.NewExporter(commandFactory)
 	testAddonExporter := testaddon.NewExporter(testaddon.NewTestAddon(logger))
 	stepenvRepository := stepenv.NewRepository(envRepository)
@@ -116,5 +114,5 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 
 	xcodebuilder := xcodebuild.NewXcodebuild(logger, fileManager, xcconfigWriter, xcodeCommandRunner)
 
-	return step.NewXcodeTestRunner(logger, commandFactory, xcodebuilder, simulatorManager, swiftCache, exporter, pathModifier, pathProvider, utils), nil
+	return step.NewXcodeTestRunner(logger, commandFactory, xcodebuilder, simulatorManager, exporter, pathModifier, pathProvider, utils), nil
 }

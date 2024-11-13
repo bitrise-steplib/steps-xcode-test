@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 	"strconv"
-
-	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
 )
 
 // On performance limited OS X hosts (ex: VMs) the iPhone/iOS Simulator might time out
@@ -144,17 +142,6 @@ func (b *xcodebuild) cleanOutputDirAndRerunTest(params TestRunParams) (string, i
 }
 
 func (b *xcodebuild) handleTestRunError(prevRunParams TestRunParams, prevRunResult testRunResult) (string, int, error) {
-	if prevRunParams.RetryOnSwiftPackageResolutionError && prevRunParams.SwiftPackagesPath != "" && isStringFoundInOutput(cache.SwiftPackagesStateInvalid, prevRunResult.xcodebuildLog) {
-		b.logger.Warnf("xcode-test", "swift-packages-cache-invalid", nil, "swift packages cache is in an invalid state")
-		if err := b.fileManager.RemoveAll(prevRunParams.SwiftPackagesPath); err != nil {
-			b.logger.Errorf("failed to remove Swift package caches: %s", err)
-			return prevRunResult.xcodebuildLog, prevRunResult.exitCode, prevRunResult.err
-		}
-
-		prevRunParams.RetryOnSwiftPackageResolutionError = false
-		return b.cleanOutputDirAndRerunTest(prevRunParams)
-	}
-
 	for _, errorPattern := range testRunnerErrorPatterns {
 		if isStringFoundInOutput(errorPattern, prevRunResult.xcodebuildLog) {
 			b.logger.Warnf("Automatic retry reason found in log: %s", errorPattern)
