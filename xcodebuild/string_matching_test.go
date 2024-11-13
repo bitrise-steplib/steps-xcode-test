@@ -1,7 +1,7 @@
 package xcodebuild
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -484,7 +484,7 @@ func testFailedToOpenTestRunner(t *testing.T, outputToSearchIn string, isShouldF
 }
 
 func loadFileContent(filePth string) (string, error) {
-	fileBytes, err := ioutil.ReadFile(filePth)
+	fileBytes, err := os.ReadFile(filePth)
 	if err != nil {
 		return "", err
 	}

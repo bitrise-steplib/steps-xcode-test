@@ -245,7 +245,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 		testExitCode = code
 	}
 
-	result.SimulatorDiagnosticsPath = s.teardownSimulator(cfg.Simulator.ID, cfg.CollectSimulatorDiagnostics, cfg.IsSimulatorBooted, testErr)
+	result.SimulatorDiagnosticsPath = s.teardownSimulator(cfg.Simulator.UDID, cfg.CollectSimulatorDiagnostics, cfg.IsSimulatorBooted, testErr)
 
 	if testErr != nil {
 		s.logger.Println()
@@ -347,8 +347,8 @@ func (s XcodeTestConfigParser) getSimulatorForDestination(destinationSpecifier s
 		s.logger.Printf("Device type: %s", colorstring.Cyan(device.Type))
 	}
 	s.logger.Printf("OS: %s %s", colorstring.Cyan(device.Platform), colorstring.Cyan(device.OS))
-	s.logger.Printf("UDID: %s", colorstring.Cyan(device.ID))
-	s.logger.Printf("Status: %s", colorstring.Cyan(device.Status))
+	s.logger.Printf("UDID: %s", colorstring.Cyan(device.UDID))
+	s.logger.Printf("Status: %s", colorstring.Cyan(device.State))
 
 	return device, nil
 }
@@ -366,7 +366,7 @@ func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simula
 		if err := s.simulatorManager.Boot(simulator); err != nil {
 			return fmt.Errorf("%v", err)
 		}
-		if err := s.simulatorManager.EnableVerboseLog(simulator.ID); err != nil {
+		if err := s.simulatorManager.EnableVerboseLog(simulator.UDID); err != nil {
 			return fmt.Errorf("%v", err)
 		}
 
@@ -374,9 +374,9 @@ func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simula
 	}
 
 	if launchSimulator {
-		s.logger.Infof("Booting simulator (%s)...", simulator.ID)
+		s.logger.Infof("Booting simulator (%s)...", simulator.UDID)
 
-		if err := s.simulatorManager.LaunchWithGUI(simulator.ID); err != nil {
+		if err := s.simulatorManager.LaunchWithGUI(simulator.UDID); err != nil {
 			return fmt.Errorf("failed to boot simulator: %w", err)
 		}
 

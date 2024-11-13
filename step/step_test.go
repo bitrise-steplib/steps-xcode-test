@@ -45,7 +45,7 @@ func Test_GivenStep_WhenRuns_ThenXcodebuildGetsCalled(t *testing.T) {
 		ProjectPath: "./project.xcodeproj",
 		Scheme:      "Project",
 
-		Simulator:         destination.Device{ID: "1234"},
+		Simulator:         destination.Device{UDID: "1234"},
 		IsSimulatorBooted: true,
 
 		TestRepetitionMode:            "none",
@@ -216,8 +216,8 @@ func defaultEnvValues() map[string]string {
 func defaultSimulator() destination.Device {
 	return destination.Device{
 		Name:   "iPhone 8 Plus",
-		ID:     "E8C36A8B-543A-4477-BB91-699C0A9EA352",
-		Status: "Shutdown",
+		UDID:     "E8C36A8B-543A-4477-BB91-699C0A9EA352",
+		State: "Shutdown",
 	}
 }
 

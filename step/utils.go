@@ -59,7 +59,7 @@ func (u utils) CreateConfig(input Input,
 		TestPlan:    input.TestPlan,
 
 		Simulator:         sim,
-		IsSimulatorBooted: sim.Status != simulatorShutdownState,
+		IsSimulatorBooted: sim.State != simulatorShutdownState,
 
 		TestRepetitionMode:            input.TestRepetitionMode,
 		MaximumTestRepetitions:        input.MaximumTestRepetitions,

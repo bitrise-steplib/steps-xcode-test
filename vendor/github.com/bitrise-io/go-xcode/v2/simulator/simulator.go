@@ -3,7 +3,6 @@ package simulator
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -107,7 +106,7 @@ func (m manager) ResetLaunchServices() error {
 
 // Boot boots Simulator in headless mode
 func (m manager) Boot(device destination.Device) error {
-	args := []string{"simctl", "boot", device.ID}
+	args := []string{"simctl", "boot", device.UDID}
 	if device.Arch != "" {
 		args = append(args, fmt.Sprintf("--arch=%s", device.Arch))
 	}
@@ -196,7 +195,7 @@ func (m manager) CollectDiagnostics() (string, error) {
 		return "", err
 	}
 
-	diagnosticsOutDir, err := ioutil.TempDir("", diagnosticsName)
+	diagnosticsOutDir, err := os.MkdirTemp("", diagnosticsName)
 	if err != nil {
 		return "", fmt.Errorf("failed to collect Simulator diagnostics, could not create temporary directory: %v", err)
 	}
