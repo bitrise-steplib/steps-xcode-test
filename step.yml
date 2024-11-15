@@ -90,7 +90,7 @@ inputs:
 
 # Test Repetition
 
-- test_repetition_mode: none
+- test_repetition_mode: retry_on_failure
   opts:
     category: Test Repetition
     title: Test Repetition Mode
