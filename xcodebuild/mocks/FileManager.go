@@ -150,6 +150,26 @@ func (_m *FileManager) WriteBytes(path string, value []byte) error {
 	return r0
 }
 
+func (_m *FileManager) FileSizeInBytes(pth string) (int64, error) {
+	ret := _m.Called(pth)
+
+	var r0 int64
+	if rf, ok := ret.Get(0).(func(string) int64); ok {
+		r0 = rf(pth)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(pth)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewFileManager creates a new instance of FileManager. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewFileManager(t interface {

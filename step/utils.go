@@ -12,7 +12,7 @@ import (
 
 type Utils interface {
 	PrintLastLinesOfXcodebuildTestLog(rawXcodebuildOutput string, isRunSuccess bool)
-	CreateConfig(input Input, projectPath string, xcodeMajorVersion int, sim destination.Device, additionalOptions, additionalLogFormatterOptions []string) Config
+	CreateConfig(input Input, projectPath string, sim destination.Device, additionalOptions, additionalLogFormatterOptions []string) Config
 	CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath string) xcodebuild.TestRunParams
 }
 
@@ -51,7 +51,6 @@ that will attach the file to your build as an artifact!`))
 
 func (u utils) CreateConfig(input Input,
 	projectPath string,
-	xcodeMajorVersion int,
 	sim destination.Device,
 	additionalOptions, additionalLogFormatterOptions []string) Config {
 	return Config{
@@ -60,14 +59,11 @@ func (u utils) CreateConfig(input Input,
 		TestPlan:    input.TestPlan,
 
 		Simulator:         sim,
-		IsSimulatorBooted: sim.Status != simulatorShutdownState,
-
-		XcodeMajorVersion: xcodeMajorVersion,
+		IsSimulatorBooted: sim.State != simulatorShutdownState,
 
 		TestRepetitionMode:            input.TestRepetitionMode,
 		MaximumTestRepetitions:        input.MaximumTestRepetitions,
 		RelaunchTestForEachRepetition: input.RelaunchTestsForEachRepetition,
-		RetryTestsOnFailure:           input.RetryTestsOnFailure,
 
 		XCConfigContent:    input.XCConfigContent,
 		PerformCleanAction: input.PerformCleanAction,
@@ -97,7 +93,6 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 		RelaunchTestsForEachRepetition: cfg.RelaunchTestForEachRepetition,
 		XCConfigContent:                cfg.XCConfigContent,
 		PerformCleanAction:             cfg.PerformCleanAction,
-		RetryTestsOnFailure:            cfg.RetryTestsOnFailure,
 		AdditionalOptions:              cfg.XcodebuildOptions,
 	}
 

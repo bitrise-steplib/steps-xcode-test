@@ -40,6 +40,17 @@ func (e *Exporter) ExportOutput(key, value string) error {
 	return nil
 }
 
+// ExportOutputNoExpand works like ExportOutput but does not expand environment variables in the value.
+// This can be used when the value is unstrusted or is beyond the control of the step.
+func (e *Exporter) ExportOutputNoExpand(key, value string) error {
+	cmd := e.cmdFactory.Create("envman", []string{"add", "--key", key, "--value", value, "--no-expand"}, nil)
+	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
+	if err != nil {
+		return fmt.Errorf("exporting output with envman failed: %s, output: %s", err, out)
+	}
+	return nil
+}
+
 // ExportOutputFile is a convenience method for copying sourcePath to destinationPath and then exporting the
 // absolute destination path with ExportOutput()
 func (e *Exporter) ExportOutputFile(key, sourcePath, destinationPath string) error {

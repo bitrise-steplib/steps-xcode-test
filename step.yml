@@ -90,10 +90,10 @@ inputs:
 
 # Test Repetition
 
-- test_repetition_mode: none
+- test_repetition_mode: retry_on_failure
   opts:
     category: Test Repetition
-    title: Test Repetition Mode (Available in Xcode 13+)
+    title: Test Repetition Mode
     summary: Determines how the tests will repeat.
     description: |-
       Determines how the tests will repeat.
@@ -114,7 +114,7 @@ inputs:
 - maximum_test_repetitions: 3
   opts:
     category: Test Repetition
-    title: Maximum Test Repetitions (Available in Xcode 13+)
+    title: Maximum Test Repetitions
     summary: The maximum number of times a test repeats based on the Test Repetition Mode (`test_repetition_mode`).
     description: |-
       The maximum number of times a test repeats based on the Test Repetition Mode (`test_repetition_mode`).
@@ -126,7 +126,7 @@ inputs:
 
 - relaunch_tests_for_each_repetition: "no"
   opts:
-    title: Relaunch Tests for Each Repetition (Available in Xcode 13+)
+    title: Relaunch Tests for Each Repetition
     category: Test Repetition
     summary: If this input is set, tests will launch in a new process for each repetition.
     description: |-
@@ -138,22 +138,6 @@ inputs:
     value_options:
     - "yes"
     - "no"
-
-- should_retry_test_on_fail: "no"
-  opts:
-    category: Test Repetition
-    title: Should retry tests on failure? (Not available in Xcode 13+)
-    summary: If set, the Step will rerun the tests in the case of failed tests.
-    description: |-
-      If this input is set, the Step will rerun the tests in the case of failed tests.
-
-      Note that all the tests will be rerun, not just the ones that failed.
-
-      This input is not available if you are using Xcode 13+. In that case, we recommend using the `retry_on_failure` Test Repetition Mode (`test_repetition_mode`).
-    value_options:
-    - "yes"
-    - "no"
-    is_required: true
 
 # xcodebuild configuration
 

@@ -2,11 +2,12 @@ package testaddon
 
 import (
 	"encoding/json"
-	"github.com/bitrise-io/go-utils/v2/log"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/bitrise-io/go-utils/v2/log"
 
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
@@ -81,7 +82,7 @@ func exportedBundleNameFromFile(path string) string {
 
 	defer jsonFile.Close()
 
-	bytes, _ := ioutil.ReadAll(jsonFile)
+	bytes, _ := io.ReadAll(jsonFile)
 
 	var bundle testBundle
 	_ = json.Unmarshal(bytes, &bundle)

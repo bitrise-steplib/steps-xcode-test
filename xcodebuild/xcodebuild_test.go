@@ -166,16 +166,6 @@ func Test_GivenTestRunError_WhenAnUnknownErrorHappened_ThenActsBasedOnTheConfig(
 		parameters    func() TestRunParams
 	}{
 		{
-			name:          "Reruns tests when should_retry_test_on_fail is enabled",
-			numberOfCalls: 2,
-			parameters: func() TestRunParams {
-				parameters := runParameters()
-				parameters.TestParams.RetryTestsOnFailure = true
-
-				return parameters
-			},
-		},
-		{
 			name:          "Does nothing when should_retry_test_on_fail is disabled",
 			numberOfCalls: 1,
 			parameters: func() TestRunParams {
@@ -260,7 +250,6 @@ func runParameters() TestRunParams {
 		RelaunchTestsForEachRepetition: true,
 		XCConfigContent:                "XCConfigContent",
 		PerformCleanAction:             false,
-		RetryTestsOnFailure:            false,
 		AdditionalOptions:              []string{"AdditionalOptions"},
 	}
 
