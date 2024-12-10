@@ -132,4 +132,3 @@ func (d deviceFinder) FindDevice(destination Simulator) (Device, error) {
 
 	return device, err
 }
-
