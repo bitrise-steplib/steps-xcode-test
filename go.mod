@@ -1,8 +1,6 @@
 module github.com/bitrise-steplib/steps-xcode-test
 
-go 1.22
-
-toolchain go1.22.4
+go 1.21
 
 require (
 	github.com/bitrise-io/bitrise v0.0.0-20230707121919-a5b9e2d27ea9
