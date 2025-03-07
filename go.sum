@@ -11,8 +11,8 @@ github.com/bitrise-io/go-utils v1.0.13 h1:1QENhTS/JlKH9F7+/nB+TtbTcor6jGrE6cQ4CJ
 github.com/bitrise-io/go-utils v1.0.13/go.mod h1:ZY1DI+fEpZuFpO9szgDeICM4QbqoWVt0RSY3tRI1heY=
 github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.23 h1:Dfh4nyZPuEtilBisidejqxBrkx9cWvbOUrpq8VEION0=
 github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.23/go.mod h1:3XUplo0dOWc3DqT2XA2SeHToDSg7+j1y1HTHibT2H68=
-github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.52.0.20250306133909-54f3caf670ed h1:upsuDJdw59d7yGSP9WFaumB5proCMviLuGrTCYYVo00=
-github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.52.0.20250306133909-54f3caf670ed/go.mod h1:T4rhWQljdgH5As4Dq/RQWuazdScY0YB7uZAMuBUnxeY=
+github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.53 h1:Ud59kqcvRulyEx8WsM+DpYlubRWhG4zAGE2ORHIcQYo=
+github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.53/go.mod h1:T4rhWQljdgH5As4Dq/RQWuazdScY0YB7uZAMuBUnxeY=
 github.com/bitrise-io/stepman v0.0.0-20240828074035-6ae1a5f5efde h1:LinFhZG5OdayDh1T1JO8QANsNwQWzqORZ0A9EGHQ0ps=
 github.com/bitrise-io/stepman v0.0.0-20240828074035-6ae1a5f5efde/go.mod h1:Lq9nEqKerBD35w3eSU8lf83F7uZPkXfmRSZEUDJN40w=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
