@@ -37,9 +37,9 @@ workflows:
     - path::./:
         inputs:
         # Inputs with non-default value or using environment variables
-        - project_path: ./_tmp/$BITRISE_PROJECT_PATH
+        - project_path: Unity-iPhone.xcodeproj
         - destination: platform=iOS Simulator,name=iPhone 11,OS=latest
-        - scheme: $BITRISE_SCHEME
+        - scheme: Unity-iPhone
         - xcodebuild_test_options: -verbose
         - export_uitest_artifacts: "true"
         - verbose: "yes"
