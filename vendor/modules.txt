@@ -44,6 +44,9 @@ github.com/bitrise-io/go-utils/v2/fileutil
 github.com/bitrise-io/go-utils/v2/log
 github.com/bitrise-io/go-utils/v2/log/colorstring
 github.com/bitrise-io/go-utils/v2/pathutil
+# github.com/bitrise-io/go-xcode v1.1.2
+## explicit; go 1.20
+github.com/bitrise-io/go-xcode/xcodeproject/serialized
 # github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.53
 ## explicit; go 1.22
 github.com/bitrise-io/go-xcode/v2/destination
@@ -56,11 +59,14 @@ github.com/bitrise-io/go-xcode/v2/xcodeversion
 # github.com/bitrise-io/stepman v0.0.0-20240828074035-6ae1a5f5efde
 ## explicit; go 1.18
 github.com/bitrise-io/stepman/models
+# github.com/bitrise-steplib/steps-deploy-to-bitrise-io v0.0.0-20250707145051-550b658b019b
+## explicit; go 1.20
+github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3
+github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3/model3
+github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/google/go-cmp v0.6.0
-## explicit; go 1.13
 # github.com/hashicorp/go-cleanhttp v0.5.2
 ## explicit; go 1.13
 github.com/hashicorp/go-cleanhttp
@@ -112,3 +118,6 @@ golang.org/x/text/unicode/norm
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
+# howett.net/plist v1.0.1
+## explicit; go 1.12
+howett.net/plist

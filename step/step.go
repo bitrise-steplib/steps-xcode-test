@@ -273,6 +273,9 @@ func (s XcodeTestRunner) Export(result Result, testFailed bool) error {
 
 	if result.XcresultPath != "" {
 		s.outputExporter.ExportXCResultBundle(result.DeployDir, result.XcresultPath, result.Scheme)
+		if err := s.outputExporter.ExportFlakyTestCases(result.XcresultPath, false); err != nil {
+			s.logger.Warnf("Failed to export flaky test cases: %s", err)
+		}
 	}
 
 	// export xcodebuild build log

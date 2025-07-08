@@ -10,6 +10,8 @@ import (
 	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/ziputil"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3/model3"
 	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
 )
 
@@ -20,6 +22,7 @@ type Exporter interface {
 	ExportXcodebuildBuildLog(deployDir, xcodebuildBuildLog string) error
 	ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) error
 	ExportSimulatorDiagnostics(deployDir, pth, name string) error
+	ExportFlakyTestCases(xcResultPath string, useOldXCResultExtractionMethod bool) error
 }
 
 type exporter struct {
@@ -115,6 +118,56 @@ func (e exporter) ExportSimulatorDiagnostics(deployDir, pth, name string) error 
 	outputPath := filepath.Join(deployDir, name)
 	if err := ziputil.ZipDir(pth, outputPath, true); err != nil {
 		return fmt.Errorf("failed to compress simulator diagnostics result: %w", err)
+	}
+
+	return nil
+}
+
+func (e exporter) ExportFlakyTestCases(xcResultPath string, useOldXCResultExtractionMethod bool) error {
+	converter := xcresult3.Converter{}
+	converter.Setup(useOldXCResultExtractionMethod)
+	if !converter.Detect([]string{xcResultPath}) {
+		return nil
+	}
+
+	results, err := xcresult3.ParseTestResults(xcResultPath)
+	if err != nil {
+		return fmt.Errorf("failed to parse xcresult: %w", err)
+	}
+
+	testSummary, warnings, err := model3.Convert(results)
+	if err != nil {
+		return fmt.Errorf("failed to convert xcresult data: %w", err)
+	}
+
+	if len(warnings) > 0 {
+		e.logger.Warnf("xcresult converter warnings: %v", warnings)
+		for _, warning := range warnings {
+			e.logger.Warnf("- %s", warning)
+		}
+	}
+
+	for _, testPlan := range testSummary.TestPlans {
+		for _, testBundle := range testPlan.TestBundles {
+			for _, testSuite := range testBundle.TestSuites {
+				var flakyTestCases []model3.TestCase
+				for _, testCase := range testSuite.TestCases {
+					if testCase.Result != model3.TestResultPassed {
+						continue
+					}
+
+					if len(testCase.Retries) == 0 {
+						continue
+					}
+
+					for _, retry := range testCase.Retries {
+						if retry.Result == model3.TestResultFailed {
+							flakyTestCases = append(flakyTestCases, testCase.TestCase)
+						}
+					}
+				}
+			}
+		}
 	}
 
 	return nil
