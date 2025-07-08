@@ -123,21 +123,47 @@ func (e exporter) ExportSimulatorDiagnostics(deployDir, pth, name string) error 
 	return nil
 }
 
+type FlakyTestPlans struct {
+	FlakyTestBundles []FlakyTestBundle
+}
+
+type FlakyTestBundle struct {
+	FlakyTestSuites []FlakyTestSuite
+}
+
+type FlakyTestSuite struct {
+	FlakyTestCases []model3.TestCase
+}
+
 func (e exporter) ExportFlakyTestCases(xcResultPath string, useOldXCResultExtractionMethod bool) error {
+	testSummary, err := e.parseTestSummary(xcResultPath, useOldXCResultExtractionMethod)
+	if err != nil {
+		return fmt.Errorf("failed to parse test summary: %w", err)
+	}
+
+	flakyTestPlans := e.collectFlakyTestPlans(*testSummary)
+	if len(flakyTestPlans) == 0 {
+		return nil
+	}
+
+	return e.exportFlakyTestCases(flakyTestPlans)
+}
+
+func (e exporter) parseTestSummary(xcResultPath string, useOldXCResultExtractionMethod bool) (*model3.TestSummary, error) {
 	converter := xcresult3.Converter{}
 	converter.Setup(useOldXCResultExtractionMethod)
 	if !converter.Detect([]string{xcResultPath}) {
-		return nil
+		return nil, nil
 	}
 
 	results, err := xcresult3.ParseTestResults(xcResultPath)
 	if err != nil {
-		return fmt.Errorf("failed to parse xcresult: %w", err)
+		return nil, fmt.Errorf("failed to parse xcresult: %w", err)
 	}
 
 	testSummary, warnings, err := model3.Convert(results)
 	if err != nil {
-		return fmt.Errorf("failed to convert xcresult data: %w", err)
+		return nil, fmt.Errorf("failed to convert xcresult data: %w", err)
 	}
 
 	if len(warnings) > 0 {
@@ -147,10 +173,20 @@ func (e exporter) ExportFlakyTestCases(xcResultPath string, useOldXCResultExtrac
 		}
 	}
 
+	return testSummary, nil
+}
+
+func (e exporter) collectFlakyTestPlans(testSummary model3.TestSummary) []FlakyTestPlans {
+	var flakyTestPlans []FlakyTestPlans
 	for _, testPlan := range testSummary.TestPlans {
+		var flakyTestBundles []FlakyTestBundle
+
 		for _, testBundle := range testPlan.TestBundles {
+			var flakyTestSuites []FlakyTestSuite
+
 			for _, testSuite := range testBundle.TestSuites {
 				var flakyTestCases []model3.TestCase
+
 				for _, testCase := range testSuite.TestCases {
 					if testCase.Result != model3.TestResultPassed {
 						continue
@@ -166,9 +202,53 @@ func (e exporter) ExportFlakyTestCases(xcResultPath string, useOldXCResultExtrac
 						}
 					}
 				}
+
+				if len(flakyTestCases) > 0 {
+					flakyTestSuites = append(flakyTestSuites, FlakyTestSuite{
+						FlakyTestCases: flakyTestCases,
+					})
+				}
+			}
+
+			if len(flakyTestSuites) > 0 {
+				flakyTestBundles = append(flakyTestBundles, FlakyTestBundle{
+					FlakyTestSuites: flakyTestSuites,
+				})
+			}
+		}
+
+		if len(flakyTestBundles) > 0 {
+			flakyTestPlans = append(flakyTestPlans, FlakyTestPlans{
+				FlakyTestBundles: flakyTestBundles,
+			})
+		}
+	}
+
+	return flakyTestPlans
+}
+
+func (e exporter) exportFlakyTestCases(flakyTestPlans []FlakyTestPlans) error {
+	var flakyTestCasesMessage string
+
+	for _, testPlan := range flakyTestPlans {
+		for _, testBundle := range testPlan.FlakyTestBundles {
+			for _, testSuite := range testBundle.FlakyTestSuites {
+				for _, testCase := range testSuite.FlakyTestCases {
+					testCaseName := testCase.Name
+					if len(testCase.ClassName) > 0 {
+						testCaseName = fmt.Sprintf("%s.%s", testCase.ClassName, testCase.Name)
+					}
+
+					flakyTestCasesMessage += fmt.Sprintf("- %s\n", testCaseName)
+				}
 			}
 		}
 	}
+
+	if err := e.envRepository.Set("BITRISE_FLAKY_TEST_CASES", flakyTestCasesMessage); err != nil {
+		return fmt.Errorf("failed to export BITRISE_FLAKY_TEST_CASES: %w", err)
+	}
+	e.logger.Printf("Exported flaky test case: %s", flakyTestCasesMessage)
 
 	return nil
 }
