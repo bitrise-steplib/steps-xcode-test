@@ -123,18 +123,6 @@ func (e exporter) ExportSimulatorDiagnostics(deployDir, pth, name string) error 
 	return nil
 }
 
-type FlakyTestPlans struct {
-	FlakyTestBundles []FlakyTestBundle
-}
-
-type FlakyTestBundle struct {
-	FlakyTestSuites []FlakyTestSuite
-}
-
-type FlakyTestSuite struct {
-	FlakyTestCases []model3.TestCase
-}
-
 func (e exporter) ExportFlakyTestCases(xcResultPath string, useOldXCResultExtractionMethod bool) error {
 	testSummary, err := e.parseTestSummary(xcResultPath, useOldXCResultExtractionMethod)
 	if err != nil {
@@ -167,7 +155,7 @@ func (e exporter) parseTestSummary(xcResultPath string, useOldXCResultExtraction
 	}
 
 	if len(warnings) > 0 {
-		e.logger.Warnf("xcresult converter warnings: %v", warnings)
+		e.logger.Warnf("xcresult converter warnings:")
 		for _, warning := range warnings {
 			e.logger.Warnf("- %s", warning)
 		}
@@ -176,16 +164,16 @@ func (e exporter) parseTestSummary(xcResultPath string, useOldXCResultExtraction
 	return testSummary, nil
 }
 
-func (e exporter) collectFlakyTestPlans(testSummary model3.TestSummary) []FlakyTestPlans {
-	var flakyTestPlans []FlakyTestPlans
+func (e exporter) collectFlakyTestPlans(testSummary model3.TestSummary) []model3.TestPlan {
+	var flakyTestPlans []model3.TestPlan
 	for _, testPlan := range testSummary.TestPlans {
-		var flakyTestBundles []FlakyTestBundle
+		var flakyTestBundles []model3.TestBundle
 
 		for _, testBundle := range testPlan.TestBundles {
-			var flakyTestSuites []FlakyTestSuite
+			var flakyTestSuites []model3.TestSuite
 
 			for _, testSuite := range testBundle.TestSuites {
-				var flakyTestCases []model3.TestCase
+				var flakyTestCases []model3.TestCaseWithRetries
 
 				for _, testCase := range testSuite.TestCases {
 					if testCase.Result != model3.TestResultPassed {
@@ -198,28 +186,31 @@ func (e exporter) collectFlakyTestPlans(testSummary model3.TestSummary) []FlakyT
 
 					for _, retry := range testCase.Retries {
 						if retry.Result == model3.TestResultFailed {
-							flakyTestCases = append(flakyTestCases, testCase.TestCase)
+							flakyTestCases = append(flakyTestCases, testCase)
 						}
 					}
 				}
 
 				if len(flakyTestCases) > 0 {
-					flakyTestSuites = append(flakyTestSuites, FlakyTestSuite{
-						FlakyTestCases: flakyTestCases,
+					flakyTestSuites = append(flakyTestSuites, model3.TestSuite{
+						Name:      testSuite.Name,
+						TestCases: flakyTestCases,
 					})
 				}
 			}
 
 			if len(flakyTestSuites) > 0 {
-				flakyTestBundles = append(flakyTestBundles, FlakyTestBundle{
-					FlakyTestSuites: flakyTestSuites,
+				flakyTestBundles = append(flakyTestBundles, model3.TestBundle{
+					Name:       testBundle.Name,
+					TestSuites: flakyTestSuites,
 				})
 			}
 		}
 
 		if len(flakyTestBundles) > 0 {
-			flakyTestPlans = append(flakyTestPlans, FlakyTestPlans{
-				FlakyTestBundles: flakyTestBundles,
+			flakyTestPlans = append(flakyTestPlans, model3.TestPlan{
+				Name:        testPlan.Name,
+				TestBundles: flakyTestBundles,
 			})
 		}
 	}
@@ -227,22 +218,27 @@ func (e exporter) collectFlakyTestPlans(testSummary model3.TestSummary) []FlakyT
 	return flakyTestPlans
 }
 
-func (e exporter) exportFlakyTestCases(flakyTestPlans []FlakyTestPlans) error {
-	var flakyTestCasesMessage string
+func (e exporter) exportFlakyTestCases(flakyTestPlans []model3.TestPlan) error {
+	flakyTestCases := map[string]bool{}
 
 	for _, testPlan := range flakyTestPlans {
-		for _, testBundle := range testPlan.FlakyTestBundles {
-			for _, testSuite := range testBundle.FlakyTestSuites {
-				for _, testCase := range testSuite.FlakyTestCases {
+		for _, testBundle := range testPlan.TestBundles {
+			for _, testSuite := range testBundle.TestSuites {
+				for _, testCase := range testSuite.TestCases {
 					testCaseName := testCase.Name
 					if len(testCase.ClassName) > 0 {
 						testCaseName = fmt.Sprintf("%s.%s", testCase.ClassName, testCase.Name)
 					}
 
-					flakyTestCasesMessage += fmt.Sprintf("- %s\n", testCaseName)
+					flakyTestCases[testCaseName] = true
 				}
 			}
 		}
+	}
+
+	var flakyTestCasesMessage string
+	for flakyTestCase := range flakyTestCases {
+		flakyTestCasesMessage += fmt.Sprintf("- %s\n", flakyTestCase)
 	}
 
 	if err := e.envRepository.Set("BITRISE_FLAKY_TEST_CASES", flakyTestCasesMessage); err != nil {

@@ -3,6 +3,7 @@ package output
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/bitrise-io/go-steputils/v2/export"
@@ -107,6 +108,23 @@ func Test_GivenSimulatorDiagnostics_WhenExporting_ThenCopiesItAndSetsEnvVariable
 	// Then
 	assert.NoError(t, err)
 	assert.True(t, isPathExists(filepath.Join(tempDir, name+".zip")))
+}
+
+func Test_GivenFlakyTestCases_WhenExporting_ThenSetsEnvVariable(t *testing.T) {
+	// Given
+	_, b, _, _ := runtime.Caller(0)
+	outputPackageDir := filepath.Dir(b)
+	testDataDir := filepath.Join(outputPackageDir, "testdata")
+	xcresultPath := filepath.Join(testDataDir, "xcresult3-flaky-with-rerun.xcresult")
+
+	exporter, mocks := createSutAndMocks()
+
+	// When
+	err := exporter.ExportFlakyTestCases(xcresultPath, false)
+
+	// Then
+	assert.NoError(t, err)
+	mocks.envRepository.AssertCalled(t, "Set", "BITRISE_FLAKY_TEST_CASES", "- BullsEyeFlakyTests.testFlakyFeature()\n")
 }
 
 // Helpers
