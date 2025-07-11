@@ -42,7 +42,7 @@ workflows:
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: UnitTests
-    - DESTINATION: platform=iOS Simulator,name=iPhone 12,OS=latest
+    - DESTINATION: platform=iOS Simulator,name=Bitrise iOS default,OS=latest
     - LOG_FORMATTER: xcbeautify
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: swift_packages
