@@ -219,7 +219,12 @@ func (e exporter) collectFlakyTestPlans(testSummary model3.TestSummary) []model3
 }
 
 func (e exporter) exportFlakyTestCases(flakyTestPlans []model3.TestPlan) error {
-	flakyTestCases := map[string]bool{}
+	if len(flakyTestPlans) == 0 {
+		return nil
+	}
+
+	storedFlakyTestCases := map[string]bool{}
+	var flakyTestCases []string
 
 	for _, testPlan := range flakyTestPlans {
 		for _, testBundle := range testPlan.TestBundles {
@@ -230,14 +235,17 @@ func (e exporter) exportFlakyTestCases(flakyTestPlans []model3.TestPlan) error {
 						testCaseName = fmt.Sprintf("%s.%s", testCase.ClassName, testCase.Name)
 					}
 
-					flakyTestCases[testCaseName] = true
+					if _, stored := storedFlakyTestCases[testCaseName]; !stored {
+						storedFlakyTestCases[testCaseName] = true
+						flakyTestCases = append(flakyTestCases, testCaseName)
+					}
 				}
 			}
 		}
 	}
 
 	var flakyTestCasesMessage string
-	for flakyTestCase := range flakyTestCases {
+	for _, flakyTestCase := range flakyTestCases {
 		flakyTestCasesMessage += fmt.Sprintf("- %s\n", flakyTestCase)
 	}
 
