@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/bitrise-io/go-steputils/v2/export"
@@ -129,11 +130,13 @@ func Test_GivenFlakyTestCases_WhenExporting_ThenSetsEnvVariable(t *testing.T) {
 }
 
 func Test_exporter_collectAndExportFlakyTestPlans(t *testing.T) {
+	longTestCaseName := strings.Repeat("a", flakyTestCasesEnvVarSizeLimitInBytes)
 
 	tests := []struct {
 		name         string
 		testPlans    []model3.TestPlan
 		wantEnvValue string
+		wantLogArgs  []interface{}
 	}{
 		{
 			name: "No flaky tests",
@@ -227,15 +230,57 @@ func Test_exporter_collectAndExportFlakyTestPlans(t *testing.T) {
 			}}},
 			wantEnvValue: "- TestBundle1.TestSuite1.TestCase1\n- TestBundle2.TestSuite1.TestCase1\n",
 		},
+		{
+			name: "Flaky test cases env var size is limited",
+			testPlans: []model3.TestPlan{{TestBundles: []model3.TestBundle{
+				{
+					Name: "TestBundle1", TestSuites: []model3.TestSuite{
+						{
+							Name: "TestSuite1",
+							TestCases: []model3.TestCaseWithRetries{
+								{
+									TestCase: model3.TestCase{Name: "TestCase1", ClassName: "TestSuite1", Result: model3.TestResultPassed},
+									Retries: []model3.TestCase{
+										{Name: "TestCase1_Retry1", ClassName: "TestSuite1", Result: model3.TestResultFailed},
+										{Name: "TestCase1_Retry2", ClassName: "TestSuite1", Result: model3.TestResultPassed},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "TestBundle2", TestSuites: []model3.TestSuite{
+						{
+							Name: "TestSuite1",
+							TestCases: []model3.TestCaseWithRetries{
+								{
+									TestCase: model3.TestCase{Name: longTestCaseName, ClassName: "TestSuite1", Result: model3.TestResultPassed},
+									Retries: []model3.TestCase{
+										{Name: longTestCaseName, ClassName: "TestSuite1", Result: model3.TestResultFailed},
+										{Name: longTestCaseName, ClassName: "TestSuite1", Result: model3.TestResultPassed},
+									},
+								},
+							},
+						},
+					},
+				},
+			}}},
+			wantEnvValue: "- TestBundle1.TestSuite1.TestCase1\n",
+			wantLogArgs:  []interface{}{"%s env var size limit (1024 characters) exceeded. Skipping %d test cases.", "BITRISE_FLAKY_TEST_CASES", 1},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			envRepository := new(mocks.Repository)
 			envRepository.On("Set", mock.Anything, mock.Anything).Return(nil)
 
+			logger := new(mocks.Logger)
+			logger.On("Warnf", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
 			exporter := exporter{
 				envRepository:     envRepository,
-				logger:            log.NewLogger(),
+				logger:            logger,
 				outputExporter:    export.NewExporter(new(commonMocks.CommandFactory)),
 				testAddonExporter: nil,
 			}
@@ -252,6 +297,12 @@ func Test_exporter_collectAndExportFlakyTestPlans(t *testing.T) {
 				envRepository.AssertCalled(t, "Set", "BITRISE_FLAKY_TEST_CASES", tt.wantEnvValue)
 			} else {
 				envRepository.AssertNumberOfCalls(t, "Set", 0)
+			}
+
+			if len(tt.wantLogArgs) > 0 {
+				logger.AssertCalled(t, "Warnf", tt.wantLogArgs...)
+			} else {
+				logger.AssertNumberOfCalls(t, "Warnf", 0)
 			}
 		})
 	}

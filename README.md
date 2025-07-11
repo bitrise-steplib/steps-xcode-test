@@ -124,7 +124,7 @@ Run tests with custom xcconfig file path:
 | `BITRISE_XCODE_TEST_ATTACHMENTS_PATH` | This is the path of the test attachments zip. |
 | `BITRISE_XCODEBUILD_BUILD_LOG_PATH` | If `single_build` is set to false, the step runs `xcodebuild build` before the test, and exports the raw xcodebuild log. |
 | `BITRISE_XCODEBUILD_TEST_LOG_PATH` | The step exports the `xcodebuild test` command output log. |
-| `BITRISE_FLAKY_TEST_CASES` | A test case is considered flaky if it has failed at least once, but passed at least once as well. The list contains the test cases in the following format: ``` - TestClassName1.TestCaseName1 - TestClassName1.TestCaseName2 - TestClassName2.TestCaseName3 ``` |
+| `BITRISE_FLAKY_TEST_CASES` | A test case is considered flaky if it has failed at least once, but passed at least once as well.  The list contains the test cases in the following format: ``` - TestTarget_1.TestClass_1.TestMethod_1 - TestTarget_1.TestClass_1.TestMethod_2 - TestTarget_1.TestClass_2.TestMethod_1 - TestTarget_2.TestClass_1.TestMethod_1 ... ``` |
 </details>
 
 ## 🙋 Contributing

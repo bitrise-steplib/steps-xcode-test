@@ -15,6 +15,11 @@ import (
 	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
 )
 
+const (
+	flakyTestCasesEnvVarKey              = "BITRISE_FLAKY_TEST_CASES"
+	flakyTestCasesEnvVarSizeLimitInBytes = 1024
+)
+
 // Exporter ...
 type Exporter interface {
 	ExportXCResultBundle(deployDir, xcResultPath, scheme string)
@@ -247,14 +252,20 @@ func (e exporter) exportFlakyTestCases(flakyTestPlans []model3.TestPlan) error {
 	}
 
 	var flakyTestCasesMessage string
-	for _, flakyTestCase := range flakyTestCases {
-		flakyTestCasesMessage += fmt.Sprintf("- %s\n", flakyTestCase)
+	for i, flakyTestCase := range flakyTestCases {
+		flakyTestCasesMessageLine := fmt.Sprintf("- %s\n", flakyTestCase)
+
+		if len(flakyTestCasesMessage)+len(flakyTestCasesMessageLine) > 1024 {
+			e.logger.Warnf("%s env var size limit (1024 characters) exceeded. Skipping %d test cases.", flakyTestCasesEnvVarKey, len(flakyTestCases)-i)
+			break
+		}
+
+		flakyTestCasesMessage += flakyTestCasesMessageLine
 	}
 
-	if err := e.envRepository.Set("BITRISE_FLAKY_TEST_CASES", flakyTestCasesMessage); err != nil {
-		return fmt.Errorf("failed to export BITRISE_FLAKY_TEST_CASES: %w", err)
+	if err := e.envRepository.Set(flakyTestCasesEnvVarKey, flakyTestCasesMessage); err != nil {
+		return fmt.Errorf("failed to export %s: %w", flakyTestCasesEnvVarKey, err)
 	}
-	e.logger.Printf("Exported flaky test case: %s", flakyTestCasesMessage)
 
 	return nil
 }
