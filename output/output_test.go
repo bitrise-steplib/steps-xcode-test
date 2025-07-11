@@ -125,7 +125,7 @@ func Test_GivenFlakyTestCases_WhenExporting_ThenSetsEnvVariable(t *testing.T) {
 
 	// Then
 	assert.NoError(t, err)
-	mocks.envRepository.AssertCalled(t, "Set", "BITRISE_FLAKY_TEST_CASES", "- BullsEyeFlakyTests.testFlakyFeature()\n")
+	mocks.envRepository.AssertCalled(t, "Set", "BITRISE_FLAKY_TEST_CASES", "- BullsEyeFlakyTests.BullsEyeFlakyTests.testFlakyFeature()\n")
 }
 
 func Test_exporter_collectAndExportFlakyTestPlans(t *testing.T) {
@@ -187,7 +187,7 @@ func Test_exporter_collectAndExportFlakyTestPlans(t *testing.T) {
 					},
 				},
 			}}}}},
-			wantEnvValue: "- TestSuite1.TestCase1\n- TestSuite1.TestCase2\n- TestSuite2.TestCase1\n",
+			wantEnvValue: "- TestBundle.TestSuite1.TestCase1\n- TestBundle.TestSuite1.TestCase2\n- TestBundle.TestSuite2.TestCase1\n",
 		},
 		{
 			name: "Same flaky test exported once",
@@ -225,7 +225,7 @@ func Test_exporter_collectAndExportFlakyTestPlans(t *testing.T) {
 					},
 				},
 			}}},
-			wantEnvValue: "- TestSuite1.TestCase1\n",
+			wantEnvValue: "- TestBundle1.TestSuite1.TestCase1\n- TestBundle2.TestSuite1.TestCase1\n",
 		},
 	}
 	for _, tt := range tests {

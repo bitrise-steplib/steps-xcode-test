@@ -235,6 +235,8 @@ func (e exporter) exportFlakyTestCases(flakyTestPlans []model3.TestPlan) error {
 						testCaseName = fmt.Sprintf("%s.%s", testCase.ClassName, testCase.Name)
 					}
 
+					testCaseName = testBundle.Name + "." + testCaseName
+
 					if _, stored := storedFlakyTestCases[testCaseName]; !stored {
 						storedFlakyTestCases[testCaseName] = true
 						flakyTestCases = append(flakyTestCases, testCaseName)
