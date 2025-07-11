@@ -43,7 +43,8 @@ workflows:
     - _expose_xcode_version
     steps:
     - bitrise-run:
-        run_if: { { getenv "XCODE_MAJOR_VERSION" | ne "26" } }
+        run_if: |-
+          {{ getenv "XCODE_MAJOR_VERSION" | ne "26" }}
         inputs:
         - workflow_id: utility_test_test_plan
         - bitrise_config_path: ./e2e/bitrise.yml
