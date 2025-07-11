@@ -128,47 +128,7 @@ func Test_GivenFlakyTestCases_WhenExporting_ThenSetsEnvVariable(t *testing.T) {
 	mocks.envRepository.AssertCalled(t, "Set", "BITRISE_FLAKY_TEST_CASES", "- BullsEyeFlakyTests.testFlakyFeature()\n")
 }
 
-func Test_ExportFlakyTestCases(t *testing.T) {
-	commandFactory := new(commonMocks.CommandFactory)
-	envRepository := new(mocks.Repository)
-	envRepository.On("Set", mock.Anything, mock.Anything).Return(nil)
-
-	exporter := exporter{
-		envRepository:     envRepository,
-		logger:            log.NewLogger(),
-		outputExporter:    export.NewExporter(commandFactory),
-		testAddonExporter: nil,
-	}
-
-	testSummary := model3.TestSummary{
-		TestPlans: []model3.TestPlan{
-			{
-				TestBundles: []model3.TestBundle{
-					{
-						Name: "BullsEyeFlakyTests",
-						TestSuites: []model3.TestSuite{
-							{
-								Name: "BullsEyeFlakyTests",
-								TestCases: []model3.TestCaseWithRetries{
-									{
-										TestCase: model3.TestCase{
-											Name:      "testFlakyFeature()",
-											ClassName: "BullsEyeFlakyTests",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	exporter.collectFlakyTestPlans(testSummary)
-}
-
-func Test_exporter_collectFlakyTestPlans(t *testing.T) {
+func Test_exporter_collectAndExportFlakyTestPlans(t *testing.T) {
 
 	tests := []struct {
 		name         string
