@@ -315,3 +315,15 @@ outputs:
     title: xcodebuild test command log file path
     description: |-
       The step exports the `xcodebuild test` command output log.
+
+- BITRISE_FLAKY_TEST_CASES:
+  opts:
+    title: List of flaky test cases
+    description: |-
+      A test case is considered flaky if it has failed at least once, but passed at least once as well.
+      The list contains the test cases in the following format:
+      ```
+      - TestClassName1.TestCaseName1
+      - TestClassName1.TestCaseName2
+      - TestClassName2.TestCaseName3
+      ```
