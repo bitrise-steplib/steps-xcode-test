@@ -17,7 +17,6 @@ import (
 	"github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-io/go-xcode/v2/destination"
 	"github.com/bitrise-io/go-xcode/v2/simulator"
-	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
 	"github.com/bitrise-io/go-xcode/v2/xcodecommand"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
@@ -46,9 +45,6 @@ type Input struct {
 	LogFormatter      string `env:"log_formatter,opt[xcbeautify,xcodebuild,xcpretty]"`
 	XcprettyOptions   string `env:"xcpretty_options"`
 	XcbeautifyOptions string `env:"xcbeautify_options"`
-
-	// Caching
-	CacheLevel string `env:"cache_level,opt[none,swift_packages]"`
 
 	// Debugging
 	VerboseLog                  bool   `env:"verbose_log,opt[yes,no]"`
@@ -124,20 +120,18 @@ type XcodeTestRunner struct {
 	commandFactory   command.Factory
 	xcodebuild       xcodebuild.Xcodebuild
 	simulatorManager simulator.Manager
-	cache            cache.SwiftPackageCache
 	outputExporter   output.Exporter
 	pathModifier     pathutil.PathModifier
 	pathProvider     pathutil.PathProvider
 	utils            Utils
 }
 
-func NewXcodeTestRunner(logger log.Logger, commandFactory command.Factory, xcodebuild xcodebuild.Xcodebuild, simulatorManager simulator.Manager, cache cache.SwiftPackageCache, outputExporter output.Exporter, pathModifier pathutil.PathModifier, pathProvider pathutil.PathProvider, utils Utils) XcodeTestRunner {
+func NewXcodeTestRunner(logger log.Logger, commandFactory command.Factory, xcodebuild xcodebuild.Xcodebuild, simulatorManager simulator.Manager, outputExporter output.Exporter, pathModifier pathutil.PathModifier, pathProvider pathutil.PathProvider, utils Utils) XcodeTestRunner {
 	return XcodeTestRunner{
 		logger:           logger,
 		commandFactory:   commandFactory,
 		xcodebuild:       xcodebuild,
 		simulatorManager: simulatorManager,
-		cache:            cache,
 		outputExporter:   outputExporter,
 		pathModifier:     pathModifier,
 		pathProvider:     pathProvider,
@@ -252,13 +246,6 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 		s.logger.Warnf("Xcode Test command exit code: %d", testExitCode)
 		s.logger.Errorf("Xcode Test command failed: %s", testErr)
 		return result, testErr
-	}
-
-	// Cache swift PM
-	if cfg.CacheLevel == "swift_packages" {
-		if err := s.cache.CollectSwiftPackages(cfg.ProjectPath); err != nil {
-			s.logger.Warnf("Failed to mark swift packages for caching: %s", err)
-		}
 	}
 
 	s.logger.Println()
@@ -404,12 +391,7 @@ func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 	}
 	xcresultPath := path.Join(tempDir, fmt.Sprintf("Test-%s.xcresult", cfg.Scheme))
 
-	swiftPackagesPath, err := s.cache.SwiftPackagesPath(cfg.ProjectPath)
-	if err != nil {
-		return result, -1, fmt.Errorf("failed to get Swift Packages path: %w", err)
-	}
-
-	testParams := s.utils.CreateTestParams(cfg, xcresultPath, swiftPackagesPath)
+	testParams := s.utils.CreateTestParams(cfg, xcresultPath)
 
 	testLog, exitCode, testErr := s.xcodebuild.RunTest(testParams)
 	result.XcresultPath = xcresultPath

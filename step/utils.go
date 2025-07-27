@@ -13,7 +13,7 @@ import (
 type Utils interface {
 	PrintLastLinesOfXcodebuildTestLog(rawXcodebuildOutput string, isRunSuccess bool)
 	CreateConfig(input Input, projectPath string, sim destination.Device, additionalOptions, additionalLogFormatterOptions []string) Config
-	CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath string) xcodebuild.TestRunParams
+	CreateTestParams(cfg Config, xcresultPath string) xcodebuild.TestRunParams
 }
 
 type utils struct {
@@ -72,8 +72,6 @@ func (u utils) CreateConfig(input Input,
 		LogFormatter:        input.LogFormatter,
 		LogFormatterOptions: additionalLogFormatterOptions,
 
-		CacheLevel: input.CacheLevel,
-
 		CollectSimulatorDiagnostics: exportCondition(input.CollectSimulatorDiagnostics),
 		HeadlessMode:                input.HeadlessMode,
 
@@ -81,7 +79,7 @@ func (u utils) CreateConfig(input Input,
 	}
 }
 
-func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath string) xcodebuild.TestRunParams {
+func (u utils) CreateTestParams(cfg Config, xcresultPath string) xcodebuild.TestRunParams {
 	testParams := xcodebuild.TestParams{
 		ProjectPath:                    cfg.ProjectPath,
 		Scheme:                         cfg.Scheme,
@@ -100,7 +98,5 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 		TestParams:                         testParams,
 		LogFormatterOptions:                cfg.LogFormatterOptions,
 		RetryOnTestRunnerError:             true,
-		RetryOnSwiftPackageResolutionError: true,
-		SwiftPackagesPath:                  swiftPackagesPath,
 	}
 }
