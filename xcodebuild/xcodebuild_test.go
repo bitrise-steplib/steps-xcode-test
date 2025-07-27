@@ -124,7 +124,7 @@ func Test_GivenTestRunError_WhenOneOfTheNamedErrorsHappened_ThenActsBasedOnTheCo
 	}
 
 	for _, test := range tests {
-		t.Logf(test.name)
+		t.Log(test.name)
 
 		for _, errorString := range test.errors {
 			t.Logf("Testing: %s", errorString)
@@ -152,7 +152,7 @@ func Test_GivenTestRunError_WhenAnUnknownErrorHappened_ThenActsBasedOnTheConfig(
 	}
 
 	for _, test := range tests {
-		t.Logf(test.name)
+		t.Log(test.name)
 
 		runRunnerErrorTests(t, test.numberOfCalls, test.parameters(), xcodeOutput)
 	}
