@@ -177,6 +177,7 @@ func Test_GivenStep_WhenExport_ThenExportsAllTestArtifacts(t *testing.T) {
 
 	mocks.outputExporter.On("ExportTestRunResult", mock.Anything)
 	mocks.outputExporter.On("ExportXCResultBundle", result.DeployDir, result.XcresultPath, result.Scheme)
+	mocks.outputExporter.On("ExportFlakyTestCases", result.XcresultPath, false).Return(nil)
 	mocks.outputExporter.On("ExportXcodebuildBuildLog", result.DeployDir, result.XcodebuildBuildLog).Return(nil)
 	mocks.outputExporter.On("ExportXcodebuildTestLog", result.DeployDir, result.XcodebuildTestLog).Return(nil)
 	mocks.outputExporter.On("ExportSimulatorDiagnostics", result.DeployDir, result.SimulatorDiagnosticsPath, diagnosticsName).Return(nil)
@@ -188,6 +189,7 @@ func Test_GivenStep_WhenExport_ThenExportsAllTestArtifacts(t *testing.T) {
 	assert.NoError(t, err)
 
 	mocks.outputExporter.AssertCalled(t, "ExportXCResultBundle", result.DeployDir, result.XcresultPath, result.Scheme)
+	mocks.outputExporter.AssertCalled(t, "ExportFlakyTestCases", result.XcresultPath, false)
 	mocks.outputExporter.AssertCalled(t, "ExportXcodebuildBuildLog", result.DeployDir, result.XcodebuildBuildLog)
 	mocks.outputExporter.AssertCalled(t, "ExportXcodebuildTestLog", result.DeployDir, result.XcodebuildTestLog)
 	mocks.outputExporter.AssertCalled(t, "ExportSimulatorDiagnostics", result.DeployDir, result.SimulatorDiagnosticsPath, diagnosticsName)
@@ -215,8 +217,8 @@ func defaultEnvValues() map[string]string {
 
 func defaultSimulator() destination.Device {
 	return destination.Device{
-		Name:   "iPhone 8 Plus",
-		UDID:     "E8C36A8B-543A-4477-BB91-699C0A9EA352",
+		Name:  "iPhone 8 Plus",
+		UDID:  "E8C36A8B-543A-4477-BB91-699C0A9EA352",
 		State: "Shutdown",
 	}
 }

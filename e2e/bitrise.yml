@@ -36,13 +36,27 @@ workflows:
 
   # Requires Xcode 11+
   test_test_plan:
+    description: |-
+        This test fails on Xcode 26 with: 'BullsEye (33951) encountered an error (Early unexpected exit, operation never finished bootstrapping - no restart will be attempted. (Underlying Error: Crash: BullsEye (33951) <external symbol>))' error.
+        Example build: https://app.bitrise.io/build/c71f9c3a-e164-423f-8779-d4c8db69827a
+    before_run:
+    - _expose_xcode_version
+    steps:
+    - bitrise-run:
+        run_if: |-
+          {{ getenv "XCODE_MAJOR_VERSION" | ne "26" }}
+        inputs:
+        - workflow_id: utility_test_test_plan
+        - bitrise_config_path: ./e2e/bitrise.yml
+
+  utility_test_test_plan:
     envs:
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: UnitTests
-    - DESTINATION: platform=iOS Simulator,name=iPhone 12,OS=latest
+    - DESTINATION: platform=iOS Simulator,name=Bitrise iOS default,OS=latest
     - LOG_FORMATTER: xcbeautify
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: swift_packages
@@ -263,3 +277,25 @@ workflows:
                 echo "BITRISE_CACHE_INCLUDE_PATHS is empty"
                 exit 1
             fi
+
+  _expose_xcode_version:
+    steps:
+    - script:
+        title: Expose Xcode major version
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+            if [[ ! -z "$XCODE_MAJOR_VERSION" ]]; then
+              echo "Xcode major version already exposed: $XCODE_MAJOR_VERSION"
+              exit 0
+            fi
+            version=`xcodebuild -version`
+            regex="Xcode ([0-9]*)."
+            if [[ ! $version =~ $regex ]]; then
+              echo "Failed to determine Xcode major version"
+              exit 1
+            fi
+            xcode_major_version=${BASH_REMATCH[1]}
+            echo "Xcode major version: $xcode_major_version"
+            envman add --key XCODE_MAJOR_VERSION --value $xcode_major_version
