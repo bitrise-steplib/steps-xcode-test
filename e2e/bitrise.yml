@@ -17,6 +17,61 @@ workflows:
     - _run
     - _check_outputs
 
+  test_rosetta_simulator:
+    description: Rosetta Simulator requires Xcode 14.3+.
+    steps:
+    - bitrise-run:
+        run_if: |-
+          {{ or (enveq "XCODE_MAJOR_VERSION" "15") (not .IsCI) }}
+        inputs:
+        - workflow_id: utility_test_rosetta_simulator
+        - bitrise_config_path: ./e2e/bitrise.yml
+
+  utility_test_rosetta_simulator:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/Bitrise-iOS-x86-Framework-Sample.git
+    - TEST_APP_BRANCH: main
+    - BITRISE_PROJECT_PATH: Bitrise-iOS-x86-Framework-Sample.xcworkspace
+    - BITRISE_SCHEME: Bitrise-iOS-x86-Framework-Sample
+    - TEST_PLAN: ""
+    - DESTINATION: platform=iOS Simulator,name=iPhone 11,OS=latest,arch=x86_64
+    - LOG_FORMATTER: xcbeautify
+    - RETRY_ON_FAILURE: "no"
+    - EXPECT_TEST_FAILURE: "false"
+    - CACHE_LEVEL: none
+    - COLLECT_SIM_DIAGNOSTICS: never
+    after_run:
+    - _run
+    - _check_outputs
+
+  test_rosetta_simulator_failure:
+    description: Rosetta Simulator requires Xcode 14.3+.
+    steps:
+    - bitrise-run:
+        run_if: |-
+          {{ or (enveq "IS_LATEST_STACK_XCODE" "true") (not .IsCI) }}
+        is_skippable: true
+        inputs:
+        - workflow_id: utility_test_rosetta_simulator_failure
+        - bitrise_config_path: ./e2e/bitrise.yml
+
+  utility_test_rosetta_simulator_failure:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/Bitrise-iOS-x86-Framework-Sample.git
+    - TEST_APP_BRANCH: main
+    - BITRISE_PROJECT_PATH: Bitrise-iOS-x86-Framework-Sample.xcworkspace
+    - BITRISE_SCHEME: Bitrise-iOS-x86-Framework-Sample
+    - TEST_PLAN: ""
+    - DESTINATION: platform=iOS Simulator,name=iPhone 11,OS=latest
+    - LOG_FORMATTER: xcbeautify
+    - RETRY_ON_FAILURE: "no"
+    - EXPECT_TEST_FAILURE: "true"
+    - CACHE_LEVEL: none
+    - COLLECT_SIM_DIAGNOSTICS: never
+    after_run:
+    - _run
+    - _check_outputs
+
   test_objc_xcpretty:
     envs:
     - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
@@ -95,6 +150,50 @@ workflows:
             mkdir -p ./_tmp2
             echo "A=a" > ./_tmp2/p.xcconfig
 
+  test_visionOS:
+    description: visionOS requires Xcode >= 15.2
+    before_run:
+    - _expose_xcode_version
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+            if [[ "$XCODE_MAJOR_VERSION" -lt 16 ]]; then
+              echo "This test case requires Xcode >= 16.0, skipping..."
+              exit 0
+            fi
+            if [[ "$XCODE_MINOR_VERSION" -lt 0 ]]; then
+              echo "This test case requires Xcode >= 16.0, skipping..."
+              exit 0
+            fi
+            envman add --key XCODE_VERSION_AT_LEAST_16_0 --value true
+    - bitrise-run:
+        run_if: |-
+          {{ or (enveq "XCODE_VERSION_AT_LEAST_16_0" "true") (not .IsCI) }}
+        inputs:
+        - workflow_id: utility_test_visionOS
+        - bitrise_config_path: ./e2e/bitrise.yml
+
+  utility_test_visionOS:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-visionOS-HelloWorld.git
+    - TEST_APP_BRANCH: main
+    - BITRISE_PROJECT_PATH: World.xcodeproj
+    - BITRISE_SCHEME: World
+    - TEST_PLAN: ""
+    - DESTINATION: platform=visionOS Simulator,name=Apple Vision Pro
+    - LOG_FORMATTER: xcbeautify
+    - RETRY_ON_FAILURE: "no"
+    - EXPECT_TEST_FAILURE: "false"
+    - CACHE_LEVEL: none
+    - COLLECT_SIM_DIAGNOSTICS: never
+    after_run:
+    - _run
+    - _check_outputs
+    - _check_exported_artifacts
+
   _run:
     before_run:
     - _clear_outputs
@@ -156,9 +255,39 @@ workflows:
         - log_formatter: $LOG_FORMATTER
         - perform_clean_action: "yes"
         - xcodebuild_options: -verbose
-        - verbose_log: "yes"
+
+        - verbose_log: "no"
         - cache_level: $CACHE_LEVEL
         - collect_simulator_diagnostics: $COLLECT_SIM_DIAGNOSTICS
+
+  _expose_xcode_version:
+    steps:
+    - script:
+        title: Expose Xcode major version
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -e
+
+            if [[ ! -z "$XCODE_MAJOR_VERSION" ]]; then
+              echo "Xcode major version already exposed: $XCODE_MAJOR_VERSION"
+              exit 0
+            fi
+
+            version=`xcodebuild -version`
+            regex="Xcode ([0-9]*).([0-9]*)"
+            if [[ ! $version =~ $regex ]]; then
+              echo "Failed to determine Xcode major version"
+              exit 1
+            fi
+
+            xcode_major_version=${BASH_REMATCH[1]}
+            echo "Xcode major version: $xcode_major_version"
+            envman add --key XCODE_MAJOR_VERSION --value $xcode_major_version
+
+            xcode_minor_version=${BASH_REMATCH[2]}
+            echo "Xcode minor version: $xcode_minor_version"
+            envman add --key XCODE_MINOR_VERSION --value $xcode_minor_version
 
   _clear_outputs:
     steps:
