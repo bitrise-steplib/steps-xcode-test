@@ -267,7 +267,7 @@ func Test_exporter_collectAndExportFlakyTestPlans(t *testing.T) {
 				},
 			}}},
 			wantEnvValue: "- TestBundle1.TestSuite1.TestCase1\n",
-			wantLogArgs:  []interface{}{"%s env var size limit (1024 characters) exceeded. Skipping %d test cases.", "BITRISE_FLAKY_TEST_CASES", 1},
+			wantLogArgs:  []interface{}{"%s env var size limit (%d characters) exceeded. Skipping %d test cases.", "BITRISE_FLAKY_TEST_CASES", flakyTestCasesEnvVarSizeLimitInBytes, 1},
 		},
 	}
 	for _, tt := range tests {
@@ -276,7 +276,7 @@ func Test_exporter_collectAndExportFlakyTestPlans(t *testing.T) {
 			envRepository.On("Set", mock.Anything, mock.Anything).Return(nil)
 
 			logger := new(mocks.Logger)
-			logger.On("Warnf", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			logger.On("Warnf", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 			exporter := exporter{
 				envRepository:     envRepository,
