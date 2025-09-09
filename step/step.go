@@ -52,7 +52,7 @@ type Input struct {
 
 	// Debugging
 	VerboseLog                  bool   `env:"verbose_log,opt[yes,no]"`
-	SkipTests                   string `env:"skip_tests"`
+	SkipTesting                 string `env:"skip_testing"`
 	CollectSimulatorDiagnostics string `env:"collect_simulator_diagnostics,opt[always,on_failure,never]"`
 	HeadlessMode                bool   `env:"headless_mode,opt[yes,no]"`
 
@@ -96,7 +96,7 @@ type Config struct {
 
 	CacheLevel string
 
-	SkipTests                   []string
+	SkipTesting                 []string
 	CollectSimulatorDiagnostics exportCondition
 	HeadlessMode                bool
 
@@ -199,19 +199,19 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 		return Config{}, fmt.Errorf("`-xcconfig` option found in 'Additional options for the xcodebuild command' (xcodebuild_options), please clear 'Build settings (xcconfig)' (`xcconfig_content`) input as only one can be set")
 	}
 
-	var skipTests []string
-	skipTestsInputValue := strings.TrimSpace(input.SkipTests)
-	if skipTestsInputValue != "" {
-		split := strings.Split(skipTestsInputValue, "\n")
+	var skipTesting []string
+	skipTestingInputValue := strings.TrimSpace(input.SkipTesting)
+	if skipTestingInputValue != "" {
+		split := strings.Split(skipTestingInputValue, "\n")
 		for _, test := range split {
 			test = strings.TrimSpace(test)
 			if test != "" {
-				skipTests = append(skipTests, test)
+				skipTesting = append(skipTesting, test)
 			}
 		}
 	}
 
-	return s.utils.CreateConfig(input, projectPath, sim, additionalOptions, additionalLogFormatterOptions, skipTests), nil
+	return s.utils.CreateConfig(input, projectPath, sim, additionalOptions, additionalLogFormatterOptions, skipTesting), nil
 }
 
 func (s XcodeTestRunner) InstallDeps() {

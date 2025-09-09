@@ -12,7 +12,7 @@ import (
 
 type Utils interface {
 	PrintLastLinesOfXcodebuildTestLog(rawXcodebuildOutput string, isRunSuccess bool)
-	CreateConfig(input Input, projectPath string, sim destination.Device, additionalOptions, additionalLogFormatterOptions []string, skipTests []string) Config
+	CreateConfig(input Input, projectPath string, sim destination.Device, additionalOptions, additionalLogFormatterOptions []string, skipTesting []string) Config
 	CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath string) xcodebuild.TestRunParams
 }
 
@@ -52,7 +52,7 @@ that will attach the file to your build as an artifact!`))
 func (u utils) CreateConfig(input Input,
 	projectPath string,
 	sim destination.Device,
-	additionalOptions, additionalLogFormatterOptions []string, skipTests []string) Config {
+	additionalOptions, additionalLogFormatterOptions []string, skipTesting []string) Config {
 	return Config{
 		ProjectPath: projectPath,
 		Scheme:      input.Scheme,
@@ -74,7 +74,7 @@ func (u utils) CreateConfig(input Input,
 
 		CacheLevel: input.CacheLevel,
 
-		SkipTests:                   skipTests,
+		SkipTesting:                 skipTesting,
 		CollectSimulatorDiagnostics: exportCondition(input.CollectSimulatorDiagnostics),
 		HeadlessMode:                input.HeadlessMode,
 
@@ -94,7 +94,7 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 		RelaunchTestsForEachRepetition: cfg.RelaunchTestForEachRepetition,
 		XCConfigContent:                cfg.XCConfigContent,
 		PerformCleanAction:             cfg.PerformCleanAction,
-		SkipTests:                      cfg.SkipTests,
+		SkipTesting:                    cfg.SkipTesting,
 		AdditionalOptions:              cfg.XcodebuildOptions,
 	}
 

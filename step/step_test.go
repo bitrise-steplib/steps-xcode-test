@@ -114,12 +114,12 @@ func Test_GivenConfigParser_WhenParsesConfig(t *testing.T) {
 			name: "skip_tests",
 			envsFunc: func() map[string]string {
 				envValues := defaultEnvValues()
-				envValues["skip_tests"] = "Target1/Class1\n  Target2/Class2/Method1\n\nTarget2/Class2/Method2"
+				envValues["skip_testing"] = "Target1/Class1\n  Target2/Class2/Method1\n\nTarget2/Class2/Method2"
 				return envValues
 			},
 			expectedConfig: func() Config {
 				config := defaultConfigs()
-				config.SkipTests = []string{"Target1/Class1", "Target2/Class2/Method1", "Target2/Class2/Method2"}
+				config.SkipTesting = []string{"Target1/Class1", "Target2/Class2/Method1", "Target2/Class2/Method2"}
 				return config
 			},
 		},

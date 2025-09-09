@@ -52,7 +52,7 @@ type TestParams struct {
 	RelaunchTestsForEachRepetition bool
 	XCConfigContent                string
 	PerformCleanAction             bool
-	SkipTests                      []string
+	SkipTesting                    []string
 	AdditionalOptions              []string
 }
 
@@ -100,7 +100,7 @@ func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, erro
 		xcodebuildArgs = append(xcodebuildArgs, "-xcconfig", xcconfigPath)
 	}
 
-	for _, test := range params.SkipTests {
+	for _, test := range params.SkipTesting {
 		xcodebuildArgs = append(xcodebuildArgs, "-skip-testing", test)
 	}
 
