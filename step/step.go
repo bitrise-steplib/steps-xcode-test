@@ -200,10 +200,14 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 	}
 
 	var skipTests []string
-	if strings.TrimSpace(input.SkipTests) != "" {
-		skipTests, err = shellquote.Split(input.SkipTests)
-		if err != nil {
-			return Config{}, fmt.Errorf("provided 'Skip Tests' (skip_tests) (%s) are not valid CLI parameters: %w", input.SkipTests, err)
+	skipTestsInputValue := strings.TrimSpace(input.SkipTests)
+	if skipTestsInputValue != "" {
+		split := strings.Split(skipTestsInputValue, "\n")
+		for _, test := range split {
+			test = strings.TrimSpace(test)
+			if test != "" {
+				skipTests = append(skipTests, test)
+			}
 		}
 	}
 

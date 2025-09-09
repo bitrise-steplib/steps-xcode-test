@@ -70,6 +70,15 @@ func Test_GivenXcodebuild_WhenInvoked_ThenUsesCorrectArguments(t *testing.T) {
 				return parameters
 			},
 		},
+		{
+			name: "Skip tests",
+			input: func() TestRunParams {
+				parameters := runParameters()
+				parameters.TestParams.SkipTests = []string{"TestTarget1/TestClass1", "TestTarget2"}
+
+				return parameters
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -300,6 +309,10 @@ func argumentsFromRunParameters(parameters TestRunParams) []string {
 
 	if parameters.TestParams.XCConfigContent != "" {
 		arguments = append(arguments, "-xcconfig", xcconfigPath)
+	}
+
+	for _, test := range parameters.TestParams.SkipTests {
+		arguments = append(arguments, "-skip-testing", test)
 	}
 
 	arguments = append(arguments, parameters.TestParams.AdditionalOptions...)
