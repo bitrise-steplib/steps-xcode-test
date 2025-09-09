@@ -88,48 +88,60 @@ func Test_GivenStep_WhenInstallXcpretty_ThenInstallIt(t *testing.T) {
 	xcodeRunner.AssertCalled(t, "CheckInstall")
 }
 
-func Test_GivenLogFormatterIsXcbeautify_WhenParsesConfig_ThenAdditionalOptionsWork(t *testing.T) {
-	// Given
-	envValues := defaultEnvValues()
-	envValues["log_formatter"] = "xcbeautify"
-	envValues["xcbeautify_options"] = "'--is-ci' '-q'"
+func Test_GivenConfigParser_WhenParsesConfig(t *testing.T) {
 
-	configParser, mocks := createConfigParser(t, envValues)
-
-	path := strings.TrimPrefix(envValues["project_path"], ".")
-	mocks.pathModifier.On("AbsPath", mock.Anything).Return(path, nil)
-	device := defaultSimulator()
-	mocks.deviceFinder.On("FindDevice", mock.Anything, mock.Anything).Return(device, nil)
-
-	// When
-	actualConfig, err := configParser.ProcessConfig()
-
-	// Then
-	require.NoError(t, err)
-
-	expectedConfig := Config{
-		ProjectPath: "/_tmp/BullsEye.xcworkspace",
-		Scheme:      "BullsEye",
-
-		Simulator:         device,
-		IsSimulatorBooted: false,
-
-		TestRepetitionMode:            "none",
-		MaximumTestRepetitions:        3,
-		RelaunchTestForEachRepetition: false,
-
-		XcodebuildOptions: []string{},
-
-		LogFormatter:        "xcbeautify",
-		LogFormatterOptions: []string{"--is-ci", "-q"},
-		PerformCleanAction:  false,
-
-		CacheLevel: "swift_packages",
-
-		CollectSimulatorDiagnostics: never,
-		HeadlessMode:                true,
+	tests := []struct {
+		name           string
+		envsFunc       func() map[string]string
+		expectedConfig func() Config
+	}{
+		{
+			name: "xcbeautify_options",
+			envsFunc: func() map[string]string {
+				envValues := defaultEnvValues()
+				envValues["log_formatter"] = "xcbeautify"
+				envValues["xcbeautify_options"] = "'--is-ci' '-q'"
+				return envValues
+			},
+			expectedConfig: func() Config {
+				config := defaultConfigs()
+				config.LogFormatter = "xcbeautify"
+				config.LogFormatterOptions = []string{"--is-ci", "-q"}
+				return config
+			},
+		},
+		{
+			name: "skip_tests",
+			envsFunc: func() map[string]string {
+				envValues := defaultEnvValues()
+				envValues["skip_tests"] = "Target1/Class1\n  Target2/Class2/Method1\n\nTarget2/Class2/Method2"
+				return envValues
+			},
+			expectedConfig: func() Config {
+				config := defaultConfigs()
+				config.SkipTests = []string{"Target1/Class1", "Target2/Class2/Method1", "Target2/Class2/Method2"}
+				return config
+			},
+		},
 	}
-	require.Equal(t, expectedConfig, actualConfig)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			envValues := tt.envsFunc()
+			configParser, mocks := createConfigParser(t, envValues)
+			path := strings.TrimPrefix(envValues["project_path"], ".")
+			mocks.pathModifier.On("AbsPath", mock.Anything).Return(path, nil)
+			device := defaultSimulator()
+			mocks.deviceFinder.On("FindDevice", mock.Anything, mock.Anything).Return(device, nil)
+
+			// When
+			actualConfig, err := configParser.ProcessConfig()
+
+			// Then
+			require.NoError(t, err)
+			require.Equal(t, tt.expectedConfig(), actualConfig)
+		})
+	}
 }
 
 func Test_GivenStep_WhenExportsTestResult_ThenSetsCorrectly(t *testing.T) {
@@ -215,6 +227,30 @@ func defaultEnvValues() map[string]string {
 	}
 }
 
+func defaultConfigs() Config {
+	return Config{
+		ProjectPath: "/_tmp/BullsEye.xcworkspace",
+		Scheme:      "BullsEye",
+
+		Simulator:         defaultSimulator(),
+		IsSimulatorBooted: false,
+
+		TestRepetitionMode:            "none",
+		MaximumTestRepetitions:        3,
+		RelaunchTestForEachRepetition: false,
+
+		XcodebuildOptions: []string{},
+
+		LogFormatter:        "xcpretty",
+		LogFormatterOptions: []string{},
+		PerformCleanAction:  false,
+
+		CacheLevel: "swift_packages",
+
+		CollectSimulatorDiagnostics: never,
+		HeadlessMode:                true,
+	}
+}
 func defaultSimulator() destination.Device {
 	return destination.Device{
 		Name:  "iPhone 8 Plus",

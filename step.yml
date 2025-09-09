@@ -261,7 +261,7 @@ inputs:
     description: |-
       Constrains a test action to skip testing a specified identifier, but including all other identifiers.
 
-      Test identifiers have the form TestTarget[/TestClass[/TestMethod]]. 
+      Test identifiers have the form TestTarget[/TestClass[/TestMethod]].
       The TestTarget component of an identifier is the name of a unit or UI testing bundle as shown in the Test Navigator.
       You can specify multiple identifiers, each separated by a newline.
 
