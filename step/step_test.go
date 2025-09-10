@@ -20,6 +20,7 @@ import (
 type configParserMocks struct {
 	deviceFinder *mocks.DeviceFinder
 	pathModifier *mocks.PathModifier
+	pathChecker  *mocks.PathChecker
 }
 
 type stepMocks struct {
@@ -91,9 +92,10 @@ func Test_GivenStep_WhenInstallXcpretty_ThenInstallIt(t *testing.T) {
 func Test_GivenConfigParser_WhenParsesConfig(t *testing.T) {
 
 	tests := []struct {
-		name           string
-		envsFunc       func() map[string]string
-		expectedConfig func() Config
+		name            string
+		envsFunc        func() map[string]string
+		expectedConfig  func() Config
+		setExpectations func(mocks configParserMocks)
 	}{
 		{
 			name: "xcbeautify_options",
@@ -122,6 +124,11 @@ func Test_GivenConfigParser_WhenParsesConfig(t *testing.T) {
 				config.SkipTesting = []string{"Target1/Class1", "Target2/Class2/Method1", "Target2/Class2/Method2"}
 				return config
 			},
+			setExpectations: func(mocks configParserMocks) {
+				// IsPathExists checks if config.SkipTesting value is a path or a raw value.
+				// In this test case, it's a raw value.
+				mocks.pathChecker.On("IsPathExists", mock.Anything).Return(false, nil)
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -133,6 +140,9 @@ func Test_GivenConfigParser_WhenParsesConfig(t *testing.T) {
 			mocks.pathModifier.On("AbsPath", mock.Anything).Return(path, nil)
 			device := defaultSimulator()
 			mocks.deviceFinder.On("FindDevice", mock.Anything, mock.Anything).Return(device, nil)
+			if tt.setExpectations != nil {
+				tt.setExpectations(mocks)
+			}
 
 			// When
 			actualConfig, err := configParser.ProcessConfig()
@@ -286,12 +296,14 @@ func createConfigParser(t *testing.T, envValues map[string]string) (XcodeTestCon
 	inputParser := stepconf.NewInputParser(envRepository)
 	deviceFinder := mocks.NewDeviceFinder(t)
 	pathModifier := mocks.NewPathModifier(t)
+	pathChecker := mocks.NewPathChecker(t)
 	utils := NewUtils(logger)
 
-	configParser := NewXcodeTestConfigParser(inputParser, logger, deviceFinder, pathModifier, utils)
+	configParser := NewXcodeTestConfigParser(inputParser, logger, deviceFinder, pathModifier, pathChecker, utils)
 	mocks := configParserMocks{
 		deviceFinder: deviceFinder,
 		pathModifier: pathModifier,
+		pathChecker:  pathChecker,
 	}
 
 	return configParser, mocks

@@ -3,6 +3,7 @@ package step
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -108,15 +109,17 @@ type XcodeTestConfigParser struct {
 	inputParser  stepconf.InputParser
 	deviceFinder destination.DeviceFinder
 	pathModifier pathutil.PathModifier
+	pathChecker  pathutil.PathChecker
 	utils        Utils
 }
 
-func NewXcodeTestConfigParser(inputParser stepconf.InputParser, logger log.Logger, deviceFinder destination.DeviceFinder, pathModifier pathutil.PathModifier, utils Utils) XcodeTestConfigParser {
+func NewXcodeTestConfigParser(inputParser stepconf.InputParser, logger log.Logger, deviceFinder destination.DeviceFinder, pathModifier pathutil.PathModifier, pathChecker pathutil.PathChecker, utils Utils) XcodeTestConfigParser {
 	return XcodeTestConfigParser{
 		logger:       logger,
 		inputParser:  inputParser,
 		deviceFinder: deviceFinder,
 		pathModifier: pathModifier,
+		pathChecker:  pathChecker,
 		utils:        utils,
 	}
 }
@@ -199,19 +202,40 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 		return Config{}, fmt.Errorf("`-xcconfig` option found in 'Additional options for the xcodebuild command' (xcodebuild_options), please clear 'Build settings (xcconfig)' (`xcconfig_content`) input as only one can be set")
 	}
 
-	var skipTesting []string
-	skipTestingInputValue := strings.TrimSpace(input.SkipTesting)
-	if skipTestingInputValue != "" {
-		split := strings.Split(skipTestingInputValue, "\n")
-		for _, test := range split {
-			test = strings.TrimSpace(test)
-			if test != "" {
-				skipTesting = append(skipTesting, test)
-			}
-		}
+	skipTesting, err := s.processTestConfiguration(input.SkipTesting)
+	if err != nil {
+		return Config{}, fmt.Errorf("failed to process test configuration: %w", err)
 	}
 
 	return s.utils.CreateConfig(input, projectPath, sim, additionalOptions, additionalLogFormatterOptions, skipTesting), nil
+}
+
+func (s XcodeTestConfigParser) processTestConfiguration(input string) ([]string, error) {
+	if input == "" {
+		return nil, nil
+	}
+
+	exists, err := s.pathChecker.IsPathExists(input)
+	if err != nil {
+		return nil, err
+	}
+
+	var contents string
+
+	if exists {
+		bytes, err := os.ReadFile(input)
+		if err != nil {
+			return nil, err
+		}
+
+		contents = string(bytes)
+	} else {
+		contents = input
+	}
+
+	identifiers := strings.Split(contents, "\n")
+
+	return removeEmptyLines(identifiers), nil
 }
 
 func (s XcodeTestRunner) InstallDeps() {
@@ -464,4 +488,15 @@ func (s XcodeTestRunner) teardownSimulator(simulatorID string, simulatorDebug ex
 	}
 
 	return simulatorDiagnosticsPath
+}
+
+func removeEmptyLines(lines []string) []string {
+	var result []string
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			result = append(result, line)
+		}
+	}
+	return result
 }

@@ -2,6 +2,7 @@ package xcodebuild
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -312,7 +313,7 @@ func argumentsFromRunParameters(parameters TestRunParams) []string {
 	}
 
 	for _, test := range parameters.TestParams.SkipTesting {
-		arguments = append(arguments, "-skip-testing", test)
+		arguments = append(arguments, fmt.Sprintf("-skip-testing:'%s'", test))
 	}
 
 	arguments = append(arguments, parameters.TestParams.AdditionalOptions...)
