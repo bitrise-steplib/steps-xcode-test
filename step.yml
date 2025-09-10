@@ -255,7 +255,7 @@ inputs:
 
 - skip_testing:
   opts:
-    category: Test Selection
+    category: Debugging
     title: Test identifier list to skip
     summary: The step will skip the listed tests during execution.
     description: |-
