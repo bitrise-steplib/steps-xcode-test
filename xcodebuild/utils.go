@@ -101,7 +101,7 @@ func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, erro
 	}
 
 	for _, test := range params.SkipTesting {
-		xcodebuildArgs = append(xcodebuildArgs, fmt.Sprintf("-skip-testing:'%s'", test))
+		xcodebuildArgs = append(xcodebuildArgs, fmt.Sprintf("-skip-testing:%s", test))
 	}
 
 	xcodebuildArgs = append(xcodebuildArgs, params.AdditionalOptions...)
