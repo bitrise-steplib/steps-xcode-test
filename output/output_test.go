@@ -3,12 +3,15 @@ package output
 import (
 	"os"
 	"path/filepath"
+	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/bitrise-io/go-steputils/v2/export"
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3/model3"
 	commonMocks "github.com/bitrise-steplib/steps-xcode-test/mocks"
 	"github.com/bitrise-steplib/steps-xcode-test/output/mocks"
 	"github.com/stretchr/testify/assert"
@@ -107,6 +110,202 @@ func Test_GivenSimulatorDiagnostics_WhenExporting_ThenCopiesItAndSetsEnvVariable
 	// Then
 	assert.NoError(t, err)
 	assert.True(t, isPathExists(filepath.Join(tempDir, name+".zip")))
+}
+
+func Test_GivenFlakyTestCases_WhenExporting_ThenSetsEnvVariable(t *testing.T) {
+	// Given
+	_, b, _, _ := runtime.Caller(0)
+	outputPackageDir := filepath.Dir(b)
+	testDataDir := filepath.Join(outputPackageDir, "testdata")
+	xcresultPath := filepath.Join(testDataDir, "xcresult3-flaky-with-rerun.xcresult")
+
+	exporter, mocks := createSutAndMocks()
+
+	// When
+	err := exporter.ExportFlakyTestCases(xcresultPath, false)
+
+	// Then
+	assert.NoError(t, err)
+	mocks.envRepository.AssertCalled(t, "Set", "BITRISE_FLAKY_TEST_CASES", "- BullsEyeFlakyTests.BullsEyeFlakyTests.testFlakyFeature()\n")
+}
+
+func Test_exporter_collectAndExportFlakyTestPlans(t *testing.T) {
+	longTestCaseName := strings.Repeat("a", flakyTestCasesEnvVarSizeLimitInBytes)
+
+	tests := []struct {
+		name         string
+		testPlans    []model3.TestPlan
+		wantEnvValue string
+		wantLogArgs  []interface{}
+	}{
+		{
+			name: "No flaky tests",
+			testPlans: []model3.TestPlan{{TestBundles: []model3.TestBundle{{Name: "TestBundle", TestSuites: []model3.TestSuite{
+				{
+					Name: "TestSuite",
+					TestCases: []model3.TestCaseWithRetries{
+						{
+							TestCase: model3.TestCase{Name: "TestCase", ClassName: "TestClass"},
+						},
+					},
+				},
+			}}}}},
+			wantEnvValue: "",
+		},
+		{
+			name: "Multiple flaky tests",
+			testPlans: []model3.TestPlan{{TestBundles: []model3.TestBundle{{Name: "TestBundle", TestSuites: []model3.TestSuite{
+				{
+					Name: "TestSuite1",
+					TestCases: []model3.TestCaseWithRetries{
+						{
+							TestCase: model3.TestCase{Name: "TestCase1", ClassName: "TestSuite1", Result: model3.TestResultPassed},
+							Retries: []model3.TestCase{
+								{Name: "TestCase1_Retry1", ClassName: "TestSuite1", Result: model3.TestResultFailed},
+								{Name: "TestCase1_Retry2", ClassName: "TestSuite1", Result: model3.TestResultPassed},
+							},
+						},
+						{
+							TestCase: model3.TestCase{Name: "TestCase2", ClassName: "TestSuite1", Result: model3.TestResultPassed},
+							Retries: []model3.TestCase{
+								{Name: "TestCase2_Retry1", ClassName: "TestSuite1", Result: model3.TestResultFailed},
+								{Name: "TestCase2_Retry2", ClassName: "TestSuite1", Result: model3.TestResultPassed},
+							},
+						},
+						{
+							TestCase: model3.TestCase{Name: "TestCase3", ClassName: "TestSuite1", Result: model3.TestResultPassed},
+						},
+					},
+				},
+				{
+					Name: "TestSuite2",
+					TestCases: []model3.TestCaseWithRetries{
+						{
+							TestCase: model3.TestCase{Name: "TestCase1", ClassName: "TestSuite2", Result: model3.TestResultPassed},
+							Retries: []model3.TestCase{
+								{Name: "TestCase1_Retry1", ClassName: "TestSuite1", Result: model3.TestResultFailed},
+								{Name: "TestCase1_Retry2", ClassName: "TestSuite1", Result: model3.TestResultPassed},
+							},
+						},
+					},
+				},
+			}}}}},
+			wantEnvValue: "- TestBundle.TestSuite1.TestCase1\n- TestBundle.TestSuite1.TestCase2\n- TestBundle.TestSuite2.TestCase1\n",
+		},
+		{
+			name: "Same flaky test exported once",
+			testPlans: []model3.TestPlan{{TestBundles: []model3.TestBundle{
+				{
+					Name: "TestBundle1", TestSuites: []model3.TestSuite{
+						{
+							Name: "TestSuite1",
+							TestCases: []model3.TestCaseWithRetries{
+								{
+									TestCase: model3.TestCase{Name: "TestCase1", ClassName: "TestSuite1", Result: model3.TestResultPassed},
+									Retries: []model3.TestCase{
+										{Name: "TestCase1_Retry1", ClassName: "TestSuite1", Result: model3.TestResultFailed},
+										{Name: "TestCase1_Retry2", ClassName: "TestSuite1", Result: model3.TestResultPassed},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "TestBundle2", TestSuites: []model3.TestSuite{
+						{
+							Name: "TestSuite1",
+							TestCases: []model3.TestCaseWithRetries{
+								{
+									TestCase: model3.TestCase{Name: "TestCase1", ClassName: "TestSuite1", Result: model3.TestResultPassed},
+									Retries: []model3.TestCase{
+										{Name: "TestCase1_Retry1", ClassName: "TestSuite1", Result: model3.TestResultFailed},
+										{Name: "TestCase1_Retry2", ClassName: "TestSuite1", Result: model3.TestResultPassed},
+									},
+								},
+							},
+						},
+					},
+				},
+			}}},
+			wantEnvValue: "- TestBundle1.TestSuite1.TestCase1\n- TestBundle2.TestSuite1.TestCase1\n",
+		},
+		{
+			name: "Flaky test cases env var size is limited",
+			testPlans: []model3.TestPlan{{TestBundles: []model3.TestBundle{
+				{
+					Name: "TestBundle1", TestSuites: []model3.TestSuite{
+						{
+							Name: "TestSuite1",
+							TestCases: []model3.TestCaseWithRetries{
+								{
+									TestCase: model3.TestCase{Name: "TestCase1", ClassName: "TestSuite1", Result: model3.TestResultPassed},
+									Retries: []model3.TestCase{
+										{Name: "TestCase1_Retry1", ClassName: "TestSuite1", Result: model3.TestResultFailed},
+										{Name: "TestCase1_Retry2", ClassName: "TestSuite1", Result: model3.TestResultPassed},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "TestBundle2", TestSuites: []model3.TestSuite{
+						{
+							Name: "TestSuite1",
+							TestCases: []model3.TestCaseWithRetries{
+								{
+									TestCase: model3.TestCase{Name: longTestCaseName, ClassName: "TestSuite1", Result: model3.TestResultPassed},
+									Retries: []model3.TestCase{
+										{Name: longTestCaseName, ClassName: "TestSuite1", Result: model3.TestResultFailed},
+										{Name: longTestCaseName, ClassName: "TestSuite1", Result: model3.TestResultPassed},
+									},
+								},
+							},
+						},
+					},
+				},
+			}}},
+			wantEnvValue: "- TestBundle1.TestSuite1.TestCase1\n",
+			wantLogArgs:  []interface{}{"%s env var size limit (1024 characters) exceeded. Skipping %d test cases.", "BITRISE_FLAKY_TEST_CASES", 1},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			envRepository := new(mocks.Repository)
+			envRepository.On("Set", mock.Anything, mock.Anything).Return(nil)
+
+			logger := new(mocks.Logger)
+			logger.On("Warnf", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+			exporter := exporter{
+				envRepository:     envRepository,
+				logger:            logger,
+				outputExporter:    export.NewExporter(new(commonMocks.CommandFactory)),
+				testAddonExporter: nil,
+			}
+
+			testSummary := model3.TestSummary{
+				TestPlans: tt.testPlans,
+			}
+
+			flakyTestCases := exporter.collectFlakyTestPlans(testSummary)
+			err := exporter.exportFlakyTestCases(flakyTestCases)
+			require.NoError(t, err)
+
+			if tt.wantEnvValue != "" {
+				envRepository.AssertCalled(t, "Set", "BITRISE_FLAKY_TEST_CASES", tt.wantEnvValue)
+			} else {
+				envRepository.AssertNumberOfCalls(t, "Set", 0)
+			}
+
+			if len(tt.wantLogArgs) > 0 {
+				logger.AssertCalled(t, "Warnf", tt.wantLogArgs...)
+			} else {
+				logger.AssertNumberOfCalls(t, "Warnf", 0)
+			}
+		})
+	}
 }
 
 // Helpers

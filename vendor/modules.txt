@@ -44,10 +44,14 @@ github.com/bitrise-io/go-utils/v2/fileutil
 github.com/bitrise-io/go-utils/v2/log
 github.com/bitrise-io/go-utils/v2/log/colorstring
 github.com/bitrise-io/go-utils/v2/pathutil
-# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.50
+# github.com/bitrise-io/go-xcode v1.3.0
 ## explicit; go 1.20
+github.com/bitrise-io/go-xcode/xcodeproject/serialized
+# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.68
+## explicit; go 1.22
 github.com/bitrise-io/go-xcode/v2/destination
 github.com/bitrise-io/go-xcode/v2/errorfinder
+github.com/bitrise-io/go-xcode/v2/loginterceptor
 github.com/bitrise-io/go-xcode/v2/simulator
 github.com/bitrise-io/go-xcode/v2/xcconfig
 github.com/bitrise-io/go-xcode/v2/xcodecache
@@ -56,11 +60,14 @@ github.com/bitrise-io/go-xcode/v2/xcodeversion
 # github.com/bitrise-io/stepman v0.0.0-20240828074035-6ae1a5f5efde
 ## explicit; go 1.18
 github.com/bitrise-io/stepman/models
+# github.com/bitrise-steplib/steps-deploy-to-bitrise-io v0.0.0-20250707145051-550b658b019b
+## explicit; go 1.20
+github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3
+github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3/model3
+github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/google/go-cmp v0.6.0
-## explicit; go 1.13
 # github.com/hashicorp/go-cleanhttp v0.5.2
 ## explicit; go 1.13
 github.com/hashicorp/go-cleanhttp
@@ -86,23 +93,24 @@ github.com/ryanuber/go-glob
 # github.com/stretchr/objx v0.5.2
 ## explicit; go 1.20
 github.com/stretchr/objx
-# github.com/stretchr/testify v1.9.0
+# github.com/stretchr/testify v1.10.0
 ## explicit; go 1.17
 github.com/stretchr/testify/assert
+github.com/stretchr/testify/assert/yaml
 github.com/stretchr/testify/mock
 github.com/stretchr/testify/require
-# golang.org/x/crypto v0.29.0
+# golang.org/x/crypto v0.31.0
 ## explicit; go 1.20
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/sys v0.27.0
+# golang.org/x/sys v0.28.0
 ## explicit; go 1.18
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.26.0
+# golang.org/x/term v0.27.0
 ## explicit; go 1.18
 golang.org/x/term
-# golang.org/x/text v0.20.0
+# golang.org/x/text v0.21.0
 ## explicit; go 1.18
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
@@ -111,3 +119,6 @@ golang.org/x/text/unicode/norm
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
+# howett.net/plist v1.0.1
+## explicit; go 1.12
+howett.net/plist
