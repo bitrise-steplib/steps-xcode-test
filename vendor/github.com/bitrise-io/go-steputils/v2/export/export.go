@@ -165,7 +165,7 @@ func copyFile(source, destination string) error {
 	defer func(out *os.File) {
 		err := out.Close()
 		if err != nil {
-			log.Fatalf(err.Error())
+			log.Fatalf("Failed to close output file: %s", err)
 		}
 	}(out)
 

@@ -253,22 +253,6 @@ inputs:
     - "yes"
     - "no"
 
-- skip_testing:
-  opts:
-    category: Debugging
-    title: Test identifier list to skip
-    summary: The step will skip the listed tests during execution.
-    description: |-
-      The step will skip the listed tests during execution.
-
-      The input value sets xcodebuild's `-skip-testing` option and you can enter multiple test identifiers separated by a newline.
-      The input field supports the same options as xcodebuild:
-      - Test target name only: `MyAppTests`
-      - Test target and test class name: `MyAppTests/MyAppTests`
-      - Test target, class and function name: `MyAppTests/MyAppTests/testExample`
-
-      The input value can be a filepath as well which contains the list of tests separated by a newline character.
-
 - collect_simulator_diagnostics: never
   opts:
     category: Debugging
@@ -291,6 +275,14 @@ inputs:
     value_options:
     - "yes"
     - "no"
+
+- quarantined_tests: $BITRISE_QUARANTINED_TESTS_JSON
+  opts:
+    category: Debugging
+    title: Quarantined tests
+    summary: A JSON array of quarantined tests.
+    description: |-
+      A JSON array of quarantined tests.
 
 outputs:
 - BITRISE_XCODE_TEST_RESULT:

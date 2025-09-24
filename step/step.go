@@ -3,13 +3,13 @@ package step
 import (
 	"errors"
 	"fmt"
-	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
+	"github.com/bitrise-io/go-steputils/v2/testquarantine"
 	"github.com/bitrise-io/go-utils/colorstring"
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/sliceutil"
@@ -53,7 +53,7 @@ type Input struct {
 
 	// Debugging
 	VerboseLog                  bool   `env:"verbose_log,opt[yes,no]"`
-	SkipTesting                 string `env:"skip_testing"`
+	QuarantinedTests            string `env:"quarantined_tests"`
 	CollectSimulatorDiagnostics string `env:"collect_simulator_diagnostics,opt[always,on_failure,never]"`
 	HeadlessMode                bool   `env:"headless_mode,opt[yes,no]"`
 
@@ -202,7 +202,7 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 		return Config{}, fmt.Errorf("`-xcconfig` option found in 'Additional options for the xcodebuild command' (xcodebuild_options), please clear 'Build settings (xcconfig)' (`xcconfig_content`) input as only one can be set")
 	}
 
-	skipTesting, err := s.processTestConfiguration(input.SkipTesting)
+	skipTesting, err := s.processQuarantinedTests(input.QuarantinedTests)
 	if err != nil {
 		return Config{}, fmt.Errorf("failed to process test configuration: %w", err)
 	}
@@ -210,32 +210,34 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 	return s.utils.CreateConfig(input, projectPath, sim, additionalOptions, additionalLogFormatterOptions, skipTesting), nil
 }
 
-func (s XcodeTestConfigParser) processTestConfiguration(input string) ([]string, error) {
-	if input == "" {
+/*
+parseQuarantinedTests converts the Bitrise quarantined tests JSON input ($BITRISE_QUARANTINED_TESTS_JSON)
+to xctestrun file's SkipTestIdentifiers format: TestTarget/TestClass/TestMethod.
+*/
+func (s XcodeTestConfigParser) processQuarantinedTests(quarantinedTestsInput string) ([]string, error) {
+	if quarantinedTestsInput == "" {
 		return nil, nil
 	}
 
-	exists, err := s.pathChecker.IsPathExists(input)
+	quarantinedTests, err := testquarantine.ParseQuarantinedTests(quarantinedTestsInput)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse quarantined tests input: %w", err)
 	}
 
-	var contents string
-
-	if exists {
-		bytes, err := os.ReadFile(input)
-		if err != nil {
-			return nil, err
+	var skippedTests []string
+	for _, qt := range quarantinedTests {
+		if len(qt.TestSuiteName) == 0 || qt.TestSuiteName[0] == "" || qt.ClassName == "" || qt.TestCaseName == "" {
+			continue
 		}
 
-		contents = string(bytes)
-	} else {
-		contents = input
+		testTarget := qt.TestSuiteName[0]
+		testClass := qt.ClassName
+		testMethod := qt.TestCaseName
+
+		skippedTests = append(skippedTests, fmt.Sprintf("%s/%s/%s", testTarget, testClass, testMethod))
 	}
 
-	identifiers := strings.Split(contents, "\n")
-
-	return removeEmptyLines(identifiers), nil
+	return skippedTests, nil
 }
 
 func (s XcodeTestRunner) InstallDeps() {
