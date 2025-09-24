@@ -109,9 +109,9 @@ Run tests with custom xcconfig file path:
 | `xcpretty_options` | Additional options to be added to the executed xcpretty command. |  | `--color --report html --output "${BITRISE_DEPLOY_DIR}/xcode-test-results-${BITRISE_SCHEME}.html"` |
 | `cache_level` | Defines what cache content should be automatically collected. Use key-based caching instead for better performance.  Available options: - `none`: Disable collecting cache content. - `swift_packages`: Collect Swift PM packages added to the Xcode project.  With key-based caching, you only need the Restore SPM cache and the Save SPM cache Steps to cache your Swift packages. [See devcenter for more information.](https://devcenter.bitrise.io/en/dependencies-and-caching/managing-dependencies-for-ios-apps/managing-dependencies-with-spm.html#caching-swift-packages) |  | `none` |
 | `verbose_log` | If this input is set, the Step will print additional logs for debugging. |  | `no` |
-| `skip_testing` | The step will skip the listed tests during execution.  The input value sets xcodebuild's `-skip-testing` option and you can enter multiple test identifiers separated by a newline. The input field supports the same options as xcodebuild: - Test target name only: `MyAppTests` - Test target and test class name: `MyAppTests/MyAppTests` - Test target, class and function name: `MyAppTests/MyAppTests/testExample`  The input value can be a filepath as well which contains the list of tests separated by a newline character. |  |  |
 | `collect_simulator_diagnostics` | If this input is set, the simulator verbose logging will be enabled and the simulator diagnostics log will be exported. |  | `never` |
 | `headless_mode` | In headless mode the simulator is not launched in the foreground.  If this input is set, the simulator will not be visible but tests (even the screenshots) will run just like if you run a simulator in foreground. |  | `yes` |
+| `quarantined_tests` | A JSON array of quarantined tests. |  | `$BITRISE_QUARANTINED_TESTS_JSON` |
 </details>
 
 <details>
