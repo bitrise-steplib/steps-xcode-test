@@ -202,7 +202,7 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 
 	skipTesting, err := s.processQuarantinedTests(input.QuarantinedTests)
 	if err != nil {
-		return Config{}, fmt.Errorf("failed to process test configuration: %w", err)
+		return Config{}, fmt.Errorf("failed to process quarentined tests: %w", err)
 	}
 
 	return s.utils.CreateConfig(input, projectPath, sim, additionalOptions, additionalLogFormatterOptions, skipTesting), nil
@@ -210,7 +210,7 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 
 /*
 parseQuarantinedTests converts the Bitrise quarantined tests JSON input ($BITRISE_QUARANTINED_TESTS_JSON)
-to xctestrun file's SkipTestIdentifiers format: TestTarget/TestClass/TestMethod.
+to test identifiers for the `-skip-testing` xcodebuild option. The test identifier format is: <TestTarget>/<TestClass>/<TestMethod>.
 */
 func (s XcodeTestConfigParser) processQuarantinedTests(quarantinedTestsInput string) ([]string, error) {
 	if quarantinedTestsInput == "" {
