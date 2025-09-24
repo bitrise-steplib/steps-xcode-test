@@ -95,7 +95,7 @@ workflows:
             mkdir -p ./_tmp2
             echo "A=a" > ./_tmp2/p.xcconfig
 
-  test_skip_testing:
+  test_quarantined_tests:
     envs:
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
     - TEST_APP_BRANCH: master
