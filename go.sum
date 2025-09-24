@@ -13,8 +13,8 @@ github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.26 h1:meDTxqONXlQv2JmOcEbJj5Wx7Wc
 github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.26/go.mod h1:3XUplo0dOWc3DqT2XA2SeHToDSg7+j1y1HTHibT2H68=
 github.com/bitrise-io/go-xcode v1.3.0 h1:QB8Vyr2oZQro/ocs9DJai80rlYL1hU1kwjHqdGslFLo=
 github.com/bitrise-io/go-xcode v1.3.0/go.mod h1:9OwsvrhZ4A2JxHVoEY7CPcABAKA+OE7FQqFfBfvbFuY=
-github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.67 h1:Fz3LSRoH9p5u7yTqdsmE32RHGWEw8q3BVWoOSiHs7AY=
-github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.67/go.mod h1:rSmzmqVD3Mn9dWwe19qiiGjlvk/At3D8bQh7n9E8S58=
+github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.68 h1:jgGJR0lZnqX39MBIEpO7T0kV6kRZ4Pk0os1UQ22p/H8=
+github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.68/go.mod h1:rSmzmqVD3Mn9dWwe19qiiGjlvk/At3D8bQh7n9E8S58=
 github.com/bitrise-io/stepman v0.0.0-20240828074035-6ae1a5f5efde h1:LinFhZG5OdayDh1T1JO8QANsNwQWzqORZ0A9EGHQ0ps=
 github.com/bitrise-io/stepman v0.0.0-20240828074035-6ae1a5f5efde/go.mod h1:Lq9nEqKerBD35w3eSU8lf83F7uZPkXfmRSZEUDJN40w=
 github.com/bitrise-steplib/steps-deploy-to-bitrise-io v0.0.0-20250707145051-550b658b019b h1:/Gd2kLTzdcnmPyhoirrAPE66Dt4JV2Kh8iFRw+vcuGk=
