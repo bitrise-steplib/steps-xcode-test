@@ -20,7 +20,6 @@ import (
 type configParserMocks struct {
 	deviceFinder *mocks.DeviceFinder
 	pathModifier *mocks.PathModifier
-	pathChecker  *mocks.PathChecker
 }
 
 type stepMocks struct {
@@ -92,10 +91,9 @@ func Test_GivenStep_WhenInstallXcpretty_ThenInstallIt(t *testing.T) {
 func Test_GivenConfigParser_WhenParsesConfig(t *testing.T) {
 
 	tests := []struct {
-		name            string
-		envsFunc        func() map[string]string
-		expectedConfig  func() Config
-		setExpectations func(mocks configParserMocks)
+		name           string
+		envsFunc       func() map[string]string
+		expectedConfig func() Config
 	}{
 		{
 			name: "xcbeautify_options",
@@ -116,18 +114,29 @@ func Test_GivenConfigParser_WhenParsesConfig(t *testing.T) {
 			name: "skip_tests",
 			envsFunc: func() map[string]string {
 				envValues := defaultEnvValues()
-				envValues["skip_testing"] = "Target1/Class1\n  Target2/Class2/Method1\n\nTarget2/Class2/Method2"
+				envValues["quarantined_tests"] = `
+[
+  {
+	"testCaseName": "Method1()",
+	"testSuiteName": [
+	  "Target2"
+	],
+	"className": "Class2"
+  },
+  {
+	"testCaseName": "Method2()",
+	"testSuiteName": [
+	  "Target2"
+	],
+	"className": "Class2"
+  }
+]`
 				return envValues
 			},
 			expectedConfig: func() Config {
 				config := defaultConfigs()
-				config.SkipTesting = []string{"Target1/Class1", "Target2/Class2/Method1", "Target2/Class2/Method2"}
+				config.SkipTesting = []string{"Target2/Class2/Method1()", "Target2/Class2/Method2()"}
 				return config
-			},
-			setExpectations: func(mocks configParserMocks) {
-				// IsPathExists checks if config.SkipTesting value is a path or a raw value.
-				// In this test case, it's a raw value.
-				mocks.pathChecker.On("IsPathExists", mock.Anything).Return(false, nil)
 			},
 		},
 	}
@@ -140,9 +149,6 @@ func Test_GivenConfigParser_WhenParsesConfig(t *testing.T) {
 			mocks.pathModifier.On("AbsPath", mock.Anything).Return(path, nil)
 			device := defaultSimulator()
 			mocks.deviceFinder.On("FindDevice", mock.Anything, mock.Anything).Return(device, nil)
-			if tt.setExpectations != nil {
-				tt.setExpectations(mocks)
-			}
 
 			// When
 			actualConfig, err := configParser.ProcessConfig()
@@ -296,14 +302,12 @@ func createConfigParser(t *testing.T, envValues map[string]string) (XcodeTestCon
 	inputParser := stepconf.NewInputParser(envRepository)
 	deviceFinder := mocks.NewDeviceFinder(t)
 	pathModifier := mocks.NewPathModifier(t)
-	pathChecker := mocks.NewPathChecker(t)
 	utils := NewUtils(logger)
 
-	configParser := NewXcodeTestConfigParser(inputParser, logger, deviceFinder, pathModifier, pathChecker, utils)
+	configParser := NewXcodeTestConfigParser(inputParser, logger, deviceFinder, pathModifier, utils)
 	mocks := configParserMocks{
 		deviceFinder: deviceFinder,
 		pathModifier: pathModifier,
-		pathChecker:  pathChecker,
 	}
 
 	return configParser, mocks

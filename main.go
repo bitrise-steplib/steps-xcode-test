@@ -73,11 +73,10 @@ func createConfigParser(logger log.Logger) step.XcodeTestConfigParser {
 		logger.Errorf("failed to read Xcode version: %w", err)
 	}
 	pathModifier := pathutil.NewPathModifier()
-	pathChecker := pathutil.NewPathChecker()
 	deviceFinder := destination.NewDeviceFinder(logger, commandFactory, xcodeVersion)
 	utils := step.NewUtils(logger)
 
-	return step.NewXcodeTestConfigParser(inputParser, logger, deviceFinder, pathModifier, pathChecker, utils)
+	return step.NewXcodeTestConfigParser(inputParser, logger, deviceFinder, pathModifier, utils)
 }
 
 func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, error) {

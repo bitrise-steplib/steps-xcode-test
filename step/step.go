@@ -109,17 +109,15 @@ type XcodeTestConfigParser struct {
 	inputParser  stepconf.InputParser
 	deviceFinder destination.DeviceFinder
 	pathModifier pathutil.PathModifier
-	pathChecker  pathutil.PathChecker
 	utils        Utils
 }
 
-func NewXcodeTestConfigParser(inputParser stepconf.InputParser, logger log.Logger, deviceFinder destination.DeviceFinder, pathModifier pathutil.PathModifier, pathChecker pathutil.PathChecker, utils Utils) XcodeTestConfigParser {
+func NewXcodeTestConfigParser(inputParser stepconf.InputParser, logger log.Logger, deviceFinder destination.DeviceFinder, pathModifier pathutil.PathModifier, utils Utils) XcodeTestConfigParser {
 	return XcodeTestConfigParser{
 		logger:       logger,
 		inputParser:  inputParser,
 		deviceFinder: deviceFinder,
 		pathModifier: pathModifier,
-		pathChecker:  pathChecker,
 		utils:        utils,
 	}
 }
