@@ -491,14 +491,3 @@ func (s XcodeTestRunner) teardownSimulator(simulatorID string, simulatorDebug ex
 
 	return simulatorDiagnosticsPath
 }
-
-func removeEmptyLines(lines []string) []string {
-	var result []string
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line != "" {
-			result = append(result, line)
-		}
-	}
-	return result
-}
