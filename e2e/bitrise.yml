@@ -95,6 +95,53 @@ workflows:
             mkdir -p ./_tmp2
             echo "A=a" > ./_tmp2/p.xcconfig
 
+  test_skip_testing:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
+    - TEST_APP_BRANCH: master
+    - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
+    - BITRISE_SCHEME: BullsEye
+    - TEST_PLAN: UITests
+    - DESTINATION: platform=iOS Simulator,name=Bitrise iOS default,OS=latest
+    - CODE_SIGNING_METHOD: "off"
+    - LOG_FORMATTER: xcbeautify
+    - EXPECT_TEST_FAILURE: "false"
+    - CACHE_LEVEL: none
+    - QUARANTINED_TESTS: |-
+        [
+          {
+            "testCaseName": "testGameStyleSwitch()",
+            "testSuiteName": [
+              "BullsEyeUITests"
+            ],
+            "className": "BullsEyeUITests2"
+          }
+        ]
+    before_run:
+    - _run
+    - _check_outputs
+    steps:
+    - script:
+        title: Check skipped tests
+        summary: This Step checks if the test results contain the skipped test method or not.
+        inputs:
+        - content: |-
+            #!/usr/bin/env bash
+            set -ex
+            out=$(xcrun xcresulttool get test-results tests --path "$BITRISE_XCRESULT_PATH")
+            xcresulttool_exit_code=$?
+            if [ $xcresulttool_exit_code -ne 0 ]; then
+              echo "failed to get test results from xcresult: $out"
+              exit 1
+            fi
+            # Check if the skipped test method is in the results
+            set +e
+            grep_out=$(echo "$out" | grep "BullsEyeUITests2/testGameStyleSwitch()")
+            if [ ! -z "$grep_out" ]; then
+              echo "skipped test method found in test results"
+              exit 1
+            fi
+
   _run:
     before_run:
     - _clear_outputs
@@ -159,6 +206,7 @@ workflows:
         - verbose_log: "yes"
         - cache_level: $CACHE_LEVEL
         - collect_simulator_diagnostics: $COLLECT_SIM_DIAGNOSTICS
+        - quarantined_tests: $QUARANTINED_TESTS
 
   _clear_outputs:
     steps:
