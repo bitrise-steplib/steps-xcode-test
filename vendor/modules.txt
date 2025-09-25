@@ -14,7 +14,7 @@ github.com/bitrise-io/envman/models
 ## explicit; go 1.15
 github.com/bitrise-io/go-steputils/cache
 github.com/bitrise-io/go-steputils/tools
-# github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.39.0.20250923144217-d27f95bcbc58
+# github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.40
 ## explicit; go 1.17
 github.com/bitrise-io/go-steputils/v2/export
 github.com/bitrise-io/go-steputils/v2/ruby
