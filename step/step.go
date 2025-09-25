@@ -209,7 +209,7 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 }
 
 /*
-parseQuarantinedTests converts the Bitrise quarantined tests JSON input ($BITRISE_QUARANTINED_TESTS_JSON)
+processQuarantinedTests converts the Bitrise quarantined tests JSON input ($BITRISE_QUARANTINED_TESTS_JSON)
 to test identifiers for the `-skip-testing` xcodebuild option. The test identifier format is: <TestTarget>/<TestClass>/<TestMethod>.
 */
 func (s XcodeTestConfigParser) processQuarantinedTests(quarantinedTestsInput string) ([]string, error) {
