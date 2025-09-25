@@ -37,14 +37,14 @@ workflows:
   # Requires Xcode 11+
   test_test_plan:
     description: |-
-        This test fails on Xcode 26 with: 'BullsEye (33951) encountered an error (Early unexpected exit, operation never finished bootstrapping - no restart will be attempted. (Underlying Error: Crash: BullsEye (33951) <external symbol>))' error.
-        Example build: https://app.bitrise.io/build/c71f9c3a-e164-423f-8779-d4c8db69827a
+      This test fails on Xcode 26 with: 'BullsEye (33951) encountered an error (Early unexpected exit, operation never finished bootstrapping - no restart will be attempted. (Underlying Error: Crash: BullsEye (33951) <external symbol>))' error.
+      Example build: https://app.bitrise.io/build/c71f9c3a-e164-423f-8779-d4c8db69827a
     before_run:
     - _expose_xcode_version
     steps:
     - bitrise-run:
-        run_if: |-
-          {{ getenv "XCODE_MAJOR_VERSION" | ne "26" }}
+        #        run_if: |-
+        #          {{ getenv "XCODE_MAJOR_VERSION" | ne "26" }}
         inputs:
         - workflow_id: utility_test_test_plan
         - bitrise_config_path: ./e2e/bitrise.yml
@@ -55,15 +55,46 @@ workflows:
     - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: UnitTests
+    - TEST_PLAN: UITests
     - DESTINATION: platform=iOS Simulator,name=Bitrise iOS default,OS=latest
     - LOG_FORMATTER: xcbeautify
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: swift_packages
-    after_run:
+    - QUARANTINED_TESTS: |-
+        [
+          {
+            "testCaseName": "testGameStyleSwitch()",
+            "testSuiteName": [
+              "BullsEyeUITests"
+            ],
+            "className": "BullsEyeUITests2"
+          }
+        ]
+    before_run:
     - _run
     - _check_outputs
     - _check_cache
+    steps:
+    - script:
+        title: Check skipped tests
+        summary: This Step checks if the test results contain the skipped test method or not.
+        inputs:
+        - content: |-
+            #!/usr/bin/env bash
+            set -ex
+            out=$(xcrun xcresulttool get test-results tests --path "$BITRISE_XCRESULT_PATH")
+            xcresulttool_exit_code=$?
+            if [ $xcresulttool_exit_code -ne 0 ]; then
+              echo "failed to get test results from xcresult: $out"
+              exit 1
+            fi
+            # Check if the skipped test method is in the results
+            set +e
+            grep_out=$(echo "$out" | grep "BullsEyeUITests2/testGameStyleSwitch()")
+            if [ ! -z "$grep_out" ]; then
+              echo "skipped test method found in test results"
+              exit 1
+            fi
 
   test_xcconfig_rel_path:
     envs:
@@ -94,53 +125,6 @@ workflows:
 
             mkdir -p ./_tmp2
             echo "A=a" > ./_tmp2/p.xcconfig
-
-  test_quarantined_tests:
-    envs:
-    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: master
-    - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
-    - BITRISE_SCHEME: BullsEye
-    - TEST_PLAN: UITests
-    - DESTINATION: platform=iOS Simulator,name=Bitrise iOS default,OS=latest
-    - CODE_SIGNING_METHOD: "off"
-    - LOG_FORMATTER: xcbeautify
-    - EXPECT_TEST_FAILURE: "false"
-    - CACHE_LEVEL: none
-    - QUARANTINED_TESTS: |-
-        [
-          {
-            "testCaseName": "testGameStyleSwitch()",
-            "testSuiteName": [
-              "BullsEyeUITests"
-            ],
-            "className": "BullsEyeUITests2"
-          }
-        ]
-    before_run:
-    - _run
-    - _check_outputs
-    steps:
-    - script:
-        title: Check skipped tests
-        summary: This Step checks if the test results contain the skipped test method or not.
-        inputs:
-        - content: |-
-            #!/usr/bin/env bash
-            set -ex
-            out=$(xcrun xcresulttool get test-results tests --path "$BITRISE_XCRESULT_PATH")
-            xcresulttool_exit_code=$?
-            if [ $xcresulttool_exit_code -ne 0 ]; then
-              echo "failed to get test results from xcresult: $out"
-              exit 1
-            fi
-            # Check if the skipped test method is in the results
-            set +e
-            grep_out=$(echo "$out" | grep "BullsEyeUITests2/testGameStyleSwitch()")
-            if [ ! -z "$grep_out" ]; then
-              echo "skipped test method found in test results"
-              exit 1
-            fi
 
   _run:
     before_run:
