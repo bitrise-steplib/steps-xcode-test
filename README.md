@@ -111,7 +111,7 @@ Run tests with custom xcconfig file path:
 | `verbose_log` | If this input is set, the Step will print additional logs for debugging. |  | `no` |
 | `collect_simulator_diagnostics` | If this input is set, the simulator verbose logging will be enabled and the simulator diagnostics log will be exported. |  | `never` |
 | `headless_mode` | In headless mode the simulator is not launched in the foreground.  If this input is set, the simulator will not be visible but tests (even the screenshots) will run just like if you run a simulator in foreground. |  | `yes` |
-| `quarantined_tests` | A JSON array of quarantined tests. |  | `$BITRISE_QUARANTINED_TESTS_JSON` |
+| `quarantined_tests` | JSON list of tests added to quarantine on Bitrise.io, quarantined tests are excluded from test runs. |  | `$BITRISE_QUARANTINED_TESTS_JSON` |
 </details>
 
 <details>

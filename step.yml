@@ -280,9 +280,7 @@ inputs:
   opts:
     category: Debugging
     title: Quarantined tests
-    summary: A JSON array of quarantined tests.
-    description: |-
-      A JSON array of quarantined tests.
+    summary: JSON list of tests added to quarantine on Bitrise.io, quarantined tests are excluded from test runs.
 
 outputs:
 - BITRISE_XCODE_TEST_RESULT:
