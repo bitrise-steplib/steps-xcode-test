@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
+	"github.com/bitrise-io/go-steputils/v2/testquarantine"
 	"github.com/bitrise-io/go-utils/colorstring"
 	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/sliceutil"
@@ -52,6 +53,7 @@ type Input struct {
 
 	// Debugging
 	VerboseLog                  bool   `env:"verbose_log,opt[yes,no]"`
+	QuarantinedTests            string `env:"quarantined_tests"`
 	CollectSimulatorDiagnostics string `env:"collect_simulator_diagnostics,opt[always,on_failure,never]"`
 	HeadlessMode                bool   `env:"headless_mode,opt[yes,no]"`
 
@@ -95,6 +97,7 @@ type Config struct {
 
 	CacheLevel string
 
+	SkipTesting                 []string
 	CollectSimulatorDiagnostics exportCondition
 	HeadlessMode                bool
 
@@ -197,7 +200,42 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 		return Config{}, fmt.Errorf("`-xcconfig` option found in 'Additional options for the xcodebuild command' (xcodebuild_options), please clear 'Build settings (xcconfig)' (`xcconfig_content`) input as only one can be set")
 	}
 
-	return s.utils.CreateConfig(input, projectPath, sim, additionalOptions, additionalLogFormatterOptions), nil
+	skipTesting, err := s.processQuarantinedTests(input.QuarantinedTests)
+	if err != nil {
+		return Config{}, fmt.Errorf("failed to process quarentined tests: %w", err)
+	}
+
+	return s.utils.CreateConfig(input, projectPath, sim, additionalOptions, additionalLogFormatterOptions, skipTesting), nil
+}
+
+/*
+processQuarantinedTests converts the Bitrise quarantined tests JSON input ($BITRISE_QUARANTINED_TESTS_JSON)
+to test identifiers for the `-skip-testing` xcodebuild option. The test identifier format is: <TestTarget>/<TestClass>/<TestMethod>.
+*/
+func (s XcodeTestConfigParser) processQuarantinedTests(quarantinedTestsInput string) ([]string, error) {
+	if quarantinedTestsInput == "" {
+		return nil, nil
+	}
+
+	quarantinedTests, err := testquarantine.ParseQuarantinedTests(quarantinedTestsInput)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse quarantined tests input: %w", err)
+	}
+
+	var skippedTests []string
+	for _, qt := range quarantinedTests {
+		if len(qt.TestSuiteName) == 0 || qt.TestSuiteName[0] == "" || qt.ClassName == "" || qt.TestCaseName == "" {
+			continue
+		}
+
+		testTarget := qt.TestSuiteName[0]
+		testClass := qt.ClassName
+		testMethod := qt.TestCaseName
+
+		skippedTests = append(skippedTests, fmt.Sprintf("%s/%s/%s", testTarget, testClass, testMethod))
+	}
+
+	return skippedTests, nil
 }
 
 func (s XcodeTestRunner) InstallDeps() {

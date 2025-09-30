@@ -276,6 +276,12 @@ inputs:
     - "yes"
     - "no"
 
+- quarantined_tests: $BITRISE_QUARANTINED_TESTS_JSON
+  opts:
+    category: Debugging
+    title: Quarantined tests
+    summary: JSON list of tests added to quarantine on Bitrise.io, quarantined tests are excluded from test runs.
+
 outputs:
 - BITRISE_XCODE_TEST_RESULT:
   opts:

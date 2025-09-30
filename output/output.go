@@ -255,8 +255,8 @@ func (e exporter) exportFlakyTestCases(flakyTestPlans []model3.TestPlan) error {
 	for i, flakyTestCase := range flakyTestCases {
 		flakyTestCasesMessageLine := fmt.Sprintf("- %s\n", flakyTestCase)
 
-		if len(flakyTestCasesMessage)+len(flakyTestCasesMessageLine) > 1024 {
-			e.logger.Warnf("%s env var size limit (1024 characters) exceeded. Skipping %d test cases.", flakyTestCasesEnvVarKey, len(flakyTestCases)-i)
+		if len(flakyTestCasesMessage)+len(flakyTestCasesMessageLine) > flakyTestCasesEnvVarSizeLimitInBytes {
+			e.logger.Warnf("%s env var size limit (%d characters) exceeded. Skipping %d test cases.", flakyTestCasesEnvVarKey, flakyTestCasesEnvVarSizeLimitInBytes, len(flakyTestCases)-i)
 			break
 		}
 
