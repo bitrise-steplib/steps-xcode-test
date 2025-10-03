@@ -48,11 +48,11 @@ github.com/bitrise-io/go-utils/v2/pathutil
 # github.com/bitrise-io/go-xcode v1.3.0
 ## explicit; go 1.20
 github.com/bitrise-io/go-xcode/xcodeproject/serialized
-# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.68
+# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.69
 ## explicit; go 1.22
 github.com/bitrise-io/go-xcode/v2/destination
 github.com/bitrise-io/go-xcode/v2/errorfinder
-github.com/bitrise-io/go-xcode/v2/loginterceptor
+github.com/bitrise-io/go-xcode/v2/logio
 github.com/bitrise-io/go-xcode/v2/simulator
 github.com/bitrise-io/go-xcode/v2/xcconfig
 github.com/bitrise-io/go-xcode/v2/xcodecache
@@ -69,6 +69,9 @@ github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
+# github.com/globocom/go-buffer/v2 v2.0.0
+## explicit; go 1.13
+github.com/globocom/go-buffer/v2
 # github.com/hashicorp/go-cleanhttp v0.5.2
 ## explicit; go 1.13
 github.com/hashicorp/go-cleanhttp
