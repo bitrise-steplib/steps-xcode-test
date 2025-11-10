@@ -28,11 +28,12 @@ website: https://github.com/bitrise-steplib/steps-xcode-test
 source_code_url: https://github.com/bitrise-steplib/steps-xcode-test
 support_url: https://github.com/bitrise-steplib/steps-xcode-test/issues
 project_type_tags:
-- ios
 - cordova
-- ionic
-- react-native
 - flutter
+- ionic
+- ios
+- kotlin-multiplatform
+- react-native
 type_tags:
 - test
 is_always_run: false
