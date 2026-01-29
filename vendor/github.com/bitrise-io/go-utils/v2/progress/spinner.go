@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 	"time"
 	"unicode/utf8"
 )
@@ -29,19 +30,20 @@ type Spinner struct {
 	writer  io.Writer
 	sleeper Sleeper
 
+	mu         sync.Mutex
 	active     bool
 	lastOutput string
 	stopChan   chan bool
 }
 
 // NewSpinner creates a new Spinner with the given parameters.
-func NewSpinner(message string, chars []string, delay time.Duration, writer io.Writer) Spinner {
+func NewSpinner(message string, chars []string, delay time.Duration, writer io.Writer) *Spinner {
 	return NewSpinnerWithSleeper(message, chars, delay, writer, DefaultSleeper{})
 }
 
 // NewSpinnerWithSleeper creates a new Spinner with a custom Sleeper for testing.
-func NewSpinnerWithSleeper(message string, chars []string, delay time.Duration, writer io.Writer, sleeper Sleeper) Spinner {
-	return Spinner{
+func NewSpinnerWithSleeper(message string, chars []string, delay time.Duration, writer io.Writer, sleeper Sleeper) *Spinner {
+	return &Spinner{
 		message: message,
 		chars:   chars,
 		delay:   delay,
@@ -54,12 +56,12 @@ func NewSpinnerWithSleeper(message string, chars []string, delay time.Duration, 
 }
 
 // NewDefaultSpinner creates a Spinner with default animation characters and timing, writing to stdout.
-func NewDefaultSpinner(message string) Spinner {
+func NewDefaultSpinner(message string) *Spinner {
 	return NewDefaultSpinnerWithOutput(message, os.Stdout)
 }
 
 // NewDefaultSpinnerWithOutput creates a Spinner with default animation characters and timing.
-func NewDefaultSpinnerWithOutput(message string, output io.Writer) Spinner {
+func NewDefaultSpinnerWithOutput(message string, output io.Writer) *Spinner {
 	chars := []string{"⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"}
 	delay := 100 * time.Millisecond
 	return NewSpinner(message, chars, delay, output)
@@ -67,10 +69,13 @@ func NewDefaultSpinnerWithOutput(message string, output io.Writer) Spinner {
 
 // Start begins the spinner animation in a background goroutine.
 func (s *Spinner) Start() {
+	s.mu.Lock()
 	if s.active {
+		s.mu.Unlock()
 		return
 	}
 	s.active = true
+	s.mu.Unlock()
 
 	go func() {
 		for {
@@ -79,6 +84,7 @@ func (s *Spinner) Start() {
 				case <-s.stopChan:
 					return
 				default:
+					s.mu.Lock()
 					s.erase()
 
 					out := fmt.Sprintf("%s %s", s.message, s.chars[i])
@@ -86,6 +92,7 @@ func (s *Spinner) Start() {
 						fmt.Printf("failed to update progress, error: %s\n", err)
 					}
 					s.lastOutput = out
+					s.mu.Unlock()
 
 					s.sleeper.Sleep(s.delay)
 				}
@@ -96,10 +103,14 @@ func (s *Spinner) Start() {
 
 // Stop terminates the spinner animation and clears the output.
 func (s *Spinner) Stop() {
+	s.mu.Lock()
 	if s.active {
 		s.active = false
 		s.erase()
+		s.mu.Unlock()
 		s.stopChan <- true
+	} else {
+		s.mu.Unlock()
 	}
 }
 
