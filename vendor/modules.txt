@@ -36,7 +36,7 @@ github.com/bitrise-io/go-utils/retry
 github.com/bitrise-io/go-utils/sliceutil
 github.com/bitrise-io/go-utils/stringutil
 github.com/bitrise-io/go-utils/ziputil
-# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.26
+# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.28.0.20260129135042-916e3b7a8f35
 ## explicit; go 1.17
 github.com/bitrise-io/go-utils/v2/command
 github.com/bitrise-io/go-utils/v2/env
@@ -45,6 +45,7 @@ github.com/bitrise-io/go-utils/v2/fileutil
 github.com/bitrise-io/go-utils/v2/log
 github.com/bitrise-io/go-utils/v2/log/colorstring
 github.com/bitrise-io/go-utils/v2/pathutil
+github.com/bitrise-io/go-utils/v2/progress
 # github.com/bitrise-io/go-xcode v1.3.0
 ## explicit; go 1.20
 github.com/bitrise-io/go-xcode/xcodeproject/serialized
