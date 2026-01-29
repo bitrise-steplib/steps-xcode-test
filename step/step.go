@@ -11,7 +11,7 @@ import (
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
 	"github.com/bitrise-io/go-steputils/v2/testquarantine"
 	"github.com/bitrise-io/go-utils/colorstring"
-	"github.com/bitrise-io/go-utils/progress"
+	"github.com/bitrise-io/go-utils/v2/progress"
 	"github.com/bitrise-io/go-utils/sliceutil"
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/log"
