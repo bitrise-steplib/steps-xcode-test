@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/bitrise-io/go-steputils/v2/testquarantine"
 	"github.com/bitrise-io/go-utils/colorstring"
 	"github.com/bitrise-io/go-utils/progress"
-	"github.com/bitrise-io/go-utils/sliceutil"
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
@@ -195,7 +195,7 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 	if strings.TrimSpace(input.XCConfigContent) == "" {
 		input.XCConfigContent = ""
 	}
-	if sliceutil.IsStringInSlice("-xcconfig", additionalOptions) &&
+	if slices.Contains(additionalOptions, "-xcconfig") &&
 		input.XCConfigContent != "" {
 		return Config{}, fmt.Errorf("`-xcconfig` option found in 'Additional options for the xcodebuild command' (xcodebuild_options), please clear 'Build settings (xcconfig)' (`xcconfig_content`) input as only one can be set")
 	}
