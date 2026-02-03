@@ -112,15 +112,35 @@ func extractDuration(text string) time.Duration {
 	return duration
 }
 
+func extractFailureMessageFromTestPlanConfigs(testPlanConfigNodes []TestNode) (string, []string) {
+	var warnings []string
+	failureMessage := ""
+
+	for _, testPlanConfigNode := range testPlanConfigNodes {
+		msg, wrns := extractFailureMessage(testPlanConfigNode)
+		if msg != "" {
+			failureMessage += fmt.Sprintf("%s: %s\n", testPlanConfigNode.Name, msg)
+		}
+		if wrns != nil {
+			warnings = append(warnings, wrns...)
+		}
+	}
+
+	return failureMessage, warnings
+}
+
 func extractFailureMessage(testNode TestNode) (string, []string) {
 	childrenCount := len(testNode.Children)
 	if childrenCount == 0 {
 		return "", nil
 	}
 
-	lastNode := testNode.Children[childrenCount-1]
-	if lastNode.Type == TestNodeTypeRepetition {
-		return extractFailureMessage(lastNode)
+	lastChild := testNode.Children[childrenCount-1]
+	if lastChild.Type == TestNodeTypeRepetition {
+		return extractFailureMessage(lastChild)
+	}
+	if lastChild.Type == TestNodeTypeTestPlanConfig {
+		return extractFailureMessageFromTestPlanConfigs(testNode.Children)
 	}
 
 	var warnings []string

@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -19,6 +21,7 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-xcode/xcodeproject/serialized"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3/model3"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testasset"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
 )
 
@@ -191,7 +194,14 @@ func parse(path string) (testreport.TestReport, error) {
 	}
 
 	outputPath := filepath.Dir(path)
-	if err := exportAttachments(path, outputPath); err != nil {
+
+	attachmentsMap, err := extractAttachments(path, outputPath)
+	if err != nil {
+		return testreport.TestReport{}, err
+	}
+
+	xml, err = connectAttachmentsToTestCases(xml, attachmentsMap)
+	if err != nil {
 		return testreport.TestReport{}, err
 	}
 
@@ -254,44 +264,123 @@ func parseTestCase(testCase model3.TestCase) testreport.TestCase {
 	return test
 }
 
-func exportAttachments(xcresultPath, outputPath string) error {
+func extractAttachments(xcresultPath, outputPath string) (map[string][]string, error) {
+	var attachmentsMap = make(map[string][]string)
+
 	if err := xcresulttoolExport(xcresultPath, "", outputPath, false); err != nil {
-		return err
+		return nil, err
 	}
 
-	return renameFiles(outputPath)
-}
-
-func renameFiles(outputPath string) error {
 	manifestPath := filepath.Join(outputPath, "manifest.json")
 	bytes, err := os.ReadFile(manifestPath)
 	if err != nil {
-		return fmt.Errorf("failed to read manifest.json: %w", err)
+		return nil, err
 	}
 
 	var manifest []model3.TestAttachmentDetails
 	if err := json.Unmarshal(bytes, &manifest); err != nil {
-		return fmt.Errorf("failed to unmarshal manifest.json: %w", err)
+		return nil, err
 	}
 
 	for _, attachmentDetail := range manifest {
-		for _, attachment := range attachmentDetail.Attachments {
+		attachments := attachmentDetail.Attachments
+
+		sort.Slice(attachments, func(i, j int) bool {
+			return time.Time(attachments[i].Timestamp).Before(time.Time(attachments[j].Timestamp))
+		})
+
+		for _, attachment := range attachments {
 			oldPath := filepath.Join(outputPath, attachment.ExportedFileName)
-			newPath := filepath.Join(outputPath, attachment.SuggestedHumanReadableName)
+			newFilename := createUniqueFilename(attachment)
+			newPath := filepath.Join(outputPath, newFilename)
 
 			if err := os.Rename(oldPath, newPath); err != nil {
 				// It is not a critical error if the rename fails because the file will be still exported just by its
 				// unique ID.
 				log.Warnf("Failed to rename %s to %s", oldPath, newPath)
 			}
+
+			if !testasset.IsSupportedAssetType(newPath) {
+				continue
+			}
+
+			testIdentifier := appendRepetitionToTestIdentifier(attachmentDetail.TestIdentifier, attachment.RepetitionNumber)
+			attachmentsMap[testIdentifier] = append(attachmentsMap[testIdentifier], filepath.Base(newPath))
 		}
 	}
 
 	if err := os.Remove(manifestPath); err != nil {
-		return err
+		log.Warnf("Failed to remove manifest file %s: %s", manifestPath, err)
 	}
 
-	return nil
+	return attachmentsMap, nil
+}
+
+// Create unique filename using timestamp as suffix
+func createUniqueFilename(attachment model3.Attachment) string {
+	timestamp := time.Time(attachment.Timestamp).UnixNano()
+
+	originalName := attachment.SuggestedHumanReadableName
+	ext := filepath.Ext(originalName)
+	nameWithoutExt := strings.TrimSuffix(originalName, ext)
+
+	// Format: originalname_timestamp.ext
+	return fmt.Sprintf("%s_%d%s", nameWithoutExt, timestamp, ext)
+}
+
+func stripTrailingParentheses(s string) string {
+	return strings.TrimSuffix(s, "()")
+}
+
+func buildTestIdentifier(className, testName string) string {
+	return className + "/" + testName
+}
+
+func appendRepetitionToTestIdentifier(testIdentifier string, repetition int) string {
+	// Non-retried tests have an empty repetition, but later we treat them as a test with a repetition of 1.
+	// So we need to ensure that the repetition is at least 1.
+	value := int(math.Max(1, float64(repetition)))
+	return fmt.Sprintf("%s (%d)", stripTrailingParentheses(testIdentifier), value)
+}
+
+func connectAttachmentsToTestCases(xml testreport.TestReport, attachmentsMap map[string][]string) (testreport.TestReport, error) {
+	for i := range xml.TestSuites {
+		var testRepetitionMap = make(map[string]int)
+
+		for j := range xml.TestSuites[i].TestCases {
+			testCase := &xml.TestSuites[i].TestCases[j]
+			testIdentifier := buildTestIdentifier(testCase.ClassName, testCase.Name)
+
+			// If the test case has a repetition, we need to append it to the test identifier
+			// and keep track of how many times we have seen this test identifier.
+			if count, exists := testRepetitionMap[testIdentifier]; exists {
+				testRepetitionMap[testIdentifier] = count + 1
+			} else {
+				testRepetitionMap[testIdentifier] = 1
+			}
+
+			testIdentifier = appendRepetitionToTestIdentifier(testIdentifier, testRepetitionMap[testIdentifier])
+
+			// Add attachments if any exist for this test and repetition
+			if attachments, exists := attachmentsMap[testIdentifier]; exists {
+				if testCase.Properties == nil {
+					testCase.Properties = &testreport.Properties{
+						Property: []testreport.Property{},
+					}
+				}
+
+				// Add each attachment as a property
+				for i, fileName := range attachments {
+					testCase.Properties.Property = append(
+						testCase.Properties.Property,
+						testreport.Property{Name: fmt.Sprintf("attachment_%d", i), Value: fileName},
+					)
+				}
+			}
+		}
+	}
+
+	return xml, nil
 }
 
 func testSuiteCountInSummaries(summaries []ActionTestPlanRunSummaries) int {
