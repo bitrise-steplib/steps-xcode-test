@@ -33,22 +33,22 @@ func NewExporter(cmdFactory command.Factory) Exporter {
 // a value for subsequent steps.
 func (e *Exporter) ExportOutput(key, value string) error {
 	cmd := e.cmdFactory.Create("envman", []string{"add", "--key", key, "--value", value}, nil)
-	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
-	if err != nil {
-		return fmt.Errorf("exporting output with envman failed: %s, output: %s", err, out)
-	}
-	return nil
+	return runExport(cmd)
 }
 
 // ExportOutputNoExpand works like ExportOutput but does not expand environment variables in the value.
 // This can be used when the value is unstrusted or is beyond the control of the step.
 func (e *Exporter) ExportOutputNoExpand(key, value string) error {
 	cmd := e.cmdFactory.Create("envman", []string{"add", "--key", key, "--value", value, "--no-expand"}, nil)
-	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
-	if err != nil {
-		return fmt.Errorf("exporting output with envman failed: %s, output: %s", err, out)
-	}
-	return nil
+	return runExport(cmd)
+}
+
+// ExportSecretOutput is used for exposing secret values for other steps.
+// Regular env vars are isolated between steps, so instead of calling `os.Setenv()`, use this to explicitly expose
+// a secret value for subsequent steps.
+func (e *Exporter) ExportSecretOutput(key, value string) error {
+	cmd := e.cmdFactory.Create("envman", []string{"add", "--key", key, "--value", value, "--sensitive"}, nil)
+	return runExport(cmd)
 }
 
 // ExportOutputFile is a convenience method for copying sourcePath to destinationPath and then exporting the
@@ -172,6 +172,14 @@ func copyFile(source, destination string) error {
 	_, err = io.Copy(out, in)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func runExport(cmd command.Command) error {
+	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
+	if err != nil {
+		return fmt.Errorf("exporting output with envman failed: %s, output: %s", err, out)
 	}
 	return nil
 }

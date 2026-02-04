@@ -29,7 +29,10 @@ func (t *Timestamp) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	*t = Timestamp(time.Unix(int64(timestamp), 0))
+	// Extract seconds and nanoseconds separately to preserve fractional part
+	seconds := int64(timestamp)
+	nanoseconds := int64((timestamp - float64(seconds)) * 1e9)
 
+	*t = Timestamp(time.Unix(seconds, nanoseconds))
 	return nil
 }

@@ -1,14 +1,22 @@
 package xcresult3
 
 import (
+	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/errorutil"
+	command2 "github.com/bitrise-io/go-utils/v2/command"
+	"github.com/bitrise-io/go-utils/v2/env"
+	"github.com/bitrise-io/go-utils/v2/log"
 )
 
 func isXcresulttoolAvailable() bool {
@@ -64,6 +72,9 @@ func supportsNewExtractionMethods() (bool, error) {
 
 // xcresulttoolGet performs xcrun xcresulttool get with --id flag defined if id provided and marshals the output into v.
 func xcresulttoolGet(xcresultPth, id string, useLegacyFlag bool, v interface{}) error {
+	commandFactory := command2.NewFactory(env.NewRepository())
+	logger := log.NewLogger()
+
 	args := []string{"xcresulttool", "get"}
 
 	supportsNewMethod, err := supportsNewExtractionMethods()
@@ -87,18 +98,50 @@ func xcresulttoolGet(xcresultPth, id string, useLegacyFlag bool, v interface{}) 
 		args = append(args, "--id", id)
 	}
 
-	cmd := command.New("xcrun", args...)
-	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
-	if err != nil {
+	var outBuffer, errBuffer, combinedBuffer bytes.Buffer
+	outWriter := io.MultiWriter(&outBuffer, &combinedBuffer)
+	errWriter := io.MultiWriter(&errBuffer, &combinedBuffer)
+
+	cmd := commandFactory.Create("xcrun", args, &command2.Opts{
+		Stdout:      outWriter,
+		Stderr:      errWriter,
+		Stdin:       nil,
+		Env:         os.Environ(),
+		Dir:         "",
+		ErrorFinder: nil,
+	})
+	if err := cmd.Run(); err != nil {
 		if errorutil.IsExitStatusError(err) {
-			return fmt.Errorf("%s failed: %s", cmd.PrintableCommandArgs(), out)
+			return fmt.Errorf("%s failed: %s", cmd.PrintableCommandArgs(), combinedBuffer.String())
 		}
 		return fmt.Errorf("%s failed: %s", cmd.PrintableCommandArgs(), err)
 	}
-	if err := json.Unmarshal([]byte(out), v); err != nil {
+	if stdErr := errBuffer.String(); stdErr != "" {
+		logger.Warnf("%s: %s", cmd.PrintableCommandArgs(), stdErr)
+	}
+
+	stdout := outBuffer.Bytes()
+	if err := json.Unmarshal(stdout, v); err != nil {
+		logger.Warnf("Failed to parse %s command output, first lines:\n%s", cmd.PrintableCommandArgs(), firstLines(string(stdout), 10))
 		return err
 	}
 	return nil
+}
+
+func firstLines(out string, count int) string {
+	if count < 1 {
+		return ""
+	}
+
+	var lines []string
+	scanner := bufio.NewScanner(strings.NewReader(out))
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+		if len(lines) >= count {
+			break
+		}
+	}
+	return strings.Join(lines, "\n")
 }
 
 // xcresulttoolExport exports a file with the given id at the given output path.
