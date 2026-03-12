@@ -10,8 +10,8 @@ import (
 	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/ziputil"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3/model3"
+	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult3"
+	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult3/model3"
 	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
 )
 
@@ -143,8 +143,7 @@ func (e exporter) ExportFlakyTestCases(xcResultPath string, useOldXCResultExtrac
 }
 
 func (e exporter) parseTestSummary(xcResultPath string, useOldXCResultExtractionMethod bool) (*model3.TestSummary, error) {
-	converter := xcresult3.Converter{}
-	converter.Setup(useOldXCResultExtractionMethod)
+	converter := xcresult3.NewConverter(useOldXCResultExtractionMethod)
 	if !converter.Detect([]string{xcResultPath}) {
 		return nil, nil
 	}

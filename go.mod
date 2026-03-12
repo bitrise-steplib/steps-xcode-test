@@ -6,11 +6,10 @@ toolchain go1.23.2
 
 require (
 	github.com/bitrise-io/bitrise v0.0.0-20230707121919-a5b9e2d27ea9
-	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.43
+	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.48.0.20260312091018-7447bc60506b
 	github.com/bitrise-io/go-utils v1.0.15
-	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.31
-	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.77
-	github.com/bitrise-steplib/steps-deploy-to-bitrise-io v0.0.0-20260105124642-5583d1ed06c4
+	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.33
+	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.79.0.20260312102256-0c898dd1f2a3
 	github.com/hashicorp/go-version v1.7.0
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/stretchr/testify v1.10.0
@@ -19,10 +18,11 @@ require (
 require (
 	github.com/bitrise-io/envman v0.0.0-20240730123632-8066eeb61599 // indirect
 	github.com/bitrise-io/go-steputils v1.0.6 // indirect
-	github.com/bitrise-io/go-xcode v1.3.1 // indirect
+	github.com/bitrise-io/go-xcode v1.3.3 // indirect
 	github.com/bitrise-io/stepman v0.0.0-20240828074035-6ae1a5f5efde // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/globocom/go-buffer/v2 v2.0.0 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
 	github.com/kr/pretty v0.3.1 // indirect

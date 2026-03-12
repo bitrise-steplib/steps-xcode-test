@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// Convert converts TestData into a TestSummary and a list of warnings.
 func Convert(data *TestData) (*TestSummary, []string, error) {
 	var warnings []string
 	summary := TestSummary{}
@@ -102,9 +103,12 @@ func extractTestCases(nodes []TestNode, fallbackName string) ([]TestCaseWithRetr
 }
 
 func extractDuration(text string) time.Duration {
-	// Duration is in the format "123.456789s" or "123,456789s", so we need to replace the comma with a dot.
-	text = strings.Replace(text, ",", ".", -1)
-	duration, err := time.ParseDuration(text)
+	// Duration is in the format "123.456789s", "123,456789s" or "4m 34s", so we need to do some normalization. We
+	// need to replace the comma with a dot and remove the space to be able to parse it with time.ParseDuration.
+	normalized := strings.ReplaceAll(text, ",", ".")
+	normalized = strings.ReplaceAll(normalized, " ", "")
+
+	duration, err := time.ParseDuration(normalized)
 	if err != nil {
 		return 0
 	}
