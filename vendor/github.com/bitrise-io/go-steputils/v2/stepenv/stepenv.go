@@ -10,7 +10,7 @@ import (
 func NewRepository(osRepository env.Repository) env.Repository {
 	return defaultRepository{
 		osRepository: osRepository,
-		exporter:     export.NewExporter(command.NewFactory(osRepository)),
+		exporter:     export.NewExporter(command.NewFactory(osRepository), export.NewFileManager()),
 	}
 }
 

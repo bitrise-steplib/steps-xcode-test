@@ -1,4 +1,4 @@
-package internal
+package fileutil
 
 import (
 	"io/fs"
@@ -6,6 +6,12 @@ import (
 	"path/filepath"
 	"time"
 )
+
+// SysStat holds file system stat information.
+type SysStat struct {
+	Uid int
+	Gid int
+}
 
 // OsProxy defines the subset of os package functions we want to proxy.
 // Add more methods as you need them.

@@ -22,10 +22,10 @@ type Exporter struct {
 }
 
 // NewExporter ...
-func NewExporter(cmdFactory command.Factory) Exporter {
+func NewExporter(cmdFactory command.Factory, fm FileManager) Exporter {
 	return Exporter{
 		cmdFactory:  cmdFactory,
-		fileManager: NewFileManager(),
+		fileManager: fm,
 	}
 }
 
@@ -53,7 +53,11 @@ func (e *Exporter) ExportSecretOutput(key, value string) error {
 }
 
 // ExportOutputFile is a convenience method for copying sourcePath to destinationPath and then exporting the
-// absolute destination path with ExportOutput()
+// absolute destination path with ExportOutput().
+//
+// Attention:
+// This method will overwrite the destinationPath if existing prior to calling this; this is intentional.
+// No errors or warnings will be returned for this.
 func (e *Exporter) ExportOutputFile(key, sourcePath, destinationPath string) error {
 	pathModifier := pathutil.NewPathModifier()
 	absSourcePath, err := pathModifier.AbsPath(sourcePath)
@@ -66,7 +70,7 @@ func (e *Exporter) ExportOutputFile(key, sourcePath, destinationPath string) err
 	}
 
 	if absSourcePath != absDestinationPath {
-		if err = e.fileManager.CopyFile(absSourcePath, absDestinationPath); err != nil {
+		if err = e.fileManager.CopyFile(absSourcePath, absDestinationPath, &CopyOptions{Overwrite: true}); err != nil {
 			return err
 		}
 	}
@@ -76,6 +80,10 @@ func (e *Exporter) ExportOutputFile(key, sourcePath, destinationPath string) err
 
 // ExportOutputFilesZip is a convenience method for creating a ZIP archive from sourcePaths at zipPath and then
 // exporting the absolute path of the ZIP with ExportOutput()
+//
+// Attention:
+// This method will overwrite the zipPath if existing prior to calling this; this is intentional.
+// No errors or warnings will be returned for this.
 func (e *Exporter) ExportOutputFilesZip(key string, sourcePaths []string, zipPath string) error {
 	tempZipPath, err := zipFilePath()
 	if err != nil {
@@ -110,6 +118,10 @@ func (e *Exporter) ExportOutputFilesZip(key string, sourcePaths []string, zipPat
 // ExportOutputDir is a convenience method for copying sourceDir to destinationDir and then exporting the
 // absolute destination dir with ExportOutput()
 // Note: symlinks are preserved during the copy operation
+//
+// Attention:
+// This method will overwrite the dstDir if existing prior to calling this; this is intentional.
+// No errors or warnings will be returned for this.
 func (e *Exporter) ExportOutputDir(envKey, srcDir, dstDir string) error {
 	srcDir, err := filepath.Abs(srcDir)
 	if err != nil {
@@ -132,7 +144,7 @@ func (e *Exporter) ExportOutputDir(envKey, srcDir, dstDir string) error {
 		return e.ExportOutput(envKey, dstDir)
 	}
 
-	if err := e.fileManager.CopyDir(srcDir, dstDir); err != nil {
+	if err := e.fileManager.CopyDir(srcDir, dstDir, &CopyOptions{Overwrite: true}); err != nil {
 		return err
 	}
 
@@ -141,6 +153,10 @@ func (e *Exporter) ExportOutputDir(envKey, srcDir, dstDir string) error {
 
 // ExportStringToFileOutput is a convenience method for writing content to dst and then exporting the
 // absolute dst path with ExportOutputFile()
+//
+// Attention:
+// This method will overwrite the dst if existing prior to calling this; this is intentional.
+// No errors or warnings will be returned for this.
 func (e *Exporter) ExportStringToFileOutput(envKey, content, dst string) error {
 	if err := e.fileManager.WriteBytes(dst, []byte(content)); err != nil {
 		return err
@@ -151,6 +167,10 @@ func (e *Exporter) ExportStringToFileOutput(envKey, content, dst string) error {
 
 // ExportStringToFileOutputAndReturnLastNLines is similar to ExportStringToFileOutput but it also returns the
 // last N lines of the content.
+//
+// Attention:
+// This method will overwrite the dst if existing prior to calling this; this is intentional.
+// No errors or warnings will be returned for this.
 func (e *Exporter) ExportStringToFileOutputAndReturnLastNLines(envKey, content, dst string, lines int) (string, error) {
 	if err := e.ExportStringToFileOutput(envKey, content, dst); err != nil {
 		return "", err

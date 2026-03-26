@@ -1,6 +1,6 @@
 //go:build linux
 
-package export
+package fileutil
 
 import (
 	"syscall"

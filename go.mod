@@ -6,10 +6,10 @@ toolchain go1.23.2
 
 require (
 	github.com/bitrise-io/bitrise v0.0.0-20230707121919-a5b9e2d27ea9
-	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.48.0.20260312091018-7447bc60506b
+	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.49
 	github.com/bitrise-io/go-utils v1.0.15
-	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.33
-	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.79.0.20260312102256-0c898dd1f2a3
+	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.34
+	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.80
 	github.com/hashicorp/go-version v1.7.0
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/stretchr/testify v1.10.0

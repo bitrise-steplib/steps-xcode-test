@@ -1,6 +1,6 @@
 //go:build darwin || freebsd || netbsd || openbsd
 
-package export
+package fileutil
 
 import (
 	"syscall"
