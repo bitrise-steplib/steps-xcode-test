@@ -89,7 +89,7 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 	xcconfigWriter := xcconfig.NewWriter(pathProvider, fileManager, pathChecker, pathModifier)
 	simulatorManager := simulator.NewManager(logger, commandFactory)
 	swiftCache := cache.NewSwiftPackageCache()
-	outputExporter := export.NewExporter(commandFactory)
+	outputExporter := export.NewExporter(commandFactory, fileManager)
 	testAddonExporter := testaddon.NewExporter(testaddon.NewTestAddon(logger))
 	stepenvRepository := stepenv.NewRepository(envRepository)
 	exporter := output.NewExporter(stepenvRepository, logger, outputExporter, testAddonExporter)
