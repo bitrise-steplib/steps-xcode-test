@@ -1,3 +1,4 @@
+// Package testreport defines the data structures for representing test results.
 package testreport
 
 import (
@@ -10,6 +11,7 @@ type TestReport struct {
 	TestSuites []TestSuite `xml:"testsuite"`
 }
 
+// TestSuite represents a collection of test cases.
 type TestSuite struct {
 	XMLName    xml.Name    `xml:"testsuite"`
 	Name       string      `xml:"name,attr"`
@@ -25,6 +27,7 @@ type TestSuite struct {
 	TestSuites []TestSuite `xml:"testsuite,omitempty"`
 }
 
+// TestCase represents a single test case execution.
 type TestCase struct {
 	XMLName xml.Name `xml:"testcase"`
 	// ConfigurationHash is used to distinguish the same test case runs,
@@ -44,6 +47,7 @@ type TestCase struct {
 	SystemErr         *SystemErr  `xml:"system-err,omitempty"`
 }
 
+// Failure represents a test case failure.
 type Failure struct {
 	XMLName xml.Name `xml:"failure,omitempty"`
 	Type    string   `xml:"type,attr,omitempty"`
@@ -51,6 +55,7 @@ type Failure struct {
 	Value   string   `xml:",chardata"`
 }
 
+// Error represents a test case error.
 type Error struct {
 	XMLName xml.Name `xml:"error,omitempty"`
 	Type    string   `xml:"type,attr,omitempty"`
@@ -58,29 +63,41 @@ type Error struct {
 	Value   string   `xml:",chardata"`
 }
 
+// Skipped represents a skipped test case.
 type Skipped struct {
 	XMLName xml.Name `xml:"skipped,omitempty"`
 	Message string   `xml:"message,attr,omitempty"`
 	Value   string   `xml:",chardata"`
 }
 
+// Property represents a single key-value test property.
 type Property struct {
 	XMLName xml.Name `xml:"property"`
 	Name    string   `xml:"name,attr"`
 	Value   string   `xml:"value,attr"`
 }
 
+// Properties holds a list of test properties.
 type Properties struct {
 	XMLName  xml.Name   `xml:"properties"`
 	Property []Property `xml:"property"`
 }
 
+// SystemOut holds captured standard output from a test case.
 type SystemOut struct {
 	XMLName xml.Name `xml:"system-out,omitempty"`
 	Value   string   `xml:",chardata"`
 }
 
+// SystemErr holds a captured standard error from a test case.
 type SystemErr struct {
 	XMLName xml.Name `xml:"system-err,omitempty"`
 	Value   string   `xml:",chardata"`
+}
+
+// Converter is the interface that a test result converter must implement.
+// It must be able to detect whether it can handle a set of files and run the conversion.
+type Converter interface {
+	Detect([]string) bool
+	Convert() (TestReport, error)
 }

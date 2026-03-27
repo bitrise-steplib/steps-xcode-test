@@ -17,7 +17,7 @@ import (
 const xcconfigPath = "xcconfigPath"
 
 type testingMocks struct {
-	fileManager        *mocks.FileManager
+	fileManager        *commonMocks.FileManager
 	xcconfigWriter     *mocks.XcconfigWriter
 	xcodeCommandRunner *commonMocks.XcodeCommandRunner
 }
@@ -233,7 +233,7 @@ func Test_GivenXcprettyFormatter_WhenEnabled_ThenUsesCorrectArguments(t *testing
 
 func createXcodebuildAndMocks(t *testing.T) (Xcodebuild, testingMocks) {
 	logger := log.NewLogger()
-	fileManager := new(mocks.FileManager)
+	fileManager := new(commonMocks.FileManager)
 	xcconfigWriter := new(mocks.XcconfigWriter)
 	xcodeCommandRunner := commonMocks.NewXcodeCommandRunner(t)
 

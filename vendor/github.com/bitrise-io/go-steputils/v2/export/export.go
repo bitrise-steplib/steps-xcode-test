@@ -2,9 +2,6 @@ package export
 
 import (
 	"fmt"
-	"io"
-	"log"
-	"os"
 	"path/filepath"
 
 	"github.com/bitrise-io/go-utils/v2/command"
@@ -20,12 +17,16 @@ const (
 
 // Exporter ...
 type Exporter struct {
-	cmdFactory command.Factory
+	cmdFactory  command.Factory
+	fileManager FileManager
 }
 
 // NewExporter ...
-func NewExporter(cmdFactory command.Factory) Exporter {
-	return Exporter{cmdFactory: cmdFactory}
+func NewExporter(cmdFactory command.Factory, fm FileManager) Exporter {
+	return Exporter{
+		cmdFactory:  cmdFactory,
+		fileManager: fm,
+	}
 }
 
 // ExportOutput is used for exposing values for other steps.
@@ -52,7 +53,11 @@ func (e *Exporter) ExportSecretOutput(key, value string) error {
 }
 
 // ExportOutputFile is a convenience method for copying sourcePath to destinationPath and then exporting the
-// absolute destination path with ExportOutput()
+// absolute destination path with ExportOutput().
+//
+// Attention:
+// This method will overwrite the destinationPath if existing prior to calling this; this is intentional.
+// No errors or warnings will be returned for this.
 func (e *Exporter) ExportOutputFile(key, sourcePath, destinationPath string) error {
 	pathModifier := pathutil.NewPathModifier()
 	absSourcePath, err := pathModifier.AbsPath(sourcePath)
@@ -65,7 +70,7 @@ func (e *Exporter) ExportOutputFile(key, sourcePath, destinationPath string) err
 	}
 
 	if absSourcePath != absDestinationPath {
-		if err = copyFile(absSourcePath, absDestinationPath); err != nil {
+		if err = e.fileManager.CopyFile(absSourcePath, absDestinationPath, &CopyOptions{Overwrite: true}); err != nil {
 			return err
 		}
 	}
@@ -75,6 +80,10 @@ func (e *Exporter) ExportOutputFile(key, sourcePath, destinationPath string) err
 
 // ExportOutputFilesZip is a convenience method for creating a ZIP archive from sourcePaths at zipPath and then
 // exporting the absolute path of the ZIP with ExportOutput()
+//
+// Attention:
+// This method will overwrite the zipPath if existing prior to calling this; this is intentional.
+// No errors or warnings will be returned for this.
 func (e *Exporter) ExportOutputFilesZip(key string, sourcePaths []string, zipPath string) error {
 	tempZipPath, err := zipFilePath()
 	if err != nil {
@@ -104,6 +113,70 @@ func (e *Exporter) ExportOutputFilesZip(key string, sourcePaths []string, zipPat
 	}
 
 	return e.ExportOutputFile(key, tempZipPath, zipPath)
+}
+
+// ExportOutputDir is a convenience method for copying sourceDir to destinationDir and then exporting the
+// absolute destination dir with ExportOutput()
+// Note: symlinks are preserved during the copy operation
+//
+// Attention:
+// This method will overwrite the dstDir if existing prior to calling this; this is intentional.
+// No errors or warnings will be returned for this.
+func (e *Exporter) ExportOutputDir(envKey, srcDir, dstDir string) error {
+	srcDir, err := filepath.Abs(srcDir)
+	if err != nil {
+		return err
+	}
+	srcInfo, err := e.fileManager.Lstat(srcDir)
+	if err != nil {
+		return fmt.Errorf("stat src root: %w", err)
+	}
+	if !srcInfo.IsDir() {
+		return fmt.Errorf("src is not a directory: %s", srcDir)
+	}
+
+	dstDir, err = filepath.Abs(dstDir)
+	if err != nil {
+		return err
+	}
+
+	if srcDir == dstDir {
+		return e.ExportOutput(envKey, dstDir)
+	}
+
+	if err := e.fileManager.CopyDir(srcDir, dstDir, &CopyOptions{Overwrite: true}); err != nil {
+		return err
+	}
+
+	return e.ExportOutput(envKey, dstDir)
+}
+
+// ExportStringToFileOutput is a convenience method for writing content to dst and then exporting the
+// absolute dst path with ExportOutputFile()
+//
+// Attention:
+// This method will overwrite the dst if existing prior to calling this; this is intentional.
+// No errors or warnings will be returned for this.
+func (e *Exporter) ExportStringToFileOutput(envKey, content, dst string) error {
+	if err := e.fileManager.WriteBytes(dst, []byte(content)); err != nil {
+		return err
+	}
+
+	return e.ExportOutputFile(envKey, dst, dst)
+}
+
+// ExportStringToFileOutputAndReturnLastNLines is similar to ExportStringToFileOutput but it also returns the
+// last N lines of the content.
+//
+// Attention:
+// This method will overwrite the dst if existing prior to calling this; this is intentional.
+// No errors or warnings will be returned for this.
+func (e *Exporter) ExportStringToFileOutputAndReturnLastNLines(envKey, content, dst string, lines int) (string, error) {
+	if err := e.ExportStringToFileOutput(envKey, content, dst); err != nil {
+		return "", err
+	}
+
+	return e.fileManager.LastNLines(content, lines), nil
 }
 
 func zipFilePath() (string, error) {
@@ -149,31 +222,6 @@ func getInputType(sourcePths []string) (string, error) {
 	}
 
 	return "", nil
-}
-
-func copyFile(source, destination string) error {
-	in, err := os.Open(source)
-	if err != nil {
-		return err
-	}
-	defer in.Close() //nolint:errcheck
-
-	out, err := os.Create(destination)
-	if err != nil {
-		return err
-	}
-	defer func(out *os.File) {
-		err := out.Close()
-		if err != nil {
-			log.Fatalf("Failed to close output file: %s", err)
-		}
-	}(out)
-
-	_, err = io.Copy(out, in)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func runExport(cmd command.Command) error {

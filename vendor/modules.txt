@@ -14,13 +14,15 @@ github.com/bitrise-io/envman/models
 ## explicit; go 1.15
 github.com/bitrise-io/go-steputils/cache
 github.com/bitrise-io/go-steputils/tools
-# github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.43
-## explicit; go 1.17
+# github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.49
+## explicit; go 1.21
 github.com/bitrise-io/go-steputils/v2/export
 github.com/bitrise-io/go-steputils/v2/ruby
 github.com/bitrise-io/go-steputils/v2/stepconf
 github.com/bitrise-io/go-steputils/v2/stepenv
+github.com/bitrise-io/go-steputils/v2/testasset
 github.com/bitrise-io/go-steputils/v2/testquarantine
+github.com/bitrise-io/go-steputils/v2/testreport
 # github.com/bitrise-io/go-utils v1.0.15
 ## explicit; go 1.13
 github.com/bitrise-io/go-utils/colorstring
@@ -34,8 +36,8 @@ github.com/bitrise-io/go-utils/pointers
 github.com/bitrise-io/go-utils/progress
 github.com/bitrise-io/go-utils/stringutil
 github.com/bitrise-io/go-utils/ziputil
-# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.31
-## explicit; go 1.17
+# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.34
+## explicit; go 1.21
 github.com/bitrise-io/go-utils/v2/command
 github.com/bitrise-io/go-utils/v2/env
 github.com/bitrise-io/go-utils/v2/errorutil
@@ -43,18 +45,21 @@ github.com/bitrise-io/go-utils/v2/filedownloader
 github.com/bitrise-io/go-utils/v2/fileutil
 github.com/bitrise-io/go-utils/v2/log
 github.com/bitrise-io/go-utils/v2/log/colorstring
+github.com/bitrise-io/go-utils/v2/parseutil
 github.com/bitrise-io/go-utils/v2/pathutil
 github.com/bitrise-io/go-utils/v2/retry
 github.com/bitrise-io/go-utils/v2/retryhttp
-# github.com/bitrise-io/go-xcode v1.3.1
+# github.com/bitrise-io/go-xcode v1.3.3
 ## explicit; go 1.20
 github.com/bitrise-io/go-xcode/xcodeproject/serialized
-# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.77
+# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.80
 ## explicit; go 1.22
 github.com/bitrise-io/go-xcode/v2/destination
 github.com/bitrise-io/go-xcode/v2/errorfinder
 github.com/bitrise-io/go-xcode/v2/logio
 github.com/bitrise-io/go-xcode/v2/simulator
+github.com/bitrise-io/go-xcode/v2/testresult/xcresult3
+github.com/bitrise-io/go-xcode/v2/testresult/xcresult3/model3
 github.com/bitrise-io/go-xcode/v2/xcconfig
 github.com/bitrise-io/go-xcode/v2/xcodecache
 github.com/bitrise-io/go-xcode/v2/xcodecommand
@@ -62,18 +67,14 @@ github.com/bitrise-io/go-xcode/v2/xcodeversion
 # github.com/bitrise-io/stepman v0.0.0-20240828074035-6ae1a5f5efde
 ## explicit; go 1.18
 github.com/bitrise-io/stepman/models
-# github.com/bitrise-steplib/steps-deploy-to-bitrise-io v0.0.0-20260105124642-5583d1ed06c4
-## explicit; go 1.22
-github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3
-github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3/model3
-github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testasset
-github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
 # github.com/globocom/go-buffer/v2 v2.0.0
 ## explicit; go 1.13
 github.com/globocom/go-buffer/v2
+# github.com/google/go-cmp v0.6.0
+## explicit; go 1.13
 # github.com/hashicorp/go-cleanhttp v0.5.2
 ## explicit; go 1.13
 github.com/hashicorp/go-cleanhttp

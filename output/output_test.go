@@ -11,7 +11,7 @@ import (
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3/model3"
+	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult3/model3"
 	commonMocks "github.com/bitrise-steplib/steps-xcode-test/mocks"
 	"github.com/bitrise-steplib/steps-xcode-test/output/mocks"
 	"github.com/stretchr/testify/assert"
@@ -281,7 +281,7 @@ func Test_exporter_collectAndExportFlakyTestPlans(t *testing.T) {
 			exporter := exporter{
 				envRepository:     envRepository,
 				logger:            logger,
-				outputExporter:    export.NewExporter(new(commonMocks.CommandFactory)),
+				outputExporter:    export.NewExporter(new(commonMocks.CommandFactory), new(commonMocks.FileManager)),
 				testAddonExporter: nil,
 			}
 
@@ -312,10 +312,11 @@ func Test_exporter_collectAndExportFlakyTestPlans(t *testing.T) {
 
 func createSutAndMocks() (Exporter, testingMocks) {
 	commandFactory := new(commonMocks.CommandFactory)
+	fileManager := new(commonMocks.FileManager)
 	envRepository := new(mocks.Repository)
 	envRepository.On("Set", mock.Anything, mock.Anything).Return(nil)
 
-	exporter := NewExporter(envRepository, log.NewLogger(), export.NewExporter(commandFactory), nil)
+	exporter := NewExporter(envRepository, log.NewLogger(), export.NewExporter(commandFactory, fileManager), nil)
 
 	return exporter, testingMocks{
 		envRepository: envRepository,

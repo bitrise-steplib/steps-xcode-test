@@ -20,9 +20,9 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-xcode/xcodeproject/serialized"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3/model3"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testasset"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
+	"github.com/bitrise-io/go-steputils/v2/testasset"
+	"github.com/bitrise-io/go-steputils/v2/testreport"
+	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult3/model3"
 )
 
 // Converter ...
@@ -58,8 +58,9 @@ func documentMajorVersion(pth string) (int, error) {
 	return majorVersion(info)
 }
 
-func (c *Converter) Setup(useOldXCResultExtractionMethod bool) {
-	c.useLegacyExtractionMethod = useOldXCResultExtractionMethod
+// NewConverter creates a Converter with the given extraction method preference.
+func NewConverter(useLegacy bool) *Converter {
+	return &Converter{useLegacyExtractionMethod: useLegacy}
 }
 
 // Detect ...
@@ -100,7 +101,7 @@ func (c *Converter) Detect(files []string) bool {
 	return false
 }
 
-// XML ...
+// Convert returns the test report parsed from the xcresult file.
 func (c *Converter) Convert() (testreport.TestReport, error) {
 	supportsNewMethod, err := supportsNewExtractionMethods()
 	if err != nil {
@@ -138,7 +139,7 @@ func legacyParse(path string, useLegacyFlag bool) (testreport.TestReport, error)
 
 	log.Debugf("Maximum parallelism: %d.", maxParallel)
 
-	_, summaries, err := Parse(path, useLegacyFlag)
+	_, summaries, err := loadXCResultData(path, useLegacyFlag)
 	if err != nil {
 		return testreport.TestReport{}, err
 	}
@@ -383,7 +384,7 @@ func connectAttachmentsToTestCases(xml testreport.TestReport, attachmentsMap map
 	return xml, nil
 }
 
-func testSuiteCountInSummaries(summaries []ActionTestPlanRunSummaries) int {
+func testSuiteCountInSummaries(summaries []actionTestPlanRunSummaries) int {
 	testSuiteCount := 0
 	for _, summary := range summaries {
 		testSuiteOrder, _ := summary.tests()
@@ -393,8 +394,8 @@ func testSuiteCountInSummaries(summaries []ActionTestPlanRunSummaries) int {
 }
 
 func genTestSuite(name string,
-	summary ActionTestPlanRunSummaries,
-	tests []ActionTestSummaryGroup,
+	summary actionTestPlanRunSummaries,
+	tests []actionTestSummaryGroup,
 	testResultDir string,
 	xcresultPath string,
 	maxParallel int,
@@ -422,7 +423,7 @@ func genTestSuite(name string,
 			test := tests[testIdx]
 			wg.Add(1)
 
-			go func(test ActionTestSummaryGroup, testIdx int) {
+			go func(test actionTestSummaryGroup, testIdx int) {
 				defer wg.Done()
 
 				testCase, err := genTestCase(test, xcresultPath, testResultDir, useLegacyFlag)
@@ -446,7 +447,7 @@ func genTestSuite(name string,
 	return testSuite, genTestSuiteErr
 }
 
-func genTestCase(test ActionTestSummaryGroup, xcresultPath, testResultDir string, useLegacyFlag bool) (testreport.TestCase, error) {
+func genTestCase(test actionTestSummaryGroup, xcresultPath, testResultDir string, useLegacyFlag bool) (testreport.TestCase, error) {
 	var duartion float64
 	if test.Duration.Value != "" {
 		var err error
@@ -461,7 +462,7 @@ func genTestCase(test ActionTestSummaryGroup, xcresultPath, testResultDir string
 	// For example, failed tests will always have a summary, but successful ones might have it or might not.
 	// If they do not have it, then that means that they did not log anything to the console,
 	// and they were not executed as device configuration tests.
-	if err != nil && !errors.Is(err, ErrSummaryNotFound) {
+	if err != nil && !errors.Is(err, errSummaryNotFound) {
 		return testreport.TestCase{}, err
 	}
 
