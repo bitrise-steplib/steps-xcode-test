@@ -281,7 +281,7 @@ func Test_exporter_collectAndExportFlakyTestPlans(t *testing.T) {
 			exporter := exporter{
 				envRepository:     envRepository,
 				logger:            logger,
-				outputExporter:    export.NewExporter(new(commonMocks.CommandFactory)),
+				outputExporter:    export.NewExporter(new(commonMocks.CommandFactory), new(commonMocks.FileManager)),
 				testAddonExporter: nil,
 			}
 
@@ -312,10 +312,11 @@ func Test_exporter_collectAndExportFlakyTestPlans(t *testing.T) {
 
 func createSutAndMocks() (Exporter, testingMocks) {
 	commandFactory := new(commonMocks.CommandFactory)
+	fileManager := new(commonMocks.FileManager)
 	envRepository := new(mocks.Repository)
 	envRepository.On("Set", mock.Anything, mock.Anything).Return(nil)
 
-	exporter := NewExporter(envRepository, log.NewLogger(), export.NewExporter(commandFactory), nil)
+	exporter := NewExporter(envRepository, log.NewLogger(), export.NewExporter(commandFactory, fileManager), nil)
 
 	return exporter, testingMocks{
 		envRepository: envRepository,
