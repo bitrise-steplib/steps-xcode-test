@@ -11,6 +11,7 @@ import (
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
+	"github.com/bitrise-io/go-utils/v2/ziputil"
 	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult3/model3"
 	commonMocks "github.com/bitrise-steplib/steps-xcode-test/mocks"
 	"github.com/bitrise-steplib/steps-xcode-test/output/mocks"
@@ -316,7 +317,8 @@ func createSutAndMocks() (Exporter, testingMocks) {
 	envRepository := new(mocks.Repository)
 	envRepository.On("Set", mock.Anything, mock.Anything).Return(nil)
 
-	exporter := NewExporter(envRepository, log.NewLogger(), export.NewExporter(commandFactory, fileManager), nil)
+	zipManager := ziputil.NewZipManager(pathutil.NewPathChecker())
+	exporter := NewExporter(envRepository, log.NewLogger(), export.NewExporter(commandFactory, fileManager), nil, zipManager)
 
 	return exporter, testingMocks{
 		envRepository: envRepository,

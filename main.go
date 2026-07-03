@@ -16,6 +16,7 @@ import (
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
+	"github.com/bitrise-io/go-utils/v2/ziputil"
 	"github.com/bitrise-io/go-xcode/v2/destination"
 	"github.com/bitrise-io/go-xcode/v2/simulator"
 	"github.com/bitrise-io/go-xcode/v2/xcconfig"
@@ -94,7 +95,8 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 	outputExporter := export.NewExporter(commandFactory, fileManager)
 	testAddonExporter := testaddon.NewExporter(testaddon.NewTestAddon(logger))
 	stepenvRepository := stepenv.NewRepository(envRepository)
-	exporter := output.NewExporter(stepenvRepository, logger, outputExporter, testAddonExporter)
+	zipManager := ziputil.NewZipManager(pathChecker)
+	exporter := output.NewExporter(stepenvRepository, logger, outputExporter, testAddonExporter, zipManager)
 	utils := step.NewUtils(logger)
 
 	// Only the factory handed to the xcodecommand runner gets wrapped — codesign,

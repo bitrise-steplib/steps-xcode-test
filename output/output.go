@@ -9,7 +9,6 @@ import (
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-utils/v2/log"
-	"github.com/bitrise-io/go-utils/ziputil"
 	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult3"
 	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult3/model3"
 	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
@@ -30,20 +29,27 @@ type Exporter interface {
 	ExportFlakyTestCases(xcResultPath string, useOldXCResultExtractionMethod bool) error
 }
 
+// DirZipper zips a directory into a destination archive.
+type DirZipper interface {
+	ZipDir(sourceDirPth, destinationZipPth string, isContentOnly bool) error
+}
+
 type exporter struct {
 	envRepository     env.Repository
 	logger            log.Logger
 	outputExporter    export.Exporter
 	testAddonExporter testaddon.Exporter
+	dirZipper         DirZipper
 }
 
 // NewExporter ...
-func NewExporter(envRepository env.Repository, logger log.Logger, outputExporter export.Exporter, testAddonExporter testaddon.Exporter) Exporter {
+func NewExporter(envRepository env.Repository, logger log.Logger, outputExporter export.Exporter, testAddonExporter testaddon.Exporter, dirZipper DirZipper) Exporter {
 	return &exporter{
 		envRepository:     envRepository,
 		logger:            logger,
 		outputExporter:    outputExporter,
 		testAddonExporter: testAddonExporter,
+		dirZipper:         dirZipper,
 	}
 }
 
@@ -120,8 +126,11 @@ func (e exporter) ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) e
 }
 
 func (e exporter) ExportSimulatorDiagnostics(deployDir, pth, name string) error {
-	outputPath := filepath.Join(deployDir, name)
-	if err := ziputil.ZipDir(pth, outputPath, true); err != nil {
+	// v1 shelled out to /usr/bin/zip, which appended .zip when the destination had no
+	// extension. The pure-Go v2 ZipDir writes the exact path given, so add .zip here to
+	// keep the produced artifact name unchanged.
+	outputPath := filepath.Join(deployDir, name+".zip")
+	if err := e.dirZipper.ZipDir(pth, outputPath, true); err != nil {
 		return fmt.Errorf("failed to compress simulator diagnostics result: %w", err)
 	}
 

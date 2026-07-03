@@ -49,7 +49,7 @@ github.com/bitrise-io/go-utils/pointers
 github.com/bitrise-io/go-utils/progress
 github.com/bitrise-io/go-utils/stringutil
 github.com/bitrise-io/go-utils/ziputil
-# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.34
+# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.36.0.20260612135825-fa80291d0871
 ## explicit; go 1.21
 github.com/bitrise-io/go-utils/v2/command
 github.com/bitrise-io/go-utils/v2/env
@@ -62,6 +62,7 @@ github.com/bitrise-io/go-utils/v2/parseutil
 github.com/bitrise-io/go-utils/v2/pathutil
 github.com/bitrise-io/go-utils/v2/retry
 github.com/bitrise-io/go-utils/v2/retryhttp
+github.com/bitrise-io/go-utils/v2/ziputil
 # github.com/bitrise-io/go-xcode v1.3.3
 ## explicit; go 1.20
 github.com/bitrise-io/go-xcode/xcodeproject/serialized
