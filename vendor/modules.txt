@@ -27,7 +27,7 @@ github.com/bitrise-io/envman/models
 ## explicit; go 1.15
 github.com/bitrise-io/go-steputils/cache
 github.com/bitrise-io/go-steputils/tools
-# github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.50
+# github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.52
 ## explicit; go 1.21
 github.com/bitrise-io/go-steputils/v2/export
 github.com/bitrise-io/go-steputils/v2/ruby
@@ -49,7 +49,7 @@ github.com/bitrise-io/go-utils/pointers
 github.com/bitrise-io/go-utils/progress
 github.com/bitrise-io/go-utils/stringutil
 github.com/bitrise-io/go-utils/ziputil
-# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.36.0.20260612135825-fa80291d0871
+# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.39
 ## explicit; go 1.21
 github.com/bitrise-io/go-utils/v2/command
 github.com/bitrise-io/go-utils/v2/env
