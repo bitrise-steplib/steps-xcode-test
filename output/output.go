@@ -128,10 +128,7 @@ func (e exporter) ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) e
 }
 
 func (e exporter) ExportSimulatorDiagnostics(deployDir, pth, name string) error {
-	// v1 shelled out to /usr/bin/zip, which appended .zip when the destination had no
-	// extension. The pure-Go v2 ZipDir writes the exact path given, so add .zip here to
-	// keep the produced artifact name unchanged.
-	outputPath := filepath.Join(deployDir, name+".zip")
+	outputPath := filepath.Join(deployDir, name)
 	if err := e.dirZipper.ZipDir(pth, outputPath, true); err != nil {
 		return fmt.Errorf("failed to compress simulator diagnostics result: %w", err)
 	}
