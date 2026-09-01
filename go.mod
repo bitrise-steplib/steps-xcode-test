@@ -6,7 +6,6 @@ require (
 	github.com/bitrise-io/bitrise v0.0.0-20230707121919-a5b9e2d27ea9
 	github.com/bitrise-io/bitrise-build-cache-cli/v2 v2.6.0
 	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.50
-	github.com/bitrise-io/go-utils v1.0.15
 	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.36.0.20260612135825-fa80291d0871
 	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.80
 	github.com/hashicorp/go-version v1.7.0
@@ -17,6 +16,7 @@ require (
 require (
 	github.com/bitrise-io/envman v0.0.0-20240730123632-8066eeb61599 // indirect
 	github.com/bitrise-io/go-steputils v1.0.6 // indirect
+	github.com/bitrise-io/go-utils v1.0.15 // indirect
 	github.com/bitrise-io/go-xcode v1.3.3 // indirect
 	github.com/bitrise-io/stepman v0.0.0-20240828074035-6ae1a5f5efde // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect

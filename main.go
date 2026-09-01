@@ -96,7 +96,7 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 	testAddonExporter := testaddon.NewExporter(testaddon.NewTestAddon(logger))
 	stepenvRepository := stepenv.NewRepository(envRepository)
 	zipManager := ziputil.NewZipManager(pathChecker)
-	exporter := output.NewExporter(stepenvRepository, logger, outputExporter, testAddonExporter, zipManager)
+	exporter := output.NewExporter(stepenvRepository, logger, outputExporter, testAddonExporter, zipManager, fileManager)
 	utils := step.NewUtils(logger)
 
 	// Only the factory handed to the xcodecommand runner gets wrapped — codesign,

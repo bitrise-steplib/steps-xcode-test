@@ -318,7 +318,7 @@ func createSutAndMocks() (Exporter, testingMocks) {
 	envRepository.On("Set", mock.Anything, mock.Anything).Return(nil)
 
 	zipManager := ziputil.NewZipManager(pathutil.NewPathChecker())
-	exporter := NewExporter(envRepository, log.NewLogger(), export.NewExporter(commandFactory, fileManager), nil, zipManager)
+	exporter := NewExporter(envRepository, log.NewLogger(), export.NewExporter(commandFactory, fileManager), nil, zipManager, fileutil.NewFileManager())
 
 	return exporter, testingMocks{
 		envRepository: envRepository,
