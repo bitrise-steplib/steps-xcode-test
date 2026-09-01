@@ -113,6 +113,33 @@ func Test_GivenSimulatorDiagnostics_WhenExporting_ThenCopiesItAndSetsEnvVariable
 	assert.True(t, isPathExists(filepath.Join(tempDir, name+".zip")))
 }
 
+func Test_GivenSimulatorDiagnostics_WhenNameHasExtension_ThenKeepsNameWithoutAppendingZip(t *testing.T) {
+	// Given
+	// The diagnostics dir name is an os.MkdirTemp basename with a dotted suffix
+	// (e.g. "...zip1805076116"), which counts as an extension, so the archive keeps
+	// that name as-is instead of getting a .zip appended.
+	name := "simctl_diagnose_2026-09-01T14-52-16.270015+02-00.zip1805076116"
+	tempDir := t.TempDir()
+
+	diagnosticsDir := filepath.Join(tempDir, "diagnostics")
+
+	diagnosticsFile := filepath.Join(diagnosticsDir, "simulatorDiagnostics.txt")
+	err := fileutil.NewFileManager().Write(diagnosticsFile, "test-diagnostics", 0777)
+
+	require.NoError(t, err)
+	require.FileExists(t, diagnosticsFile)
+
+	exporter, _ := createSutAndMocks()
+
+	// When
+	err = exporter.ExportSimulatorDiagnostics(tempDir, diagnosticsDir, name)
+
+	// Then
+	assert.NoError(t, err)
+	assert.True(t, isPathExists(filepath.Join(tempDir, name)))
+	assert.False(t, isPathExists(filepath.Join(tempDir, name+".zip")))
+}
+
 func Test_GivenFlakyTestCases_WhenExporting_ThenSetsEnvVariable(t *testing.T) {
 	// Given
 	_, b, _, _ := runtime.Caller(0)
