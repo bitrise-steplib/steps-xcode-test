@@ -5,8 +5,9 @@ import (
 	"path/filepath"
 
 	"github.com/bitrise-io/go-utils/v2/command"
+	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
-	"github.com/bitrise-io/go-utils/ziputil"
+	"github.com/bitrise-io/go-utils/v2/ziputil"
 )
 
 const (
@@ -18,15 +19,22 @@ const (
 // Exporter ...
 type Exporter struct {
 	cmdFactory  command.Factory
-	fileManager FileManager
+	fileManager fileutil.FileManager
+	zipManager  *ziputil.ZipManager
 }
 
 // NewExporter ...
-func NewExporter(cmdFactory command.Factory, fm FileManager) Exporter {
+func NewExporter(cmdFactory command.Factory, fm fileutil.FileManager, zm *ziputil.ZipManager) Exporter {
 	return Exporter{
 		cmdFactory:  cmdFactory,
 		fileManager: fm,
+		zipManager:  zm,
 	}
+}
+
+// NewDefaultExporter returns an Exporter with the default file and zip managers.
+func NewDefaultExporter(cmdFactory command.Factory) Exporter {
+	return NewExporter(cmdFactory, fileutil.NewFileManager(), ziputil.NewZipManager(pathutil.NewPathChecker()))
 }
 
 // ExportOutput is used for exposing values for other steps.
@@ -70,7 +78,7 @@ func (e *Exporter) ExportOutputFile(key, sourcePath, destinationPath string) err
 	}
 
 	if absSourcePath != absDestinationPath {
-		if err = e.fileManager.CopyFile(absSourcePath, absDestinationPath, &CopyOptions{Overwrite: true}); err != nil {
+		if err = e.fileManager.CopyFile(absSourcePath, absDestinationPath, &fileutil.CopyOptions{Overwrite: true}); err != nil {
 			return err
 		}
 	}
@@ -99,9 +107,9 @@ func (e *Exporter) ExportOutputFilesZip(key string, sourcePaths []string, zipPat
 	}
 	switch inputType {
 	case filesType:
-		err = ziputil.ZipFiles(sourcePaths, tempZipPath)
+		err = e.zipManager.ZipFiles(sourcePaths, tempZipPath)
 	case foldersType:
-		err = ziputil.ZipDirs(sourcePaths, tempZipPath)
+		err = e.zipManager.ZipDirs(sourcePaths, tempZipPath)
 	case mixedFileAndFolderType:
 		return fmt.Errorf("source path list (%s) contains a mix of files and folders", sourcePaths)
 	default:
@@ -144,7 +152,7 @@ func (e *Exporter) ExportOutputDir(envKey, srcDir, dstDir string) error {
 		return e.ExportOutput(envKey, dstDir)
 	}
 
-	if err := e.fileManager.CopyDir(srcDir, dstDir, &CopyOptions{Overwrite: true}); err != nil {
+	if err := e.fileManager.CopyDir(srcDir, dstDir, &fileutil.CopyOptions{Overwrite: true}); err != nil {
 		return err
 	}
 

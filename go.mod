@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/bitrise-io/bitrise v0.0.0-20230707121919-a5b9e2d27ea9
 	github.com/bitrise-io/bitrise-build-cache-cli/v2 v2.6.0
-	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.52
+	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.53
 	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.39
 	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.80
 	github.com/hashicorp/go-version v1.7.0

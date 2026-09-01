@@ -309,7 +309,7 @@ func Test_exporter_collectAndExportFlakyTestPlans(t *testing.T) {
 			exporter := exporter{
 				envRepository:     envRepository,
 				logger:            logger,
-				outputExporter:    export.NewExporter(new(commonMocks.CommandFactory), new(commonMocks.FileManager)),
+				outputExporter:    export.NewExporter(new(commonMocks.CommandFactory), new(commonMocks.FileManager), ziputil.NewZipManager(pathutil.NewPathChecker())),
 				testAddonExporter: nil,
 			}
 
@@ -345,7 +345,7 @@ func createSutAndMocks() (Exporter, testingMocks) {
 	envRepository.On("Set", mock.Anything, mock.Anything).Return(nil)
 
 	zipManager := ziputil.NewZipManager(pathutil.NewPathChecker())
-	exporter := NewExporter(envRepository, log.NewLogger(), export.NewExporter(commandFactory, fileManager), nil, zipManager, fileutil.NewFileManager())
+	exporter := NewExporter(envRepository, log.NewLogger(), export.NewExporter(commandFactory, fileManager, zipManager), nil, zipManager, fileutil.NewFileManager())
 
 	return exporter, testingMocks{
 		envRepository: envRepository,
