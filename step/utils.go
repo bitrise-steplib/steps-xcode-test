@@ -3,9 +3,9 @@ package step
 import (
 	"fmt"
 
-	"github.com/bitrise-io/go-utils/colorstring"
-	"github.com/bitrise-io/go-utils/stringutil"
 	"github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/log/colorstring"
+	"github.com/bitrise-io/go-utils/v2/stringutil"
 	"github.com/bitrise-io/go-xcode/v2/destination"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
 )

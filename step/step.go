@@ -11,11 +11,11 @@ import (
 
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
 	"github.com/bitrise-io/go-steputils/v2/testquarantine"
-	"github.com/bitrise-io/go-utils/colorstring"
-	"github.com/bitrise-io/go-utils/progress"
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/log/colorstring"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
+	"github.com/bitrise-io/go-utils/v2/progress"
 	"github.com/bitrise-io/go-xcode/v2/destination"
 	"github.com/bitrise-io/go-xcode/v2/simulator"
 	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
@@ -422,8 +422,10 @@ func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simula
 			return fmt.Errorf("failed to boot simulator: %w", err)
 		}
 
-		progress.NewDefaultWrapper("Waiting for simulator boot").WrapAction(func() {
+		s.logger.Printf("Waiting for simulator boot")
+		_ = progress.NewDefaultSimpleDots(progress.NewFmtPrinter()).Run(func() error {
 			time.Sleep(60 * time.Second)
+			return nil
 		})
 
 		s.logger.Println()

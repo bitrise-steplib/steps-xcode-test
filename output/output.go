@@ -6,10 +6,9 @@ import (
 
 	"github.com/bitrise-io/bitrise/configs"
 	"github.com/bitrise-io/go-steputils/v2/export"
-	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/v2/env"
+	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
-	"github.com/bitrise-io/go-utils/ziputil"
 	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult3"
 	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult3/model3"
 	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
@@ -30,20 +29,29 @@ type Exporter interface {
 	ExportFlakyTestCases(xcResultPath string, useOldXCResultExtractionMethod bool) error
 }
 
+// DirZipper zips a directory into a destination archive.
+type DirZipper interface {
+	ZipDir(sourceDirPth, destinationZipPth string, isContentOnly bool) error
+}
+
 type exporter struct {
 	envRepository     env.Repository
 	logger            log.Logger
 	outputExporter    export.Exporter
 	testAddonExporter testaddon.Exporter
+	dirZipper         DirZipper
+	fileManager       fileutil.FileManager
 }
 
 // NewExporter ...
-func NewExporter(envRepository env.Repository, logger log.Logger, outputExporter export.Exporter, testAddonExporter testaddon.Exporter) Exporter {
+func NewExporter(envRepository env.Repository, logger log.Logger, outputExporter export.Exporter, testAddonExporter testaddon.Exporter, dirZipper DirZipper, fileManager fileutil.FileManager) Exporter {
 	return &exporter{
 		envRepository:     envRepository,
 		logger:            logger,
 		outputExporter:    outputExporter,
 		testAddonExporter: testAddonExporter,
+		dirZipper:         dirZipper,
+		fileManager:       fileManager,
 	}
 }
 
@@ -90,7 +98,7 @@ func (e exporter) ExportXcodebuildBuildLog(deployDir, xcodebuildBuildLog string)
 	}
 
 	deployPth := filepath.Join(deployDir, "xcodebuild_build.log")
-	if err := command.CopyFile(pth, deployPth); err != nil {
+	if err := e.fileManager.CopyFile(pth, deployPth, &fileutil.CopyOptions{Overwrite: true}); err != nil {
 		return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s): %w", pth, deployPth, err)
 	}
 
@@ -108,7 +116,7 @@ func (e exporter) ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) e
 	}
 
 	deployPth := filepath.Join(deployDir, "xcodebuild_test.log")
-	if err := command.CopyFile(pth, deployPth); err != nil {
+	if err := e.fileManager.CopyFile(pth, deployPth, &fileutil.CopyOptions{Overwrite: true}); err != nil {
 		return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s): %w", pth, deployPth, err)
 	}
 
@@ -121,7 +129,7 @@ func (e exporter) ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) e
 
 func (e exporter) ExportSimulatorDiagnostics(deployDir, pth, name string) error {
 	outputPath := filepath.Join(deployDir, name)
-	if err := ziputil.ZipDir(pth, outputPath, true); err != nil {
+	if err := e.dirZipper.ZipDir(pth, outputPath, true); err != nil {
 		return fmt.Errorf("failed to compress simulator diagnostics result: %w", err)
 	}
 

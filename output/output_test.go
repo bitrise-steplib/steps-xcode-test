@@ -11,6 +11,7 @@ import (
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
+	"github.com/bitrise-io/go-utils/v2/ziputil"
 	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult3/model3"
 	commonMocks "github.com/bitrise-steplib/steps-xcode-test/mocks"
 	"github.com/bitrise-steplib/steps-xcode-test/output/mocks"
@@ -110,6 +111,33 @@ func Test_GivenSimulatorDiagnostics_WhenExporting_ThenCopiesItAndSetsEnvVariable
 	// Then
 	assert.NoError(t, err)
 	assert.True(t, isPathExists(filepath.Join(tempDir, name+".zip")))
+}
+
+func Test_GivenSimulatorDiagnostics_WhenNameHasExtension_ThenKeepsNameWithoutAppendingZip(t *testing.T) {
+	// Given
+	// The diagnostics dir name is an os.MkdirTemp basename with a dotted suffix
+	// (e.g. "...zip1805076116"), which counts as an extension, so the archive keeps
+	// that name as-is instead of getting a .zip appended.
+	name := "simctl_diagnose_2026-09-01T14-52-16.270015+02-00.zip1805076116"
+	tempDir := t.TempDir()
+
+	diagnosticsDir := filepath.Join(tempDir, "diagnostics")
+
+	diagnosticsFile := filepath.Join(diagnosticsDir, "simulatorDiagnostics.txt")
+	err := fileutil.NewFileManager().Write(diagnosticsFile, "test-diagnostics", 0777)
+
+	require.NoError(t, err)
+	require.FileExists(t, diagnosticsFile)
+
+	exporter, _ := createSutAndMocks()
+
+	// When
+	err = exporter.ExportSimulatorDiagnostics(tempDir, diagnosticsDir, name)
+
+	// Then
+	assert.NoError(t, err)
+	assert.True(t, isPathExists(filepath.Join(tempDir, name)))
+	assert.False(t, isPathExists(filepath.Join(tempDir, name+".zip")))
 }
 
 func Test_GivenFlakyTestCases_WhenExporting_ThenSetsEnvVariable(t *testing.T) {
@@ -281,7 +309,7 @@ func Test_exporter_collectAndExportFlakyTestPlans(t *testing.T) {
 			exporter := exporter{
 				envRepository:     envRepository,
 				logger:            logger,
-				outputExporter:    export.NewExporter(new(commonMocks.CommandFactory), new(commonMocks.FileManager)),
+				outputExporter:    export.NewExporter(new(commonMocks.CommandFactory), new(commonMocks.FileManager), ziputil.NewZipManager(pathutil.NewPathChecker())),
 				testAddonExporter: nil,
 			}
 
@@ -316,7 +344,8 @@ func createSutAndMocks() (Exporter, testingMocks) {
 	envRepository := new(mocks.Repository)
 	envRepository.On("Set", mock.Anything, mock.Anything).Return(nil)
 
-	exporter := NewExporter(envRepository, log.NewLogger(), export.NewExporter(commandFactory, fileManager), nil)
+	zipManager := ziputil.NewZipManager(pathutil.NewPathChecker())
+	exporter := NewExporter(envRepository, log.NewLogger(), export.NewExporter(commandFactory, fileManager, zipManager), nil, zipManager, fileutil.NewFileManager())
 
 	return exporter, testingMocks{
 		envRepository: envRepository,
