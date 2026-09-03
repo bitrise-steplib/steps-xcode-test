@@ -27,7 +27,7 @@ github.com/bitrise-io/envman/models
 ## explicit; go 1.15
 github.com/bitrise-io/go-steputils/cache
 github.com/bitrise-io/go-steputils/tools
-# github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.53
+# github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.54
 ## explicit; go 1.21
 github.com/bitrise-io/go-steputils/v2/export
 github.com/bitrise-io/go-steputils/v2/ruby
@@ -67,7 +67,7 @@ github.com/bitrise-io/go-utils/v2/ziputil
 # github.com/bitrise-io/go-xcode v1.3.3
 ## explicit; go 1.20
 github.com/bitrise-io/go-xcode/xcodeproject/serialized
-# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.80
+# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.85
 ## explicit; go 1.22
 github.com/bitrise-io/go-xcode/v2/destination
 github.com/bitrise-io/go-xcode/v2/errorfinder
@@ -135,7 +135,7 @@ github.com/shirou/gopsutil/v4/process
 # github.com/stretchr/objx v0.5.2
 ## explicit; go 1.20
 github.com/stretchr/objx
-# github.com/stretchr/testify v1.10.0
+# github.com/stretchr/testify v1.11.1
 ## explicit; go 1.17
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/assert/yaml

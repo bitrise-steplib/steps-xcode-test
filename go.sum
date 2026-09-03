@@ -6,8 +6,8 @@ github.com/bitrise-io/envman v0.0.0-20240730123632-8066eeb61599 h1:UaudsJR8LbzL7
 github.com/bitrise-io/envman v0.0.0-20240730123632-8066eeb61599/go.mod h1:7yJQdVdq8BxJYq2xjG0yViQf/aspJLJ/xqk/OnP6lGE=
 github.com/bitrise-io/go-steputils v1.0.6 h1:eBRL70DWwEd7DWYGd5Ds7OSIY5HElzhoDOI6UuITKQg=
 github.com/bitrise-io/go-steputils v1.0.6/go.mod h1:YIUaQnIAyK4pCvQG0hYHVkSzKNT9uL2FWmkFNW4mfNI=
-github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.53 h1:iQhtBrVKhlblSM0HHuaoU1tdfrMrk6d5PLk+HZUej48=
-github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.53/go.mod h1:XrqiAQ3NY/T3gC50n7jCthpkYF8o9zDtwPDqy59pbKo=
+github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.54 h1:0dGR82r6ru+9Dyw6JSwjOyx7/n28cVm34XtMrIBlnkU=
+github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.54/go.mod h1:XrqiAQ3NY/T3gC50n7jCthpkYF8o9zDtwPDqy59pbKo=
 github.com/bitrise-io/go-utils v1.0.1/go.mod h1:ZY1DI+fEpZuFpO9szgDeICM4QbqoWVt0RSY3tRI1heY=
 github.com/bitrise-io/go-utils v1.0.15 h1:KRQjNiPrkxBRM6G5fQy05v0p0r8wycWfKVb+Ko+Vtg0=
 github.com/bitrise-io/go-utils v1.0.15/go.mod h1:ZY1DI+fEpZuFpO9szgDeICM4QbqoWVt0RSY3tRI1heY=
@@ -15,8 +15,8 @@ github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.39 h1:QbWclC8fOI9rho//WXZFXmcbho+
 github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.39/go.mod h1:5Z/vkUZ2BIY7IAVlMGns3ypRjd+J872YBSCJaLWVo/U=
 github.com/bitrise-io/go-xcode v1.3.3 h1:aYkSMWP+1/n2ZabRy3OMfeaWmE4l1gAPq63azx06LIw=
 github.com/bitrise-io/go-xcode v1.3.3/go.mod h1:9OwsvrhZ4A2JxHVoEY7CPcABAKA+OE7FQqFfBfvbFuY=
-github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.80 h1:/pq5C8nvn71HSsGyqhv76XcEgM/XZpYwMvBl4R+OczQ=
-github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.80/go.mod h1:YspByJ93D3uuDoCMCw0BZLT6rl77YUohOb4b+lBaMTQ=
+github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.85 h1:gTVyRqO278hRErI8KKwTB86Kb++6GeoTSE8Gwu1cCKk=
+github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.85/go.mod h1:QicNtmRb2JncpvTGx4q9CMGkI/ddOaYRcKVAl8TQphA=
 github.com/bitrise-io/stepman v0.0.0-20240828074035-6ae1a5f5efde h1:LinFhZG5OdayDh1T1JO8QANsNwQWzqORZ0A9EGHQ0ps=
 github.com/bitrise-io/stepman v0.0.0-20240828074035-6ae1a5f5efde/go.mod h1:Lq9nEqKerBD35w3eSU8lf83F7uZPkXfmRSZEUDJN40w=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
@@ -104,8 +104,8 @@ github.com/stretchr/objx v0.5.2/go.mod h1:FRsXN1f5AsAjCGJKqEizvkpNtU+EGNCLh3NxZ/
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
-github.com/stretchr/testify v1.10.0 h1:Xv5erBjTwe/5IxqUQTdXv5kgmIvbHo3QQyRwhJsOfJA=
-github.com/stretchr/testify v1.10.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
+github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
+github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
 github.com/tklauser/go-sysconf v0.3.15 h1:VE89k0criAymJ/Os65CSn1IXaol+1wrsFHEB8Ol49K4=
 github.com/tklauser/go-sysconf v0.3.15/go.mod h1:Dmjwr6tYFIseJw7a3dRLJfsHAMXZ3nEnL/aZY+0IuI4=
 github.com/tklauser/numcpus v0.10.0 h1:18njr6LDBk1zuna922MgdjQuJFjrdppsZG60sHGfjso=

@@ -116,7 +116,7 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 		xcodeCommandRunner = xcodecommand.NewXcbeautifyRunner(logger, runnerCmdFactory)
 	case step.XcprettyTool:
 		commandLocator := env.NewCommandLocator()
-		rubyComamndFactory, err := ruby.NewCommandFactory(commandFactory, commandLocator)
+		rubyComamndFactory, err := ruby.NewCommandFactory(commandFactory, commandLocator, logger)
 		if err != nil {
 			return step.XcodeTestRunner{}, fmt.Errorf("failed to install xcpretty: %s", err)
 		}
