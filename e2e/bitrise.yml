@@ -81,6 +81,57 @@ workflows:
               exit 1
             fi
 
+  test_swift_testing_quarantine:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
+    - TEST_APP_BRANCH: add-swift-testing-unit-tests
+    - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
+    - BITRISE_SCHEME: BullsEye
+    - TEST_PLAN: UnitTests
+    - DESTINATION: platform=iOS Simulator,name=Bitrise iOS default,OS=latest
+    - LOG_FORMATTER: xcbeautify
+    - EXPECT_TEST_FAILURE: "false"
+    - CACHE_LEVEL: swift_packages
+    - QUARANTINED_TESTS: |-
+        [
+          {
+            "testCaseName": "scoreIsComputedWhenGuessIsHigherThanTarget()",
+            "testSuiteName": [
+              "BullsEyeTests"
+            ],
+            "className": "BullsEyeSwiftTestingTests"
+          }
+        ]
+    before_run:
+    - _run
+    - _check_outputs
+    - _check_cache
+    steps:
+    - script:
+        title: Check skipped Swift Testing test
+        summary: The quarantined Swift Testing test must be absent from the results, while a non-quarantined one from the same suite must be present.
+        inputs:
+        - content: |-
+            #!/usr/bin/env bash
+            set -ex
+            out=$(xcrun xcresulttool get test-results tests --path "$BITRISE_XCRESULT_PATH")
+            xcresulttool_exit_code=$?
+            if [ $xcresulttool_exit_code -ne 0 ]; then
+              echo "failed to get test results from xcresult: $out"
+              exit 1
+            fi
+            set +e
+            quarantined=$(echo "$out" | grep "BullsEyeSwiftTestingTests/scoreIsComputedWhenGuessIsHigherThanTarget()")
+            if [ ! -z "$quarantined" ]; then
+              echo "quarantined Swift Testing test found in test results"
+              exit 1
+            fi
+            control=$(echo "$out" | grep "BullsEyeSwiftTestingTests/scoreIsComputedWhenGuessIsLowerThanTarget()")
+            if [ -z "$control" ]; then
+              echo "control Swift Testing test missing from test results, the suite may not have run"
+              exit 1
+            fi
+
   test_xcconfig_rel_path:
     envs:
     - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
