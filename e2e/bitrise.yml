@@ -130,6 +130,15 @@ workflows:
         - content: |-
             #!/usr/bin/env bash
             set -ex
+            # Xcode skips Swift Testing test cases from 16.3 on, older versions run them regardless of -skip-testing.
+            version=`xcodebuild -version`
+            regex="Xcode ([0-9]+)\.([0-9]+)"
+            if [[ $version =~ $regex ]]; then
+              if (( ${BASH_REMATCH[1]} < 16 || (${BASH_REMATCH[1]} == 16 && ${BASH_REMATCH[2]} < 3) )); then
+                echo "$version cannot skip Swift Testing test cases, skipping this check"
+                exit 0
+              fi
+            fi
             out=$(xcrun xcresulttool get test-results tests --path "$BITRISE_XCRESULT_PATH")
             xcresulttool_exit_code=$?
             if [ $xcresulttool_exit_code -ne 0 ]; then
