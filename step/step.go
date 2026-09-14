@@ -210,7 +210,8 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 
 /*
 processQuarantinedTests converts the Bitrise quarantined tests JSON input ($BITRISE_QUARANTINED_TESTS_JSON)
-to test identifiers for the `-skip-testing` xcodebuild option. The test identifier format is: <TestTarget>/<TestClass>/<TestMethod>.
+to test identifiers for the `-skip-testing` xcodebuild option. The test identifier format is:
+<TestTarget>/<TestCaseIdentifier>, or <TestTarget>/<TestClass>/<TestMethod> for entries without an identifier.
 */
 func (s XcodeTestConfigParser) processQuarantinedTests(quarantinedTestsInput string) ([]string, error) {
 	if quarantinedTestsInput == "" {
@@ -224,18 +225,31 @@ func (s XcodeTestConfigParser) processQuarantinedTests(quarantinedTestsInput str
 
 	var skippedTests []string
 	for _, qt := range quarantinedTests {
-		if len(qt.TestSuiteName) == 0 || qt.TestSuiteName[0] == "" || qt.ClassName == "" || qt.TestCaseName == "" {
-			continue
+		if identifier := skipTestingIdentifier(qt); identifier != "" {
+			skippedTests = append(skippedTests, identifier)
 		}
-
-		testTarget := qt.TestSuiteName[0]
-		testClass := qt.ClassName
-		testMethod := qt.TestCaseName
-
-		skippedTests = append(skippedTests, fmt.Sprintf("%s/%s/%s", testTarget, testClass, testMethod))
 	}
 
 	return skippedTests, nil
+}
+
+// The test case identifier holds the whole suite path, while ClassName holds its first element only,
+// so a test case in a nested suite can be named through the identifier alone.
+func skipTestingIdentifier(quarantinedTest testquarantine.QuarantinedTest) string {
+	if len(quarantinedTest.TestSuiteName) == 0 || quarantinedTest.TestSuiteName[0] == "" {
+		return ""
+	}
+	testTarget := quarantinedTest.TestSuiteName[0]
+
+	if quarantinedTest.TestCaseIdentifier != "" {
+		return fmt.Sprintf("%s/%s", testTarget, quarantinedTest.TestCaseIdentifier)
+	}
+
+	if quarantinedTest.ClassName == "" || quarantinedTest.TestCaseName == "" {
+		return ""
+	}
+
+	return fmt.Sprintf("%s/%s/%s", testTarget, quarantinedTest.ClassName, quarantinedTest.TestCaseName)
 }
 
 func (s XcodeTestRunner) InstallDeps() {

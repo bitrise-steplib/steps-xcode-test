@@ -100,6 +100,22 @@ workflows:
               "BullsEyeTests"
             ],
             "className": "BullsEyeSwiftTestingTests"
+          },
+          {
+            "testCaseName": "Score is computed when the guess matches the target",
+            "testSuiteName": [
+              "BullsEyeTests"
+            ],
+            "className": "BullsEyeSwiftTestingTests",
+            "testCaseIdentifier": "BullsEyeSwiftTestingTests/scoreIsComputedWhenGuessMatchesTarget()"
+          },
+          {
+            "testCaseName": "totalAddsUpTheRoundScores()",
+            "testSuiteName": [
+              "BullsEyeTests"
+            ],
+            "className": "BullsEyeSwiftTestingTests",
+            "testCaseIdentifier": "BullsEyeSwiftTestingTests/TotalScore/totalAddsUpTheRoundScores()"
           }
         ]
     before_run:
@@ -108,8 +124,8 @@ workflows:
     - _check_cache
     steps:
     - script:
-        title: Check skipped Swift Testing test
-        summary: The quarantined Swift Testing test must be absent from the results, while a non-quarantined one from the same suite must be present.
+        title: Check skipped Swift Testing tests
+        summary: The quarantined Swift Testing tests must be absent from the results, while the non-quarantined ones from the same suites must be present.
         inputs:
         - content: |-
             #!/usr/bin/env bash
@@ -120,17 +136,28 @@ workflows:
               echo "failed to get test results from xcresult: $out"
               exit 1
             fi
-            set +e
-            quarantined=$(echo "$out" | grep "BullsEyeSwiftTestingTests/scoreIsComputedWhenGuessIsHigherThanTarget()")
-            if [ ! -z "$quarantined" ]; then
-              echo "quarantined Swift Testing test found in test results"
-              exit 1
-            fi
-            control=$(echo "$out" | grep "BullsEyeSwiftTestingTests/scoreIsComputedWhenGuessIsLowerThanTarget()")
-            if [ -z "$control" ]; then
-              echo "control Swift Testing test missing from test results, the suite may not have run"
-              exit 1
-            fi
+            quarantined_tests=(
+              "BullsEyeSwiftTestingTests/scoreIsComputedWhenGuessIsHigherThanTarget()"
+              "BullsEyeSwiftTestingTests/scoreIsComputedWhenGuessMatchesTarget()"
+              "BullsEyeSwiftTestingTests/TotalScore/totalAddsUpTheRoundScores()"
+            )
+            for test in "${quarantined_tests[@]}"; do
+              if echo "$out" | grep -qF "$test"; then
+                echo "quarantined Swift Testing test found in test results: $test"
+                exit 1
+              fi
+            done
+            control_tests=(
+              "BullsEyeSwiftTestingTests/scoreIsComputedWhenGuessIsLowerThanTarget()"
+              "BullsEyeSwiftTestingTests/scoreIsEventuallyComputedWhenGuessMatchesTarget()"
+              "BullsEyeSwiftTestingTests/TotalScore/newGameResetsTheTotal()"
+            )
+            for test in "${control_tests[@]}"; do
+              if ! echo "$out" | grep -qF "$test"; then
+                echo "control Swift Testing test missing from test results, the suite may not have run: $test"
+                exit 1
+              fi
+            done
 
   test_xcconfig_rel_path:
     envs:
