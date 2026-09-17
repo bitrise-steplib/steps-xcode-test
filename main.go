@@ -79,7 +79,7 @@ func createConfigParser(logger log.Logger) step.XcodeTestConfigParser {
 	deviceFinder := destination.NewDeviceFinder(logger, commandFactory, xcodeVersion)
 	utils := step.NewUtils(logger)
 
-	return step.NewXcodeTestConfigParser(inputParser, logger, deviceFinder, pathModifier, utils)
+	return step.NewXcodeTestConfigParser(inputParser, logger, deviceFinder, pathModifier, utils, xcodeVersion)
 }
 
 func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, error) {

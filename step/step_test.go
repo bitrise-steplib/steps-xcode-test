@@ -9,6 +9,7 @@ import (
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-xcode/v2/destination"
+	"github.com/bitrise-io/go-xcode/v2/xcodeversion"
 	commonMocks "github.com/bitrise-steplib/steps-xcode-test/mocks"
 	"github.com/bitrise-steplib/steps-xcode-test/step/mocks"
 	"github.com/hashicorp/go-version"
@@ -264,6 +265,7 @@ func defaultConfigs() Config {
 		CacheLevel: "swift_packages",
 
 		CollectSimulatorDiagnostics: never,
+		CollectTestDiagnostics:      "never",
 		HeadlessMode:                true,
 	}
 }
@@ -304,7 +306,10 @@ func createConfigParser(t *testing.T, envValues map[string]string) (XcodeTestCon
 	pathModifier := mocks.NewPathModifier(t)
 	utils := NewUtils(logger)
 
-	configParser := NewXcodeTestConfigParser(inputParser, logger, deviceFinder, pathModifier, utils)
+	// Xcode 27 so that the -collect-test-diagnostics mapping is exercised by the existing cases.
+	xcodeVersion := xcodeversion.Version{Version: "27.0", BuildVersion: "27A266a", Major: 27, Minor: 0}
+
+	configParser := NewXcodeTestConfigParser(inputParser, logger, deviceFinder, pathModifier, utils, xcodeVersion)
 	mocks := configParserMocks{
 		deviceFinder: deviceFinder,
 		pathModifier: pathModifier,

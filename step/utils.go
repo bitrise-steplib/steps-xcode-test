@@ -2,6 +2,7 @@ package step
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/log/colorstring"
@@ -12,7 +13,7 @@ import (
 
 type Utils interface {
 	PrintLastLinesOfXcodebuildTestLog(rawXcodebuildOutput string, isRunSuccess bool)
-	CreateConfig(input Input, projectPath string, sim destination.Device, additionalOptions, additionalLogFormatterOptions []string, skipTesting []string) Config
+	CreateConfig(input Input, projectPath string, sim destination.Device, additionalOptions, additionalLogFormatterOptions []string, skipTesting []string, xcodeMajorVersion int64) Config
 	CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath string) xcodebuild.TestRunParams
 }
 
@@ -52,7 +53,8 @@ that will attach the file to your build as an artifact!`))
 func (u utils) CreateConfig(input Input,
 	projectPath string,
 	sim destination.Device,
-	additionalOptions, additionalLogFormatterOptions []string, skipTesting []string) Config {
+	additionalOptions, additionalLogFormatterOptions []string, skipTesting []string,
+	xcodeMajorVersion int64) Config {
 	return Config{
 		ProjectPath: projectPath,
 		Scheme:      input.Scheme,
@@ -76,7 +78,9 @@ func (u utils) CreateConfig(input Input,
 
 		SkipTesting:                 skipTesting,
 		CollectSimulatorDiagnostics: exportCondition(input.CollectSimulatorDiagnostics),
-		HeadlessMode:                input.HeadlessMode,
+		CollectTestDiagnostics: collectTestDiagnosticsValue(
+			exportCondition(input.CollectSimulatorDiagnostics), xcodeMajorVersion, additionalOptions),
+		HeadlessMode: input.HeadlessMode,
 
 		DeployDir: input.DeployDir,
 	}
@@ -95,6 +99,7 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 		XCConfigContent:                cfg.XCConfigContent,
 		PerformCleanAction:             cfg.PerformCleanAction,
 		SkipTesting:                    cfg.SkipTesting,
+		CollectTestDiagnostics:         cfg.CollectTestDiagnostics,
 		AdditionalOptions:              cfg.XcodebuildOptions,
 	}
 
@@ -105,4 +110,48 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 		RetryOnSwiftPackageResolutionError: true,
 		SwiftPackagesPath:                  swiftPackagesPath,
 	}
+}
+
+// minimumCollectTestDiagnosticsXcodeMajor is the first Xcode version that understands
+// xcodebuild's -collect-test-diagnostics option. Passing it to anything older is a usage error.
+const minimumCollectTestDiagnosticsXcodeMajor = 26
+
+// collectTestDiagnosticsValue maps the Step's collect_simulator_diagnostics input onto
+// xcodebuild's -collect-test-diagnostics option.
+//
+// Since Xcode 26 xcodebuild collects a simulator sysdiagnose of its own after a failing test run,
+// by shelling out to `simctl diagnose --timeout=600`. That is a separate mechanism from the
+// diagnostics this Step collects during teardown, and it runs even when the user asked for no
+// diagnostics at all. Measured on a two-file SPM package with a single failing test, it added ten
+// minutes to the run and 16 MB to the result bundle, and then gave up with
+//
+//	IDETestOperationsObserverDebug: Failure collecting diagnostics from simulator:
+//	Timed out after 600.0 seconds while waiting for a response from the invoked process
+//
+// It commonly presents as tests "hanging" at the end of the run. So honour the input the Step
+// already has: if the user does not want simulator diagnostics, do not let xcodebuild collect
+// them either.
+//
+// Returns an empty string when the option must not be passed at all.
+func collectTestDiagnosticsValue(condition exportCondition, xcodeMajorVersion int64, additionalOptions []string) string {
+	// An unreadable Xcode version reads as major 0, which lands here and leaves xcodebuild alone.
+	if xcodeMajorVersion < minimumCollectTestDiagnosticsXcodeMajor {
+		return ""
+	}
+
+	// An explicit -collect-test-diagnostics in xcodebuild_options wins.
+	for _, option := range additionalOptions {
+		if option == xcodebuild.CollectTestDiagnosticsFlag ||
+			strings.HasPrefix(option, xcodebuild.CollectTestDiagnosticsFlag+"=") {
+			return ""
+		}
+	}
+
+	if condition == never {
+		return "never"
+	}
+
+	// xcodebuild accepts on-failure|never only - there is no "always" - and its collection is
+	// failure-triggered anyway, so both always and on_failure map onto on-failure.
+	return "on-failure"
 }

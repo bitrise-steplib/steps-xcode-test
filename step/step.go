@@ -20,6 +20,7 @@ import (
 	"github.com/bitrise-io/go-xcode/v2/simulator"
 	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
 	"github.com/bitrise-io/go-xcode/v2/xcodecommand"
+	"github.com/bitrise-io/go-xcode/v2/xcodeversion"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
 	"github.com/kballard/go-shellquote"
@@ -99,7 +100,10 @@ type Config struct {
 
 	SkipTesting                 []string
 	CollectSimulatorDiagnostics exportCondition
-	HeadlessMode                bool
+	// CollectTestDiagnostics is the resolved value for xcodebuild's -collect-test-diagnostics
+	// option, derived from CollectSimulatorDiagnostics. Empty means do not pass the option.
+	CollectTestDiagnostics string
+	HeadlessMode           bool
 
 	DeployDir string
 }
@@ -110,15 +114,17 @@ type XcodeTestConfigParser struct {
 	deviceFinder destination.DeviceFinder
 	pathModifier pathutil.PathModifier
 	utils        Utils
+	xcodeVersion xcodeversion.Version
 }
 
-func NewXcodeTestConfigParser(inputParser stepconf.InputParser, logger log.Logger, deviceFinder destination.DeviceFinder, pathModifier pathutil.PathModifier, utils Utils) XcodeTestConfigParser {
+func NewXcodeTestConfigParser(inputParser stepconf.InputParser, logger log.Logger, deviceFinder destination.DeviceFinder, pathModifier pathutil.PathModifier, utils Utils, xcodeVersion xcodeversion.Version) XcodeTestConfigParser {
 	return XcodeTestConfigParser{
 		logger:       logger,
 		inputParser:  inputParser,
 		deviceFinder: deviceFinder,
 		pathModifier: pathModifier,
 		utils:        utils,
+		xcodeVersion: xcodeVersion,
 	}
 }
 
@@ -205,7 +211,7 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 		return Config{}, fmt.Errorf("failed to process quarentined tests: %w", err)
 	}
 
-	return s.utils.CreateConfig(input, projectPath, sim, additionalOptions, additionalLogFormatterOptions, skipTesting), nil
+	return s.utils.CreateConfig(input, projectPath, sim, additionalOptions, additionalLogFormatterOptions, skipTesting, s.xcodeVersion.Major), nil
 }
 
 /*

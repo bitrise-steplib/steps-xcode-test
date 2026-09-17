@@ -260,6 +260,7 @@ func runParameters() TestRunParams {
 		RelaunchTestsForEachRepetition: true,
 		XCConfigContent:                "XCConfigContent",
 		PerformCleanAction:             false,
+		CollectTestDiagnostics:         "never",
 		AdditionalOptions:              []string{"AdditionalOptions"},
 	}
 
@@ -314,6 +315,10 @@ func argumentsFromRunParameters(parameters TestRunParams) []string {
 
 	for _, test := range parameters.TestParams.SkipTesting {
 		arguments = append(arguments, fmt.Sprintf("-skip-testing:%s", test))
+	}
+
+	if parameters.TestParams.CollectTestDiagnostics != "" {
+		arguments = append(arguments, CollectTestDiagnosticsFlag, parameters.TestParams.CollectTestDiagnostics)
 	}
 
 	arguments = append(arguments, parameters.TestParams.AdditionalOptions...)

@@ -259,6 +259,21 @@ inputs:
     category: Debugging
     title: Collect Simulator diagnostics
     summary: If this input is set, the simulator verbose logging will be enabled and the simulator diagnostics log will be exported.
+    description: |-
+      If this input is set, the simulator verbose logging will be enabled and the simulator diagnostics log will be exported.
+
+      On Xcode 26 and later this input also controls xcodebuild's own `-collect-test-diagnostics` option.
+      Since Xcode 26, xcodebuild collects a simulator sysdiagnose itself after a failing test run, which
+      can add up to ten minutes to a failing build and often ends in a timeout without collecting anything.
+      Setting this input to `never` (the default) now also tells xcodebuild not to collect them.
+
+      Set it to `on_failure` or `always` to keep xcodebuild's collection enabled. You can also override the
+      option directly in `xcodebuild_options`, which takes precedence over this input.
+
+      Available options:
+      - `always`: collect diagnostics after every run.
+      - `on_failure`: collect diagnostics only when the tests fail.
+      - `never`: do not collect diagnostics.
     value_options:
     - always
     - on_failure

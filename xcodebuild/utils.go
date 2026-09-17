@@ -40,6 +40,10 @@ var testRunnerErrorPatterns = []string{
 	failedToOpenTestRunner,
 }
 
+// CollectTestDiagnosticsFlag is xcodebuild's option for controlling whether it collects a
+// simulator sysdiagnose after a failing test run. Added in Xcode 26; it accepts on-failure|never.
+const CollectTestDiagnosticsFlag = "-collect-test-diagnostics"
+
 // TestParams ...
 type TestParams struct {
 	ProjectPath                    string
@@ -53,7 +57,10 @@ type TestParams struct {
 	XCConfigContent                string
 	PerformCleanAction             bool
 	SkipTesting                    []string
-	AdditionalOptions              []string
+	// CollectTestDiagnostics is the value for xcodebuild's -collect-test-diagnostics option.
+	// Empty means the option is not passed at all, leaving xcodebuild at its own default.
+	CollectTestDiagnostics string
+	AdditionalOptions      []string
 }
 
 func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, error) {
@@ -104,6 +111,11 @@ func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, erro
 		xcodebuildArgs = append(xcodebuildArgs, fmt.Sprintf("-skip-testing:%s", test))
 	}
 
+	if params.CollectTestDiagnostics != "" {
+		xcodebuildArgs = append(xcodebuildArgs, CollectTestDiagnosticsFlag, params.CollectTestDiagnostics)
+	}
+
+	// Appended last so that anything the user passes in xcodebuild_options takes precedence.
 	xcodebuildArgs = append(xcodebuildArgs, params.AdditionalOptions...)
 
 	return xcodebuildArgs, nil
