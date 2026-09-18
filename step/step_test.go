@@ -140,6 +140,78 @@ func Test_GivenConfigParser_WhenParsesConfig(t *testing.T) {
 				return config
 			},
 		},
+		{
+			name: "skip_tests_with_test_case_identifier",
+			envsFunc: func() map[string]string {
+				envValues := defaultEnvValues()
+				envValues["quarantined_tests"] = `
+[
+  {
+	"testCaseName": "Score is computed when the guess matches the target",
+	"testSuiteName": [
+	  "Target2"
+	],
+	"className": "Suite2",
+	"testCaseIdentifier": "Suite2/scoreIsComputedWhenGuessMatchesTarget()"
+  },
+  {
+	"testCaseName": "Method1()",
+	"testSuiteName": [
+	  "Target2"
+	],
+	"testCaseIdentifier": "Suite2/NestedSuite/Method1()"
+  }
+]`
+				return envValues
+			},
+			expectedConfig: func() Config {
+				config := defaultConfigs()
+				config.SkipTesting = []string{
+					"Target2/Suite2/scoreIsComputedWhenGuessMatchesTarget()",
+					"Target2/Suite2/NestedSuite/Method1()",
+				}
+				return config
+			},
+		},
+		{
+			name: "skip_tests_with_incomplete_entries",
+			envsFunc: func() map[string]string {
+				envValues := defaultEnvValues()
+				envValues["quarantined_tests"] = `
+[
+  {
+	"testCaseName": "Method1()",
+	"testSuiteName": [],
+	"className": "Class2"
+  },
+  {
+	"testCaseName": "Method2()",
+	"testSuiteName": [
+	  "Target2"
+	]
+  },
+  {
+	"testSuiteName": [
+	  "Target2"
+	],
+	"className": "Class2"
+  },
+  {
+	"testCaseName": "Method3()",
+	"testSuiteName": [
+	  "Target2"
+	],
+	"className": "Class2"
+  }
+]`
+				return envValues
+			},
+			expectedConfig: func() Config {
+				config := defaultConfigs()
+				config.SkipTesting = []string{"Target2/Class2/Method3()"}
+				return config
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

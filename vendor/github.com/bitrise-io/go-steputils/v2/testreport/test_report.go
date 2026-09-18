@@ -5,6 +5,11 @@ import (
 	"encoding/xml"
 )
 
+// TestCaseIdentifierPropertyName is the <testcase> property name carrying the test framework's own
+// identifier of the test case. Needed because name and classname alone cannot address a test whose
+// display name differs from its function name (e.g. Swift Testing's @Test("...")).
+const TestCaseIdentifierPropertyName = "test-identifier"
+
 // TestReport is the internal test report structure used to present test results.
 type TestReport struct {
 	XMLName    xml.Name    `xml:"testsuites"`
