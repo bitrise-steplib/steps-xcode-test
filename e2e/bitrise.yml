@@ -84,7 +84,7 @@ workflows:
   test_swift_testing_quarantine:
     envs:
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
-    - TEST_APP_BRANCH: add-swift-testing-unit-tests
+    - TEST_APP_BRANCH: master
     - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
     - BITRISE_SCHEME: BullsEye
     - TEST_PLAN: UnitTests
