@@ -53,7 +53,7 @@ type TestParams struct {
 	XCConfigContent                string
 	PerformCleanAction             bool
 	SkipTesting                    []string
-	CollectTestDiagnostics         string
+	XcodebuildDiagnosticsOverride  string
 	AdditionalOptions              []string
 }
 
@@ -105,8 +105,8 @@ func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, erro
 		xcodebuildArgs = append(xcodebuildArgs, fmt.Sprintf("-skip-testing:%s", test))
 	}
 
-	if params.CollectTestDiagnostics != "" {
-		xcodebuildArgs = append(xcodebuildArgs, "-collect-test-diagnostics", params.CollectTestDiagnostics)
+	if params.XcodebuildDiagnosticsOverride != "" {
+		xcodebuildArgs = append(xcodebuildArgs, "-collect-test-diagnostics", params.XcodebuildDiagnosticsOverride)
 	}
 
 	// Appended last so that anything the user passes in xcodebuild_options takes precedence.

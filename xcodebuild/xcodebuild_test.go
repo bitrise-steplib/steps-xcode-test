@@ -260,7 +260,7 @@ func runParameters() TestRunParams {
 		RelaunchTestsForEachRepetition: true,
 		XCConfigContent:                "XCConfigContent",
 		PerformCleanAction:             false,
-		CollectTestDiagnostics:         "never",
+		XcodebuildDiagnosticsOverride:  "never",
 		AdditionalOptions:              []string{"AdditionalOptions"},
 	}
 
@@ -317,8 +317,8 @@ func argumentsFromRunParameters(parameters TestRunParams) []string {
 		arguments = append(arguments, fmt.Sprintf("-skip-testing:%s", test))
 	}
 
-	if parameters.TestParams.CollectTestDiagnostics != "" {
-		arguments = append(arguments, "-collect-test-diagnostics", parameters.TestParams.CollectTestDiagnostics)
+	if parameters.TestParams.XcodebuildDiagnosticsOverride != "" {
+		arguments = append(arguments, "-collect-test-diagnostics", parameters.TestParams.XcodebuildDiagnosticsOverride)
 	}
 
 	arguments = append(arguments, parameters.TestParams.AdditionalOptions...)

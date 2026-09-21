@@ -99,11 +99,11 @@ type Config struct {
 
 	CacheLevel string
 
-	SkipTesting                 []string
-	CollectSimulatorDiagnostics exportCondition
-	CollectTestDiagnostics      string
-	HeadlessMode                bool
-	XcodeMajorVersion           int64
+	SkipTesting                   []string
+	CollectSimulatorDiagnostics   exportCondition
+	XcodebuildDiagnosticsOverride string
+	HeadlessMode                  bool
+	XcodeMajorVersion             int64
 
 	DeployDir string
 }
@@ -489,7 +489,7 @@ func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 func (s XcodeTestRunner) teardownSimulator(simulatorID string, simulatorDebug exportCondition, isSimulatorBooted bool, testErr error, xcodeMajorVersion int64) string {
 	var simulatorDiagnosticsPath string
 
-	if shouldCollectSimulatorDiagnostics(simulatorDebug, testErr != nil, xcodeMajorVersion) {
+	if shouldStepCollectDiagnostics(simulatorDebug, testErr != nil, xcodeMajorVersion) {
 		s.logger.Println()
 		s.logger.Infof("Collecting Simulator diagnostics")
 

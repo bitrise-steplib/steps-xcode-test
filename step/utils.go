@@ -77,7 +77,7 @@ func (u utils) CreateConfig(input Input,
 
 		SkipTesting:                 skipTesting,
 		CollectSimulatorDiagnostics: exportCondition(input.CollectSimulatorDiagnostics),
-		CollectTestDiagnostics: collectTestDiagnosticsValue(
+		XcodebuildDiagnosticsOverride: xcodebuildDiagnosticsOverride(
 			exportCondition(input.CollectSimulatorDiagnostics), xcodeMajorVersion, additionalOptions),
 		HeadlessMode:      input.HeadlessMode,
 		XcodeMajorVersion: xcodeMajorVersion,
@@ -99,7 +99,7 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 		XCConfigContent:                cfg.XCConfigContent,
 		PerformCleanAction:             cfg.PerformCleanAction,
 		SkipTesting:                    cfg.SkipTesting,
-		CollectTestDiagnostics:         cfg.CollectTestDiagnostics,
+		XcodebuildDiagnosticsOverride:  cfg.XcodebuildDiagnosticsOverride,
 		AdditionalOptions:              cfg.XcodebuildOptions,
 	}
 
@@ -112,28 +112,28 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 	}
 }
 
-// minimumCollectTestDiagnosticsXcodeMajor is the first Xcode version that understands
+// minimumXcodeMajorWithDiagnosticsOption is the first Xcode version that understands
 // -collect-test-diagnostics and collects Simulator diagnostics itself after a failing test run.
-const minimumCollectTestDiagnosticsXcodeMajor = 26
+const minimumXcodeMajorWithDiagnosticsOption = 26
 
-// shouldCollectSimulatorDiagnostics decides whether the Step runs its own `simctl diagnose` after the tests.
+// shouldStepCollectDiagnostics decides whether the Step runs its own `simctl diagnose` after the tests.
 // Since Xcode 26 xcodebuild collects the same diagnostics into the xcresult after a failing run
-// (see collectTestDiagnosticsValue), so the Step does not collect on those Xcode versions.
-func shouldCollectSimulatorDiagnostics(condition exportCondition, testFailed bool, xcodeMajorVersion int64) bool {
-	if xcodeMajorVersion >= minimumCollectTestDiagnosticsXcodeMajor {
+// (see xcodebuildDiagnosticsOverride), so the Step does not collect on those Xcode versions.
+func shouldStepCollectDiagnostics(condition exportCondition, testFailed bool, xcodeMajorVersion int64) bool {
+	if xcodeMajorVersion >= minimumXcodeMajorWithDiagnosticsOption {
 		return false
 	}
 
 	return condition == always || (condition == onFailure && testFailed)
 }
 
-// collectTestDiagnosticsValue maps the collect_simulator_diagnostics input onto the value of xcodebuild's
+// xcodebuildDiagnosticsOverride maps the collect_simulator_diagnostics input onto the value of xcodebuild's
 // -collect-test-diagnostics option (on-failure|never). It returns an empty string when the option must not be
 // passed: on Xcode versions without the option, when xcodebuild_options already sets it, or for project_setting,
 // which leaves the decision to the test plan.
-func collectTestDiagnosticsValue(condition exportCondition, xcodeMajorVersion int64, additionalOptions []string) string {
+func xcodebuildDiagnosticsOverride(condition exportCondition, xcodeMajorVersion int64, additionalOptions []string) string {
 	// earlier Xcode (or unknown version: 0)
-	if xcodeMajorVersion < minimumCollectTestDiagnosticsXcodeMajor {
+	if xcodeMajorVersion < minimumXcodeMajorWithDiagnosticsOption {
 		return ""
 	}
 

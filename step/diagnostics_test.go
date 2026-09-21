@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_collectTestDiagnosticsValue(t *testing.T) {
+func Test_xcodebuildDiagnosticsOverride(t *testing.T) {
 	tests := []struct {
 		name              string
 		condition         exportCondition
@@ -92,13 +92,13 @@ func Test_collectTestDiagnosticsValue(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := collectTestDiagnosticsValue(tt.condition, tt.xcodeMajorVersion, tt.additionalOptions)
+			got := xcodebuildDiagnosticsOverride(tt.condition, tt.xcodeMajorVersion, tt.additionalOptions)
 			require.Equal(t, tt.want, got)
 		})
 	}
 }
 
-func Test_shouldCollectSimulatorDiagnostics(t *testing.T) {
+func Test_shouldStepCollectDiagnostics(t *testing.T) {
 	tests := []struct {
 		name              string
 		condition         exportCondition
@@ -124,7 +124,7 @@ func Test_shouldCollectSimulatorDiagnostics(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := shouldCollectSimulatorDiagnostics(tt.condition, tt.testFailed, tt.xcodeMajorVersion)
+			got := shouldStepCollectDiagnostics(tt.condition, tt.testFailed, tt.xcodeMajorVersion)
 			require.Equal(t, tt.want, got)
 		})
 	}

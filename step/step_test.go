@@ -122,7 +122,7 @@ func Test_GivenConfigParser_WhenParsesConfig(t *testing.T) {
 				config := defaultConfigs()
 				config.CollectSimulatorDiagnostics = projectSetting
 				// Nothing is passed to xcodebuild, the test plan decides.
-				config.CollectTestDiagnostics = ""
+				config.XcodebuildDiagnosticsOverride = ""
 				return config
 			},
 		},
@@ -351,10 +351,10 @@ func defaultConfigs() Config {
 
 		CacheLevel: "swift_packages",
 
-		CollectSimulatorDiagnostics: never,
-		CollectTestDiagnostics:      "never",
-		HeadlessMode:                true,
-		XcodeMajorVersion:           27,
+		CollectSimulatorDiagnostics:   never,
+		XcodebuildDiagnosticsOverride: "never",
+		HeadlessMode:                  true,
+		XcodeMajorVersion:             27,
 	}
 }
 func defaultSimulator() destination.Device {
