@@ -127,25 +127,18 @@ func shouldStepCollectDiagnostics(condition exportCondition, testFailed bool, xc
 	return condition == always || (condition == onFailure && testFailed)
 }
 
-// xcodebuildDiagnosticsOverride maps the collect_simulator_diagnostics input onto the value of xcodebuild's
-// -collect-test-diagnostics option (on-failure|never). It returns an empty string when the option must not be
-// passed: on Xcode versions without the option, when xcodebuild_options already sets it, or for project_setting,
-// which leaves the decision to the test plan.
 func xcodebuildDiagnosticsOverride(condition exportCondition, xcodeMajorVersion int64, additionalOptions []string) string {
-	// earlier Xcode (or unknown version: 0)
-	if xcodeMajorVersion < minimumXcodeMajorWithDiagnosticsOption {
+	if xcodeMajorVersion < minimumXcodeMajorWithDiagnosticsOption { // no such option yet
 		return ""
 	}
 
-	// An explicit -collect-test-diagnostics in xcodebuild_options wins.
 	for _, option := range additionalOptions {
-		if option == "-collect-test-diagnostics" {
+		if option == "-collect-test-diagnostics" { // user's option wins
 			return ""
 		}
 	}
 
-	// project_setting: do not override anything, xcodebuild follows the test plan.
-	if condition == projectSetting {
+	if condition == projectSetting { // leave it to the test plan
 		return ""
 	}
 
