@@ -68,6 +68,53 @@ func Test_GivenStep_WhenRuns_ThenXcodebuildGetsCalled(t *testing.T) {
 	mocks.xcodebuilder.AssertCalled(t, "RunTest", mock.Anything)
 }
 
+func Test_GivenNonHeadlessMode_WhenRuns_ThenBootsTheSimulatorAndLaunchesTheGUI(t *testing.T) {
+	// Given
+	step, mocks := createStepAndMocks(t)
+
+	previousBootWait := simulatorGUIBootWait
+	simulatorGUIBootWait = 0
+	t.Cleanup(func() { simulatorGUIBootWait = previousBootWait })
+
+	device := destination.Device{UDID: "1234"}
+
+	mocks.xcodebuilder.On("RunTest", mock.Anything).Return("", 0, nil)
+	// Xcode 27's DeviceHub.app ignores -CurrentDeviceUDID, so the Step has to boot the device itself.
+	mocks.simulatorManager.On("Boot", device).Return(nil)
+	mocks.simulatorManager.On("LaunchWithGUI", device.UDID).Return(nil)
+	mocks.cache.On("SwiftPackagesPath", mock.Anything).Return("", nil)
+	mocks.pathProvider.On("CreateTempDir", mock.Anything).Return("tmp_dir", nil)
+
+	config := Config{
+		ProjectPath: "./project.xcodeproj",
+		Scheme:      "Project",
+
+		Simulator:         device,
+		IsSimulatorBooted: false,
+
+		TestRepetitionMode:            "none",
+		MaximumTestRepetitions:        0,
+		RelaunchTestForEachRepetition: true,
+
+		LogFormatter:       "xcodebuild",
+		PerformCleanAction: false,
+
+		CacheLevel: "",
+
+		CollectSimulatorDiagnostics: never,
+		HeadlessMode:                false,
+	}
+
+	// When
+	_, err := step.Run(config)
+
+	// Then
+	require.NoError(t, err)
+	mocks.simulatorManager.AssertCalled(t, "Boot", device)
+	mocks.simulatorManager.AssertCalled(t, "LaunchWithGUI", device.UDID)
+	mocks.xcodebuilder.AssertCalled(t, "RunTest", mock.Anything)
+}
+
 func Test_GivenStep_WhenInstallXcpretty_ThenInstallIt(t *testing.T) {
 	// Given
 	step, mocks := createStepAndMocks(t)
