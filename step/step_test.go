@@ -37,7 +37,6 @@ func Test_GivenStep_WhenRuns_ThenXcodebuildGetsCalled(t *testing.T) {
 	step, mocks := createStepAndMocks(t)
 
 	mocks.xcodebuilder.On("RunTest", mock.Anything).Return("", 0, nil)
-	mocks.simulatorManager.On("ResetLaunchServices").Return(nil)
 	mocks.cache.On("SwiftPackagesPath", mock.Anything).Return("", nil)
 	mocks.pathProvider.On("CreateTempDir", mock.Anything).Return("tmp_dir", nil)
 

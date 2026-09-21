@@ -410,11 +410,6 @@ func (s XcodeTestConfigParser) getSimulatorForDestination(destinationSpecifier s
 }
 
 func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simulator destination.Device, launchSimulator bool) error {
-	err := s.simulatorManager.ResetLaunchServices()
-	if err != nil {
-		s.logger.Warnf("Failed to apply simulator boot workaround: %s", err)
-	}
-
 	// Boot simulator
 	if enableSimulatorVerboseLog {
 		s.logger.Infof("Enabling Simulator verbose log for better diagnostics")
