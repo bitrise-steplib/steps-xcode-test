@@ -149,7 +149,7 @@ func collectTestDiagnosticsValue(condition exportCondition, xcodeMajorVersion in
 
 	// An explicit -collect-test-diagnostics in xcodebuild_options wins.
 	for _, option := range additionalOptions {
-		if option == xcodebuild.CollectTestDiagnosticsFlag {
+		if option == "-collect-test-diagnostics" {
 			return ""
 		}
 	}

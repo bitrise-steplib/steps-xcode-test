@@ -318,7 +318,7 @@ func argumentsFromRunParameters(parameters TestRunParams) []string {
 	}
 
 	if parameters.TestParams.CollectTestDiagnostics != "" {
-		arguments = append(arguments, CollectTestDiagnosticsFlag, parameters.TestParams.CollectTestDiagnostics)
+		arguments = append(arguments, "-collect-test-diagnostics", parameters.TestParams.CollectTestDiagnostics)
 	}
 
 	arguments = append(arguments, parameters.TestParams.AdditionalOptions...)

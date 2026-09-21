@@ -3,7 +3,6 @@ package step
 import (
 	"testing"
 
-	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
 	"github.com/stretchr/testify/require"
 )
 
@@ -71,7 +70,7 @@ func Test_collectTestDiagnosticsValue(t *testing.T) {
 			name:              "user set the option explicitly - theirs wins",
 			condition:         never,
 			xcodeMajorVersion: 27,
-			additionalOptions: []string{xcodebuild.CollectTestDiagnosticsFlag, "on-failure"},
+			additionalOptions: []string{"-collect-test-diagnostics", "on-failure"},
 			want:              "",
 		},
 		{
@@ -79,7 +78,7 @@ func Test_collectTestDiagnosticsValue(t *testing.T) {
 			name:              "user wrote the option with = syntax - Step still passes its own",
 			condition:         never,
 			xcodeMajorVersion: 27,
-			additionalOptions: []string{xcodebuild.CollectTestDiagnosticsFlag + "=on-failure"},
+			additionalOptions: []string{"-collect-test-diagnostics=on-failure"},
 			want:              "never",
 		},
 		{
