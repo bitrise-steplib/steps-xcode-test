@@ -21,7 +21,6 @@ const (
 // Manager provides methods for issuing Simulator commands
 type Manager interface {
 	LaunchWithGUI(simulatorID string) error
-	ResetLaunchServices() error
 	Boot(device destination.Device) error
 	WaitForBootFinished(id string, timeout time.Duration) error
 	EnableVerboseLog(id string) error
@@ -43,7 +42,7 @@ func NewManager(logger log.Logger, commandFactory command.Factory) Manager {
 	}
 }
 
-func (m manager) getSimulatorAppAbsolutePath() (string, error) {
+func (m manager) getXcodeDeveloperDirPath() (string, error) {
 	cmd := m.commandFactory.Create("xcode-select", []string{"--print-path"}, nil)
 
 	xcodeDevDirPath, err := cmd.RunAndReturnTrimmedCombinedOutput()
@@ -51,54 +50,47 @@ func (m manager) getSimulatorAppAbsolutePath() (string, error) {
 		return "", fmt.Errorf("failed to get Xcode Developer Directory - most likely Xcode.app is not installed: %w", err)
 	}
 
-	return filepath.Join(xcodeDevDirPath, "Applications", "Simulator.app"), nil
+	return xcodeDevDirPath, nil
+}
+
+func (m manager) findSimulatorGUIApp() (string, error) {
+	xcodeDevDirPath, err := m.getXcodeDeveloperDirPath()
+	if err != nil {
+		return "", err
+	}
+
+	// Xcode.app/Contents/
+	// ├── Applications/            <- Instruments, FileMerge, ... and on Xcode 27: DeviceHub.app
+	// │   └── DeviceHub.app
+	// └── Developer/               <- what `xcode-select -p` returns
+	//     └── Applications/
+	//         └── Simulator.app    <- Xcode 26 and earlier only
+	simulatorApp := filepath.Join(xcodeDevDirPath, "Applications", "Simulator.app")
+	if _, err := os.Stat(simulatorApp); err == nil {
+		return simulatorApp, nil
+	}
+
+	deviceHubApp := filepath.Join(xcodeDevDirPath, "..", "Applications", "DeviceHub.app")
+	if _, err := os.Stat(deviceHubApp); err == nil {
+		return deviceHubApp, nil
+	}
+
+	return "", fmt.Errorf("no Simulator GUI application found (looked for `%s` and `%s`)", simulatorApp, deviceHubApp)
 }
 
 // LaunchWithGUI can be used to run in non-headless mode (with the Simulator visible).
 func (m manager) LaunchWithGUI(simulatorID string) error {
-	simulatorAppFullPath, err := m.getSimulatorAppAbsolutePath()
+	guiPath, err := m.findSimulatorGUIApp()
 	if err != nil {
 		return err
 	}
 
-	openCmd := m.commandFactory.Create("open", []string{simulatorAppFullPath, "--args", "-CurrentDeviceUDID", simulatorID}, nil)
+	openCmd := m.commandFactory.Create("open", []string{guiPath, "--args", "-CurrentDeviceUDID", simulatorID}, nil)
 	m.logger.TPrintf("$ %s", openCmd.PrintableCommandArgs())
 
 	outStr, err := openCmd.RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to start simulators (%s), error: %s, output: %s", simulatorID, err, outStr)
-	}
-
-	return nil
-}
-
-// ResetLaunchServices resets launch services database to avoid Big Sur's sporadic failure to find the Simulator App
-// The following error is printed when this happens: "kLSNoExecutableErr: The executable is missing"
-// Details:
-// - https://stackoverflow.com/questions/2182040/the-application-cannot-be-opened-because-its-executable-is-missing/16546673#16546673
-// - https://ss64.com/osx/lsregister.html
-func (m manager) ResetLaunchServices() error {
-	cmd := m.commandFactory.Create("sw_vers", []string{"-productVersion"}, nil)
-
-	macOSVersion, err := cmd.RunAndReturnTrimmedCombinedOutput()
-	if err != nil {
-		return err
-	}
-
-	if strings.HasPrefix(macOSVersion, "11.") { // It's Big Sur
-		simulatorAppPath, err := m.getSimulatorAppAbsolutePath()
-		if err != nil {
-			return err
-		}
-
-		cmdString := "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
-		cmd = m.commandFactory.Create(cmdString, []string{"-f", simulatorAppPath}, nil)
-
-		m.logger.Infof("Applying launch services reset workaround before booting simulator")
-		_, err = cmd.RunAndReturnTrimmedCombinedOutput()
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil
