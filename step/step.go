@@ -100,10 +100,8 @@ type Config struct {
 
 	SkipTesting                 []string
 	CollectSimulatorDiagnostics exportCondition
-	// CollectTestDiagnostics is the resolved value for xcodebuild's -collect-test-diagnostics
-	// option, derived from CollectSimulatorDiagnostics. Empty means do not pass the option.
-	CollectTestDiagnostics string
-	HeadlessMode           bool
+	CollectTestDiagnostics      string
+	HeadlessMode                bool
 
 	DeployDir string
 }

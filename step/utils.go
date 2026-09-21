@@ -112,13 +112,6 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 	}
 }
 
-// minimumCollectTestDiagnosticsXcodeMajor is the first Xcode version that understands
-// xcodebuild's -collect-test-diagnostics option. Passing it to anything older is a usage error.
-const minimumCollectTestDiagnosticsXcodeMajor = 26
-
-// collectTestDiagnosticsValue maps the Step's collect_simulator_diagnostics input onto
-// xcodebuild's -collect-test-diagnostics option.
-//
 // Since Xcode 26 xcodebuild collects a simulator sysdiagnose of its own after a failing test run,
 // by shelling out to `simctl diagnose --timeout=600`. That is a separate mechanism from the
 // diagnostics this Step collects during teardown, and it runs even when the user asked for no
@@ -132,9 +125,11 @@ const minimumCollectTestDiagnosticsXcodeMajor = 26
 // already has: if the user does not want simulator diagnostics, do not let xcodebuild collect
 // them either.
 //
-// Returns an empty string when the option must not be passed at all.
+// Returns an empty string when the option must not be passed.
 func collectTestDiagnosticsValue(condition exportCondition, xcodeMajorVersion int64, additionalOptions []string) string {
-	// An unreadable Xcode version reads as major 0, which lands here and leaves xcodebuild alone.
+	// first Xcode version that understands -collect-test-diagnostics
+	const minimumCollectTestDiagnosticsXcodeMajor = 26
+	// earlier Xcode (or unknown version: 0)
 	if xcodeMajorVersion < minimumCollectTestDiagnosticsXcodeMajor {
 		return ""
 	}
@@ -150,8 +145,5 @@ func collectTestDiagnosticsValue(condition exportCondition, xcodeMajorVersion in
 	if condition == never {
 		return "never"
 	}
-
-	// xcodebuild accepts on-failure|never only - there is no "always" - and its collection is
-	// failure-triggered anyway, so both always and on_failure map onto on-failure.
 	return "on-failure"
 }

@@ -57,10 +57,8 @@ type TestParams struct {
 	XCConfigContent                string
 	PerformCleanAction             bool
 	SkipTesting                    []string
-	// CollectTestDiagnostics is the value for xcodebuild's -collect-test-diagnostics option.
-	// Empty means the option is not passed at all, leaving xcodebuild at its own default.
-	CollectTestDiagnostics string
-	AdditionalOptions      []string
+	CollectTestDiagnostics         string
+	AdditionalOptions              []string
 }
 
 func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, error) {
