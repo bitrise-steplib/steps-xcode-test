@@ -116,11 +116,8 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 // -collect-test-diagnostics and collects Simulator diagnostics itself after a failing test run.
 const minimumXcodeMajorWithDiagnosticsOption = 26
 
-// shouldStepCollectDiagnostics decides whether the Step runs its own `simctl diagnose` after the tests.
-// Since Xcode 26 xcodebuild collects the same diagnostics into the xcresult after a failing run
-// (see xcodebuildDiagnosticsOverride), so the Step does not collect on those Xcode versions.
 func shouldStepCollectDiagnostics(condition exportCondition, testFailed bool, xcodeMajorVersion int64) bool {
-	if xcodeMajorVersion >= minimumXcodeMajorWithDiagnosticsOption {
+	if xcodeMajorVersion >= minimumXcodeMajorWithDiagnosticsOption { // xcodebuild collects
 		return false
 	}
 
