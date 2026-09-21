@@ -38,13 +38,13 @@ func run() int {
 	configParser := createConfigParser(logger)
 	config, err := configParser.ProcessConfig()
 	if err != nil {
-		logger.Errorf(errorutil.FormattedError(fmt.Errorf("Failed to process Step inputs: %w", err)))
+		logger.Errorf(errorutil.FormattedError(fmt.Errorf("failed to process Step inputs: %w", err)))
 		return 1
 	}
 
 	xcodeTestRunner, err := createStep(logger, config.LogFormatter)
 	if err != nil {
-		logger.Errorf(errorutil.FormattedError(fmt.Errorf("Failed to process Step inputs: %w", err)))
+		logger.Errorf(errorutil.FormattedError(fmt.Errorf("failed to process Step inputs: %w", err)))
 		return 1
 	}
 
@@ -54,12 +54,12 @@ func run() int {
 	exportErr := xcodeTestRunner.Export(res, runErr != nil)
 
 	if runErr != nil {
-		logger.Errorf(errorutil.FormattedError(fmt.Errorf("Failed to execute Step: %w", runErr)))
+		logger.Errorf(errorutil.FormattedError(fmt.Errorf("failed to execute Step: %w", runErr)))
 		return 1
 	}
 
 	if exportErr != nil {
-		logger.Errorf(errorutil.FormattedError(fmt.Errorf("Failed to export Step outputs: %w", exportErr)))
+		logger.Errorf(errorutil.FormattedError(fmt.Errorf("failed to export Step outputs: %w", exportErr)))
 		return 1
 	}
 
