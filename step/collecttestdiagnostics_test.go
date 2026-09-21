@@ -68,11 +68,12 @@ func Test_collectTestDiagnosticsValue(t *testing.T) {
 			want:              "",
 		},
 		{
-			name:              "user set the option with = syntax - theirs wins",
+			// xcodebuild silently drops the -option=value form, so it must not count as an override.
+			name:              "user wrote the option with = syntax - Step still passes its own",
 			condition:         never,
 			xcodeMajorVersion: 27,
 			additionalOptions: []string{xcodebuild.CollectTestDiagnosticsFlag + "=on-failure"},
-			want:              "",
+			want:              "never",
 		},
 		{
 			name:              "unrelated additional options are ignored",

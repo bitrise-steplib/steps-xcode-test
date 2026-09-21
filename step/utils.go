@@ -2,7 +2,6 @@ package step
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/log/colorstring"
@@ -134,10 +133,10 @@ func collectTestDiagnosticsValue(condition exportCondition, xcodeMajorVersion in
 		return ""
 	}
 
-	// An explicit -collect-test-diagnostics in xcodebuild_options wins.
+	// An explicit -collect-test-diagnostics in xcodebuild_options wins. Only the two-token form counts:
+	// xcodebuild silently ignores -collect-test-diagnostics=value, so that form must not suppress the Step's own.
 	for _, option := range additionalOptions {
-		if option == xcodebuild.CollectTestDiagnosticsFlag ||
-			strings.HasPrefix(option, xcodebuild.CollectTestDiagnosticsFlag+"=") {
+		if option == xcodebuild.CollectTestDiagnosticsFlag {
 			return ""
 		}
 	}
