@@ -127,20 +127,10 @@ func shouldCollectSimulatorDiagnostics(condition exportCondition, testFailed boo
 	return condition == always || (condition == onFailure && testFailed)
 }
 
-// Since Xcode 26 xcodebuild collects a simulator sysdiagnose of its own after a failing test run,
-// by shelling out to `simctl diagnose --timeout=600`. That is a separate mechanism from the
-// diagnostics this Step collects during teardown, and it runs even when the user asked for no
-// diagnostics at all. Measured on a two-file SPM package with a single failing test, it added ten
-// minutes to the run and 16 MB to the result bundle, and then gave up with
-//
-//	IDETestOperationsObserverDebug: Failure collecting diagnostics from simulator:
-//	Timed out after 600.0 seconds while waiting for a response from the invoked process
-//
-// It commonly presents as tests "hanging" at the end of the run. So honour the input the Step
-// already has: if the user does not want simulator diagnostics, do not let xcodebuild collect
-// them either.
-//
-// Returns an empty string when the option must not be passed.
+// collectTestDiagnosticsValue maps the collect_simulator_diagnostics input onto the value of xcodebuild's
+// -collect-test-diagnostics option (on-failure|never). It returns an empty string when the option must not be
+// passed: on Xcode versions without the option, when xcodebuild_options already sets it, or for project_setting,
+// which leaves the decision to the test plan.
 func collectTestDiagnosticsValue(condition exportCondition, xcodeMajorVersion int64, additionalOptions []string) string {
 	// earlier Xcode (or unknown version: 0)
 	if xcodeMajorVersion < minimumCollectTestDiagnosticsXcodeMajor {
