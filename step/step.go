@@ -500,9 +500,9 @@ func (s XcodeTestRunner) teardownSimulator(simulatorID string, simulatorDebug ex
 			s.logger.Donef("Simulator diagnostics are available as an artifact (%s)", diagnosticsPath)
 			simulatorDiagnosticsPath = diagnosticsPath
 		}
-	} else if simulatorDebug != never && testErr != nil {
+	} else if simulatorDebug != never && testErr != nil && xcodeMajorVersion >= minimumXcodeMajorWithDiagnosticsOption {
 		s.logger.Println()
-		s.logger.Infof("On Xcode 26 and later xcodebuild collects the Simulator diagnostics into the xcresult (xcrun xcresulttool export diagnostics), the Step does not collect them separately")
+		s.logger.Infof("xcodebuild collects the Simulator diagnostics into the xcresult (xcrun xcresulttool export diagnostics), the Step does not collect them separately")
 	}
 
 	// Shut down the simulator if it was started by the step for diagnostic logs.
