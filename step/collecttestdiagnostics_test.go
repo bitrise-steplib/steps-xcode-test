@@ -91,3 +91,32 @@ func Test_collectTestDiagnosticsValue(t *testing.T) {
 		})
 	}
 }
+
+func Test_shouldCollectSimulatorDiagnostics(t *testing.T) {
+	tests := []struct {
+		name              string
+		condition         exportCondition
+		testFailed        bool
+		xcodeMajorVersion int64
+		want              bool
+	}{
+		{name: "Xcode 16, always, passed", condition: always, testFailed: false, xcodeMajorVersion: 16, want: true},
+		{name: "Xcode 16, always, failed", condition: always, testFailed: true, xcodeMajorVersion: 16, want: true},
+		{name: "Xcode 16, on_failure, passed", condition: onFailure, testFailed: false, xcodeMajorVersion: 16, want: false},
+		{name: "Xcode 16, on_failure, failed", condition: onFailure, testFailed: true, xcodeMajorVersion: 16, want: true},
+		{name: "Xcode 16, never, failed", condition: never, testFailed: true, xcodeMajorVersion: 16, want: false},
+		// main.go leaves the major at 0 when the Xcode version cannot be read; keep collecting there.
+		{name: "unknown Xcode, on_failure, failed", condition: onFailure, testFailed: true, xcodeMajorVersion: 0, want: true},
+		// Since Xcode 26 xcodebuild collects into the xcresult itself; the Step must not collect a second copy.
+		{name: "Xcode 26, on_failure, failed", condition: onFailure, testFailed: true, xcodeMajorVersion: 26, want: false},
+		{name: "Xcode 27, always, failed", condition: always, testFailed: true, xcodeMajorVersion: 27, want: false},
+		{name: "Xcode 27, always, passed", condition: always, testFailed: false, xcodeMajorVersion: 27, want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := shouldCollectSimulatorDiagnostics(tt.condition, tt.testFailed, tt.xcodeMajorVersion)
+			require.Equal(t, tt.want, got)
+		})
+	}
+}

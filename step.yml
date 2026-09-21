@@ -258,20 +258,24 @@ inputs:
   opts:
     category: Debugging
     title: Collect Simulator diagnostics
-    summary: If this input is set, the simulator verbose logging will be enabled and the simulator diagnostics log will be exported.
+    summary: Enables Simulator verbose logging and controls whether Simulator diagnostics are collected after the test run.
     description: |-
-      If this input is set, the simulator verbose logging will be enabled and the simulator diagnostics log will be exported.
+      Enables Simulator verbose logging and controls whether Simulator diagnostics are collected after the test run.
 
-      On Xcode 26 and later this input also controls xcodebuild's own `-collect-test-diagnostics` option.
-      Since Xcode 26, xcodebuild collects a simulator sysdiagnose itself after a failing test run, which
-      can add up to ten minutes to a failing build and often ends in a timeout without collecting anything.
-      Setting this input to `never` (the default) now also tells xcodebuild not to collect them.
+      Unless set to `never`, Simulator verbose logging is enabled before the tests run.
 
-      Set it to `on_failure` or `always` to keep xcodebuild's collection enabled. You can also override the
-      option directly in `xcodebuild_options`, which takes precedence over this input.
+      xcodebuild collects the Simulator diagnostics (a `simctl diagnose` bundle) itself after a failing test run
+      and stores them in the `.xcresult`; extract them with `xcrun xcresulttool export diagnostics`. This input
+      maps onto xcodebuild's `-collect-test-diagnostics` option: `never` (the default) disables that collection,
+      which can otherwise add up to ten minutes to a failing build, while `on_failure` and `always` keep it enabled.
+      The Step does not collect diagnostics on its own, so `always` behaves like `on_failure`. A
+      `-collect-test-diagnostics` option passed in `xcodebuild_options` takes precedence over this input.
+
+      On Xcode 16 and earlier, xcodebuild has no such option and the Step collects the diagnostics itself after the
+      tests and exports them as a zip artifact: after every run with `always`, only after a failed run with `on_failure`.
 
       Available options:
-      - `always`: collect diagnostics after every run.
+      - `always`: collect diagnostics after every run (Xcode 16 and earlier) or after a failed run (Xcode 26 and later).
       - `on_failure`: collect diagnostics only when the tests fail.
       - `never`: do not collect diagnostics.
     value_options:

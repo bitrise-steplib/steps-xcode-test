@@ -339,6 +339,7 @@ func defaultConfigs() Config {
 		CollectSimulatorDiagnostics: never,
 		CollectTestDiagnostics:      "never",
 		HeadlessMode:                true,
+		XcodeMajorVersion:           27,
 	}
 }
 func defaultSimulator() destination.Device {

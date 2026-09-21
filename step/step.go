@@ -102,6 +102,7 @@ type Config struct {
 	CollectSimulatorDiagnostics exportCondition
 	CollectTestDiagnostics      string
 	HeadlessMode                bool
+	XcodeMajorVersion           int64
 
 	DeployDir string
 }
@@ -301,7 +302,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 		testExitCode = code
 	}
 
-	result.SimulatorDiagnosticsPath = s.teardownSimulator(cfg.Simulator.UDID, cfg.CollectSimulatorDiagnostics, cfg.IsSimulatorBooted, testErr)
+	result.SimulatorDiagnosticsPath = s.teardownSimulator(cfg.Simulator.UDID, cfg.CollectSimulatorDiagnostics, cfg.IsSimulatorBooted, testErr, cfg.XcodeMajorVersion)
 
 	if testErr != nil {
 		s.logger.Println()
@@ -484,10 +485,10 @@ func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 	return result, exitCode, testErr
 }
 
-func (s XcodeTestRunner) teardownSimulator(simulatorID string, simulatorDebug exportCondition, isSimulatorBooted bool, testErr error) string {
+func (s XcodeTestRunner) teardownSimulator(simulatorID string, simulatorDebug exportCondition, isSimulatorBooted bool, testErr error, xcodeMajorVersion int64) string {
 	var simulatorDiagnosticsPath string
 
-	if simulatorDebug == always || (simulatorDebug == onFailure && testErr != nil) {
+	if shouldCollectSimulatorDiagnostics(simulatorDebug, testErr != nil, xcodeMajorVersion) {
 		s.logger.Println()
 		s.logger.Infof("Collecting Simulator diagnostics")
 
@@ -498,6 +499,9 @@ func (s XcodeTestRunner) teardownSimulator(simulatorID string, simulatorDebug ex
 			s.logger.Donef("Simulator diagnostics are available as an artifact (%s)", diagnosticsPath)
 			simulatorDiagnosticsPath = diagnosticsPath
 		}
+	} else if simulatorDebug != never && testErr != nil {
+		s.logger.Println()
+		s.logger.Infof("Simulator diagnostics are collected by xcodebuild into the xcresult on Xcode 26 and later (xcrun xcresulttool export diagnostics)")
 	}
 
 	// Shut down the simulator if it was started by the step for diagnostic logs.

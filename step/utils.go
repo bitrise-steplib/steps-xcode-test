@@ -79,7 +79,8 @@ func (u utils) CreateConfig(input Input,
 		CollectSimulatorDiagnostics: exportCondition(input.CollectSimulatorDiagnostics),
 		CollectTestDiagnostics: collectTestDiagnosticsValue(
 			exportCondition(input.CollectSimulatorDiagnostics), xcodeMajorVersion, additionalOptions),
-		HeadlessMode: input.HeadlessMode,
+		HeadlessMode:      input.HeadlessMode,
+		XcodeMajorVersion: xcodeMajorVersion,
 
 		DeployDir: input.DeployDir,
 	}
@@ -111,6 +112,21 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 	}
 }
 
+// minimumCollectTestDiagnosticsXcodeMajor is the first Xcode version that understands
+// -collect-test-diagnostics and collects Simulator diagnostics itself after a failing test run.
+const minimumCollectTestDiagnosticsXcodeMajor = 26
+
+// shouldCollectSimulatorDiagnostics decides whether the Step runs its own `simctl diagnose` after the tests.
+// Since Xcode 26 xcodebuild collects the same diagnostics into the xcresult after a failing run
+// (see collectTestDiagnosticsValue), so the Step does not collect on those Xcode versions.
+func shouldCollectSimulatorDiagnostics(condition exportCondition, testFailed bool, xcodeMajorVersion int64) bool {
+	if xcodeMajorVersion >= minimumCollectTestDiagnosticsXcodeMajor {
+		return false
+	}
+
+	return condition == always || (condition == onFailure && testFailed)
+}
+
 // Since Xcode 26 xcodebuild collects a simulator sysdiagnose of its own after a failing test run,
 // by shelling out to `simctl diagnose --timeout=600`. That is a separate mechanism from the
 // diagnostics this Step collects during teardown, and it runs even when the user asked for no
@@ -126,15 +142,12 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 //
 // Returns an empty string when the option must not be passed.
 func collectTestDiagnosticsValue(condition exportCondition, xcodeMajorVersion int64, additionalOptions []string) string {
-	// first Xcode version that understands -collect-test-diagnostics
-	const minimumCollectTestDiagnosticsXcodeMajor = 26
 	// earlier Xcode (or unknown version: 0)
 	if xcodeMajorVersion < minimumCollectTestDiagnosticsXcodeMajor {
 		return ""
 	}
 
-	// An explicit -collect-test-diagnostics in xcodebuild_options wins. Only the two-token form counts:
-	// xcodebuild silently ignores -collect-test-diagnostics=value, so that form must not suppress the Step's own.
+	// An explicit -collect-test-diagnostics in xcodebuild_options wins.
 	for _, option := range additionalOptions {
 		if option == xcodebuild.CollectTestDiagnosticsFlag {
 			return ""
