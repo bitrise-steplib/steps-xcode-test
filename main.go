@@ -38,13 +38,13 @@ func run() int {
 	configParser := createConfigParser(logger)
 	config, err := configParser.ProcessConfig()
 	if err != nil {
-		logger.Errorf(errorutil.FormattedError(fmt.Errorf("Failed to process Step inputs: %w", err))) //nolint:staticcheck // top-level messages are user facing
+		logger.Errorf("%s", errorutil.FormattedError(fmt.Errorf("Failed to process Step inputs: %w", err))) //nolint:staticcheck // top-level messages are user facing
 		return 1
 	}
 
 	xcodeTestRunner, err := createStep(logger, config.LogFormatter)
 	if err != nil {
-		logger.Errorf(errorutil.FormattedError(fmt.Errorf("Failed to process Step inputs: %w", err))) //nolint:staticcheck // top-level messages are user facing
+		logger.Errorf("%s", errorutil.FormattedError(fmt.Errorf("Failed to process Step inputs: %w", err))) //nolint:staticcheck // top-level messages are user facing
 		return 1
 	}
 
@@ -54,12 +54,12 @@ func run() int {
 	exportErr := xcodeTestRunner.Export(res, runErr != nil)
 
 	if runErr != nil {
-		logger.Errorf(errorutil.FormattedError(fmt.Errorf("Failed to execute Step: %w", runErr))) //nolint:staticcheck // top-level messages are user facing
+		logger.Errorf("%s", errorutil.FormattedError(fmt.Errorf("Failed to execute Step: %w", runErr))) //nolint:staticcheck // top-level messages are user facing
 		return 1
 	}
 
 	if exportErr != nil {
-		logger.Errorf(errorutil.FormattedError(fmt.Errorf("Failed to export Step outputs: %w", exportErr))) //nolint:staticcheck // top-level messages are user facing
+		logger.Errorf("%s", errorutil.FormattedError(fmt.Errorf("Failed to export Step outputs: %w", exportErr))) //nolint:staticcheck // top-level messages are user facing
 		return 1
 	}
 
@@ -73,7 +73,7 @@ func createConfigParser(logger log.Logger) step.XcodeTestConfigParser {
 	xcodeVersionProvider := xcodeversion.NewXcodeVersionProvider(commandFactory)
 	xcodeVersion, err := xcodeVersionProvider.GetVersion()
 	if err != nil { // Not a fatal error, continuing with empty version
-		logger.Errorf("failed to read Xcode version: %w", err)
+		logger.Errorf("Failed to read Xcode version: %s", err)
 	}
 	pathModifier := pathutil.NewPathModifier()
 	deviceFinder := destination.NewDeviceFinder(logger, commandFactory, xcodeVersion)
