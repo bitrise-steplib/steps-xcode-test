@@ -154,6 +154,11 @@ func collectTestDiagnosticsValue(condition exportCondition, xcodeMajorVersion in
 		}
 	}
 
+	// project_setting: do not override anything, xcodebuild follows the test plan.
+	if condition == projectSetting {
+		return ""
+	}
+
 	if condition == never {
 		return "never"
 	}

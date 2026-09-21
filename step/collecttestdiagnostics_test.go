@@ -41,6 +41,13 @@ func Test_collectTestDiagnosticsValue(t *testing.T) {
 			want:              "on-failure",
 		},
 		{
+			// project_setting leaves the decision to the test plan, so nothing is passed.
+			name:              "Xcode 27, project_setting - option not passed",
+			condition:         projectSetting,
+			xcodeMajorVersion: 27,
+			want:              "",
+		},
+		{
 			// The option does not exist before Xcode 26; passing it would be a usage error.
 			name:              "Xcode 25, never - option not passed",
 			condition:         never,
@@ -105,6 +112,9 @@ func Test_shouldCollectSimulatorDiagnostics(t *testing.T) {
 		{name: "Xcode 16, on_failure, passed", condition: onFailure, testFailed: false, xcodeMajorVersion: 16, want: false},
 		{name: "Xcode 16, on_failure, failed", condition: onFailure, testFailed: true, xcodeMajorVersion: 16, want: true},
 		{name: "Xcode 16, never, failed", condition: never, testFailed: true, xcodeMajorVersion: 16, want: false},
+		// project_setting has nothing to follow before Xcode 26, the Step does not collect on its own.
+		{name: "Xcode 16, project_setting, failed", condition: projectSetting, testFailed: true, xcodeMajorVersion: 16, want: false},
+		{name: "Xcode 27, project_setting, failed", condition: projectSetting, testFailed: true, xcodeMajorVersion: 27, want: false},
 		// main.go leaves the major at 0 when the Xcode version cannot be read; keep collecting there.
 		{name: "unknown Xcode, on_failure, failed", condition: onFailure, testFailed: true, xcodeMajorVersion: 0, want: true},
 		// Since Xcode 26 xcodebuild collects into the xcresult itself; the Step must not collect a second copy.

@@ -55,7 +55,7 @@ type Input struct {
 	// Debugging
 	VerboseLog                  bool   `env:"verbose_log,opt[yes,no]"`
 	QuarantinedTests            string `env:"quarantined_tests"`
-	CollectSimulatorDiagnostics string `env:"collect_simulator_diagnostics,opt[always,on_failure,never]"`
+	CollectSimulatorDiagnostics string `env:"collect_simulator_diagnostics,opt[project_setting,always,on_failure,never]"`
 	HeadlessMode                bool   `env:"headless_mode,opt[yes,no]"`
 
 	// Output export
@@ -65,9 +65,10 @@ type Input struct {
 type exportCondition string
 
 const (
-	always    = "always"
-	never     = "never"
-	onFailure = "on_failure"
+	always         = "always"
+	never          = "never"
+	onFailure      = "on_failure"
+	projectSetting = "project_setting"
 )
 
 // Output tools
@@ -501,7 +502,7 @@ func (s XcodeTestRunner) teardownSimulator(simulatorID string, simulatorDebug ex
 		}
 	} else if simulatorDebug != never && testErr != nil {
 		s.logger.Println()
-		s.logger.Infof("Simulator diagnostics are collected by xcodebuild into the xcresult on Xcode 26 and later (xcrun xcresulttool export diagnostics)")
+		s.logger.Infof("On Xcode 26 and later xcodebuild collects the Simulator diagnostics into the xcresult (xcrun xcresulttool export diagnostics), the Step does not collect them separately")
 	}
 
 	// Shut down the simulator if it was started by the step for diagnostic logs.

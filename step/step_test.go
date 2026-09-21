@@ -112,6 +112,21 @@ func Test_GivenConfigParser_WhenParsesConfig(t *testing.T) {
 			},
 		},
 		{
+			name: "collect_simulator_diagnostics_project_setting",
+			envsFunc: func() map[string]string {
+				envValues := defaultEnvValues()
+				envValues["collect_simulator_diagnostics"] = "project_setting"
+				return envValues
+			},
+			expectedConfig: func() Config {
+				config := defaultConfigs()
+				config.CollectSimulatorDiagnostics = projectSetting
+				// Nothing is passed to xcodebuild, the test plan decides.
+				config.CollectTestDiagnostics = ""
+				return config
+			},
+		},
+		{
 			name: "skip_tests",
 			envsFunc: func() map[string]string {
 				envValues := defaultEnvValues()
