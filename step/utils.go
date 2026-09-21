@@ -124,6 +124,10 @@ func shouldStepCollectDiagnostics(condition exportCondition, testFailed bool, xc
 	return condition == always || (condition == onFailure && testFailed)
 }
 
+func xcodebuildCollectsDiagnostics(condition exportCondition, testFailed bool, xcodeMajorVersion int64) bool {
+	return xcodeMajorVersion >= minimumXcodeMajorWithDiagnosticsOption && condition != never && testFailed
+}
+
 func xcodebuildDiagnosticsOverride(condition exportCondition, xcodeMajorVersion int64, additionalOptions []string) string {
 	if xcodeMajorVersion < minimumXcodeMajorWithDiagnosticsOption { // no such option yet
 		return ""
