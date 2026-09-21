@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
+	"github.com/bitrise-io/bitrise-build-cache-cli/v2/pkg/reactnative/wrap"
 	"github.com/bitrise-io/go-steputils/v2/export"
 	"github.com/bitrise-io/go-steputils/v2/ruby"
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
@@ -14,6 +16,7 @@ import (
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
+	"github.com/bitrise-io/go-utils/v2/ziputil"
 	"github.com/bitrise-io/go-xcode/v2/destination"
 	"github.com/bitrise-io/go-xcode/v2/simulator"
 	"github.com/bitrise-io/go-xcode/v2/xcconfig"
@@ -89,27 +92,37 @@ func createStep(logger log.Logger, logFormatter string) (step.XcodeTestRunner, e
 	xcconfigWriter := xcconfig.NewWriter(pathProvider, fileManager, pathChecker, pathModifier)
 	simulatorManager := simulator.NewManager(logger, commandFactory)
 	swiftCache := cache.NewSwiftPackageCache()
-	outputExporter := export.NewExporter(commandFactory)
+	zipManager := ziputil.NewZipManager(pathChecker)
+	outputExporter := export.NewExporter(commandFactory, fileManager, zipManager)
 	testAddonExporter := testaddon.NewExporter(testaddon.NewTestAddon(logger))
 	stepenvRepository := stepenv.NewRepository(envRepository)
-	exporter := output.NewExporter(stepenvRepository, logger, outputExporter, testAddonExporter)
+	exporter := output.NewExporter(stepenvRepository, logger, outputExporter, testAddonExporter, zipManager, fileManager)
 	utils := step.NewUtils(logger)
+
+	// Only the factory handed to the xcodecommand runner gets wrapped — codesign,
+	// project readers, and other commandFactory consumers keep invoking binaries
+	// directly.
+	det := wrap.Detect(context.Background(), wrap.DetectParams{Logger: logger})
+	if det.ReactNativeEnabled {
+		logger.Infof("Bitrise Build Cache: React Native cache active — wrapping xcodebuild with %s", det.CLIPath)
+	}
+	runnerCmdFactory := wrap.NewWrappingCommandFactory(commandFactory, det, "xcodebuild")
 
 	xcodeCommandRunner := xcodecommand.Runner(nil)
 	switch logFormatter {
 	case step.XcodebuildTool:
-		xcodeCommandRunner = xcodecommand.NewRawCommandRunner(logger, commandFactory)
+		xcodeCommandRunner = xcodecommand.NewRawCommandRunner(logger, runnerCmdFactory)
 	case step.XcbeautifyTool:
-		xcodeCommandRunner = xcodecommand.NewXcbeautifyRunner(logger, commandFactory)
+		xcodeCommandRunner = xcodecommand.NewXcbeautifyRunner(logger, runnerCmdFactory)
 	case step.XcprettyTool:
 		commandLocator := env.NewCommandLocator()
-		rubyComamndFactory, err := ruby.NewCommandFactory(commandFactory, commandLocator)
+		rubyComamndFactory, err := ruby.NewCommandFactory(commandFactory, commandLocator, logger)
 		if err != nil {
 			return step.XcodeTestRunner{}, fmt.Errorf("failed to install xcpretty: %s", err)
 		}
 		rubyEnv := ruby.NewEnvironment(rubyComamndFactory, commandLocator, logger)
 
-		xcodeCommandRunner = xcodecommand.NewXcprettyCommandRunner(logger, commandFactory, pathChecker, fileManager, rubyComamndFactory, rubyEnv)
+		xcodeCommandRunner = xcodecommand.NewXcprettyCommandRunner(logger, runnerCmdFactory, pathChecker, fileManager, rubyComamndFactory, rubyEnv)
 	default:
 		panic(fmt.Sprintf("Unknown log formatter: %s", logFormatter))
 	}

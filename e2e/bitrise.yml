@@ -89,22 +89,54 @@ workflows:
     - _check_exported_artifacts
     - _check_xcpretty_html_report
 
-  # Requires Xcode 11+
   test_test_plan:
-    description: |-
-        This test fails on Xcode 26 with: 'BullsEye (33951) encountered an error (Early unexpected exit, operation never finished bootstrapping - no restart will be attempted. (Underlying Error: Crash: BullsEye (33951) <external symbol>))' error.
-        Example build: https://app.bitrise.io/build/c71f9c3a-e164-423f-8779-d4c8db69827a
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
+    - TEST_APP_BRANCH: master
+    - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
+    - BITRISE_SCHEME: BullsEye
+    - TEST_PLAN: UITests
+    - DESTINATION: platform=iOS Simulator,name=Bitrise iOS default,OS=latest
+    - LOG_FORMATTER: xcbeautify
+    - EXPECT_TEST_FAILURE: "false"
+    - CACHE_LEVEL: swift_packages
+    - QUARANTINED_TESTS: |-
+        [
+          {
+            "testCaseName": "testGameStyleSwitch()",
+            "testSuiteName": [
+              "BullsEyeUITests"
+            ],
+            "className": "BullsEyeUITests2"
+          }
+        ]
     before_run:
-    - _expose_xcode_version
+    - _run
+    - _check_outputs
+    - _check_cache
     steps:
-    - bitrise-run:
-        run_if: |-
-          {{ getenv "XCODE_MAJOR_VERSION" | ne "26" }}
+    - script:
+        title: Check skipped tests
+        summary: This Step checks if the test results contain the skipped test method or not.
         inputs:
-        - workflow_id: utility_test_test_plan
-        - bitrise_config_path: ./e2e/bitrise.yml
+        - content: |-
+            #!/usr/bin/env bash
+            set -ex
+            out=$(xcrun xcresulttool get test-results tests --path "$BITRISE_XCRESULT_PATH")
+            xcresulttool_exit_code=$?
+            if [ $xcresulttool_exit_code -ne 0 ]; then
+              echo "failed to get test results from xcresult: $out"
+              exit 1
+            fi
+            # Check if the skipped test method is in the results
+            set +e
+            grep_out=$(echo "$out" | grep "BullsEyeUITests2/testGameStyleSwitch()")
+            if [ ! -z "$grep_out" ]; then
+              echo "skipped test method found in test results"
+              exit 1
+            fi
 
-  utility_test_test_plan:
+  test_swift_testing_quarantine:
     envs:
     - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
     - TEST_APP_BRANCH: master
@@ -115,10 +147,81 @@ workflows:
     - LOG_FORMATTER: xcbeautify
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: swift_packages
-    after_run:
+    - QUARANTINED_TESTS: |-
+        [
+          {
+            "testCaseName": "scoreIsComputedWhenGuessIsHigherThanTarget()",
+            "testSuiteName": [
+              "BullsEyeTests"
+            ],
+            "className": "BullsEyeSwiftTestingTests"
+          },
+          {
+            "testCaseName": "Score is computed when the guess matches the target",
+            "testSuiteName": [
+              "BullsEyeTests"
+            ],
+            "className": "BullsEyeSwiftTestingTests",
+            "testCaseIdentifier": "BullsEyeSwiftTestingTests/scoreIsComputedWhenGuessMatchesTarget()"
+          },
+          {
+            "testCaseName": "totalAddsUpTheRoundScores()",
+            "testSuiteName": [
+              "BullsEyeTests"
+            ],
+            "className": "BullsEyeSwiftTestingTests",
+            "testCaseIdentifier": "BullsEyeSwiftTestingTests/TotalScore/totalAddsUpTheRoundScores()"
+          }
+        ]
+    before_run:
     - _run
     - _check_outputs
     - _check_cache
+    steps:
+    - script:
+        title: Check skipped Swift Testing tests
+        summary: The quarantined Swift Testing tests must be absent from the results, while the non-quarantined ones from the same suites must be present.
+        inputs:
+        - content: |-
+            #!/usr/bin/env bash
+            set -ex
+            # Xcode skips Swift Testing test cases from 16.3 on, older versions run them regardless of -skip-testing.
+            version=`xcodebuild -version`
+            regex="Xcode ([0-9]+)\.([0-9]+)"
+            if [[ $version =~ $regex ]]; then
+              if (( ${BASH_REMATCH[1]} < 16 || (${BASH_REMATCH[1]} == 16 && ${BASH_REMATCH[2]} < 3) )); then
+                echo "$version cannot skip Swift Testing test cases, skipping this check"
+                exit 0
+              fi
+            fi
+            out=$(xcrun xcresulttool get test-results tests --path "$BITRISE_XCRESULT_PATH")
+            xcresulttool_exit_code=$?
+            if [ $xcresulttool_exit_code -ne 0 ]; then
+              echo "failed to get test results from xcresult: $out"
+              exit 1
+            fi
+            quarantined_tests=(
+              "BullsEyeSwiftTestingTests/scoreIsComputedWhenGuessIsHigherThanTarget()"
+              "BullsEyeSwiftTestingTests/scoreIsComputedWhenGuessMatchesTarget()"
+              "BullsEyeSwiftTestingTests/TotalScore/totalAddsUpTheRoundScores()"
+            )
+            for test in "${quarantined_tests[@]}"; do
+              if echo "$out" | grep -qF "$test"; then
+                echo "quarantined Swift Testing test found in test results: $test"
+                exit 1
+              fi
+            done
+            control_tests=(
+              "BullsEyeSwiftTestingTests/scoreIsComputedWhenGuessIsLowerThanTarget()"
+              "BullsEyeSwiftTestingTests/scoreIsEventuallyComputedWhenGuessMatchesTarget()"
+              "BullsEyeSwiftTestingTests/TotalScore/newGameResetsTheTotal()"
+            )
+            for test in "${control_tests[@]}"; do
+              if ! echo "$out" | grep -qF "$test"; then
+                echo "control Swift Testing test missing from test results, the suite may not have run: $test"
+                exit 1
+              fi
+            done
 
   test_xcconfig_rel_path:
     envs:
@@ -132,14 +235,10 @@ workflows:
     - EXPECT_TEST_FAILURE: "false"
     - CACHE_LEVEL: none
     - XCCONFIG_CONTENT: ./_tmp2/p.xcconfig
-    before_run:
-    - utility_create_xcconfig
     after_run:
     - _run
     - _check_outputs
     - _check_exported_artifacts
-
-  utility_create_xcconfig:
     steps:
     - script:
         inputs:
@@ -259,6 +358,7 @@ workflows:
         - verbose_log: "no"
         - cache_level: $CACHE_LEVEL
         - collect_simulator_diagnostics: $COLLECT_SIM_DIAGNOSTICS
+        - quarantined_tests: $QUARANTINED_TESTS
 
   _expose_xcode_version:
     steps:
@@ -406,25 +506,3 @@ workflows:
                 echo "BITRISE_CACHE_INCLUDE_PATHS is empty"
                 exit 1
             fi
-
-  _expose_xcode_version:
-    steps:
-    - script:
-        title: Expose Xcode major version
-        inputs:
-        - content: |-
-            #!/bin/env bash
-            set -e
-            if [[ ! -z "$XCODE_MAJOR_VERSION" ]]; then
-              echo "Xcode major version already exposed: $XCODE_MAJOR_VERSION"
-              exit 0
-            fi
-            version=`xcodebuild -version`
-            regex="Xcode ([0-9]*)."
-            if [[ ! $version =~ $regex ]]; then
-              echo "Failed to determine Xcode major version"
-              exit 1
-            fi
-            xcode_major_version=${BASH_REMATCH[1]}
-            echo "Xcode major version: $xcode_major_version"
-            envman add --key XCODE_MAJOR_VERSION --value $xcode_major_version

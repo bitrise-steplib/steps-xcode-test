@@ -2,20 +2,18 @@ package output
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
-
-	"github.com/bitrise-io/go-utils/fileutil"
-	"github.com/bitrise-io/go-utils/pathutil"
 )
 
 func saveRawOutputToLogFile(rawXcodebuildOutput string) (string, error) {
-	tmpDir, err := pathutil.NormalizedOSTempDirPath("xcodebuild-output")
+	tmpDir, err := os.MkdirTemp("", "xcodebuild-output")
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp dir: %w", err)
 	}
 	logFileName := "raw-xcodebuild-output.log"
 	logPth := filepath.Join(tmpDir, logFileName)
-	if err := fileutil.WriteStringToFile(logPth, rawXcodebuildOutput); err != nil {
+	if err := os.WriteFile(logPth, []byte(rawXcodebuildOutput), 0644); err != nil {
 		return "", fmt.Errorf("failed to write xcodebuild output to file: %w", err)
 	}
 

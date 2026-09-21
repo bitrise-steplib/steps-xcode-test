@@ -5,16 +5,17 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
-	"github.com/bitrise-io/go-utils/colorstring"
-	"github.com/bitrise-io/go-utils/progress"
-	"github.com/bitrise-io/go-utils/sliceutil"
+	"github.com/bitrise-io/go-steputils/v2/testquarantine"
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/log/colorstring"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
+	"github.com/bitrise-io/go-utils/v2/progress"
 	"github.com/bitrise-io/go-xcode/v2/destination"
 	"github.com/bitrise-io/go-xcode/v2/simulator"
 	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
@@ -52,6 +53,7 @@ type Input struct {
 
 	// Debugging
 	VerboseLog                  bool   `env:"verbose_log,opt[yes,no]"`
+	QuarantinedTests            string `env:"quarantined_tests"`
 	CollectSimulatorDiagnostics string `env:"collect_simulator_diagnostics,opt[always,on_failure,never]"`
 	HeadlessMode                bool   `env:"headless_mode,opt[yes,no]"`
 
@@ -95,6 +97,7 @@ type Config struct {
 
 	CacheLevel string
 
+	SkipTesting                 []string
 	CollectSimulatorDiagnostics exportCondition
 	HeadlessMode                bool
 
@@ -192,12 +195,61 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 	if strings.TrimSpace(input.XCConfigContent) == "" {
 		input.XCConfigContent = ""
 	}
-	if sliceutil.IsStringInSlice("-xcconfig", additionalOptions) &&
+	if slices.Contains(additionalOptions, "-xcconfig") &&
 		input.XCConfigContent != "" {
 		return Config{}, fmt.Errorf("`-xcconfig` option found in 'Additional options for the xcodebuild command' (xcodebuild_options), please clear 'Build settings (xcconfig)' (`xcconfig_content`) input as only one can be set")
 	}
 
-	return s.utils.CreateConfig(input, projectPath, sim, additionalOptions, additionalLogFormatterOptions), nil
+	skipTesting, err := s.processQuarantinedTests(input.QuarantinedTests)
+	if err != nil {
+		return Config{}, fmt.Errorf("failed to process quarentined tests: %w", err)
+	}
+
+	return s.utils.CreateConfig(input, projectPath, sim, additionalOptions, additionalLogFormatterOptions, skipTesting), nil
+}
+
+/*
+processQuarantinedTests converts the Bitrise quarantined tests JSON input ($BITRISE_QUARANTINED_TESTS_JSON)
+to test identifiers for the `-skip-testing` xcodebuild option. The test identifier format is:
+<TestTarget>/<TestCaseIdentifier>, or <TestTarget>/<TestClass>/<TestMethod> for entries without an identifier.
+*/
+func (s XcodeTestConfigParser) processQuarantinedTests(quarantinedTestsInput string) ([]string, error) {
+	if quarantinedTestsInput == "" {
+		return nil, nil
+	}
+
+	quarantinedTests, err := testquarantine.ParseQuarantinedTests(quarantinedTestsInput)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse quarantined tests input: %w", err)
+	}
+
+	var skippedTests []string
+	for _, qt := range quarantinedTests {
+		if identifier := skipTestingIdentifier(qt); identifier != "" {
+			skippedTests = append(skippedTests, identifier)
+		}
+	}
+
+	return skippedTests, nil
+}
+
+// The test case identifier holds the whole suite path, while ClassName holds its first element only,
+// so a test case in a nested suite can be named through the identifier alone.
+func skipTestingIdentifier(quarantinedTest testquarantine.QuarantinedTest) string {
+	if len(quarantinedTest.TestSuiteName) == 0 || quarantinedTest.TestSuiteName[0] == "" {
+		return ""
+	}
+	testTarget := quarantinedTest.TestSuiteName[0]
+
+	if quarantinedTest.TestCaseIdentifier != "" {
+		return fmt.Sprintf("%s/%s", testTarget, quarantinedTest.TestCaseIdentifier)
+	}
+
+	if quarantinedTest.ClassName == "" || quarantinedTest.TestCaseName == "" {
+		return ""
+	}
+
+	return fmt.Sprintf("%s/%s/%s", testTarget, quarantinedTest.ClassName, quarantinedTest.TestCaseName)
 }
 
 func (s XcodeTestRunner) InstallDeps() {
@@ -384,8 +436,10 @@ func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simula
 			return fmt.Errorf("failed to boot simulator: %w", err)
 		}
 
-		progress.NewDefaultWrapper("Waiting for simulator boot").WrapAction(func() {
+		s.logger.Printf("Waiting for simulator boot")
+		_ = progress.NewDefaultSimpleDots(progress.NewFmtPrinter()).Run(func() error {
 			time.Sleep(60 * time.Second)
+			return nil
 		})
 
 		s.logger.Println()

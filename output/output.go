@@ -6,12 +6,11 @@ import (
 
 	"github.com/bitrise-io/bitrise/configs"
 	"github.com/bitrise-io/go-steputils/v2/export"
-	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/v2/env"
+	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
-	"github.com/bitrise-io/go-utils/ziputil"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3/model3"
+	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult3"
+	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult3/model3"
 	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
 )
 
@@ -30,20 +29,29 @@ type Exporter interface {
 	ExportFlakyTestCases(xcResultPath string, useOldXCResultExtractionMethod bool) error
 }
 
+// DirZipper zips a directory into a destination archive.
+type DirZipper interface {
+	ZipDir(sourceDirPth, destinationZipPth string, isContentOnly bool) error
+}
+
 type exporter struct {
 	envRepository     env.Repository
 	logger            log.Logger
 	outputExporter    export.Exporter
 	testAddonExporter testaddon.Exporter
+	dirZipper         DirZipper
+	fileManager       fileutil.FileManager
 }
 
 // NewExporter ...
-func NewExporter(envRepository env.Repository, logger log.Logger, outputExporter export.Exporter, testAddonExporter testaddon.Exporter) Exporter {
+func NewExporter(envRepository env.Repository, logger log.Logger, outputExporter export.Exporter, testAddonExporter testaddon.Exporter, dirZipper DirZipper, fileManager fileutil.FileManager) Exporter {
 	return &exporter{
 		envRepository:     envRepository,
 		logger:            logger,
 		outputExporter:    outputExporter,
 		testAddonExporter: testAddonExporter,
+		dirZipper:         dirZipper,
+		fileManager:       fileManager,
 	}
 }
 
@@ -90,7 +98,7 @@ func (e exporter) ExportXcodebuildBuildLog(deployDir, xcodebuildBuildLog string)
 	}
 
 	deployPth := filepath.Join(deployDir, "xcodebuild_build.log")
-	if err := command.CopyFile(pth, deployPth); err != nil {
+	if err := e.fileManager.CopyFile(pth, deployPth, &fileutil.CopyOptions{Overwrite: true}); err != nil {
 		return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s): %w", pth, deployPth, err)
 	}
 
@@ -108,7 +116,7 @@ func (e exporter) ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) e
 	}
 
 	deployPth := filepath.Join(deployDir, "xcodebuild_test.log")
-	if err := command.CopyFile(pth, deployPth); err != nil {
+	if err := e.fileManager.CopyFile(pth, deployPth, &fileutil.CopyOptions{Overwrite: true}); err != nil {
 		return fmt.Errorf("failed to copy xcodebuild output log file from (%s) to (%s): %w", pth, deployPth, err)
 	}
 
@@ -121,7 +129,7 @@ func (e exporter) ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) e
 
 func (e exporter) ExportSimulatorDiagnostics(deployDir, pth, name string) error {
 	outputPath := filepath.Join(deployDir, name)
-	if err := ziputil.ZipDir(pth, outputPath, true); err != nil {
+	if err := e.dirZipper.ZipDir(pth, outputPath, true); err != nil {
 		return fmt.Errorf("failed to compress simulator diagnostics result: %w", err)
 	}
 
@@ -143,8 +151,7 @@ func (e exporter) ExportFlakyTestCases(xcResultPath string, useOldXCResultExtrac
 }
 
 func (e exporter) parseTestSummary(xcResultPath string, useOldXCResultExtractionMethod bool) (*model3.TestSummary, error) {
-	converter := xcresult3.Converter{}
-	converter.Setup(useOldXCResultExtractionMethod)
+	converter := xcresult3.NewConverter(useOldXCResultExtractionMethod)
 	if !converter.Detect([]string{xcResultPath}) {
 		return nil, nil
 	}
@@ -255,8 +262,8 @@ func (e exporter) exportFlakyTestCases(flakyTestPlans []model3.TestPlan) error {
 	for i, flakyTestCase := range flakyTestCases {
 		flakyTestCasesMessageLine := fmt.Sprintf("- %s\n", flakyTestCase)
 
-		if len(flakyTestCasesMessage)+len(flakyTestCasesMessageLine) > 1024 {
-			e.logger.Warnf("%s env var size limit (1024 characters) exceeded. Skipping %d test cases.", flakyTestCasesEnvVarKey, len(flakyTestCases)-i)
+		if len(flakyTestCasesMessage)+len(flakyTestCasesMessageLine) > flakyTestCasesEnvVarSizeLimitInBytes {
+			e.logger.Warnf("%s env var size limit (%d characters) exceeded. Skipping %d test cases.", flakyTestCasesEnvVarKey, flakyTestCasesEnvVarSizeLimitInBytes, len(flakyTestCases)-i)
 			break
 		}
 
