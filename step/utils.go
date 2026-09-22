@@ -12,7 +12,7 @@ import (
 
 type Utils interface {
 	PrintLastLinesOfXcodebuildTestLog(rawXcodebuildOutput string, isRunSuccess bool)
-	CreateConfig(input Input, projectPath string, sim destination.Device, additionalOptions, additionalLogFormatterOptions []string, skipTesting []string) Config
+	CreateConfig(input Input, projectPath string, sim destination.Device, additionalOptions, additionalLogFormatterOptions []string, skipTesting []string, xcodeMajorVersion int64) Config
 	CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath string) xcodebuild.TestRunParams
 }
 
@@ -52,7 +52,8 @@ that will attach the file to your build as an artifact!`))
 func (u utils) CreateConfig(input Input,
 	projectPath string,
 	sim destination.Device,
-	additionalOptions, additionalLogFormatterOptions []string, skipTesting []string) Config {
+	additionalOptions, additionalLogFormatterOptions []string, skipTesting []string,
+	xcodeMajorVersion int64) Config {
 	return Config{
 		ProjectPath: projectPath,
 		Scheme:      input.Scheme,
@@ -76,7 +77,10 @@ func (u utils) CreateConfig(input Input,
 
 		SkipTesting:                 skipTesting,
 		CollectSimulatorDiagnostics: exportCondition(input.CollectSimulatorDiagnostics),
-		HeadlessMode:                input.HeadlessMode,
+		XcodebuildDiagnosticsOverride: xcodebuildDiagnosticsOverride(
+			exportCondition(input.CollectSimulatorDiagnostics), xcodeMajorVersion, additionalOptions),
+		HeadlessMode:      input.HeadlessMode,
+		XcodeMajorVersion: xcodeMajorVersion,
 
 		DeployDir: input.DeployDir,
 	}
@@ -95,6 +99,7 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 		XCConfigContent:                cfg.XCConfigContent,
 		PerformCleanAction:             cfg.PerformCleanAction,
 		SkipTesting:                    cfg.SkipTesting,
+		XcodebuildDiagnosticsOverride:  cfg.XcodebuildDiagnosticsOverride,
 		AdditionalOptions:              cfg.XcodebuildOptions,
 	}
 
@@ -105,4 +110,41 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 		RetryOnSwiftPackageResolutionError: true,
 		SwiftPackagesPath:                  swiftPackagesPath,
 	}
+}
+
+// minimumXcodeMajorWithDiagnosticsOption is the first Xcode version that understands
+// -collect-test-diagnostics and collects Simulator diagnostics itself after a failing test run.
+const minimumXcodeMajorWithDiagnosticsOption = 26
+
+func shouldStepCollectDiagnostics(condition exportCondition, testFailed bool, xcodeMajorVersion int64) bool {
+	if xcodeMajorVersion >= minimumXcodeMajorWithDiagnosticsOption { // xcodebuild collects
+		return false
+	}
+
+	return condition == always || (condition == onFailure && testFailed)
+}
+
+func xcodebuildCollectsDiagnostics(condition exportCondition, testFailed bool, xcodeMajorVersion int64) bool {
+	return xcodeMajorVersion >= minimumXcodeMajorWithDiagnosticsOption && condition != never && testFailed
+}
+
+func xcodebuildDiagnosticsOverride(condition exportCondition, xcodeMajorVersion int64, additionalOptions []string) string {
+	if xcodeMajorVersion < minimumXcodeMajorWithDiagnosticsOption { // no such option yet
+		return ""
+	}
+
+	for _, option := range additionalOptions {
+		if option == "-collect-test-diagnostics" { // user's option wins
+			return ""
+		}
+	}
+
+	if condition == projectSetting { // leave it to the test plan
+		return ""
+	}
+
+	if condition == never {
+		return "never"
+	}
+	return "on-failure"
 }

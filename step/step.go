@@ -20,6 +20,7 @@ import (
 	"github.com/bitrise-io/go-xcode/v2/simulator"
 	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
 	"github.com/bitrise-io/go-xcode/v2/xcodecommand"
+	"github.com/bitrise-io/go-xcode/v2/xcodeversion"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
 	"github.com/kballard/go-shellquote"
@@ -54,7 +55,7 @@ type Input struct {
 	// Debugging
 	VerboseLog                  bool   `env:"verbose_log,opt[yes,no]"`
 	QuarantinedTests            string `env:"quarantined_tests"`
-	CollectSimulatorDiagnostics string `env:"collect_simulator_diagnostics,opt[always,on_failure,never]"`
+	CollectSimulatorDiagnostics string `env:"collect_simulator_diagnostics,opt[project_setting,always,on_failure,never]"`
 	HeadlessMode                bool   `env:"headless_mode,opt[yes,no]"`
 
 	// Output export
@@ -64,9 +65,10 @@ type Input struct {
 type exportCondition string
 
 const (
-	always    = "always"
-	never     = "never"
-	onFailure = "on_failure"
+	always         = "always"
+	never          = "never"
+	onFailure      = "on_failure"
+	projectSetting = "project_setting"
 )
 
 // Output tools
@@ -97,9 +99,11 @@ type Config struct {
 
 	CacheLevel string
 
-	SkipTesting                 []string
-	CollectSimulatorDiagnostics exportCondition
-	HeadlessMode                bool
+	SkipTesting                   []string
+	CollectSimulatorDiagnostics   exportCondition
+	XcodebuildDiagnosticsOverride string
+	HeadlessMode                  bool
+	XcodeMajorVersion             int64
 
 	DeployDir string
 }
@@ -110,15 +114,17 @@ type XcodeTestConfigParser struct {
 	deviceFinder destination.DeviceFinder
 	pathModifier pathutil.PathModifier
 	utils        Utils
+	xcodeVersion xcodeversion.Version
 }
 
-func NewXcodeTestConfigParser(inputParser stepconf.InputParser, logger log.Logger, deviceFinder destination.DeviceFinder, pathModifier pathutil.PathModifier, utils Utils) XcodeTestConfigParser {
+func NewXcodeTestConfigParser(inputParser stepconf.InputParser, logger log.Logger, deviceFinder destination.DeviceFinder, pathModifier pathutil.PathModifier, utils Utils, xcodeVersion xcodeversion.Version) XcodeTestConfigParser {
 	return XcodeTestConfigParser{
 		logger:       logger,
 		inputParser:  inputParser,
 		deviceFinder: deviceFinder,
 		pathModifier: pathModifier,
 		utils:        utils,
+		xcodeVersion: xcodeVersion,
 	}
 }
 
@@ -205,7 +211,7 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 		return Config{}, fmt.Errorf("failed to process quarentined tests: %w", err)
 	}
 
-	return s.utils.CreateConfig(input, projectPath, sim, additionalOptions, additionalLogFormatterOptions, skipTesting), nil
+	return s.utils.CreateConfig(input, projectPath, sim, additionalOptions, additionalLogFormatterOptions, skipTesting, s.xcodeVersion.Major), nil
 }
 
 /*
@@ -297,7 +303,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 		testExitCode = code
 	}
 
-	result.SimulatorDiagnosticsPath = s.teardownSimulator(cfg.Simulator.UDID, cfg.CollectSimulatorDiagnostics, cfg.IsSimulatorBooted, testErr)
+	result.SimulatorDiagnosticsPath = s.teardownSimulator(cfg.Simulator.UDID, cfg.CollectSimulatorDiagnostics, cfg.IsSimulatorBooted, testErr, cfg.XcodeMajorVersion)
 
 	if testErr != nil {
 		s.logger.Println()
@@ -485,10 +491,10 @@ func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 	return result, exitCode, testErr
 }
 
-func (s XcodeTestRunner) teardownSimulator(simulatorID string, simulatorDebug exportCondition, isSimulatorBooted bool, testErr error) string {
+func (s XcodeTestRunner) teardownSimulator(simulatorID string, simulatorDebug exportCondition, isSimulatorBooted bool, testErr error, xcodeMajorVersion int64) string {
 	var simulatorDiagnosticsPath string
 
-	if simulatorDebug == always || (simulatorDebug == onFailure && testErr != nil) {
+	if shouldStepCollectDiagnostics(simulatorDebug, testErr != nil, xcodeMajorVersion) {
 		s.logger.Println()
 		s.logger.Infof("Collecting Simulator diagnostics")
 
@@ -499,6 +505,9 @@ func (s XcodeTestRunner) teardownSimulator(simulatorID string, simulatorDebug ex
 			s.logger.Donef("Simulator diagnostics are available as an artifact (%s)", diagnosticsPath)
 			simulatorDiagnosticsPath = diagnosticsPath
 		}
+	} else if xcodebuildCollectsDiagnostics(simulatorDebug, testErr != nil, xcodeMajorVersion) {
+		s.logger.Println()
+		s.logger.Infof("xcodebuild collects the Simulator diagnostics into the xcresult (xcrun xcresulttool export diagnostics), the Step does not collect them separately")
 	}
 
 	// Shut down the simulator if it was started by the step for diagnostic logs.

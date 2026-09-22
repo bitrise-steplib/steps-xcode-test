@@ -30,8 +30,8 @@ func NewTestAddon(logger log.Logger) TestAddon {
 
 // ReplaceUnsupportedFilenameCharacters Replaces characters '/' and ':', which are unsupported in filnenames on macOS
 func (t testAddon) ReplaceUnsupportedFilenameCharacters(s string) string {
-	s = strings.Replace(s, "/", "-", -1)
-	s = strings.Replace(s, ":", "-", -1)
+	s = strings.ReplaceAll(s, "/", "-")
+	s = strings.ReplaceAll(s, ":", "-")
 	return s
 }
 

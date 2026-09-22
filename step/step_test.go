@@ -9,6 +9,7 @@ import (
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-xcode/v2/destination"
+	"github.com/bitrise-io/go-xcode/v2/xcodeversion"
 	commonMocks "github.com/bitrise-steplib/steps-xcode-test/mocks"
 	"github.com/bitrise-steplib/steps-xcode-test/step/mocks"
 	"github.com/hashicorp/go-version"
@@ -153,6 +154,21 @@ func Test_GivenConfigParser_WhenParsesConfig(t *testing.T) {
 				config := defaultConfigs()
 				config.LogFormatter = "xcbeautify"
 				config.LogFormatterOptions = []string{"--is-ci", "-q"}
+				return config
+			},
+		},
+		{
+			name: "collect_simulator_diagnostics_project_setting",
+			envsFunc: func() map[string]string {
+				envValues := defaultEnvValues()
+				envValues["collect_simulator_diagnostics"] = "project_setting"
+				return envValues
+			},
+			expectedConfig: func() Config {
+				config := defaultConfigs()
+				config.CollectSimulatorDiagnostics = projectSetting
+				// Nothing is passed to xcodebuild, the test plan decides.
+				config.XcodebuildDiagnosticsOverride = ""
 				return config
 			},
 		},
@@ -381,8 +397,10 @@ func defaultConfigs() Config {
 
 		CacheLevel: "swift_packages",
 
-		CollectSimulatorDiagnostics: never,
-		HeadlessMode:                true,
+		CollectSimulatorDiagnostics:   never,
+		XcodebuildDiagnosticsOverride: "never",
+		HeadlessMode:                  true,
+		XcodeMajorVersion:             27,
 	}
 }
 func defaultSimulator() destination.Device {
@@ -422,7 +440,10 @@ func createConfigParser(t *testing.T, envValues map[string]string) (XcodeTestCon
 	pathModifier := mocks.NewPathModifier(t)
 	utils := NewUtils(logger)
 
-	configParser := NewXcodeTestConfigParser(inputParser, logger, deviceFinder, pathModifier, utils)
+	// Xcode 27 so that the -collect-test-diagnostics mapping is exercised by the existing cases.
+	xcodeVersion := xcodeversion.Version{Version: "27.0", BuildVersion: "27A266a", Major: 27, Minor: 0}
+
+	configParser := NewXcodeTestConfigParser(inputParser, logger, deviceFinder, pathModifier, utils, xcodeVersion)
 	mocks := configParserMocks{
 		deviceFinder: deviceFinder,
 		pathModifier: pathModifier,
