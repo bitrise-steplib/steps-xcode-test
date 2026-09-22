@@ -94,20 +94,6 @@ func (_m *SimulatorManager) LaunchWithGUI(simulatorID string) error {
 	return r0
 }
 
-// ResetLaunchServices provides a mock function with given fields:
-func (_m *SimulatorManager) ResetLaunchServices() error {
-	ret := _m.Called()
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func() error); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // Shutdown provides a mock function with given fields: id
 func (_m *SimulatorManager) Shutdown(id string) error {
 	ret := _m.Called(id)
