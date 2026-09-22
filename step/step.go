@@ -415,12 +415,10 @@ func (s XcodeTestConfigParser) getSimulatorForDestination(destinationSpecifier s
 	return device, nil
 }
 
-func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simulator destination.Device, launchSimulator bool) error {
-	err := s.simulatorManager.ResetLaunchServices()
-	if err != nil {
-		s.logger.Warnf("Failed to apply simulator boot workaround: %s", err)
-	}
+// simulatorGUIBootWait is overridden in tests.
+var simulatorGUIBootWait = 60 * time.Second
 
+func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simulator destination.Device, launchSimulator bool) error {
 	// Boot simulator
 	if enableSimulatorVerboseLog {
 		s.logger.Infof("Enabling Simulator verbose log for better diagnostics")
@@ -438,13 +436,20 @@ func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simula
 	if launchSimulator {
 		s.logger.Infof("Booting simulator (%s)...", simulator.UDID)
 
-		if err := s.simulatorManager.LaunchWithGUI(simulator.UDID); err != nil {
+		// Unlike Simulator.app, Xcode 27's DeviceHub.app does not boot the device passed in -CurrentDeviceUDID.
+		if err := s.simulatorManager.Boot(simulator); err != nil {
 			return fmt.Errorf("failed to boot simulator: %w", err)
+		}
+
+		s.logger.Infof("Launching the Simulator GUI...")
+
+		if err := s.simulatorManager.LaunchWithGUI(simulator.UDID); err != nil {
+			return fmt.Errorf("failed to launch the Simulator GUI: %w", err)
 		}
 
 		s.logger.Printf("Waiting for simulator boot")
 		_ = progress.NewDefaultSimpleDots(progress.NewFmtPrinter()).Run(func() error {
-			time.Sleep(60 * time.Second)
+			time.Sleep(simulatorGUIBootWait)
 			return nil
 		})
 
