@@ -7,11 +7,11 @@ import (
 	"github.com/bitrise-io/go-xcode/v2/xcodecommand"
 )
 
-// Test repetition modes ...
+// Test repetition modes, as the test_repetition_mode input spells them.
 const (
-	TestRepetitionNone           = "none"
-	TestRepetitionUntilFailure   = "until_failure"
-	TestRepetitionRetryOnFailure = "retry_on_failure"
+	TestRepetitionNone           = string(xcodecommand.TestRepetitionNone)
+	TestRepetitionUntilFailure   = string(xcodecommand.TestRepetitionUntilFailure)
+	TestRepetitionRetryOnFailure = string(xcodecommand.TestRepetitionRetryOnFailure)
 )
 
 // Xcodebuild ....

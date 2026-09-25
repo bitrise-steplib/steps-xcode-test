@@ -3,9 +3,9 @@ package xcodebuild
 import (
 	"fmt"
 	"path/filepath"
-	"strconv"
 
 	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
+	"github.com/bitrise-io/go-xcode/v2/xcodecommand"
 )
 
 // On performance limited OS X hosts (ex: VMs) the iPhone/iOS Simulator might time out
@@ -57,62 +57,42 @@ type TestParams struct {
 	AdditionalOptions              []string
 }
 
+// createXcodebuildTestArgs assembles the xcodebuild test command with go-xcode. The
+// library lays the user's xcodebuild_options over the step's flags and reports what it
+// found; the findings are logged here as warnings.
 func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, error) {
-	var xcodebuildArgs []string
-
-	fileExtension := filepath.Ext(params.ProjectPath)
-	if fileExtension == ".xcodeproj" {
-		xcodebuildArgs = append(xcodebuildArgs, "-project", params.ProjectPath)
-	} else if fileExtension == ".xcworkspace" {
-		xcodebuildArgs = append(xcodebuildArgs, "-workspace", params.ProjectPath)
-	}
-	xcodebuildArgs = append(xcodebuildArgs, "-scheme", params.Scheme)
-
-	if params.PerformCleanAction {
-		xcodebuildArgs = append(xcodebuildArgs, "clean")
-	}
-
-	xcodebuildArgs = append(xcodebuildArgs, "test", "-destination", params.Destination)
-	if params.TestPlan != "" {
-		xcodebuildArgs = append(xcodebuildArgs, "-testPlan", params.TestPlan)
-	}
-	xcodebuildArgs = append(xcodebuildArgs, "-resultBundlePath", params.TestOutputDir)
-
-	switch params.TestRepetitionMode {
-	case TestRepetitionUntilFailure:
-		xcodebuildArgs = append(xcodebuildArgs, "-run-tests-until-failure")
-	case TestRepetitionRetryOnFailure:
-		xcodebuildArgs = append(xcodebuildArgs, "-retry-tests-on-failure")
-	}
-
-	if params.TestRepetitionMode != TestRepetitionNone {
-		xcodebuildArgs = append(xcodebuildArgs, "-test-iterations", strconv.Itoa(params.MaximumTestRepetitions))
-	}
-
-	if params.RelaunchTestsForEachRepetition {
-		xcodebuildArgs = append(xcodebuildArgs, "-test-repetition-relaunch-enabled", "YES")
-	}
-
+	var xcconfigPath string
 	if params.XCConfigContent != "" {
-		xcconfigPath, err := b.xcconfigWriter.Write(params.XCConfigContent)
-		if err != nil {
+		var err error
+		if xcconfigPath, err = b.xcconfigWriter.Write(params.XCConfigContent); err != nil {
 			return nil, err
 		}
-		xcodebuildArgs = append(xcodebuildArgs, "-xcconfig", xcconfigPath)
 	}
 
-	for _, test := range params.SkipTesting {
-		xcodebuildArgs = append(xcodebuildArgs, fmt.Sprintf("-skip-testing:%s", test))
+	cmd, err := xcodecommand.Test(xcodecommand.TestParams{
+		ProjectPath:                    params.ProjectPath,
+		Scheme:                         params.Scheme,
+		Destination:                    params.Destination,
+		TestPlan:                       params.TestPlan,
+		ResultBundlePath:               params.TestOutputDir,
+		TestRepetitionMode:             xcodecommand.TestRepetitionMode(params.TestRepetitionMode),
+		MaximumTestRepetitions:         params.MaximumTestRepetitions,
+		RelaunchTestsForEachRepetition: params.RelaunchTestsForEachRepetition,
+		XCConfigPath:                   xcconfigPath,
+		Clean:                          params.PerformCleanAction,
+		SkipTesting:                    params.SkipTesting,
+		CollectTestDiagnostics:         params.XcodebuildDiagnosticsOverride,
+		AdditionalOptions:              params.AdditionalOptions,
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	if params.XcodebuildDiagnosticsOverride != "" {
-		xcodebuildArgs = append(xcodebuildArgs, "-collect-test-diagnostics", params.XcodebuildDiagnosticsOverride)
+	for _, d := range cmd.Diagnostics() {
+		b.logger.Warnf("xcodebuild_options: %s", d)
 	}
 
-	// Appended last so that anything the user passes in xcodebuild_options takes precedence.
-	xcodebuildArgs = append(xcodebuildArgs, params.AdditionalOptions...)
-
-	return xcodebuildArgs, nil
+	return cmd.Args(), nil
 }
 
 func (b *xcodebuild) runTest(params TestRunParams) (string, int, error) {

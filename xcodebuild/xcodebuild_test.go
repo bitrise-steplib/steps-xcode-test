@@ -210,6 +210,29 @@ func runRunnerErrorTests(t *testing.T, expectedNumberOfCreateCalls int, paramete
 	mocks.xcodeCommandRunner.AssertExpectations(t)
 }
 
+// The Step always passes its -collect-test-diagnostics value; go-xcode drops it when the
+// user set the option in xcodebuild_options, so the user's wins without a scan here.
+func Test_GivenUserCollectTestDiagnostics_WhenInvoked_ThenStepsOwnIsReplaced(t *testing.T) {
+	// Given
+	input := runParameters()
+	input.TestParams.XcodebuildDiagnosticsOverride = "never"
+	input.TestParams.AdditionalOptions = []string{"-collect-test-diagnostics", "on-failure"}
+
+	expected := input
+	expected.TestParams.XcodebuildDiagnosticsOverride = ""
+	arguments := argumentsFromRunParameters(expected)
+
+	xcodebuild, mocks := createXcodebuildAndMocks(t)
+	mocks.xcodeCommandRunner.On("Run", mock.Anything, arguments, []string{}).
+		Return(xcodecommand.Output{}, nil)
+
+	// When
+	_, _, _ = xcodebuild.RunTest(input)
+
+	// Then
+	mocks.xcodeCommandRunner.AssertExpectations(t)
+}
+
 func Test_GivenXcprettyFormatter_WhenEnabled_ThenUsesCorrectArguments(t *testing.T) {
 	// Given
 	outputPath := "path/to/output"
