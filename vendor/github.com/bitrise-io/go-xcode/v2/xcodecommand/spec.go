@@ -79,15 +79,9 @@ var (
 		name:     "resolve packages",
 		rejected: union(without(modeSwitchingFlags, "-resolvePackageDependencies"), testOnlyFlags),
 	}
-	// test derives -skip-testing from quarantined tests and -destination from the simulator
-	// input; the user's entries are added to both. -collect-test-diagnostics is a default.
-	testSpec = actionSpec{
-		name:       ActionTest,
-		rejected:   modeSwitchingFlags,
-		defaults:   set("-collect-test-diagnostics"),
-		appendable: set("-skip-testing", "-destination", "-arch"),
-	}
-	showBuildSettingsSpec = actionSpec{
+	testSpec                = testRunSpec(ActionTest, map[string]string{"-xctestrun": "applies to test-without-building only"})
+	testWithoutBuildingSpec = testRunSpec(ActionTestWithoutBuilding, nil)
+	showBuildSettingsSpec   = actionSpec{
 		name:     "show build settings",
 		rejected: union(without(modeSwitchingFlags, "-showBuildSettings"), testOnlyFlags),
 	}

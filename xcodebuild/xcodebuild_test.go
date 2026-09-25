@@ -315,6 +315,10 @@ func argumentsFromRunParameters(parameters TestRunParams) []string {
 		arguments = append(arguments, "-testPlan", parameters.TestParams.TestPlan)
 	}
 
+	if parameters.TestParams.XCConfigContent != "" {
+		arguments = append(arguments, "-xcconfig", xcconfigPath)
+	}
+
 	arguments = append(arguments, "-resultBundlePath", parameters.TestParams.TestOutputDir)
 
 	switch parameters.TestParams.TestRepetitionMode {
@@ -330,10 +334,6 @@ func argumentsFromRunParameters(parameters TestRunParams) []string {
 
 	if parameters.TestParams.RelaunchTestsForEachRepetition {
 		arguments = append(arguments, "-test-repetition-relaunch-enabled", "YES")
-	}
-
-	if parameters.TestParams.XCConfigContent != "" {
-		arguments = append(arguments, "-xcconfig", xcconfigPath)
 	}
 
 	for _, test := range parameters.TestParams.SkipTesting {
