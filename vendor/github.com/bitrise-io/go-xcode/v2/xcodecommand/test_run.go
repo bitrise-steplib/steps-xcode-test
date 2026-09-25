@@ -23,7 +23,7 @@ type testRunOptions struct {
 	collectTestDiagnostics         string
 }
 
-func (r testRunOptions) render() Options {
+func (r testRunOptions) options() Options {
 	opts := appendValue(nil, "-resultBundlePath", r.resultBundlePath)
 
 	switch r.repetitionMode {
@@ -48,14 +48,14 @@ func (r testRunOptions) render() Options {
 	return appendValue(opts, "-collect-test-diagnostics", r.collectTestDiagnostics)
 }
 
-// testRunSpec is the spec shared by the test actions: selection flags and -destination
+// testRunPolicy is the policy shared by the test actions: selection flags and -destination
 // are appendable (xcodebuild applies -only-testing before -skip-testing, and runs on
 // every destination), -collect-test-diagnostics is a default.
-func testRunSpec(name string, rejected map[string]string) actionSpec {
-	return actionSpec{
+func testRunPolicy(name string, extra ...rejection) actionPolicy {
+	return actionPolicy{
 		name:       name,
-		rejected:   union(modeSwitchingFlags, rejected),
-		defaults:   set("-collect-test-diagnostics"),
-		appendable: set("-only-testing", "-skip-testing", "-only-test-configuration", "-skip-test-configuration", "-destination", "-arch"),
+		rejects:    append([]rejection{modeSwitching}, extra...),
+		defaults:   []string{"-collect-test-diagnostics"},
+		appendable: []string{"-only-testing", "-skip-testing", "-only-test-configuration", "-skip-test-configuration", "-destination", "-arch"},
 	}
 }
