@@ -188,9 +188,9 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 		return Config{}, errors.New("the 'Relaunch Tests for Each Repetition' (relaunch_tests_for_each_repetition) cannot be used if 'Test Repetition Mode' (test_repetition_mode) is 'none'")
 	}
 
-	additionalOptions, err := shellquote.Split(input.XcodebuildOptions)
+	additionalOptions, err := xcodecommand.SplitAdditionalOptions(input.XcodebuildOptions)
 	if err != nil {
-		return Config{}, fmt.Errorf("provided 'Additional options for the xcodebuild command' (xcodebuild_options) (%s) are not valid CLI parameters: %w", input.XcodebuildOptions, err)
+		return Config{}, err
 	}
 
 	additionalLogFormatterOptions, err := s.parseAdditionalLogFormatterOptions(input.LogFormatter, input.XcprettyOptions, input.XcbeautifyOptions)
