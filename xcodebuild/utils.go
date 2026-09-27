@@ -3,6 +3,7 @@ package xcodebuild
 import (
 	"fmt"
 	"path/filepath"
+	"slices"
 
 	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
 	"github.com/bitrise-io/go-xcode/v2/xcodecommand"
@@ -88,8 +89,15 @@ func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, erro
 		return nil, err
 	}
 
-	for _, d := range cmd.Diagnostics() {
-		b.logger.Warnf("xcodebuild_options: %s", d)
+	// The parser's findings were logged with the inputs; a retry rebuilds the same command.
+	if !b.optionDiagnosticsLogged {
+		reported := xcodecommand.ParseAdditionalOptions(params.AdditionalOptions).Diagnostics()
+		for _, d := range cmd.Diagnostics() {
+			if !slices.Contains(reported, d) {
+				b.logger.Warnf("xcodebuild_options: %s", d)
+			}
+		}
+		b.optionDiagnosticsLogged = true
 	}
 
 	return cmd.Args(), nil

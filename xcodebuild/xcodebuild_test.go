@@ -12,6 +12,7 @@ import (
 	commonMocks "github.com/bitrise-steplib/steps-xcode-test/mocks"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild/mocks"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 const xcconfigPath = "xcconfigPath"
@@ -363,4 +364,33 @@ func errorsToBeRetried() []string {
 		`Timed out registering for testing event accessibility notifications`,
 		`Test runner never began executing tests after launching.`,
 	}
+}
+
+// warnRecorder keeps what is logged at warning level.
+type warnRecorder struct {
+	log.Logger
+	warnings []string
+}
+
+func (l *warnRecorder) Warnf(format string, v ...interface{}) {
+	l.warnings = append(l.warnings, fmt.Sprintf(format, v...))
+}
+
+// The test command is rebuilt for every automatic retry; its xcodebuild_options findings
+// are logged once, and the parser's own findings not at all (the step logs them with the
+// inputs).
+func Test_GivenRetriedTestCommand_ThenOptionDiagnosticsAreLoggedOnce(t *testing.T) {
+	logger := &warnRecorder{Logger: log.NewLogger()}
+	xcconfigWriter := new(mocks.XcconfigWriter)
+	b := &xcodebuild{logger: logger, xcconfigWriter: xcconfigWriter}
+
+	params := runParameters().TestParams
+	params.XCConfigContent = ""
+	params.AdditionalOptions = []string{"-ENABLE_BITCODE=NO", "-collect-test-diagnostics", "on-failure"}
+
+	for range 2 {
+		_, err := b.createXcodebuildTestArgs(params)
+		require.NoError(t, err)
+	}
+	require.Equal(t, []string{`xcodebuild_options: "-collect-test-diagnostics on-failure" replaces the Step's default "-collect-test-diagnostics never".`}, logger.warnings)
 }

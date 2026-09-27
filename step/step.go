@@ -186,10 +186,15 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+	// What the parser finds is reported here, before any xcodebuild call; the test command
+	// adds what its merge finds when it is assembled.
+	for _, d := range xcodecommand.ParseAdditionalOptions(additionalOptions).Diagnostics() {
+		s.logger.Warnf("xcodebuild_options: %s", d)
+	}
 
 	additionalLogFormatterOptions, err := s.parseAdditionalLogFormatterOptions(input.LogFormatter, input.XcprettyOptions, input.XcbeautifyOptions)
 	if err != nil {
-		return Config{}, nil
+		return Config{}, err
 	}
 
 	if strings.TrimSpace(input.XCConfigContent) == "" {

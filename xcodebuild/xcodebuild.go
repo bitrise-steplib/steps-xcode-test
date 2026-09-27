@@ -19,6 +19,8 @@ type xcodebuild struct {
 	fileManager        fileutil.FileManager
 	xcconfigWriter     xcconfig.Writer
 	xcodeCommandRunner xcodecommand.Runner
+
+	optionDiagnosticsLogged bool // the test command is rebuilt for each automatic retry
 }
 
 // NewXcodebuild ...
