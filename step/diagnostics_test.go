@@ -11,7 +11,6 @@ func Test_xcodebuildDiagnosticsOverride(t *testing.T) {
 		name              string
 		condition         exportCondition
 		xcodeMajorVersion int64
-		additionalOptions []string
 		want              string
 	}{
 		{
@@ -66,33 +65,11 @@ func Test_xcodebuildDiagnosticsOverride(t *testing.T) {
 			xcodeMajorVersion: 0,
 			want:              "",
 		},
-		{
-			name:              "user set the option explicitly - theirs wins",
-			condition:         never,
-			xcodeMajorVersion: 27,
-			additionalOptions: []string{"-collect-test-diagnostics", "on-failure"},
-			want:              "",
-		},
-		{
-			// xcodebuild silently drops the -option=value form, so it must not count as an override.
-			name:              "user wrote the option with = syntax - Step still passes its own",
-			condition:         never,
-			xcodeMajorVersion: 27,
-			additionalOptions: []string{"-collect-test-diagnostics=on-failure"},
-			want:              "never",
-		},
-		{
-			name:              "unrelated additional options are ignored",
-			condition:         never,
-			xcodeMajorVersion: 27,
-			additionalOptions: []string{"-quiet", "-parallel-testing-enabled", "NO"},
-			want:              "never",
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := xcodebuildDiagnosticsOverride(tt.condition, tt.xcodeMajorVersion, tt.additionalOptions)
+			got := xcodebuildDiagnosticsOverride(tt.condition, tt.xcodeMajorVersion)
 			require.Equal(t, tt.want, got)
 		})
 	}

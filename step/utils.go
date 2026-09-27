@@ -78,7 +78,7 @@ func (u utils) CreateConfig(input Input,
 		SkipTesting:                 skipTesting,
 		CollectSimulatorDiagnostics: exportCondition(input.CollectSimulatorDiagnostics),
 		XcodebuildDiagnosticsOverride: xcodebuildDiagnosticsOverride(
-			exportCondition(input.CollectSimulatorDiagnostics), xcodeMajorVersion, additionalOptions),
+			exportCondition(input.CollectSimulatorDiagnostics), xcodeMajorVersion),
 		HeadlessMode:      input.HeadlessMode,
 		XcodeMajorVersion: xcodeMajorVersion,
 
@@ -128,15 +128,12 @@ func xcodebuildCollectsDiagnostics(condition exportCondition, testFailed bool, x
 	return xcodeMajorVersion >= minimumXcodeMajorWithDiagnosticsOption && condition != never && testFailed
 }
 
-func xcodebuildDiagnosticsOverride(condition exportCondition, xcodeMajorVersion int64, additionalOptions []string) string {
+// xcodebuildDiagnosticsOverride is the -collect-test-diagnostics value the Step passes. A
+// -collect-test-diagnostics in xcodebuild_options replaces it (go-xcode reports the
+// override), so the user's option still wins.
+func xcodebuildDiagnosticsOverride(condition exportCondition, xcodeMajorVersion int64) string {
 	if xcodeMajorVersion < minimumXcodeMajorWithDiagnosticsOption { // no such option yet
 		return ""
-	}
-
-	for _, option := range additionalOptions {
-		if option == "-collect-test-diagnostics" { // user's option wins
-			return ""
-		}
 	}
 
 	if condition == projectSetting { // leave it to the test plan

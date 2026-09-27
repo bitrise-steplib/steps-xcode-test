@@ -1,7 +1,6 @@
 package step
 
 import (
-	"errors"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -179,23 +178,23 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 		return Config{}, err
 	}
 
-	// validate test repetition related inputs
-	if input.TestRepetitionMode != xcodebuild.TestRepetitionNone && input.MaximumTestRepetitions < 2 {
-		return Config{}, fmt.Errorf("invalid number of Maximum Test Repetitions (maximum_test_repetitions): %d, should be more than 1", input.MaximumTestRepetitions)
+	if err := xcodecommand.ValidateTestRepetition(xcodecommand.TestRepetitionMode(input.TestRepetitionMode), input.MaximumTestRepetitions, input.RelaunchTestsForEachRepetition); err != nil {
+		return Config{}, err
 	}
 
-	if input.RelaunchTestsForEachRepetition && input.TestRepetitionMode == xcodebuild.TestRepetitionNone {
-		return Config{}, errors.New("the 'Relaunch Tests for Each Repetition' (relaunch_tests_for_each_repetition) cannot be used if 'Test Repetition Mode' (test_repetition_mode) is 'none'")
-	}
-
-	additionalOptions, err := shellquote.Split(input.XcodebuildOptions)
+	additionalOptions, err := xcodecommand.SplitAdditionalOptions(input.XcodebuildOptions)
 	if err != nil {
-		return Config{}, fmt.Errorf("provided 'Additional options for the xcodebuild command' (xcodebuild_options) (%s) are not valid CLI parameters: %w", input.XcodebuildOptions, err)
+		return Config{}, err
+	}
+	// What the parser finds is reported here, before any xcodebuild call; the test command
+	// adds what its merge finds when it is assembled.
+	for _, d := range xcodecommand.ParseAdditionalOptions(additionalOptions).Diagnostics() {
+		s.logger.Warnf("xcodebuild_options: %s", d)
 	}
 
 	additionalLogFormatterOptions, err := s.parseAdditionalLogFormatterOptions(input.LogFormatter, input.XcprettyOptions, input.XcbeautifyOptions)
 	if err != nil {
-		return Config{}, nil
+		return Config{}, err
 	}
 
 	if strings.TrimSpace(input.XCConfigContent) == "" {

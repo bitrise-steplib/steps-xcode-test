@@ -12,6 +12,7 @@ import (
 	commonMocks "github.com/bitrise-steplib/steps-xcode-test/mocks"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild/mocks"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 const xcconfigPath = "xcconfigPath"
@@ -49,6 +50,7 @@ func Test_GivenXcodebuild_WhenInvoked_ThenUsesCorrectArguments(t *testing.T) {
 				parameters := runParameters()
 				parameters.TestParams.TestRepetitionMode = "retry_on_failure"
 				parameters.TestParams.MaximumTestRepetitions = 11
+				parameters.TestParams.RelaunchTestsForEachRepetition = true
 
 				return parameters
 			},
@@ -210,6 +212,29 @@ func runRunnerErrorTests(t *testing.T, expectedNumberOfCreateCalls int, paramete
 	mocks.xcodeCommandRunner.AssertExpectations(t)
 }
 
+// The Step always passes its -collect-test-diagnostics value; go-xcode drops it when the
+// user set the option in xcodebuild_options, so the user's wins without a scan here.
+func Test_GivenUserCollectTestDiagnostics_WhenInvoked_ThenStepsOwnIsReplaced(t *testing.T) {
+	// Given
+	input := runParameters()
+	input.TestParams.XcodebuildDiagnosticsOverride = "never"
+	input.TestParams.AdditionalOptions = []string{"-collect-test-diagnostics", "on-failure"}
+
+	expected := input
+	expected.TestParams.XcodebuildDiagnosticsOverride = ""
+	arguments := argumentsFromRunParameters(expected)
+
+	xcodebuild, mocks := createXcodebuildAndMocks(t)
+	mocks.xcodeCommandRunner.On("Run", mock.Anything, arguments, []string{}).
+		Return(xcodecommand.Output{}, nil)
+
+	// When
+	_, _, _ = xcodebuild.RunTest(input)
+
+	// Then
+	mocks.xcodeCommandRunner.AssertExpectations(t)
+}
+
 func Test_GivenXcprettyFormatter_WhenEnabled_ThenUsesCorrectArguments(t *testing.T) {
 	// Given
 	outputPath := "path/to/output"
@@ -257,7 +282,7 @@ func runParameters() TestRunParams {
 		TestOutputDir:                  "TestOutputDir",
 		TestRepetitionMode:             "none",
 		MaximumTestRepetitions:         3,
-		RelaunchTestsForEachRepetition: true,
+		RelaunchTestsForEachRepetition: false, // relaunching needs a repeating mode
 		XCConfigContent:                "XCConfigContent",
 		PerformCleanAction:             false,
 		XcodebuildDiagnosticsOverride:  "never",
@@ -292,25 +317,25 @@ func argumentsFromRunParameters(parameters TestRunParams) []string {
 		arguments = append(arguments, "-testPlan", parameters.TestParams.TestPlan)
 	}
 
+	if parameters.TestParams.XCConfigContent != "" {
+		arguments = append(arguments, "-xcconfig", xcconfigPath)
+	}
+
 	arguments = append(arguments, "-resultBundlePath", parameters.TestParams.TestOutputDir)
 
 	switch parameters.TestParams.TestRepetitionMode {
-	case TestRepetitionUntilFailure:
+	case string(xcodecommand.TestRepetitionUntilFailure):
 		arguments = append(arguments, "-run-tests-until-failure")
-	case TestRepetitionRetryOnFailure:
+	case string(xcodecommand.TestRepetitionRetryOnFailure):
 		arguments = append(arguments, "-retry-tests-on-failure")
 	}
 
-	if parameters.TestParams.TestRepetitionMode != TestRepetitionNone {
+	if parameters.TestParams.TestRepetitionMode != string(xcodecommand.TestRepetitionNone) {
 		arguments = append(arguments, "-test-iterations", strconv.Itoa(parameters.TestParams.MaximumTestRepetitions))
 	}
 
 	if parameters.TestParams.RelaunchTestsForEachRepetition {
 		arguments = append(arguments, "-test-repetition-relaunch-enabled", "YES")
-	}
-
-	if parameters.TestParams.XCConfigContent != "" {
-		arguments = append(arguments, "-xcconfig", xcconfigPath)
 	}
 
 	for _, test := range parameters.TestParams.SkipTesting {
@@ -339,4 +364,33 @@ func errorsToBeRetried() []string {
 		`Timed out registering for testing event accessibility notifications`,
 		`Test runner never began executing tests after launching.`,
 	}
+}
+
+// warnRecorder keeps what is logged at warning level.
+type warnRecorder struct {
+	log.Logger
+	warnings []string
+}
+
+func (l *warnRecorder) Warnf(format string, v ...interface{}) {
+	l.warnings = append(l.warnings, fmt.Sprintf(format, v...))
+}
+
+// The test command is rebuilt for every automatic retry; its xcodebuild_options findings
+// are logged once, and the parser's own findings not at all (the step logs them with the
+// inputs).
+func Test_GivenRetriedTestCommand_ThenOptionDiagnosticsAreLoggedOnce(t *testing.T) {
+	logger := &warnRecorder{Logger: log.NewLogger()}
+	xcconfigWriter := new(mocks.XcconfigWriter)
+	b := &xcodebuild{logger: logger, xcconfigWriter: xcconfigWriter}
+
+	params := runParameters().TestParams
+	params.XCConfigContent = ""
+	params.AdditionalOptions = []string{"-ENABLE_BITCODE=NO", "-collect-test-diagnostics", "on-failure"}
+
+	for range 2 {
+		_, err := b.createXcodebuildTestArgs(params)
+		require.NoError(t, err)
+	}
+	require.Equal(t, []string{`xcodebuild_options: "-collect-test-diagnostics on-failure" replaces the Step's default "-collect-test-diagnostics never".`}, logger.warnings)
 }

@@ -7,13 +7,6 @@ import (
 	"github.com/bitrise-io/go-xcode/v2/xcodecommand"
 )
 
-// Test repetition modes ...
-const (
-	TestRepetitionNone           = "none"
-	TestRepetitionUntilFailure   = "until_failure"
-	TestRepetitionRetryOnFailure = "retry_on_failure"
-)
-
 // Xcodebuild ....
 type Xcodebuild interface {
 	RunTest(params TestRunParams) (string, int, error)
@@ -26,6 +19,8 @@ type xcodebuild struct {
 	fileManager        fileutil.FileManager
 	xcconfigWriter     xcconfig.Writer
 	xcodeCommandRunner xcodecommand.Runner
+
+	optionDiagnosticsLogged bool // the test command is rebuilt for each automatic retry
 }
 
 // NewXcodebuild ...
