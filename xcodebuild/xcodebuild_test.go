@@ -49,6 +49,7 @@ func Test_GivenXcodebuild_WhenInvoked_ThenUsesCorrectArguments(t *testing.T) {
 				parameters := runParameters()
 				parameters.TestParams.TestRepetitionMode = "retry_on_failure"
 				parameters.TestParams.MaximumTestRepetitions = 11
+				parameters.TestParams.RelaunchTestsForEachRepetition = true
 
 				return parameters
 			},
@@ -280,7 +281,7 @@ func runParameters() TestRunParams {
 		TestOutputDir:                  "TestOutputDir",
 		TestRepetitionMode:             "none",
 		MaximumTestRepetitions:         3,
-		RelaunchTestsForEachRepetition: true,
+		RelaunchTestsForEachRepetition: false, // relaunching needs a repeating mode
 		XCConfigContent:                "XCConfigContent",
 		PerformCleanAction:             false,
 		XcodebuildDiagnosticsOverride:  "never",
@@ -322,13 +323,13 @@ func argumentsFromRunParameters(parameters TestRunParams) []string {
 	arguments = append(arguments, "-resultBundlePath", parameters.TestParams.TestOutputDir)
 
 	switch parameters.TestParams.TestRepetitionMode {
-	case TestRepetitionUntilFailure:
+	case string(xcodecommand.TestRepetitionUntilFailure):
 		arguments = append(arguments, "-run-tests-until-failure")
-	case TestRepetitionRetryOnFailure:
+	case string(xcodecommand.TestRepetitionRetryOnFailure):
 		arguments = append(arguments, "-retry-tests-on-failure")
 	}
 
-	if parameters.TestParams.TestRepetitionMode != TestRepetitionNone {
+	if parameters.TestParams.TestRepetitionMode != string(xcodecommand.TestRepetitionNone) {
 		arguments = append(arguments, "-test-iterations", strconv.Itoa(parameters.TestParams.MaximumTestRepetitions))
 	}
 

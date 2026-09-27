@@ -1,7 +1,6 @@
 package step
 
 import (
-	"errors"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -179,13 +178,8 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 		return Config{}, err
 	}
 
-	// validate test repetition related inputs
-	if input.TestRepetitionMode != xcodebuild.TestRepetitionNone && input.MaximumTestRepetitions < 2 {
-		return Config{}, fmt.Errorf("invalid number of Maximum Test Repetitions (maximum_test_repetitions): %d, should be more than 1", input.MaximumTestRepetitions)
-	}
-
-	if input.RelaunchTestsForEachRepetition && input.TestRepetitionMode == xcodebuild.TestRepetitionNone {
-		return Config{}, errors.New("the 'Relaunch Tests for Each Repetition' (relaunch_tests_for_each_repetition) cannot be used if 'Test Repetition Mode' (test_repetition_mode) is 'none'")
+	if err := xcodecommand.ValidateTestRepetition(xcodecommand.TestRepetitionMode(input.TestRepetitionMode), input.MaximumTestRepetitions, input.RelaunchTestsForEachRepetition); err != nil {
+		return Config{}, err
 	}
 
 	additionalOptions, err := xcodecommand.SplitAdditionalOptions(input.XcodebuildOptions)
