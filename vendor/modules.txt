@@ -48,7 +48,7 @@ github.com/bitrise-io/go-utils/pathutil
 github.com/bitrise-io/go-utils/pointers
 github.com/bitrise-io/go-utils/progress
 github.com/bitrise-io/go-utils/stringutil
-# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.39
+# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.40
 ## explicit; go 1.21
 github.com/bitrise-io/go-utils/v2/command
 github.com/bitrise-io/go-utils/v2/env
