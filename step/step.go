@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
 	"github.com/bitrise-io/go-steputils/v2/testquarantine"
@@ -15,7 +14,6 @@ import (
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/log/colorstring"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
-	"github.com/bitrise-io/go-utils/v2/progress"
 	"github.com/bitrise-io/go-xcode/v2/destination"
 	"github.com/bitrise-io/go-xcode/v2/simulator"
 	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
@@ -287,9 +285,19 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 		s.logger.Warnf("Simulator diagnostics collection needs Xcode %d or later (xcodebuild -collect-test-diagnostics), the collect_simulator_diagnostics input is ignored", minimumXcodeMajorWithDiagnosticsOption)
 	}
 
-	launchSimulator := !cfg.IsSimulatorBooted && !cfg.HeadlessMode
-	if err := s.prepareSimulator(cfg.Simulator, launchSimulator); err != nil {
-		return Result{}, err
+	// xcodebuild shuts down only the Simulators it booted itself, so a Simulator booted by the Step
+	// stays booted after the Step, for manual debugging.
+	if !cfg.HeadlessMode && !cfg.IsSimulatorBooted {
+		s.logger.Infof("Booting simulator (%s), it stays booted after the Step...", cfg.Simulator.UDID)
+		// Unlike Simulator.app, Xcode 27's DeviceHub.app does not boot the device passed in -CurrentDeviceUDID.
+		if err := s.simulatorManager.Boot(cfg.Simulator); err != nil {
+			return Result{}, fmt.Errorf("failed to boot simulator: %w", err)
+		}
+
+		s.logger.Infof("Launching the Simulator GUI...")
+		if err := s.simulatorManager.LaunchWithGUI(cfg.Simulator.UDID); err != nil {
+			return Result{}, fmt.Errorf("failed to launch the Simulator GUI: %w", err)
+		}
 	}
 
 	s.logger.Println()
@@ -409,36 +417,6 @@ func (s XcodeTestConfigParser) getSimulatorForDestination(destinationSpecifier s
 	s.logger.Printf("Status: %s", colorstring.Cyan(device.State))
 
 	return device, nil
-}
-
-// simulatorGUIBootWait is overridden in tests.
-var simulatorGUIBootWait = 60 * time.Second
-
-func (s XcodeTestRunner) prepareSimulator(simulator destination.Device, launchSimulator bool) error {
-	if launchSimulator {
-		s.logger.Infof("Booting simulator (%s)...", simulator.UDID)
-
-		// Unlike Simulator.app, Xcode 27's DeviceHub.app does not boot the device passed in -CurrentDeviceUDID.
-		if err := s.simulatorManager.Boot(simulator); err != nil {
-			return fmt.Errorf("failed to boot simulator: %w", err)
-		}
-
-		s.logger.Infof("Launching the Simulator GUI...")
-
-		if err := s.simulatorManager.LaunchWithGUI(simulator.UDID); err != nil {
-			return fmt.Errorf("failed to launch the Simulator GUI: %w", err)
-		}
-
-		s.logger.Printf("Waiting for simulator boot")
-		_ = progress.NewDefaultSimpleDots(progress.NewFmtPrinter()).Run(func() error {
-			time.Sleep(simulatorGUIBootWait)
-			return nil
-		})
-
-		s.logger.Println()
-	}
-
-	return nil
 }
 
 func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {

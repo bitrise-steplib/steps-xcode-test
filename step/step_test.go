@@ -72,14 +72,10 @@ func Test_GivenNonHeadlessMode_WhenRuns_ThenBootsTheSimulatorAndLaunchesTheGUI(t
 	// Given
 	step, mocks := createStepAndMocks(t)
 
-	previousBootWait := simulatorGUIBootWait
-	simulatorGUIBootWait = 0
-	t.Cleanup(func() { simulatorGUIBootWait = previousBootWait })
-
 	device := destination.Device{UDID: "1234"}
 
 	mocks.xcodebuilder.On("RunTest", mock.Anything).Return("", 0, nil)
-	// Xcode 27's DeviceHub.app ignores -CurrentDeviceUDID, so the Step has to boot the device itself.
+	// The Step boots the device so that it outlives xcodebuild, then opens the GUI on it.
 	mocks.simulatorManager.On("Boot", device).Return(nil)
 	mocks.simulatorManager.On("LaunchWithGUI", device.UDID).Return(nil)
 	mocks.cache.On("SwiftPackagesPath", mock.Anything).Return("", nil)
