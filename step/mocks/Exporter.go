@@ -27,24 +27,6 @@ func (_m *Exporter) ExportFlakyTestCases(xcResultPath string, useOldXCResultExtr
 	return r0
 }
 
-// ExportSimulatorDiagnostics provides a mock function with given fields: deployDir, pth, name
-func (_m *Exporter) ExportSimulatorDiagnostics(deployDir string, pth string, name string) error {
-	ret := _m.Called(deployDir, pth, name)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ExportSimulatorDiagnostics")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string, string) error); ok {
-		r0 = rf(deployDir, pth, name)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // ExportTestRunResult provides a mock function with given fields: failed
 func (_m *Exporter) ExportTestRunResult(failed bool) {
 	_m.Called(failed)
