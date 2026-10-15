@@ -278,6 +278,8 @@ type Result struct {
 	XcresultPath       string
 	XcodebuildBuildLog string
 	XcodebuildTestLog  string
+	// XcodebuildCollectedDiagnostics is set when xcodebuild collected the Simulator diagnostics into the xcresult.
+	XcodebuildCollectedDiagnostics bool
 }
 
 func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
@@ -314,8 +316,9 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 	}
 
 	if xcodebuildCollectsDiagnostics(cfg.CollectSimulatorDiagnostics, testErr != nil, cfg.XcodeMajorVersion) {
+		result.XcodebuildCollectedDiagnostics = true
 		s.logger.Println()
-		s.logger.Infof("xcodebuild collected the Simulator diagnostics into the xcresult, extract them with: xcrun xcresulttool export diagnostics --path <xcresult> --output-path <directory>")
+		s.logger.Infof("xcodebuild collected the Simulator diagnostics into the xcresult, the Step exports them as an artifact")
 	}
 
 	if testErr != nil {
@@ -361,6 +364,14 @@ func (s XcodeTestRunner) Export(result Result, testFailed bool) error {
 	if result.XcodebuildTestLog != "" {
 		if err := s.outputExporter.ExportXcodebuildTestLog(result.DeployDir, result.XcodebuildTestLog); err != nil {
 			return err
+		}
+	}
+
+	// export the Simulator diagnostics xcodebuild collected into the xcresult
+	if result.XcresultPath != "" && result.XcodebuildCollectedDiagnostics {
+		if err := s.outputExporter.ExportXcresultDiagnostics(result.DeployDir, result.XcresultPath, result.Scheme); err != nil {
+			s.logger.Warnf("Failed to export the Simulator diagnostics: %s", err)
+			s.logger.Warnf("Extract them from the xcresult with: xcrun xcresulttool export diagnostics --path <xcresult> --output-path <directory>")
 		}
 	}
 

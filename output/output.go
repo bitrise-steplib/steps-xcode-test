@@ -2,10 +2,12 @@ package output
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/bitrise-io/bitrise/configs"
 	"github.com/bitrise-io/go-steputils/v2/export"
+	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
@@ -25,7 +27,13 @@ type Exporter interface {
 	ExportTestRunResult(failed bool)
 	ExportXcodebuildBuildLog(deployDir, xcodebuildBuildLog string) error
 	ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) error
+	ExportXcresultDiagnostics(deployDir, xcResultPath, scheme string) error
 	ExportFlakyTestCases(xcResultPath string, useOldXCResultExtractionMethod bool) error
+}
+
+// DirZipper zips a directory into a destination archive.
+type DirZipper interface {
+	ZipDir(sourceDirPth, destinationZipPth string, isContentOnly bool) error
 }
 
 type exporter struct {
@@ -33,16 +41,20 @@ type exporter struct {
 	logger            log.Logger
 	outputExporter    export.Exporter
 	testAddonExporter testaddon.Exporter
+	commandFactory    command.Factory
+	dirZipper         DirZipper
 	fileManager       fileutil.FileManager
 }
 
 // NewExporter ...
-func NewExporter(envRepository env.Repository, logger log.Logger, outputExporter export.Exporter, testAddonExporter testaddon.Exporter, fileManager fileutil.FileManager) Exporter {
+func NewExporter(envRepository env.Repository, logger log.Logger, outputExporter export.Exporter, testAddonExporter testaddon.Exporter, commandFactory command.Factory, dirZipper DirZipper, fileManager fileutil.FileManager) Exporter {
 	return &exporter{
 		envRepository:     envRepository,
 		logger:            logger,
 		outputExporter:    outputExporter,
 		testAddonExporter: testAddonExporter,
+		commandFactory:    commandFactory,
+		dirZipper:         dirZipper,
 		fileManager:       fileManager,
 	}
 }
@@ -115,6 +127,39 @@ func (e exporter) ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) e
 	if err := e.envRepository.Set("BITRISE_XCODEBUILD_TEST_LOG_PATH", deployPth); err != nil {
 		e.logger.Warnf("Failed to export: BITRISE_XCODEBUILD_TEST_LOG_PATH: %s", err)
 	}
+
+	return nil
+}
+
+// ExportXcresultDiagnostics exports the Simulator diagnostics xcodebuild collected into the xcresult
+// (-collect-test-diagnostics) and zips them into the deploy dir as Test-<scheme>-diagnostics.zip.
+func (e exporter) ExportXcresultDiagnostics(deployDir, xcResultPath, scheme string) error {
+	outputDir, err := os.MkdirTemp("", "xcresult-diagnostics")
+	if err != nil {
+		return fmt.Errorf("failed to create a temporary directory: %w", err)
+	}
+
+	cmd := e.commandFactory.Create("xcrun", []string{"xcresulttool", "export", "diagnostics", "--path", xcResultPath, "--output-path", outputDir}, nil)
+	e.logger.Printf("$ %s", cmd.PrintableCommandArgs())
+
+	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
+		return fmt.Errorf("xcresulttool export diagnostics failed: %w, output: %s", err, out)
+	}
+
+	entries, err := os.ReadDir(outputDir)
+	if err != nil {
+		return fmt.Errorf("failed to read the exported diagnostics: %w", err)
+	}
+	if len(entries) == 0 {
+		return fmt.Errorf("the xcresult (%s) contains no diagnostics", xcResultPath)
+	}
+
+	zipPath := filepath.Join(deployDir, fmt.Sprintf("Test-%s-diagnostics.zip", scheme))
+	if err := e.dirZipper.ZipDir(outputDir, zipPath, true); err != nil {
+		return fmt.Errorf("failed to compress the exported diagnostics: %w", err)
+	}
+
+	e.logger.Donef("Simulator diagnostics are available as an artifact (%s)", zipPath)
 
 	return nil
 }
