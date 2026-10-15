@@ -284,9 +284,9 @@ type Result struct {
 }
 
 func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
-	enableSimulatorVerboseLog := cfg.CollectSimulatorDiagnostics != never
+	bootForDiagnostics := cfg.CollectSimulatorDiagnostics != never
 	launchSimulator := !cfg.IsSimulatorBooted && !cfg.HeadlessMode
-	if err := s.prepareSimulator(enableSimulatorVerboseLog, cfg.Simulator, launchSimulator); err != nil {
+	if err := s.prepareSimulator(bootForDiagnostics, cfg.Simulator, launchSimulator); err != nil {
 		return Result{}, err
 	}
 
@@ -418,16 +418,13 @@ func (s XcodeTestConfigParser) getSimulatorForDestination(destinationSpecifier s
 // simulatorGUIBootWait is overridden in tests.
 var simulatorGUIBootWait = 60 * time.Second
 
-func (s XcodeTestRunner) prepareSimulator(enableSimulatorVerboseLog bool, simulator destination.Device, launchSimulator bool) error {
-	// Boot simulator
-	if enableSimulatorVerboseLog {
-		s.logger.Infof("Enabling Simulator verbose log for better diagnostics")
-		// Boot the simulator now, so verbose logging can be enabled, and it is kept booted after running tests.
+func (s XcodeTestRunner) prepareSimulator(bootForDiagnostics bool, simulator destination.Device, launchSimulator bool) error {
+	if bootForDiagnostics {
+		s.logger.Infof("Booting simulator (%s) for diagnostics collection...", simulator.UDID)
+		// xcodebuild shuts down only the simulators it booted itself, so a simulator booted by the Step
+		// is kept booted after the tests and the Step can collect diagnostics from it.
 		if err := s.simulatorManager.Boot(simulator); err != nil {
-			return fmt.Errorf("%v", err)
-		}
-		if err := s.simulatorManager.EnableVerboseLog(simulator.UDID); err != nil {
-			return fmt.Errorf("%v", err)
+			return fmt.Errorf("failed to boot simulator: %w", err)
 		}
 
 		s.logger.Println()
