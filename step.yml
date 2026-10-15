@@ -263,7 +263,8 @@ inputs:
       Controls whether Simulator diagnostics are collected after the test run.
 
       xcodebuild collects the Simulator diagnostics (a `simctl diagnose` bundle) itself after a failing test run
-      and stores them in the `.xcresult`; extract them with `xcrun xcresulttool export diagnostics --path <xcresult> --output-path <directory>`.
+      and stores them in the `.xcresult`. The Step exports them from there as a separate `Test-<scheme>-diagnostics.zip` artifact
+      (or extract them with `xcrun xcresulttool export diagnostics --path <xcresult> --output-path <directory>`).
 
       The default value is `never`, which prevents intermittent hangs in a CI environment.
       To let xcodebuild follow the test plan (collect on failure unless the plan says otherwise), set this Input to `project_setting`.
