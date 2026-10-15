@@ -307,7 +307,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 
 	if xcodebuildCollectsDiagnostics(cfg.CollectSimulatorDiagnostics, testErr != nil, cfg.XcodeMajorVersion) {
 		s.logger.Println()
-		s.logger.Infof("xcodebuild collected the Simulator diagnostics into the xcresult, extract them with `xcrun xcresulttool export diagnostics`")
+		s.logger.Infof("xcodebuild collected the Simulator diagnostics into the xcresult, extract them with: xcrun xcresulttool export diagnostics --path <xcresult> --output-path <directory>")
 	}
 
 	if testErr != nil {
