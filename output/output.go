@@ -25,13 +25,7 @@ type Exporter interface {
 	ExportTestRunResult(failed bool)
 	ExportXcodebuildBuildLog(deployDir, xcodebuildBuildLog string) error
 	ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) error
-	ExportSimulatorDiagnostics(deployDir, pth, name string) error
 	ExportFlakyTestCases(xcResultPath string, useOldXCResultExtractionMethod bool) error
-}
-
-// DirZipper zips a directory into a destination archive.
-type DirZipper interface {
-	ZipDir(sourceDirPth, destinationZipPth string, isContentOnly bool) error
 }
 
 type exporter struct {
@@ -39,18 +33,16 @@ type exporter struct {
 	logger            log.Logger
 	outputExporter    export.Exporter
 	testAddonExporter testaddon.Exporter
-	dirZipper         DirZipper
 	fileManager       fileutil.FileManager
 }
 
 // NewExporter ...
-func NewExporter(envRepository env.Repository, logger log.Logger, outputExporter export.Exporter, testAddonExporter testaddon.Exporter, dirZipper DirZipper, fileManager fileutil.FileManager) Exporter {
+func NewExporter(envRepository env.Repository, logger log.Logger, outputExporter export.Exporter, testAddonExporter testaddon.Exporter, fileManager fileutil.FileManager) Exporter {
 	return &exporter{
 		envRepository:     envRepository,
 		logger:            logger,
 		outputExporter:    outputExporter,
 		testAddonExporter: testAddonExporter,
-		dirZipper:         dirZipper,
 		fileManager:       fileManager,
 	}
 }
@@ -122,15 +114,6 @@ func (e exporter) ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) e
 
 	if err := e.envRepository.Set("BITRISE_XCODEBUILD_TEST_LOG_PATH", deployPth); err != nil {
 		e.logger.Warnf("Failed to export: BITRISE_XCODEBUILD_TEST_LOG_PATH: %s", err)
-	}
-
-	return nil
-}
-
-func (e exporter) ExportSimulatorDiagnostics(deployDir, pth, name string) error {
-	outputPath := filepath.Join(deployDir, name)
-	if err := e.dirZipper.ZipDir(pth, outputPath, true); err != nil {
-		return fmt.Errorf("failed to compress simulator diagnostics result: %w", err)
 	}
 
 	return nil

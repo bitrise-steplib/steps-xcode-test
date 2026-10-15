@@ -2,7 +2,6 @@ package step
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -73,14 +72,10 @@ func Test_GivenNonHeadlessMode_WhenRuns_ThenBootsTheSimulatorAndLaunchesTheGUI(t
 	// Given
 	step, mocks := createStepAndMocks(t)
 
-	previousBootWait := simulatorGUIBootWait
-	simulatorGUIBootWait = 0
-	t.Cleanup(func() { simulatorGUIBootWait = previousBootWait })
-
 	device := destination.Device{UDID: "1234"}
 
 	mocks.xcodebuilder.On("RunTest", mock.Anything).Return("", 0, nil)
-	// Xcode 27's DeviceHub.app ignores -CurrentDeviceUDID, so the Step has to boot the device itself.
+	// The Step boots the device so that it outlives xcodebuild, then opens the GUI on it.
 	mocks.simulatorManager.On("Boot", device).Return(nil)
 	mocks.simulatorManager.On("LaunchWithGUI", device.UDID).Return(nil)
 	mocks.cache.On("SwiftPackagesPath", mock.Anything).Return("", nil)
@@ -351,14 +346,12 @@ func Test_GivenStep_WhenExport_ThenExportsAllTestArtifacts(t *testing.T) {
 	// Given
 	step, mocks := createStepAndMocks(t)
 	result := defaultResult()
-	diagnosticsName := filepath.Base(result.SimulatorDiagnosticsPath)
 
 	mocks.outputExporter.On("ExportTestRunResult", mock.Anything)
 	mocks.outputExporter.On("ExportXCResultBundle", result.DeployDir, result.XcresultPath, result.Scheme)
 	mocks.outputExporter.On("ExportFlakyTestCases", result.XcresultPath, false).Return(nil)
 	mocks.outputExporter.On("ExportXcodebuildBuildLog", result.DeployDir, result.XcodebuildBuildLog).Return(nil)
 	mocks.outputExporter.On("ExportXcodebuildTestLog", result.DeployDir, result.XcodebuildTestLog).Return(nil)
-	mocks.outputExporter.On("ExportSimulatorDiagnostics", result.DeployDir, result.SimulatorDiagnosticsPath, diagnosticsName).Return(nil)
 
 	// When
 	err := step.Export(result, false)
@@ -370,7 +363,6 @@ func Test_GivenStep_WhenExport_ThenExportsAllTestArtifacts(t *testing.T) {
 	mocks.outputExporter.AssertCalled(t, "ExportFlakyTestCases", result.XcresultPath, false)
 	mocks.outputExporter.AssertCalled(t, "ExportXcodebuildBuildLog", result.DeployDir, result.XcodebuildBuildLog)
 	mocks.outputExporter.AssertCalled(t, "ExportXcodebuildTestLog", result.DeployDir, result.XcodebuildTestLog)
-	mocks.outputExporter.AssertCalled(t, "ExportSimulatorDiagnostics", result.DeployDir, result.SimulatorDiagnosticsPath, diagnosticsName)
 }
 
 // Helpers
@@ -429,12 +421,11 @@ func defaultSimulator() destination.Device {
 
 func defaultResult() Result {
 	return Result{
-		Scheme:                   "Scheme",
-		DeployDir:                "DeployDir",
-		XcresultPath:             "XcresultPath",
-		XcodebuildBuildLog:       "XcodebuildBuildLog",
-		XcodebuildTestLog:        "XcodebuildTestLog",
-		SimulatorDiagnosticsPath: "/testpath/SimulatorDiagnosticsPath",
+		Scheme:             "Scheme",
+		DeployDir:          "DeployDir",
+		XcresultPath:       "XcresultPath",
+		XcodebuildBuildLog: "XcodebuildBuildLog",
+		XcodebuildTestLog:  "XcodebuildTestLog",
 	}
 }
 
