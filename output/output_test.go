@@ -299,8 +299,9 @@ func Test_GivenXcresultDiagnostics_WhenExporting_ThenZipsThemIntoTheDeployDir(t 
 	cmd.On("RunAndReturnTrimmedCombinedOutput").Return("Exported 1 object", nil)
 	mocks.commandFactory.On("Create", "xcrun", mock.MatchedBy(isExportDiagnosticsArgs), mock.Anything).Run(func(args mock.Arguments) {
 		// xcresulttool writes the bundle into --output-path
-		outputDir := args.Get(1).([]string)[6]
-		require.NoError(t, os.WriteFile(filepath.Join(outputDir, "diagnose.log"), []byte("diagnostics"), 0600))
+		bundleDir := filepath.Join(args.Get(1).([]string)[6], "0_Test_iPhone 17_Diagnostics", "simctl_diagnostics")
+		require.NoError(t, os.MkdirAll(bundleDir, 0700))
+		require.NoError(t, os.WriteFile(filepath.Join(bundleDir, "diagnose.log"), []byte("diagnostics"), 0600))
 	}).Return(cmd)
 
 	// When
@@ -309,6 +310,28 @@ func Test_GivenXcresultDiagnostics_WhenExporting_ThenZipsThemIntoTheDeployDir(t 
 	// Then
 	require.NoError(t, err)
 	assert.True(t, isPathExists(filepath.Join(deployDir, "Test-Scheme-diagnostics.zip")))
+}
+
+func Test_GivenXcresultWithoutSimulatorDiagnostics_WhenExporting_ThenReturnsError(t *testing.T) {
+	// Given
+	deployDir := t.TempDir()
+	exporter, mocks := createSutAndMocks()
+	cmd := new(commonMocks.Command)
+	cmd.On("PrintableCommandArgs").Return("xcrun xcresulttool export diagnostics")
+	cmd.On("RunAndReturnTrimmedCombinedOutput").Return("Exported 1 object", nil)
+	mocks.commandFactory.On("Create", "xcrun", mock.MatchedBy(isExportDiagnosticsArgs), mock.Anything).Run(func(args mock.Arguments) {
+		// only the test session logs, no simctl diagnose bundle
+		sessionDir := filepath.Join(args.Get(1).([]string)[6], "0_Test_iPhone 17_Diagnostics", "Tests-Configuration")
+		require.NoError(t, os.MkdirAll(sessionDir, 0700))
+		require.NoError(t, os.WriteFile(filepath.Join(sessionDir, "scheduling.log"), []byte("log"), 0600))
+	}).Return(cmd)
+
+	// When
+	err := exporter.ExportXcresultDiagnostics(deployDir, "/path/Test-Scheme.xcresult", "Scheme")
+
+	// Then
+	require.ErrorContains(t, err, "contains no Simulator diagnostics")
+	assert.False(t, isPathExists(filepath.Join(deployDir, "Test-Scheme-diagnostics.zip")))
 }
 
 func Test_GivenXcresultDiagnostics_WhenExportFails_ThenReturnsError(t *testing.T) {

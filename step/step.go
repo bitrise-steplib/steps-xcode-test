@@ -315,7 +315,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 		testExitCode = code
 	}
 
-	if xcodebuildCollectsDiagnostics(cfg.CollectSimulatorDiagnostics, testErr != nil, cfg.XcodeMajorVersion) {
+	if xcodebuildCollectsDiagnostics(cfg.CollectSimulatorDiagnostics, testErr != nil, cfg.XcodeMajorVersion, cfg.XcodebuildOptions) {
 		result.XcodebuildCollectedDiagnostics = true
 		s.logger.Println()
 		s.logger.Infof("xcodebuild collected the Simulator diagnostics into the xcresult, the Step exports them as an artifact")
@@ -371,7 +371,6 @@ func (s XcodeTestRunner) Export(result Result, testFailed bool) error {
 	if result.XcresultPath != "" && result.XcodebuildCollectedDiagnostics {
 		if err := s.outputExporter.ExportXcresultDiagnostics(result.DeployDir, result.XcresultPath, result.Scheme); err != nil {
 			s.logger.Warnf("Failed to export the Simulator diagnostics: %s", err)
-			s.logger.Warnf("Extract them from the xcresult with: xcrun xcresulttool export diagnostics --path <xcresult> --output-path <directory>")
 		}
 	}
 

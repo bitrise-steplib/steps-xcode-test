@@ -146,12 +146,10 @@ func (e exporter) ExportXcresultDiagnostics(deployDir, xcResultPath, scheme stri
 		return fmt.Errorf("xcresulttool export diagnostics failed: %w, output: %s", err, out)
 	}
 
-	entries, err := os.ReadDir(outputDir)
-	if err != nil {
-		return fmt.Errorf("failed to read the exported diagnostics: %w", err)
-	}
-	if len(entries) == 0 {
-		return fmt.Errorf("the xcresult (%s) contains no diagnostics", xcResultPath)
+	// xcresulttool exports the test session logs even when xcodebuild did not collect the Simulator diagnostics
+	// (for example when the test plan says never); only the simctl diagnose bundle is worth a separate artifact.
+	if !containsDir(outputDir, "simctl_diagnostics") {
+		return fmt.Errorf("the xcresult (%s) contains no Simulator diagnostics", xcResultPath)
 	}
 
 	zipPath := filepath.Join(deployDir, fmt.Sprintf("Test-%s-diagnostics.zip", scheme))
@@ -162,6 +160,18 @@ func (e exporter) ExportXcresultDiagnostics(deployDir, xcResultPath, scheme stri
 	e.logger.Donef("Simulator diagnostics are available as an artifact (%s)", zipPath)
 
 	return nil
+}
+
+func containsDir(root, name string) bool {
+	found := false
+	_ = filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+		if err == nil && d.IsDir() && d.Name() == name {
+			found = true
+			return filepath.SkipAll
+		}
+		return nil
+	})
+	return found
 }
 
 func (e exporter) ExportFlakyTestCases(xcResultPath string, useOldXCResultExtractionMethod bool) error {
