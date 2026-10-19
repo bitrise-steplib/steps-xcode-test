@@ -296,6 +296,30 @@ inputs:
     - "yes"
     - "no"
 
+- test_selection: $BITRISE_TEST_SELECTION_PATH
+  opts:
+    category: Test Selection
+    title: Test selection file
+    summary: Path to the `test-selection.json` written by the Test Selection step.
+    description: |-
+      Path to the `test-selection.json` written by the Test Selection step. When set, only the
+      selected test units run. A full-run selection runs every test. Leave empty to run without
+      selection.
+- on_empty_selection: run_all
+  opts:
+    category: Test Selection
+    title: When the selection names no test
+    summary: What to do when the selection file is present but selects no test unit of this step.
+    description: |-
+      Applies only when `test_selection` is set, the selection mode is `selected`, and no test unit
+      of this step is selected.
+      - `run_all`: run every test, as if there were no selection.
+      - `skip`: run nothing and succeed.
+      - `fail`: fail the step.
+    value_options:
+    - run_all
+    - skip
+    - fail
 - quarantined_tests: $BITRISE_QUARANTINED_TESTS_JSON
   opts:
     category: Debugging

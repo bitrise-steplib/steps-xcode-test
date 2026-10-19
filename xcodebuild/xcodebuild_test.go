@@ -313,6 +313,10 @@ func argumentsFromRunParameters(parameters TestRunParams) []string {
 		arguments = append(arguments, "-xcconfig", xcconfigPath)
 	}
 
+	for _, test := range parameters.TestParams.OnlyTesting {
+		arguments = append(arguments, fmt.Sprintf("-only-testing:%s", test))
+	}
+
 	for _, test := range parameters.TestParams.SkipTesting {
 		arguments = append(arguments, fmt.Sprintf("-skip-testing:%s", test))
 	}

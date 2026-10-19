@@ -52,6 +52,7 @@ type TestParams struct {
 	RelaunchTestsForEachRepetition bool
 	XCConfigContent                string
 	PerformCleanAction             bool
+	OnlyTesting                    []string
 	SkipTesting                    []string
 	XcodebuildDiagnosticsOverride  string
 	AdditionalOptions              []string
@@ -99,6 +100,10 @@ func (b *xcodebuild) createXcodebuildTestArgs(params TestParams) ([]string, erro
 			return nil, err
 		}
 		xcodebuildArgs = append(xcodebuildArgs, "-xcconfig", xcconfigPath)
+	}
+
+	for _, test := range params.OnlyTesting {
+		xcodebuildArgs = append(xcodebuildArgs, fmt.Sprintf("-only-testing:%s", test))
 	}
 
 	for _, test := range params.SkipTesting {
