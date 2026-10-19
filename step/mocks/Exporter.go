@@ -55,6 +55,24 @@ func (_m *Exporter) ExportXcodebuildBuildLog(deployDir string, xcodebuildBuildLo
 	return r0
 }
 
+// ExportXcresultDiagnostics provides a mock function with given fields: deployDir, xcResultPath, scheme
+func (_m *Exporter) ExportXcresultDiagnostics(deployDir string, xcResultPath string, scheme string) error {
+	ret := _m.Called(deployDir, xcResultPath, scheme)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ExportXcresultDiagnostics")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string, string) error); ok {
+		r0 = rf(deployDir, xcResultPath, scheme)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // ExportXcodebuildTestLog provides a mock function with given fields: deployDir, xcodebuildTestLog
 func (_m *Exporter) ExportXcodebuildTestLog(deployDir string, xcodebuildTestLog string) error {
 	ret := _m.Called(deployDir, xcodebuildTestLog)

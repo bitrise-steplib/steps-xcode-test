@@ -336,6 +336,7 @@ func Test_GivenStep_WhenExport_ThenExportsAllTestArtifacts(t *testing.T) {
 	mocks.outputExporter.On("ExportFlakyTestCases", result.XcresultPath, false).Return(nil)
 	mocks.outputExporter.On("ExportXcodebuildBuildLog", result.DeployDir, result.XcodebuildBuildLog).Return(nil)
 	mocks.outputExporter.On("ExportXcodebuildTestLog", result.DeployDir, result.XcodebuildTestLog).Return(nil)
+	mocks.outputExporter.On("ExportXcresultDiagnostics", result.DeployDir, result.XcresultPath, result.Scheme).Return(nil)
 
 	// When
 	err := step.Export(result, false)
@@ -347,6 +348,26 @@ func Test_GivenStep_WhenExport_ThenExportsAllTestArtifacts(t *testing.T) {
 	mocks.outputExporter.AssertCalled(t, "ExportFlakyTestCases", result.XcresultPath, false)
 	mocks.outputExporter.AssertCalled(t, "ExportXcodebuildBuildLog", result.DeployDir, result.XcodebuildBuildLog)
 	mocks.outputExporter.AssertCalled(t, "ExportXcodebuildTestLog", result.DeployDir, result.XcodebuildTestLog)
+	mocks.outputExporter.AssertCalled(t, "ExportXcresultDiagnostics", result.DeployDir, result.XcresultPath, result.Scheme)
+}
+
+func Test_GivenStep_WhenDiagnosticsExportFails_ThenExportStillSucceeds(t *testing.T) {
+	// Given
+	step, mocks := createStepAndMocks(t)
+	result := defaultResult()
+
+	mocks.outputExporter.On("ExportTestRunResult", mock.Anything)
+	mocks.outputExporter.On("ExportXCResultBundle", result.DeployDir, result.XcresultPath, result.Scheme)
+	mocks.outputExporter.On("ExportFlakyTestCases", result.XcresultPath, false).Return(nil)
+	mocks.outputExporter.On("ExportXcodebuildBuildLog", result.DeployDir, result.XcodebuildBuildLog).Return(nil)
+	mocks.outputExporter.On("ExportXcodebuildTestLog", result.DeployDir, result.XcodebuildTestLog).Return(nil)
+	mocks.outputExporter.On("ExportXcresultDiagnostics", result.DeployDir, result.XcresultPath, result.Scheme).Return(fmt.Errorf("xcresulttool failed"))
+
+	// When
+	err := step.Export(result, true)
+
+	// Then
+	assert.NoError(t, err)
 }
 
 // Helpers
@@ -410,6 +431,8 @@ func defaultResult() Result {
 		XcresultPath:       "XcresultPath",
 		XcodebuildBuildLog: "XcodebuildBuildLog",
 		XcodebuildTestLog:  "XcodebuildTestLog",
+
+		XcodebuildCollectedDiagnostics: true,
 	}
 }
 
