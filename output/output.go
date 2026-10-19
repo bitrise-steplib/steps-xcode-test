@@ -146,10 +146,18 @@ func (e exporter) ExportXcresultDiagnostics(deployDir, xcResultPath, scheme stri
 		return fmt.Errorf("xcresulttool export diagnostics failed: %w, output: %s", err, out)
 	}
 
+	entries, err := os.ReadDir(outputDir)
+	if err != nil {
+		return fmt.Errorf("failed to read the exported diagnostics: %w", err)
+	}
+	if len(entries) == 0 {
+		return fmt.Errorf("xcresulttool exported nothing from the xcresult (%s)", xcResultPath)
+	}
+
 	// xcresulttool exports the test session logs even when xcodebuild did not collect the Simulator diagnostics
-	// (for example when the test plan says never); only the simctl diagnose bundle is worth a separate artifact.
+	// (for example when the test plan says never); export what is there and say what is missing.
 	if !containsDir(outputDir, "simctl_diagnostics") {
-		return fmt.Errorf("the xcresult (%s) contains no Simulator diagnostics", xcResultPath)
+		e.logger.Warnf("The xcresult contains no Simulator diagnostics, exporting the test session logs only")
 	}
 
 	zipPath := filepath.Join(deployDir, fmt.Sprintf("Test-%s-diagnostics.zip", scheme))
