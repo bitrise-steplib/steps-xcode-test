@@ -22,6 +22,7 @@ import (
 	"github.com/bitrise-io/go-xcode/v2/xcodecommand"
 	"github.com/bitrise-io/go-xcode/v2/xcodeversion"
 	"github.com/bitrise-steplib/steps-xcode-test/output"
+	"github.com/bitrise-steplib/steps-xcode-test/testselection"
 	"github.com/bitrise-steplib/steps-xcode-test/xcodebuild"
 	"github.com/kballard/go-shellquote"
 )
@@ -55,6 +56,8 @@ type Input struct {
 	// Debugging
 	VerboseLog                  bool   `env:"verbose_log,opt[yes,no]"`
 	QuarantinedTests            string `env:"quarantined_tests"`
+	TestSelection               string `env:"test_selection"`
+	OnEmptySelection            string `env:"on_empty_selection"`
 	CollectSimulatorDiagnostics string `env:"collect_simulator_diagnostics,opt[project_setting,always,on_failure,never]"`
 	HeadlessMode                bool   `env:"headless_mode,opt[yes,no]"`
 
@@ -99,7 +102,11 @@ type Config struct {
 
 	CacheLevel string
 
-	SkipTesting                   []string
+	OnlyTesting []string
+	SkipTesting []string
+	// SkipTests is set when the test selection decided that nothing needs to run.
+	SkipTests                     bool
+	SkipReason                    string
 	CollectSimulatorDiagnostics   exportCondition
 	XcodebuildDiagnosticsOverride string
 	HeadlessMode                  bool
@@ -164,6 +171,14 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 	stepconf.Print(input)
 	s.logger.EnableDebugLog(input.VerboseLog)
 
+	onlyTesting, skipReason, err := s.processTestSelection(input.TestSelection, input.OnEmptySelection)
+	if err != nil {
+		return Config{}, err
+	}
+	if skipReason != "" {
+		return Config{Scheme: input.Scheme, LogFormatter: input.LogFormatter, DeployDir: input.DeployDir, SkipTests: true, SkipReason: skipReason}, nil
+	}
+
 	// validate project path
 	projectPath, err := s.pathModifier.AbsPath(input.ProjectPath)
 	if err != nil {
@@ -211,7 +226,43 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 		return Config{}, fmt.Errorf("failed to process quarentined tests: %w", err)
 	}
 
-	return s.utils.CreateConfig(input, projectPath, sim, additionalOptions, additionalLogFormatterOptions, skipTesting, s.xcodeVersion.Major), nil
+	cfg := s.utils.CreateConfig(input, projectPath, sim, additionalOptions, additionalLogFormatterOptions, skipTesting, s.xcodeVersion.Major)
+	cfg.OnlyTesting = onlyTesting
+	return cfg, nil
+}
+
+// processTestSelection turns the Test Selection step's output into -only-testing
+// identifiers. A non-empty skip reason means nothing should run.
+func (s XcodeTestConfigParser) processTestSelection(path, onEmpty string) ([]string, string, error) {
+	sel, err := testselection.Load(path)
+	if err != nil {
+		return nil, "", err
+	}
+	decision, err := testselection.Decide(sel, onEmpty, "xcode", "spm", "manual")
+	if err != nil {
+		return nil, "", err
+	}
+	if sel == nil {
+		return nil, "", nil
+	}
+
+	s.logger.Println()
+	s.logger.Infof("Test selection: %s", decision.Reason)
+	switch decision.Action {
+	case testselection.Skip:
+		return nil, decision.Reason, nil
+	case testselection.RunSelected:
+		var identifiers []string
+		for _, t := range decision.Tests {
+			if t.Identifiers.OnlyTesting != "" {
+				s.logger.Printf("- %s (%s)", t.Identifiers.OnlyTesting, t.Reason)
+				identifiers = append(identifiers, t.Identifiers.OnlyTesting)
+			}
+		}
+		return identifiers, "", nil
+	default:
+		return nil, "", nil
+	}
 }
 
 /*
@@ -284,6 +335,12 @@ type Result struct {
 }
 
 func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
+	if cfg.SkipTests {
+		s.logger.Println()
+		s.logger.Infof("Skipping the test run: %s", cfg.SkipReason)
+		return Result{Scheme: cfg.Scheme, DeployDir: cfg.DeployDir}, nil
+	}
+
 	bootForDiagnostics := cfg.CollectSimulatorDiagnostics != never
 	launchSimulator := !cfg.IsSimulatorBooted && !cfg.HeadlessMode
 	if err := s.prepareSimulator(bootForDiagnostics, cfg.Simulator, launchSimulator); err != nil {

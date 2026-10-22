@@ -98,6 +98,7 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 		RelaunchTestsForEachRepetition: cfg.RelaunchTestForEachRepetition,
 		XCConfigContent:                cfg.XCConfigContent,
 		PerformCleanAction:             cfg.PerformCleanAction,
+		OnlyTesting:                    cfg.OnlyTesting,
 		SkipTesting:                    cfg.SkipTesting,
 		XcodebuildDiagnosticsOverride:  cfg.XcodebuildDiagnosticsOverride,
 		AdditionalOptions:              cfg.XcodebuildOptions,
