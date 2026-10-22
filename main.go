@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/bitrise-io/bitrise-build-cache-cli/v2/pkg/reactnative/wrap"
 	"github.com/bitrise-io/go-steputils/v2/export"
@@ -50,7 +51,11 @@ func run() int {
 
 	xcodeTestRunner.InstallDeps()
 
+	shadow := step.StartTestSelectionShadow(config, logger)
+
+	started := time.Now()
 	res, runErr := xcodeTestRunner.Run(config)
+	step.FinishTestSelectionShadow(shadow, res.XcresultPath, time.Since(started), logger)
 	exportErr := xcodeTestRunner.Export(res, runErr != nil)
 
 	if runErr != nil {
