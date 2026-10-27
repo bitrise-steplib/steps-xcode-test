@@ -11,6 +11,7 @@ import (
 	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult3"
 	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult3/model3"
 	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
@@ -43,11 +44,12 @@ type exporter struct {
 	testAddonExporter testaddon.Exporter
 	commandFactory    command.Factory
 	dirZipper         DirZipper
+	pathProvider      pathutil.PathProvider
 	fileManager       fileutil.FileManager
 }
 
 // NewExporter ...
-func NewExporter(envRepository env.Repository, logger log.Logger, outputExporter export.Exporter, testAddonExporter testaddon.Exporter, commandFactory command.Factory, dirZipper DirZipper, fileManager fileutil.FileManager) Exporter {
+func NewExporter(envRepository env.Repository, logger log.Logger, outputExporter export.Exporter, testAddonExporter testaddon.Exporter, commandFactory command.Factory, dirZipper DirZipper, pathProvider pathutil.PathProvider, fileManager fileutil.FileManager) Exporter {
 	return &exporter{
 		envRepository:     envRepository,
 		logger:            logger,
@@ -55,6 +57,7 @@ func NewExporter(envRepository env.Repository, logger log.Logger, outputExporter
 		testAddonExporter: testAddonExporter,
 		commandFactory:    commandFactory,
 		dirZipper:         dirZipper,
+		pathProvider:      pathProvider,
 		fileManager:       fileManager,
 	}
 }
@@ -134,11 +137,15 @@ func (e exporter) ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) e
 // ExportXcresultDiagnostics exports the Simulator diagnostics xcodebuild collected into the xcresult
 // (-collect-test-diagnostics) and zips them into the deploy dir as Test-<scheme>-diagnostics.zip.
 func (e exporter) ExportXcresultDiagnostics(deployDir, xcResultPath, scheme string) error {
-	outputDir, err := os.MkdirTemp("", "xcresult-diagnostics")
+	outputDir, err := e.pathProvider.CreateTempDir("xcresult-diagnostics")
 	if err != nil {
 		return fmt.Errorf("failed to create a temporary directory: %w", err)
 	}
-	defer func() { _ = os.RemoveAll(outputDir) }()
+	defer func() {
+		if err := os.RemoveAll(outputDir); err != nil {
+			e.logger.Warnf("Failed to remove the temporary diagnostics directory (%s): %s", outputDir, err)
+		}
+	}()
 
 	cmd := e.commandFactory.Create("xcrun", []string{"xcresulttool", "export", "diagnostics", "--path", xcResultPath, "--output-path", outputDir}, nil)
 	e.logger.Printf("$ %s", cmd.PrintableCommandArgs())
@@ -158,7 +165,11 @@ func (e exporter) ExportXcresultDiagnostics(deployDir, xcResultPath, scheme stri
 	// xcresulttool exports the test session logs even when xcodebuild did not collect the Simulator diagnostics
 	// (for example when the test plan says never); export what is there and say what is missing.
 	// The simctl diagnose bundle is written as simctl_diagnostics (checked on Xcode 26.5 and 27.0).
-	if !containsDir(outputDir, "simctl_diagnostics") {
+	hasBundle, err := containsDir(outputDir, "simctl_diagnostics")
+	if err != nil {
+		return fmt.Errorf("failed to inspect the exported diagnostics: %w", err)
+	}
+	if !hasBundle {
 		e.logger.Warnf("The xcresult contains no Simulator diagnostics, exporting the test session logs only")
 	}
 
@@ -172,16 +183,19 @@ func (e exporter) ExportXcresultDiagnostics(deployDir, xcResultPath, scheme stri
 	return nil
 }
 
-func containsDir(root, name string) bool {
+func containsDir(root, name string) (bool, error) {
 	found := false
-	_ = filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
-		if err == nil && d.IsDir() && d.Name() == name {
+	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() && d.Name() == name {
 			found = true
 			return filepath.SkipAll
 		}
 		return nil
 	})
-	return found
+	return found, err
 }
 
 func (e exporter) ExportFlakyTestCases(xcResultPath string, useOldXCResultExtractionMethod bool) error {
