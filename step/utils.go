@@ -138,7 +138,7 @@ func xcodebuildCollectsDiagnostics(condition exportCondition, testFailed bool, x
 	}
 
 	if value, ok := userDiagnosticsOption(additionalOptions); ok { // user's option wins
-		return value != "never"
+		return value != "" && value != "never"
 	}
 
 	return condition != never

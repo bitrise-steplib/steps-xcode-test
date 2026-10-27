@@ -138,6 +138,7 @@ func (e exporter) ExportXcresultDiagnostics(deployDir, xcResultPath, scheme stri
 	if err != nil {
 		return fmt.Errorf("failed to create a temporary directory: %w", err)
 	}
+	defer func() { _ = os.RemoveAll(outputDir) }()
 
 	cmd := e.commandFactory.Create("xcrun", []string{"xcresulttool", "export", "diagnostics", "--path", xcResultPath, "--output-path", outputDir}, nil)
 	e.logger.Printf("$ %s", cmd.PrintableCommandArgs())
@@ -156,6 +157,7 @@ func (e exporter) ExportXcresultDiagnostics(deployDir, xcResultPath, scheme stri
 
 	// xcresulttool exports the test session logs even when xcodebuild did not collect the Simulator diagnostics
 	// (for example when the test plan says never); export what is there and say what is missing.
+	// The simctl diagnose bundle is written as simctl_diagnostics (checked on Xcode 26.5 and 27.0).
 	if !containsDir(outputDir, "simctl_diagnostics") {
 		e.logger.Warnf("The xcresult contains no Simulator diagnostics, exporting the test session logs only")
 	}

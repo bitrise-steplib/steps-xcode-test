@@ -278,12 +278,13 @@ type Result struct {
 	XcresultPath       string
 	XcodebuildBuildLog string
 	XcodebuildTestLog  string
-	// XcodebuildCollectedDiagnostics is set when xcodebuild collected the Simulator diagnostics into the xcresult.
-	XcodebuildCollectedDiagnostics bool
+	// XcresultDiagnosticsRequested is set when xcodebuild was asked to collect the Simulator diagnostics into the
+	// xcresult after a failing run (Xcode 26 and later); the export phase exports whatever it finds there.
+	XcresultDiagnosticsRequested bool
 }
 
 func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
-	if cfg.CollectSimulatorDiagnostics != never && cfg.XcodeMajorVersion < minimumXcodeMajorWithDiagnosticsOption {
+	if (cfg.CollectSimulatorDiagnostics == always || cfg.CollectSimulatorDiagnostics == onFailure) && cfg.XcodeMajorVersion < minimumXcodeMajorWithDiagnosticsOption {
 		s.logger.Warnf("Simulator diagnostics collection needs Xcode %d or later (xcodebuild -collect-test-diagnostics), the collect_simulator_diagnostics input is ignored", minimumXcodeMajorWithDiagnosticsOption)
 	}
 
@@ -315,11 +316,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 		testExitCode = code
 	}
 
-	if xcodebuildCollectsDiagnostics(cfg.CollectSimulatorDiagnostics, testErr != nil, cfg.XcodeMajorVersion, cfg.XcodebuildOptions) {
-		result.XcodebuildCollectedDiagnostics = true
-		s.logger.Println()
-		s.logger.Infof("xcodebuild collected the Simulator diagnostics into the xcresult, the Step exports them as an artifact")
-	}
+	result.XcresultDiagnosticsRequested = xcodebuildCollectsDiagnostics(cfg.CollectSimulatorDiagnostics, testErr != nil, cfg.XcodeMajorVersion, cfg.XcodebuildOptions)
 
 	if testErr != nil {
 		s.logger.Println()
@@ -368,7 +365,9 @@ func (s XcodeTestRunner) Export(result Result, testFailed bool) error {
 	}
 
 	// export the Simulator diagnostics xcodebuild collected into the xcresult
-	if result.XcresultPath != "" && result.XcodebuildCollectedDiagnostics {
+	if result.XcresultPath != "" && result.XcresultDiagnosticsRequested {
+		s.logger.Println()
+		s.logger.Infof("Exporting the Simulator diagnostics from the xcresult")
 		if err := s.outputExporter.ExportXcresultDiagnostics(result.DeployDir, result.XcresultPath, result.Scheme); err != nil {
 			s.logger.Warnf("Failed to export the Simulator diagnostics: %s", err)
 		}

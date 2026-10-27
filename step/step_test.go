@@ -432,7 +432,7 @@ func defaultResult() Result {
 		XcodebuildBuildLog: "XcodebuildBuildLog",
 		XcodebuildTestLog:  "XcodebuildTestLog",
 
-		XcodebuildCollectedDiagnostics: true,
+		XcresultDiagnosticsRequested: true,
 	}
 }
 
