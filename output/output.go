@@ -49,12 +49,14 @@ type exporter struct {
 	testAddonExporter testaddon.Exporter
 	commandFactory    command.Factory
 	dirZipper         DirZipper
+	pathChecker       pathutil.PathChecker
+	pathModifier      pathutil.PathModifier
 	pathProvider      pathutil.PathProvider
 	fileManager       fileutil.FileManager
 }
 
 // NewExporter ...
-func NewExporter(envRepository env.Repository, logger log.Logger, outputExporter export.Exporter, testAddonExporter testaddon.Exporter, commandFactory command.Factory, dirZipper DirZipper, pathProvider pathutil.PathProvider, fileManager fileutil.FileManager) Exporter {
+func NewExporter(envRepository env.Repository, logger log.Logger, outputExporter export.Exporter, testAddonExporter testaddon.Exporter, commandFactory command.Factory, dirZipper DirZipper, pathChecker pathutil.PathChecker, pathModifier pathutil.PathModifier, pathProvider pathutil.PathProvider, fileManager fileutil.FileManager) Exporter {
 	return &exporter{
 		envRepository:     envRepository,
 		logger:            logger,
@@ -62,6 +64,8 @@ func NewExporter(envRepository env.Repository, logger log.Logger, outputExporter
 		testAddonExporter: testAddonExporter,
 		commandFactory:    commandFactory,
 		dirZipper:         dirZipper,
+		pathChecker:       pathChecker,
+		pathModifier:      pathModifier,
 		pathProvider:      pathProvider,
 		fileManager:       fileManager,
 	}
@@ -142,11 +146,12 @@ func (e exporter) ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) e
 // ExportXcresultDiagnostics exports the Simulator diagnostics xcodebuild collected into the xcresult
 // (-collect-test-diagnostics) and zips them into the deploy dir as Test-<scheme>-diagnostics.zip.
 func (e exporter) ExportXcresultDiagnostics(deployDir, xcResultPath, scheme string) error {
-	if _, err := os.Stat(xcResultPath); err != nil {
-		if os.IsNotExist(err) { // xcodebuild did not get as far as writing the result bundle
-			return fmt.Errorf("%w: no xcresult at %s", ErrNoDiagnostics, xcResultPath)
-		}
+	exists, err := e.pathChecker.IsPathExists(xcResultPath)
+	if err != nil {
 		return fmt.Errorf("failed to check the xcresult: %w", err)
+	}
+	if !exists { // xcodebuild did not get as far as writing the result bundle
+		return fmt.Errorf("%w: no xcresult at %s", ErrNoDiagnostics, xcResultPath)
 	}
 
 	outputDir, err := e.pathProvider.CreateTempDir("xcresult-diagnostics")
@@ -178,7 +183,7 @@ func (e exporter) ExportXcresultDiagnostics(deployDir, xcResultPath, scheme stri
 
 	// xcresulttool exports the test session logs even when xcodebuild did not collect the Simulator diagnostics
 	// (for example when the test plan says never); export what is there and say what is missing.
-	hasBundle, err := hasSimulatorDiagnostics(outputDir, entries)
+	hasBundle, err := e.hasSimulatorDiagnostics(outputDir)
 	if err != nil {
 		return fmt.Errorf("failed to inspect the exported diagnostics: %w", err)
 	}
@@ -203,25 +208,12 @@ func (e exporter) ExportXcresultDiagnostics(deployDir, xcResultPath, scheme stri
 // hasSimulatorDiagnostics tells whether the exported diagnostics hold a simctl diagnose bundle. xcresulttool writes
 // one directory per test action (for example "0_Test_iPhone 17_Diagnostics") and the bundle as simctl_diagnostics
 // inside it (checked on Xcode 26.5 and 27.0).
-func hasSimulatorDiagnostics(outputDir string, entries []os.DirEntry) (bool, error) {
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-
-		info, err := os.Stat(filepath.Join(outputDir, entry.Name(), "simctl_diagnostics"))
-		if err != nil {
-			if os.IsNotExist(err) {
-				continue
-			}
-			return false, err
-		}
-		if info.IsDir() {
-			return true, nil
-		}
+func (e exporter) hasSimulatorDiagnostics(outputDir string) (bool, error) {
+	matches, err := e.pathProvider.Glob(filepath.Join(e.pathModifier.EscapeGlobPath(outputDir), "*", "simctl_diagnostics"))
+	if err != nil {
+		return false, err
 	}
-
-	return false, nil
+	return len(matches) > 0, nil
 }
 
 func (e exporter) ExportFlakyTestCases(xcResultPath string, useOldXCResultExtractionMethod bool) error {
