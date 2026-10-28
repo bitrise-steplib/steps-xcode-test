@@ -1,6 +1,7 @@
 package output
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -27,7 +28,8 @@ const (
 )
 
 type testingMocks struct {
-	envRepository *mocks.Repository
+	envRepository  *mocks.Repository
+	commandFactory *commonMocks.CommandFactory
 }
 
 func Test_GivenSuccessfulTest_WhenExportingTestRunResults_ThenSetsEnvVariableToSuccess(t *testing.T) {
@@ -88,56 +90,6 @@ func Test_GivenTestLog_WhenExporting_ThenCopiesItAndSetsEnvVariable(t *testing.T
 
 	assert.NoError(t, err)
 	assert.True(t, isPathExists(logPath))
-}
-
-func Test_GivenSimulatorDiagnostics_WhenExporting_ThenCopiesItAndSetsEnvVariable(t *testing.T) {
-	// Given
-	name := "Simulator"
-	tempDir := t.TempDir()
-
-	diagnosticsDir := filepath.Join(tempDir, "diagnostics")
-
-	diagnosticsFile := filepath.Join(diagnosticsDir, "simulatorDiagnostics.txt")
-	err := fileutil.NewFileManager().Write(diagnosticsFile, "test-diagnostics", 0777)
-
-	require.NoError(t, err)
-	require.FileExists(t, diagnosticsFile)
-
-	exporter, _ := createSutAndMocks()
-
-	// When
-	err = exporter.ExportSimulatorDiagnostics(tempDir, diagnosticsDir, name)
-
-	// Then
-	assert.NoError(t, err)
-	assert.True(t, isPathExists(filepath.Join(tempDir, name+".zip")))
-}
-
-func Test_GivenSimulatorDiagnostics_WhenNameHasExtension_ThenKeepsNameWithoutAppendingZip(t *testing.T) {
-	// Given
-	// The diagnostics dir name is an os.MkdirTemp basename with a dotted suffix
-	// (e.g. "...zip1805076116"), which counts as an extension, so the archive keeps
-	// that name as-is instead of getting a .zip appended.
-	name := "simctl_diagnose_2026-09-01T14-52-16.270015+02-00.zip1805076116"
-	tempDir := t.TempDir()
-
-	diagnosticsDir := filepath.Join(tempDir, "diagnostics")
-
-	diagnosticsFile := filepath.Join(diagnosticsDir, "simulatorDiagnostics.txt")
-	err := fileutil.NewFileManager().Write(diagnosticsFile, "test-diagnostics", 0777)
-
-	require.NoError(t, err)
-	require.FileExists(t, diagnosticsFile)
-
-	exporter, _ := createSutAndMocks()
-
-	// When
-	err = exporter.ExportSimulatorDiagnostics(tempDir, diagnosticsDir, name)
-
-	// Then
-	assert.NoError(t, err)
-	assert.True(t, isPathExists(filepath.Join(tempDir, name)))
-	assert.False(t, isPathExists(filepath.Join(tempDir, name+".zip")))
 }
 
 func Test_GivenFlakyTestCases_WhenExporting_ThenSetsEnvVariable(t *testing.T) {
@@ -338,6 +290,111 @@ func Test_exporter_collectAndExportFlakyTestPlans(t *testing.T) {
 
 // Helpers
 
+func Test_GivenXcresultDiagnostics_WhenExporting_ThenZipsThemIntoTheDeployDir(t *testing.T) {
+	// Given
+	deployDir := t.TempDir()
+	exporter, mocks := createSutAndMocks()
+	cmd := new(commonMocks.Command)
+	cmd.On("PrintableCommandArgs").Return("xcrun xcresulttool export diagnostics")
+	cmd.On("RunAndReturnTrimmedCombinedOutput").Return("Exported 1 object", nil)
+	mocks.commandFactory.On("Create", "xcrun", mock.MatchedBy(isExportDiagnosticsArgs), mock.Anything).Run(func(args mock.Arguments) {
+		// xcresulttool writes the bundle into --output-path
+		bundleDir := filepath.Join(args.Get(1).([]string)[6], "0_Test_iPhone 17_Diagnostics", "simctl_diagnostics")
+		require.NoError(t, os.MkdirAll(bundleDir, 0700))
+		require.NoError(t, os.WriteFile(filepath.Join(bundleDir, "diagnose.log"), []byte("diagnostics"), 0600))
+	}).Return(cmd)
+
+	// When
+	err := exporter.ExportXcresultDiagnostics(deployDir, fakeXcresult(t), "Scheme")
+
+	// Then
+	require.NoError(t, err)
+	assert.True(t, isPathExists(filepath.Join(deployDir, "Test-Scheme-diagnostics.zip")))
+}
+
+func Test_GivenXcresultWithoutSimulatorDiagnostics_WhenExporting_ThenExportsTheSessionLogs(t *testing.T) {
+	// Given
+	deployDir := t.TempDir()
+	exporter, mocks := createSutAndMocks()
+	cmd := new(commonMocks.Command)
+	cmd.On("PrintableCommandArgs").Return("xcrun xcresulttool export diagnostics")
+	cmd.On("RunAndReturnTrimmedCombinedOutput").Return("Exported 1 object", nil)
+	mocks.commandFactory.On("Create", "xcrun", mock.MatchedBy(isExportDiagnosticsArgs), mock.Anything).Run(func(args mock.Arguments) {
+		// only the test session logs, no simctl diagnose bundle
+		sessionDir := filepath.Join(args.Get(1).([]string)[6], "0_Test_iPhone 17_Diagnostics", "Tests-Configuration")
+		require.NoError(t, os.MkdirAll(sessionDir, 0700))
+		require.NoError(t, os.WriteFile(filepath.Join(sessionDir, "scheduling.log"), []byte("log"), 0600))
+	}).Return(cmd)
+
+	// When
+	err := exporter.ExportXcresultDiagnostics(deployDir, fakeXcresult(t), "Scheme")
+
+	// Then
+	require.NoError(t, err)
+	assert.True(t, isPathExists(filepath.Join(deployDir, "Test-Scheme-diagnostics.zip")))
+}
+
+func Test_GivenXcresultWithoutDiagnostics_WhenExporting_ThenReturnsErrNoDiagnostics(t *testing.T) {
+	// Given
+	deployDir := t.TempDir()
+	exporter, mocks := createSutAndMocks()
+	cmd := new(commonMocks.Command)
+	cmd.On("PrintableCommandArgs").Return("xcrun xcresulttool export diagnostics")
+	// xcodebuild did not reach the test phase: xcresulttool succeeds but exports nothing
+	cmd.On("RunAndReturnTrimmedCombinedOutput").Return("Exported 0 objects", nil)
+	mocks.commandFactory.On("Create", "xcrun", mock.MatchedBy(isExportDiagnosticsArgs), mock.Anything).Return(cmd)
+
+	// When
+	err := exporter.ExportXcresultDiagnostics(deployDir, fakeXcresult(t), "Scheme")
+
+	// Then
+	require.ErrorIs(t, err, ErrNoDiagnostics)
+	assert.False(t, isPathExists(filepath.Join(deployDir, "Test-Scheme-diagnostics.zip")))
+}
+
+func Test_GivenXcresultDiagnostics_WhenExportFails_ThenReturnsError(t *testing.T) {
+	// Given
+	deployDir := t.TempDir()
+	exporter, mocks := createSutAndMocks()
+	cmd := new(commonMocks.Command)
+	cmd.On("PrintableCommandArgs").Return("xcrun xcresulttool export diagnostics")
+	cmd.On("RunAndReturnTrimmedCombinedOutput").Return("error: no diagnostics", fmt.Errorf("exit status 1"))
+	mocks.commandFactory.On("Create", "xcrun", mock.MatchedBy(isExportDiagnosticsArgs), mock.Anything).Return(cmd)
+
+	// When
+	err := exporter.ExportXcresultDiagnostics(deployDir, fakeXcresult(t), "Scheme")
+
+	// Then
+	require.ErrorContains(t, err, "no diagnostics")
+	assert.False(t, isPathExists(filepath.Join(deployDir, "Test-Scheme-diagnostics.zip")))
+}
+
+func Test_GivenNoXcresult_WhenExportingDiagnostics_ThenReturnsErrNoDiagnostics(t *testing.T) {
+	// Given: xcodebuild never wrote the result bundle; xcresulttool must not even be called
+	deployDir := t.TempDir()
+	exporter, _ := createSutAndMocks()
+
+	// When
+	err := exporter.ExportXcresultDiagnostics(deployDir, filepath.Join(t.TempDir(), "Test-Scheme.xcresult"), "Scheme")
+
+	// Then
+	require.ErrorIs(t, err, ErrNoDiagnostics)
+	assert.False(t, isPathExists(filepath.Join(deployDir, "Test-Scheme-diagnostics.zip")))
+}
+
+// fakeXcresult creates an empty result bundle directory and returns its path.
+func fakeXcresult(t *testing.T) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "Test-Scheme.xcresult")
+	require.NoError(t, os.Mkdir(path, 0700))
+	return path
+}
+
+func isExportDiagnosticsArgs(args []string) bool {
+	return len(args) == 7 && args[0] == "xcresulttool" && args[1] == "export" && args[2] == "diagnostics" &&
+		args[3] == "--path" && strings.HasSuffix(args[4], "/Test-Scheme.xcresult") && args[5] == "--output-path"
+}
+
 func createSutAndMocks() (Exporter, testingMocks) {
 	commandFactory := new(commonMocks.CommandFactory)
 	fileManager := new(commonMocks.FileManager)
@@ -345,10 +402,11 @@ func createSutAndMocks() (Exporter, testingMocks) {
 	envRepository.On("Set", mock.Anything, mock.Anything).Return(nil)
 
 	zipManager := ziputil.NewZipManager(pathutil.NewPathChecker())
-	exporter := NewExporter(envRepository, log.NewLogger(), export.NewExporter(commandFactory, fileManager, zipManager), nil, zipManager, fileutil.NewFileManager())
+	exporter := NewExporter(envRepository, log.NewLogger(), export.NewExporter(commandFactory, fileManager, zipManager), nil, commandFactory, zipManager, pathutil.NewPathChecker(), pathutil.NewPathModifier(), pathutil.NewPathProvider(), fileutil.NewFileManager())
 
 	return exporter, testingMocks{
-		envRepository: envRepository,
+		envRepository:  envRepository,
+		commandFactory: commandFactory,
 	}
 }
 

@@ -116,16 +116,32 @@ func (u utils) CreateTestParams(cfg Config, xcresultPath, swiftPackagesPath stri
 // -collect-test-diagnostics and collects Simulator diagnostics itself after a failing test run.
 const minimumXcodeMajorWithDiagnosticsOption = 26
 
-func shouldStepCollectDiagnostics(condition exportCondition, testFailed bool, xcodeMajorVersion int64) bool {
-	if xcodeMajorVersion >= minimumXcodeMajorWithDiagnosticsOption { // xcodebuild collects
+// userDiagnosticsOption returns the value of a -collect-test-diagnostics option in xcodebuild_options, if there is one.
+func userDiagnosticsOption(additionalOptions []string) (string, bool) {
+	for i, option := range additionalOptions {
+		if option == "-collect-test-diagnostics" {
+			if i+1 < len(additionalOptions) {
+				return additionalOptions[i+1], true
+			}
+			return "", true
+		}
+	}
+	return "", false
+}
+
+// xcodebuildCollectsDiagnostics tells whether xcodebuild collected the Simulator diagnostics into the xcresult:
+// from Xcode 26 on, after a failing run, unless the input or a user -collect-test-diagnostics option says never.
+// With project_setting the test plan decides, which the Step cannot see; the export handles a missing bundle.
+func xcodebuildCollectsDiagnostics(condition exportCondition, testFailed bool, xcodeMajorVersion int64, additionalOptions []string) bool {
+	if xcodeMajorVersion < minimumXcodeMajorWithDiagnosticsOption || !testFailed {
 		return false
 	}
 
-	return condition == always || (condition == onFailure && testFailed)
-}
+	if value, ok := userDiagnosticsOption(additionalOptions); ok { // user's option wins
+		return value != "" && value != "never"
+	}
 
-func xcodebuildCollectsDiagnostics(condition exportCondition, testFailed bool, xcodeMajorVersion int64) bool {
-	return xcodeMajorVersion >= minimumXcodeMajorWithDiagnosticsOption && condition != never && testFailed
+	return condition != never
 }
 
 func xcodebuildDiagnosticsOverride(condition exportCondition, xcodeMajorVersion int64, additionalOptions []string) string {
@@ -133,10 +149,8 @@ func xcodebuildDiagnosticsOverride(condition exportCondition, xcodeMajorVersion 
 		return ""
 	}
 
-	for _, option := range additionalOptions {
-		if option == "-collect-test-diagnostics" { // user's option wins
-			return ""
-		}
+	if _, ok := userDiagnosticsOption(additionalOptions); ok { // user's option wins
+		return ""
 	}
 
 	if condition == projectSetting { // leave it to the test plan

@@ -98,44 +98,13 @@ func Test_xcodebuildDiagnosticsOverride(t *testing.T) {
 	}
 }
 
-func Test_shouldStepCollectDiagnostics(t *testing.T) {
-	tests := []struct {
-		name              string
-		condition         exportCondition
-		testFailed        bool
-		xcodeMajorVersion int64
-		want              bool
-	}{
-		{name: "Xcode 16, always, passed", condition: always, testFailed: false, xcodeMajorVersion: 16, want: true},
-		{name: "Xcode 16, always, failed", condition: always, testFailed: true, xcodeMajorVersion: 16, want: true},
-		{name: "Xcode 16, on_failure, passed", condition: onFailure, testFailed: false, xcodeMajorVersion: 16, want: false},
-		{name: "Xcode 16, on_failure, failed", condition: onFailure, testFailed: true, xcodeMajorVersion: 16, want: true},
-		{name: "Xcode 16, never, failed", condition: never, testFailed: true, xcodeMajorVersion: 16, want: false},
-		// project_setting has nothing to follow before Xcode 26, the Step does not collect on its own.
-		{name: "Xcode 16, project_setting, failed", condition: projectSetting, testFailed: true, xcodeMajorVersion: 16, want: false},
-		{name: "Xcode 27, project_setting, failed", condition: projectSetting, testFailed: true, xcodeMajorVersion: 27, want: false},
-		// main.go leaves the major at 0 when the Xcode version cannot be read; keep collecting there.
-		{name: "unknown Xcode, on_failure, failed", condition: onFailure, testFailed: true, xcodeMajorVersion: 0, want: true},
-		// Since Xcode 26 xcodebuild collects into the xcresult itself; the Step must not collect a second copy.
-		{name: "Xcode 26, on_failure, failed", condition: onFailure, testFailed: true, xcodeMajorVersion: 26, want: false},
-		{name: "Xcode 27, always, failed", condition: always, testFailed: true, xcodeMajorVersion: 27, want: false},
-		{name: "Xcode 27, always, passed", condition: always, testFailed: false, xcodeMajorVersion: 27, want: false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := shouldStepCollectDiagnostics(tt.condition, tt.testFailed, tt.xcodeMajorVersion)
-			require.Equal(t, tt.want, got)
-		})
-	}
-}
-
 func Test_xcodebuildCollectsDiagnostics(t *testing.T) {
 	tests := []struct {
 		name              string
 		condition         exportCondition
 		testFailed        bool
 		xcodeMajorVersion int64
+		additionalOptions []string
 		want              bool
 	}{
 		{name: "Xcode 27, on_failure, failed", condition: onFailure, testFailed: true, xcodeMajorVersion: 27, want: true},
@@ -146,11 +115,17 @@ func Test_xcodebuildCollectsDiagnostics(t *testing.T) {
 		// xcodebuild has no collection of its own before Xcode 26.
 		{name: "Xcode 16, on_failure, failed", condition: onFailure, testFailed: true, xcodeMajorVersion: 16, want: false},
 		{name: "Xcode 16, project_setting, failed", condition: projectSetting, testFailed: true, xcodeMajorVersion: 16, want: false},
+		// A -collect-test-diagnostics option in xcodebuild_options wins over the input.
+		{name: "Xcode 27, on_failure, failed, user never", condition: onFailure, testFailed: true, xcodeMajorVersion: 27, additionalOptions: []string{"-collect-test-diagnostics", "never"}, want: false},
+		{name: "Xcode 27, never, failed, user on-failure", condition: never, testFailed: true, xcodeMajorVersion: 27, additionalOptions: []string{"-verbose", "-collect-test-diagnostics", "on-failure"}, want: true},
+		{name: "Xcode 27, never, passed, user on-failure", condition: never, testFailed: false, xcodeMajorVersion: 27, additionalOptions: []string{"-collect-test-diagnostics", "on-failure"}, want: false},
+		// A dangling option has no value to collect with; xcodebuild rejects it anyway.
+		{name: "Xcode 27, on_failure, failed, user option without value", condition: onFailure, testFailed: true, xcodeMajorVersion: 27, additionalOptions: []string{"-verbose", "-collect-test-diagnostics"}, want: false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := xcodebuildCollectsDiagnostics(tt.condition, tt.testFailed, tt.xcodeMajorVersion)
+			got := xcodebuildCollectsDiagnostics(tt.condition, tt.testFailed, tt.xcodeMajorVersion, tt.additionalOptions)
 			require.Equal(t, tt.want, got)
 		})
 	}

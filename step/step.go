@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
 	"github.com/bitrise-io/go-steputils/v2/testquarantine"
@@ -15,7 +14,6 @@ import (
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/log/colorstring"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
-	"github.com/bitrise-io/go-utils/v2/progress"
 	"github.com/bitrise-io/go-xcode/v2/destination"
 	"github.com/bitrise-io/go-xcode/v2/simulator"
 	cache "github.com/bitrise-io/go-xcode/v2/xcodecache"
@@ -277,17 +275,32 @@ type Result struct {
 	Scheme    string
 	DeployDir string
 
-	XcresultPath             string
-	XcodebuildBuildLog       string
-	XcodebuildTestLog        string
-	SimulatorDiagnosticsPath string
+	XcresultPath       string
+	XcodebuildBuildLog string
+	XcodebuildTestLog  string
+	// XcresultDiagnosticsRequested is set when xcodebuild was asked to collect the Simulator diagnostics into the
+	// xcresult after a failing run (Xcode 26 and later); the export phase exports whatever it finds there.
+	XcresultDiagnosticsRequested bool
 }
 
 func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
-	bootForDiagnostics := cfg.CollectSimulatorDiagnostics != never
-	launchSimulator := !cfg.IsSimulatorBooted && !cfg.HeadlessMode
-	if err := s.prepareSimulator(bootForDiagnostics, cfg.Simulator, launchSimulator); err != nil {
-		return Result{}, err
+	if (cfg.CollectSimulatorDiagnostics == always || cfg.CollectSimulatorDiagnostics == onFailure) && cfg.XcodeMajorVersion < minimumXcodeMajorWithDiagnosticsOption {
+		s.logger.Warnf("Simulator diagnostics collection needs Xcode %d or later (xcodebuild -collect-test-diagnostics), the collect_simulator_diagnostics input is ignored", minimumXcodeMajorWithDiagnosticsOption)
+	}
+
+	// xcodebuild shuts down only the Simulators it booted itself, so a Simulator booted by the Step
+	// stays booted after the Step, for manual debugging.
+	if !cfg.HeadlessMode && !cfg.IsSimulatorBooted {
+		s.logger.Infof("Booting simulator (%s), it stays booted after the Step...", cfg.Simulator.UDID)
+		// Unlike Simulator.app, Xcode 27's DeviceHub.app does not boot the device passed in -CurrentDeviceUDID.
+		if err := s.simulatorManager.Boot(cfg.Simulator); err != nil {
+			return Result{}, fmt.Errorf("failed to boot simulator: %w", err)
+		}
+
+		s.logger.Infof("Launching the Simulator GUI...")
+		if err := s.simulatorManager.LaunchWithGUI(cfg.Simulator.UDID); err != nil {
+			return Result{}, fmt.Errorf("failed to launch the Simulator GUI: %w", err)
+		}
 	}
 
 	s.logger.Println()
@@ -303,7 +316,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 		testExitCode = code
 	}
 
-	result.SimulatorDiagnosticsPath = s.teardownSimulator(cfg.Simulator.UDID, cfg.CollectSimulatorDiagnostics, cfg.IsSimulatorBooted, testErr, cfg.XcodeMajorVersion)
+	result.XcresultDiagnosticsRequested = xcodebuildCollectsDiagnostics(cfg.CollectSimulatorDiagnostics, testErr != nil, cfg.XcodeMajorVersion, cfg.XcodebuildOptions)
 
 	if testErr != nil {
 		s.logger.Println()
@@ -351,12 +364,17 @@ func (s XcodeTestRunner) Export(result Result, testFailed bool) error {
 		}
 	}
 
-	// export simulator diagnostics log
-	if result.SimulatorDiagnosticsPath != "" {
-		diagnosticsName := filepath.Base(result.SimulatorDiagnosticsPath)
-
-		if err := s.outputExporter.ExportSimulatorDiagnostics(result.DeployDir, result.SimulatorDiagnosticsPath, diagnosticsName); err != nil {
-			return fmt.Errorf("failed to export simulator diagnostics: %w", err)
+	// export the Simulator diagnostics xcodebuild collected into the xcresult
+	if result.XcresultPath != "" && result.XcresultDiagnosticsRequested {
+		s.logger.Println()
+		s.logger.Infof("Exporting the Simulator diagnostics from the xcresult")
+		if err := s.outputExporter.ExportXcresultDiagnostics(result.DeployDir, result.XcresultPath, result.Scheme); err != nil {
+			if errors.Is(err, output.ErrNoDiagnostics) {
+				// xcodebuild did not reach the test phase (for example the build failed), so there was nothing to collect.
+				s.logger.Infof("The xcresult holds no diagnostics, nothing to export")
+			} else {
+				s.logger.Warnf("Failed to export the Simulator diagnostics: %s", err)
+			}
 		}
 	}
 
@@ -415,47 +433,6 @@ func (s XcodeTestConfigParser) getSimulatorForDestination(destinationSpecifier s
 	return device, nil
 }
 
-// simulatorGUIBootWait is overridden in tests.
-var simulatorGUIBootWait = 60 * time.Second
-
-func (s XcodeTestRunner) prepareSimulator(bootForDiagnostics bool, simulator destination.Device, launchSimulator bool) error {
-	if bootForDiagnostics {
-		s.logger.Infof("Booting simulator (%s) for diagnostics collection...", simulator.UDID)
-		// xcodebuild shuts down only the simulators it booted itself, so a simulator booted by the Step
-		// is kept booted after the tests and the Step can collect diagnostics from it.
-		if err := s.simulatorManager.Boot(simulator); err != nil {
-			return fmt.Errorf("failed to boot simulator: %w", err)
-		}
-
-		s.logger.Println()
-	}
-
-	if launchSimulator {
-		s.logger.Infof("Booting simulator (%s)...", simulator.UDID)
-
-		// Unlike Simulator.app, Xcode 27's DeviceHub.app does not boot the device passed in -CurrentDeviceUDID.
-		if err := s.simulatorManager.Boot(simulator); err != nil {
-			return fmt.Errorf("failed to boot simulator: %w", err)
-		}
-
-		s.logger.Infof("Launching the Simulator GUI...")
-
-		if err := s.simulatorManager.LaunchWithGUI(simulator.UDID); err != nil {
-			return fmt.Errorf("failed to launch the Simulator GUI: %w", err)
-		}
-
-		s.logger.Printf("Waiting for simulator boot")
-		_ = progress.NewDefaultSimpleDots(progress.NewFmtPrinter()).Run(func() error {
-			time.Sleep(simulatorGUIBootWait)
-			return nil
-		})
-
-		s.logger.Println()
-	}
-
-	return nil
-}
-
 func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 	// Run build
 	result := Result{
@@ -486,33 +463,4 @@ func (s XcodeTestRunner) runTests(cfg Config) (Result, int, error) {
 	}
 
 	return result, exitCode, testErr
-}
-
-func (s XcodeTestRunner) teardownSimulator(simulatorID string, simulatorDebug exportCondition, isSimulatorBooted bool, testErr error, xcodeMajorVersion int64) string {
-	var simulatorDiagnosticsPath string
-
-	if shouldStepCollectDiagnostics(simulatorDebug, testErr != nil, xcodeMajorVersion) {
-		s.logger.Println()
-		s.logger.Infof("Collecting Simulator diagnostics")
-
-		diagnosticsPath, err := s.simulatorManager.CollectDiagnostics()
-		if err != nil {
-			s.logger.Warnf(err.Error())
-		} else {
-			s.logger.Donef("Simulator diagnostics are available as an artifact (%s)", diagnosticsPath)
-			simulatorDiagnosticsPath = diagnosticsPath
-		}
-	} else if xcodebuildCollectsDiagnostics(simulatorDebug, testErr != nil, xcodeMajorVersion) {
-		s.logger.Println()
-		s.logger.Infof("xcodebuild collects the Simulator diagnostics into the xcresult (xcrun xcresulttool export diagnostics), the Step does not collect them separately")
-	}
-
-	// Shut down the simulator if it was started by the step for diagnostic logs.
-	if !isSimulatorBooted && simulatorDebug != never {
-		if err := s.simulatorManager.Shutdown(simulatorID); err != nil {
-			s.logger.Warnf(err.Error())
-		}
-	}
-
-	return simulatorDiagnosticsPath
 }
