@@ -168,6 +168,48 @@ workflows:
               fi
             done
 
+  test_swift_testing_flaky_parametrized:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/sample-swift-project-with-parallel-ui-test.git
+    - TEST_APP_BRANCH: flaky-parametrized-swift-testing-case
+    - BITRISE_PROJECT_PATH: BullsEye.xcworkspace
+    - BITRISE_SCHEME: BullsEye
+    - TEST_PLAN: UnitTests
+    - DESTINATION: platform=iOS Simulator,name=Bitrise iOS default,OS=latest
+    - LOG_FORMATTER: xcbeautify
+    - EXPECT_TEST_FAILURE: "false"
+    - CACHE_LEVEL: none
+    before_run:
+    - _start_flaky_run
+    - _run
+    - _check_outputs
+    steps:
+    - script:
+        title: Check flaky Swift Testing tests
+        summary: The Swift Testing tests that fail on the first attempt and pass on retry must be listed as flaky, parametrized ones included.
+        inputs:
+        - content: |-
+            #!/usr/bin/env bash
+            set -ex
+            flaky_tests=(
+              "BullsEyeTests.BullsEyeSwiftTestingTests.scoreIsComputedEventually()"
+              "BullsEyeTests.BullsEyeSwiftTestingTests.scoreIsEventuallyComputedForEachOffset(offset:)"
+            )
+            for test in "${flaky_tests[@]}"; do
+              if ! echo "$BITRISE_FLAKY_TEST_CASES" | grep -qF -- "- $test"; then
+                echo "flaky Swift Testing test missing from BITRISE_FLAKY_TEST_CASES: $test"
+                exit 1
+              fi
+            done
+    - script:
+        title: Turn the sample's flaky tests off for the next workflows
+        is_always_run: true
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -ex
+            envman add --key TEST_RUNNER_BULLSEYE_FLAKY_RUN_ID --value ""
+
   test_xcconfig_rel_path:
     envs:
     - TEST_APP_URL: https://github.com/bitrise-io/sample-apps-ios-simple-objc-with-uitest.git
@@ -259,6 +301,18 @@ workflows:
         - cache_level: $CACHE_LEVEL
         - collect_simulator_diagnostics: $COLLECT_SIM_DIAGNOSTICS
         - quarantined_tests: $QUARANTINED_TESTS
+
+  _start_flaky_run:
+    steps:
+    - script:
+        title: Make the sample's flaky tests fail on their first attempt
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -ex
+            # xcodebuild strips the TEST_RUNNER_ prefix and hands the variable to the test process.
+            # A fresh value starts a fresh scenario, so the tests fail again on every run.
+            envman add --key TEST_RUNNER_BULLSEYE_FLAKY_RUN_ID --value "$(uuidgen)"
 
   _clear_outputs:
     steps:
