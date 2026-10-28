@@ -142,6 +142,13 @@ func (e exporter) ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) e
 // ExportXcresultDiagnostics exports the Simulator diagnostics xcodebuild collected into the xcresult
 // (-collect-test-diagnostics) and zips them into the deploy dir as Test-<scheme>-diagnostics.zip.
 func (e exporter) ExportXcresultDiagnostics(deployDir, xcResultPath, scheme string) error {
+	if _, err := os.Stat(xcResultPath); err != nil {
+		if os.IsNotExist(err) { // xcodebuild did not get as far as writing the result bundle
+			return fmt.Errorf("%w: no xcresult at %s", ErrNoDiagnostics, xcResultPath)
+		}
+		return fmt.Errorf("failed to check the xcresult: %w", err)
+	}
+
 	outputDir, err := e.pathProvider.CreateTempDir("xcresult-diagnostics")
 	if err != nil {
 		return fmt.Errorf("failed to create a temporary directory: %w", err)

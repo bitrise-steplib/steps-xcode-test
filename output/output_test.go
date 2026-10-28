@@ -305,7 +305,7 @@ func Test_GivenXcresultDiagnostics_WhenExporting_ThenZipsThemIntoTheDeployDir(t 
 	}).Return(cmd)
 
 	// When
-	err := exporter.ExportXcresultDiagnostics(deployDir, "/path/Test-Scheme.xcresult", "Scheme")
+	err := exporter.ExportXcresultDiagnostics(deployDir, fakeXcresult(t), "Scheme")
 
 	// Then
 	require.NoError(t, err)
@@ -327,7 +327,7 @@ func Test_GivenXcresultWithoutSimulatorDiagnostics_WhenExporting_ThenExportsTheS
 	}).Return(cmd)
 
 	// When
-	err := exporter.ExportXcresultDiagnostics(deployDir, "/path/Test-Scheme.xcresult", "Scheme")
+	err := exporter.ExportXcresultDiagnostics(deployDir, fakeXcresult(t), "Scheme")
 
 	// Then
 	require.NoError(t, err)
@@ -345,7 +345,7 @@ func Test_GivenXcresultWithoutDiagnostics_WhenExporting_ThenReturnsErrNoDiagnost
 	mocks.commandFactory.On("Create", "xcrun", mock.MatchedBy(isExportDiagnosticsArgs), mock.Anything).Return(cmd)
 
 	// When
-	err := exporter.ExportXcresultDiagnostics(deployDir, "/path/Test-Scheme.xcresult", "Scheme")
+	err := exporter.ExportXcresultDiagnostics(deployDir, fakeXcresult(t), "Scheme")
 
 	// Then
 	require.ErrorIs(t, err, ErrNoDiagnostics)
@@ -362,16 +362,37 @@ func Test_GivenXcresultDiagnostics_WhenExportFails_ThenReturnsError(t *testing.T
 	mocks.commandFactory.On("Create", "xcrun", mock.MatchedBy(isExportDiagnosticsArgs), mock.Anything).Return(cmd)
 
 	// When
-	err := exporter.ExportXcresultDiagnostics(deployDir, "/path/Test-Scheme.xcresult", "Scheme")
+	err := exporter.ExportXcresultDiagnostics(deployDir, fakeXcresult(t), "Scheme")
 
 	// Then
 	require.ErrorContains(t, err, "no diagnostics")
 	assert.False(t, isPathExists(filepath.Join(deployDir, "Test-Scheme-diagnostics.zip")))
 }
 
+func Test_GivenNoXcresult_WhenExportingDiagnostics_ThenReturnsErrNoDiagnostics(t *testing.T) {
+	// Given: xcodebuild never wrote the result bundle; xcresulttool must not even be called
+	deployDir := t.TempDir()
+	exporter, _ := createSutAndMocks()
+
+	// When
+	err := exporter.ExportXcresultDiagnostics(deployDir, filepath.Join(t.TempDir(), "Test-Scheme.xcresult"), "Scheme")
+
+	// Then
+	require.ErrorIs(t, err, ErrNoDiagnostics)
+	assert.False(t, isPathExists(filepath.Join(deployDir, "Test-Scheme-diagnostics.zip")))
+}
+
+// fakeXcresult creates an empty result bundle directory and returns its path.
+func fakeXcresult(t *testing.T) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "Test-Scheme.xcresult")
+	require.NoError(t, os.Mkdir(path, 0700))
+	return path
+}
+
 func isExportDiagnosticsArgs(args []string) bool {
 	return len(args) == 7 && args[0] == "xcresulttool" && args[1] == "export" && args[2] == "diagnostics" &&
-		args[3] == "--path" && args[4] == "/path/Test-Scheme.xcresult" && args[5] == "--output-path"
+		args[3] == "--path" && strings.HasSuffix(args[4], "/Test-Scheme.xcresult") && args[5] == "--output-path"
 }
 
 func createSutAndMocks() (Exporter, testingMocks) {
