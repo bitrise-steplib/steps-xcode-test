@@ -193,7 +193,7 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 
 	additionalLogFormatterOptions, err := s.parseAdditionalLogFormatterOptions(input.LogFormatter, input.XcprettyOptions, input.XcbeautifyOptions)
 	if err != nil {
-		return Config{}, nil
+		return Config{}, err
 	}
 
 	if strings.TrimSpace(input.XCConfigContent) == "" {
@@ -278,10 +278,13 @@ type Result struct {
 	XcresultPath       string
 	XcodebuildBuildLog string
 	XcodebuildTestLog  string
+	// XcresultDiagnosticsRequested is set when xcodebuild was asked to collect the Simulator diagnostics into the
+	// xcresult after a failing run (Xcode 26 and later); the export phase exports whatever it finds there.
+	XcresultDiagnosticsRequested bool
 }
 
 func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
-	if cfg.CollectSimulatorDiagnostics != never && cfg.XcodeMajorVersion < minimumXcodeMajorWithDiagnosticsOption {
+	if (cfg.CollectSimulatorDiagnostics == always || cfg.CollectSimulatorDiagnostics == onFailure) && cfg.XcodeMajorVersion < minimumXcodeMajorWithDiagnosticsOption {
 		s.logger.Warnf("Simulator diagnostics collection needs Xcode %d or later (xcodebuild -collect-test-diagnostics), the collect_simulator_diagnostics input is ignored", minimumXcodeMajorWithDiagnosticsOption)
 	}
 
@@ -313,10 +316,7 @@ func (s XcodeTestRunner) Run(cfg Config) (Result, error) {
 		testExitCode = code
 	}
 
-	if xcodebuildCollectsDiagnostics(cfg.CollectSimulatorDiagnostics, testErr != nil, cfg.XcodeMajorVersion) {
-		s.logger.Println()
-		s.logger.Infof("xcodebuild collected the Simulator diagnostics into the xcresult, extract them with: xcrun xcresulttool export diagnostics --path <xcresult> --output-path <directory>")
-	}
+	result.XcresultDiagnosticsRequested = xcodebuildCollectsDiagnostics(cfg.CollectSimulatorDiagnostics, testErr != nil, cfg.XcodeMajorVersion, cfg.XcodebuildOptions)
 
 	if testErr != nil {
 		s.logger.Println()
@@ -361,6 +361,20 @@ func (s XcodeTestRunner) Export(result Result, testFailed bool) error {
 	if result.XcodebuildTestLog != "" {
 		if err := s.outputExporter.ExportXcodebuildTestLog(result.DeployDir, result.XcodebuildTestLog); err != nil {
 			return err
+		}
+	}
+
+	// export the Simulator diagnostics xcodebuild collected into the xcresult
+	if result.XcresultPath != "" && result.XcresultDiagnosticsRequested {
+		s.logger.Println()
+		s.logger.Infof("Exporting the Simulator diagnostics from the xcresult")
+		if err := s.outputExporter.ExportXcresultDiagnostics(result.DeployDir, result.XcresultPath, result.Scheme); err != nil {
+			if errors.Is(err, output.ErrNoDiagnostics) {
+				// xcodebuild did not reach the test phase (for example the build failed), so there was nothing to collect.
+				s.logger.Infof("The xcresult holds no diagnostics, nothing to export")
+			} else {
+				s.logger.Warnf("Failed to export the Simulator diagnostics: %s", err)
+			}
 		}
 	}
 

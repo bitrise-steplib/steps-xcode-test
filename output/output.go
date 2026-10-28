@@ -1,14 +1,18 @@
 package output
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"path/filepath"
 
 	"github.com/bitrise-io/bitrise/configs"
 	"github.com/bitrise-io/go-steputils/v2/export"
+	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult3"
 	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult3/model3"
 	"github.com/bitrise-steplib/steps-xcode-test/testaddon"
@@ -19,13 +23,23 @@ const (
 	flakyTestCasesEnvVarSizeLimitInBytes = 1024
 )
 
+// ErrNoDiagnostics is returned by ExportXcresultDiagnostics when the xcresult holds no diagnostics at all,
+// which is the case when xcodebuild did not reach the test phase (for example the build failed).
+var ErrNoDiagnostics = errors.New("the xcresult holds no diagnostics")
+
 // Exporter ...
 type Exporter interface {
 	ExportXCResultBundle(deployDir, xcResultPath, scheme string)
 	ExportTestRunResult(failed bool)
 	ExportXcodebuildBuildLog(deployDir, xcodebuildBuildLog string) error
 	ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) error
+	ExportXcresultDiagnostics(deployDir, xcResultPath, scheme string) error
 	ExportFlakyTestCases(xcResultPath string, useOldXCResultExtractionMethod bool) error
+}
+
+// DirZipper zips a directory into a destination archive.
+type DirZipper interface {
+	ZipDir(sourceDirPth, destinationZipPth string, isContentOnly bool) error
 }
 
 type exporter struct {
@@ -33,16 +47,26 @@ type exporter struct {
 	logger            log.Logger
 	outputExporter    export.Exporter
 	testAddonExporter testaddon.Exporter
+	commandFactory    command.Factory
+	dirZipper         DirZipper
+	pathChecker       pathutil.PathChecker
+	pathModifier      pathutil.PathModifier
+	pathProvider      pathutil.PathProvider
 	fileManager       fileutil.FileManager
 }
 
 // NewExporter ...
-func NewExporter(envRepository env.Repository, logger log.Logger, outputExporter export.Exporter, testAddonExporter testaddon.Exporter, fileManager fileutil.FileManager) Exporter {
+func NewExporter(envRepository env.Repository, logger log.Logger, outputExporter export.Exporter, testAddonExporter testaddon.Exporter, commandFactory command.Factory, dirZipper DirZipper, pathChecker pathutil.PathChecker, pathModifier pathutil.PathModifier, pathProvider pathutil.PathProvider, fileManager fileutil.FileManager) Exporter {
 	return &exporter{
 		envRepository:     envRepository,
 		logger:            logger,
 		outputExporter:    outputExporter,
 		testAddonExporter: testAddonExporter,
+		commandFactory:    commandFactory,
+		dirZipper:         dirZipper,
+		pathChecker:       pathChecker,
+		pathModifier:      pathModifier,
+		pathProvider:      pathProvider,
 		fileManager:       fileManager,
 	}
 }
@@ -117,6 +141,79 @@ func (e exporter) ExportXcodebuildTestLog(deployDir, xcodebuildTestLog string) e
 	}
 
 	return nil
+}
+
+// ExportXcresultDiagnostics exports the Simulator diagnostics xcodebuild collected into the xcresult
+// (-collect-test-diagnostics) and zips them into the deploy dir as Test-<scheme>-diagnostics.zip.
+func (e exporter) ExportXcresultDiagnostics(deployDir, xcResultPath, scheme string) error {
+	exists, err := e.pathChecker.IsPathExists(xcResultPath)
+	if err != nil {
+		return fmt.Errorf("failed to check the xcresult: %w", err)
+	}
+	if !exists { // xcodebuild did not get as far as writing the result bundle
+		return fmt.Errorf("%w: no xcresult at %s", ErrNoDiagnostics, xcResultPath)
+	}
+
+	outputDir, err := e.pathProvider.CreateTempDir("xcresult-diagnostics")
+	if err != nil {
+		return fmt.Errorf("failed to create a temporary directory: %w", err)
+	}
+	defer func() {
+		if err := e.fileManager.RemoveAll(outputDir); err != nil {
+			e.logger.Warnf("Failed to remove the temporary diagnostics directory (%s): %s", outputDir, err)
+		}
+	}()
+
+	cmd := e.commandFactory.Create("xcrun", []string{"xcresulttool", "export", "diagnostics", "--path", xcResultPath, "--output-path", outputDir}, nil)
+	e.logger.Printf("$ %s", cmd.PrintableCommandArgs())
+
+	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
+	if err != nil {
+		return fmt.Errorf("xcresulttool export diagnostics failed: %w, output: %s", err, out)
+	}
+	e.logger.Debugf("%s", out)
+
+	entries, err := e.fileManager.ReadDirEntryNames(outputDir)
+	if err != nil {
+		return fmt.Errorf("failed to read the exported diagnostics: %w", err)
+	}
+	if len(entries) == 0 {
+		return fmt.Errorf("%w: %s", ErrNoDiagnostics, xcResultPath)
+	}
+
+	// xcresulttool exports the test session logs even when xcodebuild did not collect the Simulator diagnostics
+	// (for example when the test plan says never); export what is there and say what is missing.
+	hasBundle, err := e.hasSimulatorDiagnostics(outputDir)
+	if err != nil {
+		return fmt.Errorf("failed to inspect the exported diagnostics: %w", err)
+	}
+	if !hasBundle {
+		e.logger.Warnf("The xcresult contains no Simulator diagnostics, exporting the test session logs only")
+	}
+
+	zipPath := filepath.Join(deployDir, fmt.Sprintf("Test-%s-diagnostics.zip", scheme))
+	if err := e.dirZipper.ZipDir(outputDir, zipPath, true); err != nil {
+		// do not leave a partial archive behind for the deploy step
+		if removeErr := e.fileManager.Remove(zipPath); removeErr != nil && !errors.Is(removeErr, fs.ErrNotExist) {
+			e.logger.Warnf("Failed to remove the partial archive (%s): %s", zipPath, removeErr)
+		}
+		return fmt.Errorf("failed to compress the exported diagnostics: %w", err)
+	}
+
+	e.logger.Donef("Simulator diagnostics are available as an artifact (%s)", zipPath)
+
+	return nil
+}
+
+// hasSimulatorDiagnostics tells whether the exported diagnostics hold a simctl diagnose bundle. xcresulttool writes
+// one directory per test action (for example "0_Test_iPhone 17_Diagnostics") and the bundle as simctl_diagnostics
+// inside it (checked on Xcode 26.5 and 27.0).
+func (e exporter) hasSimulatorDiagnostics(outputDir string) (bool, error) {
+	matches, err := e.pathProvider.Glob(filepath.Join(e.pathModifier.EscapeGlobPath(outputDir), "*", "simctl_diagnostics"))
+	if err != nil {
+		return false, err
+	}
+	return len(matches) > 0, nil
 }
 
 func (e exporter) ExportFlakyTestCases(xcResultPath string, useOldXCResultExtractionMethod bool) error {

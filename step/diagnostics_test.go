@@ -104,6 +104,7 @@ func Test_xcodebuildCollectsDiagnostics(t *testing.T) {
 		condition         exportCondition
 		testFailed        bool
 		xcodeMajorVersion int64
+		additionalOptions []string
 		want              bool
 	}{
 		{name: "Xcode 27, on_failure, failed", condition: onFailure, testFailed: true, xcodeMajorVersion: 27, want: true},
@@ -114,11 +115,17 @@ func Test_xcodebuildCollectsDiagnostics(t *testing.T) {
 		// xcodebuild has no collection of its own before Xcode 26.
 		{name: "Xcode 16, on_failure, failed", condition: onFailure, testFailed: true, xcodeMajorVersion: 16, want: false},
 		{name: "Xcode 16, project_setting, failed", condition: projectSetting, testFailed: true, xcodeMajorVersion: 16, want: false},
+		// A -collect-test-diagnostics option in xcodebuild_options wins over the input.
+		{name: "Xcode 27, on_failure, failed, user never", condition: onFailure, testFailed: true, xcodeMajorVersion: 27, additionalOptions: []string{"-collect-test-diagnostics", "never"}, want: false},
+		{name: "Xcode 27, never, failed, user on-failure", condition: never, testFailed: true, xcodeMajorVersion: 27, additionalOptions: []string{"-verbose", "-collect-test-diagnostics", "on-failure"}, want: true},
+		{name: "Xcode 27, never, passed, user on-failure", condition: never, testFailed: false, xcodeMajorVersion: 27, additionalOptions: []string{"-collect-test-diagnostics", "on-failure"}, want: false},
+		// A dangling option has no value to collect with; xcodebuild rejects it anyway.
+		{name: "Xcode 27, on_failure, failed, user option without value", condition: onFailure, testFailed: true, xcodeMajorVersion: 27, additionalOptions: []string{"-verbose", "-collect-test-diagnostics"}, want: false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := xcodebuildCollectsDiagnostics(tt.condition, tt.testFailed, tt.xcodeMajorVersion)
+			got := xcodebuildCollectsDiagnostics(tt.condition, tt.testFailed, tt.xcodeMajorVersion, tt.additionalOptions)
 			require.Equal(t, tt.want, got)
 		})
 	}

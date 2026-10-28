@@ -28,44 +28,6 @@ func (_m *SimulatorManager) Boot(device destination.Device) error {
 	return r0
 }
 
-// CollectDiagnostics provides a mock function with given fields:
-func (_m *SimulatorManager) CollectDiagnostics() (string, error) {
-	ret := _m.Called()
-
-	var r0 string
-	var r1 error
-	if rf, ok := ret.Get(0).(func() (string, error)); ok {
-		return rf()
-	}
-	if rf, ok := ret.Get(0).(func() string); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// EnableVerboseLog provides a mock function with given fields: id
-func (_m *SimulatorManager) EnableVerboseLog(id string) error {
-	ret := _m.Called(id)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(id)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // Erase provides a mock function with given fields: id
 func (_m *SimulatorManager) Erase(id string) error {
 	ret := _m.Called(id)
