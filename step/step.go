@@ -193,7 +193,7 @@ func (s XcodeTestConfigParser) ProcessConfig() (Config, error) {
 
 	additionalLogFormatterOptions, err := s.parseAdditionalLogFormatterOptions(input.LogFormatter, input.XcprettyOptions, input.XcbeautifyOptions)
 	if err != nil {
-		return Config{}, nil
+		return Config{}, err
 	}
 
 	if strings.TrimSpace(input.XCConfigContent) == "" {

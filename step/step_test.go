@@ -289,6 +289,22 @@ func Test_GivenConfigParser_WhenParsesConfig(t *testing.T) {
 	}
 }
 
+func Test_GivenConfigParser_WhenLogFormatterOptionsAreInvalid_ThenFails(t *testing.T) {
+	// Given
+	envValues := defaultEnvValues()
+	envValues["log_formatter"] = "xcbeautify"
+	envValues["xcbeautify_options"] = "'--is-ci"
+	configParser, mocks := createConfigParser(t, envValues)
+	mocks.pathModifier.On("AbsPath", mock.Anything).Return(strings.TrimPrefix(envValues["project_path"], "."), nil)
+	mocks.deviceFinder.On("FindDevice", mock.Anything, mock.Anything).Return(defaultSimulator(), nil)
+
+	// When
+	_, err := configParser.ProcessConfig()
+
+	// Then
+	require.ErrorContains(t, err, "xcbeautify_options")
+}
+
 func Test_GivenStep_WhenExportsTestResult_ThenSetsCorrectly(t *testing.T) {
 	tests := []struct {
 		name       string
