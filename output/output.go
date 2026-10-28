@@ -3,6 +3,7 @@ package output
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"path/filepath"
 
 	"github.com/bitrise-io/bitrise/configs"
@@ -193,27 +194,15 @@ func (e exporter) ExportXcresultDiagnostics(deployDir, xcResultPath, scheme stri
 	zipPath := filepath.Join(deployDir, fmt.Sprintf("Test-%s-diagnostics.zip", scheme))
 	if err := e.dirZipper.ZipDir(outputDir, zipPath, true); err != nil {
 		// do not leave a partial archive behind for the deploy step
-		e.removePartialArchive(zipPath)
+		if removeErr := e.fileManager.Remove(zipPath); removeErr != nil && !errors.Is(removeErr, fs.ErrNotExist) {
+			e.logger.Warnf("Failed to remove the partial archive (%s): %s", zipPath, removeErr)
+		}
 		return fmt.Errorf("failed to compress the exported diagnostics: %w", err)
 	}
 
 	e.logger.Donef("Simulator diagnostics are available as an artifact (%s)", zipPath)
 
 	return nil
-}
-
-func (e exporter) removePartialArchive(zipPath string) {
-	exists, err := e.pathChecker.IsPathExists(zipPath)
-	if err != nil {
-		e.logger.Warnf("Failed to check the partial archive (%s): %s", zipPath, err)
-		return
-	}
-	if !exists {
-		return
-	}
-	if err := e.fileManager.Remove(zipPath); err != nil {
-		e.logger.Warnf("Failed to remove the partial archive (%s): %s", zipPath, err)
-	}
 }
 
 // hasSimulatorDiagnostics tells whether the exported diagnostics hold a simctl diagnose bundle. xcresulttool writes
