@@ -334,6 +334,24 @@ func Test_GivenXcresultWithoutSimulatorDiagnostics_WhenExporting_ThenExportsTheS
 	assert.True(t, isPathExists(filepath.Join(deployDir, "Test-Scheme-diagnostics.zip")))
 }
 
+func Test_GivenXcresultWithoutDiagnostics_WhenExporting_ThenReturnsErrNoDiagnostics(t *testing.T) {
+	// Given
+	deployDir := t.TempDir()
+	exporter, mocks := createSutAndMocks()
+	cmd := new(commonMocks.Command)
+	cmd.On("PrintableCommandArgs").Return("xcrun xcresulttool export diagnostics")
+	// xcodebuild did not reach the test phase: xcresulttool succeeds but exports nothing
+	cmd.On("RunAndReturnTrimmedCombinedOutput").Return("Exported 0 objects", nil)
+	mocks.commandFactory.On("Create", "xcrun", mock.MatchedBy(isExportDiagnosticsArgs), mock.Anything).Return(cmd)
+
+	// When
+	err := exporter.ExportXcresultDiagnostics(deployDir, "/path/Test-Scheme.xcresult", "Scheme")
+
+	// Then
+	require.ErrorIs(t, err, ErrNoDiagnostics)
+	assert.False(t, isPathExists(filepath.Join(deployDir, "Test-Scheme-diagnostics.zip")))
+}
+
 func Test_GivenXcresultDiagnostics_WhenExportFails_ThenReturnsError(t *testing.T) {
 	// Given
 	deployDir := t.TempDir()

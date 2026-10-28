@@ -369,7 +369,12 @@ func (s XcodeTestRunner) Export(result Result, testFailed bool) error {
 		s.logger.Println()
 		s.logger.Infof("Exporting the Simulator diagnostics from the xcresult")
 		if err := s.outputExporter.ExportXcresultDiagnostics(result.DeployDir, result.XcresultPath, result.Scheme); err != nil {
-			s.logger.Warnf("Failed to export the Simulator diagnostics: %s", err)
+			if errors.Is(err, output.ErrNoDiagnostics) {
+				// xcodebuild did not reach the test phase (for example the build failed), so there was nothing to collect.
+				s.logger.Infof("The xcresult holds no diagnostics, nothing to export")
+			} else {
+				s.logger.Warnf("Failed to export the Simulator diagnostics: %s", err)
+			}
 		}
 	}
 

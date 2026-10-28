@@ -1,6 +1,7 @@
 package output
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -21,6 +22,10 @@ const (
 	flakyTestCasesEnvVarKey              = "BITRISE_FLAKY_TEST_CASES"
 	flakyTestCasesEnvVarSizeLimitInBytes = 1024
 )
+
+// ErrNoDiagnostics is returned by ExportXcresultDiagnostics when the xcresult holds no diagnostics at all,
+// which is the case when xcodebuild did not reach the test phase (for example the build failed).
+var ErrNoDiagnostics = errors.New("the xcresult holds no diagnostics")
 
 // Exporter ...
 type Exporter interface {
@@ -159,7 +164,7 @@ func (e exporter) ExportXcresultDiagnostics(deployDir, xcResultPath, scheme stri
 		return fmt.Errorf("failed to read the exported diagnostics: %w", err)
 	}
 	if len(entries) == 0 {
-		return fmt.Errorf("xcresulttool exported nothing from the xcresult (%s)", xcResultPath)
+		return fmt.Errorf("%w: %s", ErrNoDiagnostics, xcResultPath)
 	}
 
 	// xcresulttool exports the test session logs even when xcodebuild did not collect the Simulator diagnostics

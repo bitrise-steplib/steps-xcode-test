@@ -10,6 +10,7 @@ import (
 	"github.com/bitrise-io/go-xcode/v2/destination"
 	"github.com/bitrise-io/go-xcode/v2/xcodeversion"
 	commonMocks "github.com/bitrise-steplib/steps-xcode-test/mocks"
+	"github.com/bitrise-steplib/steps-xcode-test/output"
 	"github.com/bitrise-steplib/steps-xcode-test/step/mocks"
 	"github.com/hashicorp/go-version"
 	"github.com/stretchr/testify/assert"
@@ -378,6 +379,25 @@ func Test_GivenStep_WhenDiagnosticsExportFails_ThenExportStillSucceeds(t *testin
 	mocks.outputExporter.On("ExportXcodebuildBuildLog", result.DeployDir, result.XcodebuildBuildLog).Return(nil)
 	mocks.outputExporter.On("ExportXcodebuildTestLog", result.DeployDir, result.XcodebuildTestLog).Return(nil)
 	mocks.outputExporter.On("ExportXcresultDiagnostics", result.DeployDir, result.XcresultPath, result.Scheme).Return(fmt.Errorf("xcresulttool failed"))
+
+	// When
+	err := step.Export(result, true)
+
+	// Then
+	assert.NoError(t, err)
+}
+
+func Test_GivenStep_WhenXcresultHoldsNoDiagnostics_ThenExportStillSucceeds(t *testing.T) {
+	// Given: the build failed, xcodebuild never reached the test phase
+	step, mocks := createStepAndMocks(t)
+	result := defaultResult()
+
+	mocks.outputExporter.On("ExportTestRunResult", mock.Anything)
+	mocks.outputExporter.On("ExportXCResultBundle", result.DeployDir, result.XcresultPath, result.Scheme)
+	mocks.outputExporter.On("ExportFlakyTestCases", result.XcresultPath, false).Return(nil)
+	mocks.outputExporter.On("ExportXcodebuildBuildLog", result.DeployDir, result.XcodebuildBuildLog).Return(nil)
+	mocks.outputExporter.On("ExportXcodebuildTestLog", result.DeployDir, result.XcodebuildTestLog).Return(nil)
+	mocks.outputExporter.On("ExportXcresultDiagnostics", result.DeployDir, result.XcresultPath, result.Scheme).Return(fmt.Errorf("%w: %s", output.ErrNoDiagnostics, result.XcresultPath))
 
 	// When
 	err := step.Export(result, true)
