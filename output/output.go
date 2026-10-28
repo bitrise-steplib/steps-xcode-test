@@ -155,9 +155,11 @@ func (e exporter) ExportXcresultDiagnostics(deployDir, xcResultPath, scheme stri
 	cmd := e.commandFactory.Create("xcrun", []string{"xcresulttool", "export", "diagnostics", "--path", xcResultPath, "--output-path", outputDir}, nil)
 	e.logger.Printf("$ %s", cmd.PrintableCommandArgs())
 
-	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
+	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
+	if err != nil {
 		return fmt.Errorf("xcresulttool export diagnostics failed: %w, output: %s", err, out)
 	}
+	e.logger.Debugf("%s", out)
 
 	entries, err := os.ReadDir(outputDir)
 	if err != nil {
@@ -169,8 +171,7 @@ func (e exporter) ExportXcresultDiagnostics(deployDir, xcResultPath, scheme stri
 
 	// xcresulttool exports the test session logs even when xcodebuild did not collect the Simulator diagnostics
 	// (for example when the test plan says never); export what is there and say what is missing.
-	// The simctl diagnose bundle is written as simctl_diagnostics (checked on Xcode 26.5 and 27.0).
-	hasBundle, err := containsDir(outputDir, "simctl_diagnostics")
+	hasBundle, err := hasSimulatorDiagnostics(outputDir, entries)
 	if err != nil {
 		return fmt.Errorf("failed to inspect the exported diagnostics: %w", err)
 	}
@@ -180,6 +181,10 @@ func (e exporter) ExportXcresultDiagnostics(deployDir, xcResultPath, scheme stri
 
 	zipPath := filepath.Join(deployDir, fmt.Sprintf("Test-%s-diagnostics.zip", scheme))
 	if err := e.dirZipper.ZipDir(outputDir, zipPath, true); err != nil {
+		// do not leave a partial archive behind for the deploy step
+		if removeErr := os.Remove(zipPath); removeErr != nil && !os.IsNotExist(removeErr) {
+			e.logger.Warnf("Failed to remove the partial archive (%s): %s", zipPath, removeErr)
+		}
 		return fmt.Errorf("failed to compress the exported diagnostics: %w", err)
 	}
 
@@ -188,19 +193,28 @@ func (e exporter) ExportXcresultDiagnostics(deployDir, xcResultPath, scheme stri
 	return nil
 }
 
-func containsDir(root, name string) (bool, error) {
-	found := false
-	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+// hasSimulatorDiagnostics tells whether the exported diagnostics hold a simctl diagnose bundle. xcresulttool writes
+// one directory per test action (for example "0_Test_iPhone 17_Diagnostics") and the bundle as simctl_diagnostics
+// inside it (checked on Xcode 26.5 and 27.0).
+func hasSimulatorDiagnostics(outputDir string, entries []os.DirEntry) (bool, error) {
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		info, err := os.Stat(filepath.Join(outputDir, entry.Name(), "simctl_diagnostics"))
 		if err != nil {
-			return err
+			if os.IsNotExist(err) {
+				continue
+			}
+			return false, err
 		}
-		if d.IsDir() && d.Name() == name {
-			found = true
-			return filepath.SkipAll
+		if info.IsDir() {
+			return true, nil
 		}
-		return nil
-	})
-	return found, err
+	}
+
+	return false, nil
 }
 
 func (e exporter) ExportFlakyTestCases(xcResultPath string, useOldXCResultExtractionMethod bool) error {
