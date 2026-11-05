@@ -66,8 +66,8 @@ github.com/bitrise-io/go-utils/v2/ziputil
 # github.com/bitrise-io/go-xcode v1.3.3
 ## explicit; go 1.20
 github.com/bitrise-io/go-xcode/xcodeproject/serialized
-# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.90.0.20261027092912-8a4dff5bd6a6
-## explicit; go 1.22
+# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.92
+## explicit; go 1.23
 github.com/bitrise-io/go-xcode/v2/destination
 github.com/bitrise-io/go-xcode/v2/errorfinder
 github.com/bitrise-io/go-xcode/v2/logio
